@@ -115,16 +115,11 @@ services:
       - SERVER_URL=https://${DOMAIN_EVOLUTION:-evolution.marcaopersonal.com}
       - AUTHENTICATION_API_KEY=${EVOLUTION_API_KEY:-Marcao_Evolution_Sec2026_x9}
       - AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES=true
-      - CONFIG_SESSION_PHONE_VERSION=2.3000.1025062854
-      - CONFIG_SESSION_PHONE_CLIENT=Chrome
-      - CONFIG_SESSION_PHONE_NAME=Chrome
       - DATABASE_ENABLED=true
       - DATABASE_PROVIDER=postgresql
-      - DATABASE_CONNECTION_URI=postgresql://${POSTGRES_USER:-loja_admin}:${POSTGRES_PASSWORD:-loja_secret_2026}@postgres:5432/${POSTGRES_DB:-loja_ia}?schema=evolution
+      - DATABASE_CONNECTION_URI=postgresql://${POSTGRES_USER:-loja_admin}:${POSTGRES_PASSWORD:-loja_secret_2026}@postgres:5432/${POSTGRES_DB:-loja_ia}?schema=public
       - DATABASE_CONNECTION_CLIENT_NAME=evolution_v2
-      - CACHE_REDIS_ENABLED=true
-      - CACHE_REDIS_URI=redis://:${REDIS_PASSWORD:-redis_secret_2026}@redis:6379/1
-      - CACHE_REDIS_PREFIX_KEY=evolution
+      - CACHE_REDIS_ENABLED=false
       - LOG_LEVEL=ERROR,WARN,DEBUG,INFO,LOG,VERBOSE,DARK,WEBHOOKS
       - LOG_COLOR=true
       - LOG_BAILEYS=error
