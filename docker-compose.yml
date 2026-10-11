@@ -101,7 +101,7 @@ services:
   # 5. Evolution API v2 (WhatsApp Oficial para Sofia e Davi)
   # ============================================================================
   evolution_api:
-    image: evoapicloud/evolution-api:v2.3.7
+    image: evoapicloud/evolution-api:v2.2.3
     container_name: loja_evolution_api
     restart: always
     expose:
@@ -115,11 +115,16 @@ services:
       - SERVER_URL=https://${DOMAIN_EVOLUTION:-evolution.marcaopersonal.com}
       - AUTHENTICATION_API_KEY=${EVOLUTION_API_KEY:-Marcao_Evo_Key_2026_Secure!}
       - AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES=true
+      - CONFIG_SESSION_PHONE_VERSION=2.3000.1030415680
+      - CONFIG_SESSION_PHONE_CLIENT=Chrome
+      - CONFIG_SESSION_PHONE_NAME=Chrome
       - DATABASE_ENABLED=true
       - DATABASE_PROVIDER=postgresql
-      - DATABASE_CONNECTION_URI=postgresql://${POSTGRES_USER:-loja_admin}:${POSTGRES_PASSWORD:-loja_secret_2026}@postgres:5432/${POSTGRES_DB:-loja_ia}?schema=public
+      - DATABASE_CONNECTION_URI=postgresql://${POSTGRES_USER:-loja_admin}:${POSTGRES_PASSWORD:-loja_secret_2026}@postgres:5432/${POSTGRES_DB:-loja_ia}?schema=evolution
       - DATABASE_CONNECTION_CLIENT_NAME=evolution_v2
-      - CACHE_REDIS_ENABLED=false
+      - CACHE_REDIS_ENABLED=true
+      - CACHE_REDIS_URI=redis://:${REDIS_PASSWORD:-redis_secret_2026}@redis:6379/1
+      - CACHE_REDIS_PREFIX_KEY=evolution
       - LOG_LEVEL=ERROR,WARN,DEBUG,INFO,LOG,VERBOSE,DARK,WEBHOOKS
       - LOG_COLOR=true
       - LOG_BAILEYS=error
