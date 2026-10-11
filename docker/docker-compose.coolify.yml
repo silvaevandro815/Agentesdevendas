@@ -1,0 +1,106 @@
+version: '3.8'
+
+services:
+  # ============================================================================
+  # 1. Banco de Dados PostgreSQL com pgvector (Cérebro + RAG + Dados de Vendas)
+  # ============================================================================
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: loja_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-loja_ia}
+      POSTGRES_USER: ${POSTGRES_USER:-loja_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-loja_secret_2026}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-loja_admin} -d ${POSTGRES_DB:-loja_ia}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - loja_network
+
+  # ============================================================================
+  # 2. Redis (Fila de Tarefas e Cache de Alta Velocidade)
+  # ============================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: loja_redis
+    restart: always
+    command: redis-server --requirepass ${REDIS_PASSWORD:-redis_secret_2026}
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_secret_2026}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - loja_network
+
+  # ============================================================================
+  # 3. n8n (Motor Principal de Automações & Agentes 24h)
+  # ============================================================================
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: loja_n8n
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=${POSTGRES_DB:-loja_ia}
+      - DB_POSTGRESDB_USER=${POSTGRES_USER:-loja_admin}
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD:-loja_secret_2026}
+      - DB_POSTGRESDB_SCHEMA=public
+      - EXECUTIONS_MODE=regular
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:-defina_uma_chave_segura_32_chars}
+      - WEBHOOK_URL=https://${DOMAIN_N8N:-n8n.marcaopersonal.com}/
+      - N8N_HOST=${DOMAIN_N8N:-n8n.marcaopersonal.com}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - GENERIC_TIMEZONE=America/Sao_Paulo
+      - TZ=America/Sao_Paulo
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - loja_network
+
+  # ============================================================================
+  # 4. Painel Web de Comando & Aprovações (admin.marcaopersonal.com)
+  # ============================================================================
+  admin_panel:
+    build:
+      context: ../apps/admin
+      dockerfile: Dockerfile
+    container_name: loja_admin_panel
+    restart: always
+    depends_on:
+      - postgres
+    environment:
+      - PORT=3000
+      - DOMAIN_ADMIN=${DOMAIN_ADMIN:-admin.marcaopersonal.com}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB:-loja_ia}
+      - POSTGRES_USER=${POSTGRES_USER:-loja_admin}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-loja_secret_2026}
+    networks:
+      - loja_network
+
+volumes:
+  postgres_data:
+  redis_data:
+  n8n_data:
+
+networks:
+  loja_network:
+    driver: bridge

@@ -1,0 +1,47 @@
+{
+  "name": "F3 - Atendimento WhatsApp 24h (Sofia)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-webhook",
+        "options": {}
+      },
+      "id": "node-wa-webhook",
+      "name": "Webhook WhatsApp Cloud API",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.body.entry[0].changes[0].value.messages[0].type }}",
+              "value2": "text"
+            }
+          ]
+        }
+      },
+      "id": "node-filter-text",
+      "name": "É mensagem de texto?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [460, 300]
+    }
+  ],
+  "connections": {
+    "Webhook WhatsApp Cloud API": {
+      "main": [
+        [
+          {
+            "node": "É mensagem de texto?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

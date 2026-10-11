@@ -1,0 +1,45 @@
+{
+  "name": "F1 - Fila de Aprovação Humana (Human-in-the-Loop)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "solicitar-aprovacao",
+        "options": {}
+      },
+      "id": "node-webhook-in",
+      "name": "Webhook: Novo Criativo / Campanha",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://admin_panel:3000/api/approvals",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"agent\": \"{{ $json.body.agent }}\",\n  \"department\": \"{{ $json.body.department }}\",\n  \"type\": \"{{ $json.body.type }}\",\n  \"title\": \"{{ $json.body.title }}\",\n  \"content\": \"{{ $json.body.content }}\",\n  \"budget\": \"{{ $json.body.budget }}\"\n}",
+        "options": {}
+      },
+      "id": "node-post-admin",
+      "name": "Enviar para Painel Admin",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [460, 300]
+    }
+  ],
+  "connections": {
+    "Webhook: Novo Criativo / Campanha": {
+      "main": [
+        [
+          {
+            "node": "Enviar para Painel Admin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
