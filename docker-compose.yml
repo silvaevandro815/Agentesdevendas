@@ -103,6 +103,8 @@ services:
     image: evoapicloud/evolution-api:v2.2.3
     container_name: loja_evolution_api
     restart: always
+    expose:
+      - "8080"
     depends_on:
       postgres:
         condition: service_healthy
