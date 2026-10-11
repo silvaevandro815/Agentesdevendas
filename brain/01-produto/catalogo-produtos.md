@@ -31,7 +31,27 @@ Este documento é a **Fonte Única da Verdade** sobre o portfólio de produtos. 
 
 ---
 
-## 4. Diretrizes Operacionais de Fornecimento Sem Estoque
-- Modelo: Fornecedores de suplementação e cosméticos no Brasil com integração de expedição direta (Dropshipping Nacional via São Paulo / Paraná / Minas Gerais).
-- Prazos de postagem: até 24h úteis após confirmação de pagamento.
-- Frete: Correios (Sedex / PAC) e transportadoras privadas via Melhor Envio ou logística própria do marketplace (Shopee / Mercado Livre / TikTok Shop).
+## 4. Produto Viral 3: Escova Massageadora com Fototerapia LED (Cabelo & Barba)
+- **Função:** Fototerapia capilar com LEDs duplos (Luz Vermelha 625nm para estimulação dos folículos + Luz Azul 470nm para controle de oleosidade e caspa), microvibrações sônicas e reservatório aplicador de tônico capilar.
+- **Público-alvo:** Homens e mulheres com afinamento de fios, queda capilar ou falhas na barba.
+- **Preço de Venda Sugerido:** R$ 127,90 a R$ 167,90.
+- **Custo Fornecedor (Dropshipping Nacional via Dropi/SP):** R$ 38,00 a R$ 52,00.
+- **Margem Líquida:** ~65% a 70%.
+
+---
+
+## 5. Produto Individual 4: Nutracêutico Capilar (Biotina + Silício + Zinco)
+- **Função:** Nutrição de dentro para fora da raiz capilar, acelerando o crescimento e espessura do fio.
+- **Preço de Venda Sugerido:** R$ 89,90 a R$ 119,90.
+- **Comissão / Margem (Braip/Monetizze):** R$ 50,00 a R$ 75,00 por frasco.
+- **Combo Campeão:** Escova de LED + Frasco Capilar = R$ 197,00 (Margem de R$ 115,00+).
+
+---
+
+## 6. Diretrizes Operacionais de Fornecimento Sem Estoque
+- **Modelo Híbrido Sem Estoque:**
+  1. **Dropshipping Nacional (Dropi / Armazém SP):** Para aparelhos eletrônicos de estética (Escova de LED).
+  2. **Afiliado Autorizado de Produtos Físicos (Braip / Monetizze / Appmax):** Para encapsulados de Cabelo, Colágeno e Emagrecimento, garantindo despacho imediato, produto regularizado na ANVISA e comissões de 50% a 70%.
+- **Prazos de postagem:** até 24h a 48h úteis após confirmação de pagamento.
+- **Frete:** Correios (Sedex / PAC) ou Jadlog com código de rastreamento sincronizado automaticamente para o cliente.
+
