@@ -129,6 +129,8 @@ services:
       - LOG_COLOR=true
       - LOG_BAILEYS=error
       - QRCODE_LIMIT=30
+      - WEBSOCKET_ENABLED=true
+      - WEBSOCKET_GLOBAL_EVENTS=true
     volumes:
       - evolution_instances:/evolution/instances
     networks:
