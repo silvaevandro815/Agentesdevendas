@@ -23,7 +23,7 @@ services:
       - loja_network
 
   # ============================================================================
-  # 2. Redis (Fila de Tarefas e Cache)
+  # 2. Redis (Fila de Tarefas e Cache de Alta Velocidade)
   # ============================================================================
   redis:
     image: redis:7-alpine
@@ -96,10 +96,43 @@ services:
     networks:
       - loja_network
 
+  # ============================================================================
+  # 5. Evolution API v2 (WhatsApp Oficial para Sofia e Davi)
+  # ============================================================================
+  evolution_api:
+    image: atendai/evolution-api:v2.2.3
+    container_name: loja_evolution_api
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - SERVER_URL=https://${DOMAIN_EVOLUTION:-evolution.marcaopersonal.com}
+      - AUTHENTICATION_API_KEY=${EVOLUTION_API_KEY:-Marcao_Evolution_Sec2026_x9}
+      - AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES=true
+      - DATABASE_ENABLED=true
+      - DATABASE_PROVIDER=postgresql
+      - DATABASE_CONNECTION_URI=postgresql://${POSTGRES_USER:-loja_admin}:${POSTGRES_PASSWORD:-loja_secret_2026}@postgres:5432/${POSTGRES_DB:-loja_ia}?schema=evolution
+      - DATABASE_CONNECTION_CLIENT_NAME=evolution_v2
+      - CACHE_REDIS_ENABLED=true
+      - CACHE_REDIS_URI=redis://:${REDIS_PASSWORD:-redis_secret_2026}@redis:6379/1
+      - CACHE_REDIS_PREFIX_KEY=evolution
+      - LOG_LEVEL=ERROR,WARN,DEBUG,INFO,LOG,VERBOSE,DARK,WEBHOOKS
+      - LOG_COLOR=true
+      - LOG_BAILEYS=error
+      - QRCODE_LIMIT=30
+    volumes:
+      - evolution_instances:/evolution/instances
+    networks:
+      - loja_network
+
 volumes:
   postgres_data:
   redis_data:
   n8n_data:
+  evolution_instances:
 
 networks:
   loja_network:
