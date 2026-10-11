@@ -55,6 +55,7 @@
   - `https://admin.marcaopersonal.com` ONLINE (Status 200) — Painel dos Agentes
   - `https://n8n.marcaopersonal.com` ONLINE (Status 200) — Motor de Automações com fluxos F1 e F3 ativos
   - `https://evolution.marcaopersonal.com` ONLINE (Status 200) — Evolution API v2 para WhatsApp
+  - **WhatsApp da Sofia Conectado**: Instância `sofia` com status `open` (Pareado com WhatsApp `553285066687` de Evandro) e webhook ativo para o n8n.
   - PostgreSQL 16 e Redis rodando em rede privada e segura (portas blindadas contra invasores)
 - [ ] P1 — Landing Page do Produto & Integração com WhatsApp da Sofia
 - [ ] P2 — Máquina de Criativos e Conteúdo (Téo, Lia, Nina)
