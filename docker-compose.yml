@@ -98,7 +98,21 @@ services:
       - loja_network
 
   # ============================================================================
-  # 5. Evolution API v2 (WhatsApp Oficial para Sofia e Davi)
+  # 5. Loja & Landing Page Oficial (marcaopersonal.com)
+  # ============================================================================
+  site:
+    build:
+      context: ./apps/site
+      dockerfile: Dockerfile
+    container_name: loja_site
+    restart: always
+    environment:
+      - PORT=3000
+    networks:
+      - loja_network
+
+  # ============================================================================
+  # 6. Evolution API v2 (WhatsApp Oficial para Sofia e Davi)
   # ============================================================================
   evolution_api:
     image: evoapicloud/evolution-api:v2.2.3
