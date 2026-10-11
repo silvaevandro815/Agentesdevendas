@@ -14,11 +14,16 @@
   - **Evolution API**: Conexão com WhatsApp para Sofia e Davi
   - **Supabase**: Banco de dados relacional + pgvector para memória do Cérebro
   - **Painel Admin**: Interface web para aprovações Human-in-the-Loop
-- Nicho Escolhido: **Emagrecimento, Musculação e Estética Corporal (Corpo & Beleza)**
-  - Foco: Produtos que unem perda de peso, definição e beleza estética (ex: Creatina, Termogênicos/Drenantes naturais, Colágeno/Firmadores).
-- Modelo: Revenda sem estoque (Dropshipping Nacional / Afiliado Oficial com envio direto pelo fabricante).
+- Nicho Escolhido: **Estética Corporal, Cabelo, Pele & Definição (Marcão Personal)**
+  - Catálogo Validado Sem Estoque:
+    1. **Escova de LED Capilar (Fototerapia Vermelha/Azul + Microvibração)**: Gadget de altíssima conversão para queda capilar masculina e feminina (via Dropshipping Nacional Dropi / Armazém SP).
+    2. **Nutracêutico Capilar Antiqueda (Biotina + Silício Inteligente + Zinco)**: Cápsulas que fortalecem o bulbo capilar de dentro para fora (Afiliado Físico Braip/Monetizze com 50% a 70% de comissão).
+    3. **Colágeno Verisol® + Ácido Hialurônico**: Firmeza da pele corporal, combate a flacidez e celulite.
+    4. **Creatina Monohidratada 100% Pura + TermoFit Drenante**: Tônus muscular e queima de gordura sem retenção de líquidos.
+  - Branding: **Mascote Marcão** ("O Personal que não te deixa gastar dinheiro com bobagem") estrela os criativos de vídeo, enquanto a equipe de agentes (Téo, Lia, Rui, Sofia, Otto) cuida do marketing, tráfego, vendas no WhatsApp e pós-venda.
+- Modelo: Híbrido Sem Estoque (Dropshipping Nacional via Dropi para a Escova de LED + Afiliado Autorizado de Produtos Físicos na Braip/Monetizze para encapsulados com despacho em 24h pelos Correios).
 - Repositório GitHub: https://github.com/silvaevandro815/Agentesdevendas
-- Acesso Direto Coolify: Evandro pode gerar um API Token em `Keys & Tokens` no Coolify para que o agente comande a VPS diretamente.
+- Acesso Direto Coolify: Evandro gerou API Tokens ativos para automação total da VPS.
 
 ## Confirmação do Vídeo de Referência (Assistido e Transcrito)
 - Sistema: "Sua Empresa 24h" (Central de comando de IA conectada a um Cérebro Central com objetivos do mês, ofertas, números e políticas).
