@@ -61,8 +61,10 @@
   - `https://n8n.marcaopersonal.com` ONLINE (Status 200) — Motor de Automações com fluxos F1 e F3 ativos
   - `https://evolution.marcaopersonal.com` ONLINE (Status 200) — Evolution API v2 para WhatsApp
   - **WhatsApp da Sofia Conectado**: Instância `sofia` com status `open` (Pareado com WhatsApp `553285066687` de Evandro) e webhook ativo para o n8n.
-  - PostgreSQL 16 e Redis rodando em rede privada e segura (portas blindadas contra invasores)
-- [ ] P1 — Landing Page do Produto & Integração com WhatsApp da Sofia
+- [x] P1 — Landing Page Oficial `https://marcaopersonal.com` no ar com Mascote Marcão e integração WhatsApp Sofia
+  - Design neon dark mode com paleta oficial da logo (Cyan `#00e5ff`, Verde `#00ff88`, Laranja `#ff7a00`)
+  - 3 Protocolos de Ouro estruturados (Capilar com Escova LED, Pele Firme Verisol, Definição & Tônus Muscular)
+  - Botões interativos com mensagens personalizadas direcionando para o WhatsApp da Sofia (`553285066687`)
 - [ ] P2 — Máquina de Criativos e Conteúdo (Téo, Lia, Nina)
 - [ ] P3 — Motor de Vendas & Atendimento (Sofia no WhatsApp + integração canais)
 - [ ] P4 — Campanhas de Tráfego Pago (Rui + aprovação Telegram/Admin)
