@@ -4,6 +4,7 @@
 .env.*.local
 *.pem
 *.key
+APYKEYs/
 
 # Vídeos e arquivos brutos pesados
 *.mp4

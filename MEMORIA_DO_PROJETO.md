@@ -4,22 +4,21 @@
 
 ## Contexto
 - Diretor/Empreendedor: Evandro da Silva Gallina (CNPJ MEI: 68.746.249/0001-84).
+- IP da VPS Hostinger: `72.61.43.154` (Coolify em porta 8000)
 - Domínio principal registrado: `marcaopersonal.com`
 - Subdomínio Administrativo (Painel de Controle e Aprovações): `admin.marcaopersonal.com`
 - Subdomínio Loja / Landing Page: `loja.marcaopersonal.com` ou raiz `marcaopersonal.com`
 - Subdomínio n8n / Automações: `n8n.marcaopersonal.com`
+- Stack Definido por Evandro:
+  - **n8n**: Orquestração e fluxo de trabalho dos agentes
+  - **Evolution API**: Conexão com WhatsApp para Sofia e Davi
+  - **Supabase**: Banco de dados relacional + pgvector para memória do Cérebro
+  - **Painel Admin**: Interface web para aprovações Human-in-the-Loop
 - Nicho Escolhido: **Emagrecimento, Musculação e Estética Corporal (Corpo & Beleza)**
   - Foco: Produtos que unem perda de peso, definição e beleza estética (ex: Creatina, Termogênicos/Drenantes naturais, Colágeno/Firmadores).
-  - Vantagem: Altíssimo apelo visual no Instagram/TikTok, compra recorrente (recompra mensal) e ticket médio atrativo (kits de R$ 97 a R$ 197).
 - Modelo: Revenda sem estoque (Dropshipping Nacional / Afiliado Oficial com envio direto pelo fabricante).
-- Infraestrutura confirmada:
-  - PC Local com Antigravity + Git
-  - Repositório GitHub: https://github.com/silvaevandro815/Agentesdevendas
-  - VPS Hostinger KVM 4 com Coolify e Docker
-  - Domínio registrado: marcaopersonal.com (com DNS apontando para a VPS)
-- Painel de Aprovação do Diretor: Opção C (Painel Web em `admin.marcaopersonal.com`, reproduzindo fielmente a interface "Sua Empresa 24h" do vídeo com cards de agentes, aprovações de anúncios e chat com o Cérebro).
-- Canais de Venda: Site próprio (Landing Page no domínio), TikTok Shop, Shopee, Mercado Livre, Instagram e WhatsApp.
-- Orçamento de Tráfego Pago: R$ 500 / mês (aprox. R$ 16,50 / dia).
+- Repositório GitHub: https://github.com/silvaevandro815/Agentesdevendas
+- Acesso Direto Coolify: Evandro pode gerar um API Token em `Keys & Tokens` no Coolify para que o agente comande a VPS diretamente.
 
 ## Confirmação do Vídeo de Referência (Assistido e Transcrito)
 - Sistema: "Sua Empresa 24h" (Central de comando de IA conectada a um Cérebro Central com objetivos do mês, ofertas, números e políticas).
@@ -51,11 +50,18 @@
 
 ## Status das Fases
 - [x] Pré-alinhamento & Definição da Infraestrutura
-- [ ] P0 — Fundação Técnica (Estrutura Monorepo, Docker Compose, Git connect, Setup Coolify)
-- [ ] P1 — O Cérebro (/brain) estruturado e persona dos agentes
+- [x] P0 — Fundação Técnica (Monorepo, Docker Compose, Git connect, Setup Coolify)
+- [x] P0.5 — Deploy no Servidor Hostinger via Coolify API Concluído!
+  - `https://admin.marcaopersonal.com` ONLINE (Status 200) — Painel dos Agentes
+  - `https://n8n.marcaopersonal.com` ONLINE (Status 200) — Motor de Automações com fluxos F1 e F3 ativos
+  - `https://evolution.marcaopersonal.com` ONLINE (Status 200) — Evolution API v2 para WhatsApp
+  - PostgreSQL 16 e Redis rodando em rede privada e segura (portas blindadas contra invasores)
+- [ ] P1 — Landing Page do Produto & Integração com WhatsApp da Sofia
 - [ ] P2 — Máquina de Criativos e Conteúdo (Téo, Lia, Nina)
 - [ ] P3 — Motor de Vendas & Atendimento (Sofia no WhatsApp + integração canais)
-- [ ] P4 — Campanhas de Tráfego Pago (Rui + aprovação Telegram)
+- [ ] P4 — Campanhas de Tráfego Pago (Rui + aprovação Telegram/Admin)
 - [ ] P5 — Operação e Logística sem estoque (Otto + Rastreio)
 - [ ] P6 — Painel Gerencial & Métricas (Iago + Marta)
+
+
 
