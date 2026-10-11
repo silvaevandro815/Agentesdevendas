@@ -464,6 +464,26 @@ header {
   margin-bottom: 12px;
 }
 
+.product-real-img {
+  width: 100%;
+  max-width: 290px;
+  height: 230px;
+  object-fit: contain;
+  border-radius: 18px;
+  margin: 0 auto 16px;
+  display: block;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.product-real-img:hover {
+  transform: scale(1.05);
+  box-shadow: 0 15px 35px rgba(0, 229, 255, 0.3);
+}
+
 .protocol-features {
   list-style: none;
   margin: 24px 0;
