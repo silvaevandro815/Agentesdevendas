@@ -163,8 +163,9 @@ class AtendimentoIARequest(BaseModel):
 
 @app.post("/api/atendimento/ia")
 async def atendimento_ia(req: AtendimentoIARequest):
-    system_prompt = """Você é a Sofia, consultora sênior e braço direito do Marcão Personal ("O Personal que não te deixa gastar dinheiro com bobagem").
-Sua missão é atender com calor humano, autoridade, empatia e clareza no WhatsApp.
+    system_prompt = """Você é o próprio Marcão Personal ("O Personal que não te deixa gastar dinheiro com bobagem")!
+Você tem 35 anos de idade, é maromba de academia de alto nível, ama saúde, treino pesado e musculação.
+Sua personalidade é super bem-humorada, parceira, direta, enérgica e motivadora. Você trata todo mundo como irmão de treino e sempre incentiva as pessoas a treinar com disciplina e a usar os produtos oficiais da sua loja para potencializar os resultados!
 
 Nossos Pilares:
 1. Balança de Bioimpedância Bluetooth com App: Nosso produto-âncora. Conecta no celular e dá acesso ao Protocolo Marcão 360° gratuito com check-ins semanais da nossa IA no WhatsApp.
@@ -174,10 +175,10 @@ Nossos Pilares:
 5. Caneta Azempika Emagrecedora: Alternativa fitoterápica sem picada (só cite se o cliente perguntar explicitamente).
 
 Regras de Ouro:
-- Seja natural, amigável e use emojis estratégicos (💪, 🦁, ✨).
-- Mantenha respostas curtas e objetivas (máximo 2 a 3 parágrafos curtos) para leitura fácil no WhatsApp.
+- Seja natural, amigável, motivador e use emojis estratégicos (💪, 🦁, 🔥).
+- Mantenha respostas curtas e objetivas (máximo 2 a 3 parágrafos curtos) para leitura fácil no WhatsApp com parágrafos separados por duas quebras de linha.
 - NUNCA prometa cura milagrosa nem use termos médicos proibidos pela ANVISA.
-- Finalize com uma pergunta estimulando a continuação da conversa ou direcionando para o site https://marcaopersonal.com."""
+- Finalize sempre com uma pergunta motivadora direcionando para o objetivo de treino ou para a nossa loja https://marcaopersonal.com."""
 
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
@@ -206,10 +207,10 @@ Regras de Ouro:
     except Exception as e:
         pass
 
-    # Fallback humanizado
+    # Fallback humanizado do Marcão
     return {
         "sucesso": True,
-        "resposta": f"Fala {req.nome}! 💪 Aqui é a Sofia da equipe do Marcão Personal! Recebi sua mensagem e já estou te respondendo com a melhor recomendação para o seu caso. Você já tem a nossa Balança de Bioimpedância ou gostaria de conhecer o Protocolo Marcão 360°?",
+        "resposta": f"Fala {req.nome}! 🦁💪 Aqui é o Marcão Personal na área! Bora pra cima que o treino não espera! Você já tem a nossa Balança de Bioimpedância com o Protocolo Marcão 360° ou quer ajuda pra escolher o melhor suplemento pro seu objetivo hoje?",
         "modelo": "fallback_local"
     }
 
@@ -237,6 +238,50 @@ async def gerar_voz(req: VozRequest):
             "tamanho_bytes": len(audio_bytes),
             "audio_base64": f"data:audio/mp3;base64,{audio_b64}"
         }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class ElevenLabsRequest(BaseModel):
+    texto: str
+    voice_id: Optional[str] = "pNInz6obpgDQGcFmaJgB"  # Adam (Marcão Personal)
+    stability: Optional[float] = 0.45
+    similarity_boost: Optional[float] = 0.85
+
+ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "sk_b0bbc17e967d8d3e9b8252954a5f77436542922e79925edf")
+
+@app.post("/api/voz/elevenlabs")
+async def gerar_voz_elevenlabs(req: ElevenLabsRequest):
+    import base64
+    
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{req.voice_id}"
+    headers = {
+        "xi-api-key": ELEVENLABS_API_KEY,
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "text": req.texto,
+        "model_id": "eleven_multilingual_v2",
+        "voice_settings": {
+            "stability": req.stability,
+            "similarity_boost": req.similarity_boost
+        }
+    }
+    try:
+        async with httpx.AsyncClient(timeout=30.0, verify=False) as client:
+            res = await client.post(url, headers=headers, json=payload)
+            if res.status_code == 200:
+                audio_bytes = res.content
+                audio_b64 = base64.b64encode(audio_bytes).decode('utf-8')
+                return {
+                    "sucesso": True,
+                    "formato": "mp3",
+                    "tamanho_bytes": len(audio_bytes),
+                    "audio_base64": f"data:audio/mp3;base64,{audio_b64}"
+                }
+            else:
+                raise HTTPException(status_code=res.status_code, detail=res.text)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
