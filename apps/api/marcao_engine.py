@@ -357,6 +357,35 @@ async def processar_mensagem_marcao(payload_webhook: dict) -> dict:
         else:
             return {"ignorado": True, "motivo": "sem_conteudo"}
 
+    # Download de mídia para visão computacional e leitura de PDF
+    media_b64 = None
+    media_mimetype = None
+    texto_pdf_extraido = ""
+    if is_foto or is_pdf:
+        try:
+            async with httpx.AsyncClient(timeout=15.0, verify=False) as client:
+                evo_media_res = await client.post(
+                    f"{EVOLUTION_API_URL}/chat/getBase64FromMediaMessage/sofia",
+                    headers={"apikey": EVOLUTION_API_KEY, "Content-Type": "application/json"},
+                    json={"message": data, "convertToMp4": False}
+                )
+                if evo_media_res.status_code in [200, 201]:
+                    media_json = evo_media_res.json()
+                    media_b64 = media_json.get("base64")
+                    media_mimetype = media_json.get("mimetype", "image/jpeg")
+                    if is_pdf and media_b64:
+                        try:
+                            import io
+                            from pypdf import PdfReader
+                            raw_pdf_bytes = base64.b64decode(media_b64)
+                            reader = PdfReader(io.BytesIO(raw_pdf_bytes))
+                            for page in reader.pages:
+                                texto_pdf_extraido += (page.extract_text() or "") + "\n"
+                        except Exception as e_pdf:
+                            print("Erro extraindo PDF:", e_pdf)
+        except Exception as e_media:
+            print("Erro baixando media Evolution:", e_media)
+
     texto_lower = texto_recebido.lower()
     pediu_audio = (
         is_audio or
@@ -528,6 +557,15 @@ LINKS DIRETOS DE VENDAS:
 - Vista cansada / Vision Prime (R$ 199,00): https://ev.braip.com/ref?pl=pla2nz6n&ck=che76kmo&af=afi3vmxeod
 - Loja Geral: https://marcaopersonal.com#loja
 
+PODER DE VISÃO COMPUTACIONAL & ANÁLISE DE MÍDIAS:
+- Você tem VISÃO TOTAL para enxergar qualquer imagem, foto ou arquivo enviado (artes, pratos de comida, suplementos, prints, exames ou documentos)!
+- Descreva com naturalidade exatamente o que você vê na foto!
+- Se for arte/logo do Marcão enviada pelo Diretor Evandro: elogie os detalhes com empolgação ('Ficou fera essa arte, meu chefe!', 'Esse logo e o personagem ficaram top!'), e pergunte onde ele vai usar (site, insta, perfil). NUNCA tente vender nada para o Diretor Evandro!
+- Se for foto de comida: avalie a refeição e os macros (proteína, carbo, salada).
+- Se for foto de suplemento: comente a utilidade e como tomar.
+- Se for foto de exame/documento: leia os dados e dê uma explicação profissional de personal trainer.
+- Se for foto de corpo/shape de um cliente: avalie postura e tônus com respeito. Só envie o link da Balança de Bioimpedância com IA se ele expressamente pedir avaliação física.
+
 REGRAS OBRIGATÓRIAS DE CONVERSAÇÃO HUMANA:
 1. NUNCA REPITA RESPOSTAS PADRÃO OU FRASES PRONTAS! Converse de verdade, com repertório humano livre, considerando o que já foi conversado no histórico!
 2. FLUIDEZ E CADÊNCIA: Responda diretamente, sem repetição de cumprimentos formais se a conversa já estiver ocorrendo.
@@ -544,9 +582,27 @@ REGRAS OBRIGATÓRIAS DE CONVERSAÇÃO HUMANA:
         r = h.get("role")
         c = h.get("content")
         if r in ["user", "assistant"] and c:
-            messages_llm.append({"role": r, "content": c})
+            messages_llm.append({"role": r, "content": c if isinstance(c, str) else json.dumps(c)})
 
-    messages_llm.append({"role": "user", "content": texto_recebido})
+    if is_foto and media_b64:
+        user_content = [
+            {
+                "type": "text",
+                "text": f"O interlocutor enviou esta imagem. Analise detalhadamente o que você vê na foto e comente com naturalidade no seu estilo Marcão Personal:{' ' + texto_recebido if not texto_recebido.startswith('[') else ''}"
+            },
+            {
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:{media_mimetype};base64,{media_b64}"
+                }
+            }
+        ]
+        messages_llm.append({"role": "user", "content": user_content})
+    elif is_pdf and texto_pdf_extraido.strip():
+        user_content = f"O interlocutor enviou um documento PDF. Analise os dados extraídos abaixo e comente no seu estilo Marcão Personal:\n\n{texto_pdf_extraido.strip()}"
+        messages_llm.append({"role": "user", "content": user_content})
+    else:
+        messages_llm.append({"role": "user", "content": texto_recebido})
 
     resposta_gerada = ""
     try:
