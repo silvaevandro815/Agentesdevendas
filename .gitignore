@@ -11,6 +11,8 @@ APYKEYs/
 *.m4v
 *.mov
 *.avi
+*.mp3
+*.wav
 scratch/
 Exemplos de workflows/
 

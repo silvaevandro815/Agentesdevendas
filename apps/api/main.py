@@ -212,3 +212,31 @@ Regras de Ouro:
         "resposta": f"Fala {req.nome}! 💪 Aqui é a Sofia da equipe do Marcão Personal! Recebi sua mensagem e já estou te respondendo com a melhor recomendação para o seu caso. Você já tem a nossa Balança de Bioimpedância ou gostaria de conhecer o Protocolo Marcão 360°?",
         "modelo": "fallback_local"
     }
+
+class VozRequest(BaseModel):
+    texto: str
+    idioma: Optional[str] = "pt"
+    tld: Optional[str] = "com.br"
+
+@app.post("/api/voz/gerar")
+async def gerar_voz(req: VozRequest):
+    import io
+    import base64
+    from gtts import gTTS
+    
+    try:
+        fp = io.BytesIO()
+        tts = gTTS(text=req.texto, lang=req.idioma, tld=req.tld, slow=False)
+        tts.write_to_fp(fp)
+        fp.seek(0)
+        audio_bytes = fp.read()
+        audio_b64 = base64.b64encode(audio_bytes).decode('utf-8')
+        return {
+            "sucesso": True,
+            "formato": "mp3",
+            "tamanho_bytes": len(audio_bytes),
+            "audio_base64": f"data:audio/mp3;base64,{audio_b64}"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
