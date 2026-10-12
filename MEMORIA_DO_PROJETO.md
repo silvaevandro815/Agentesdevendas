@@ -24,6 +24,14 @@
 - Modelo: Híbrido Sem Estoque (Dropshipping Nacional via Dropi para a Escova de LED + Afiliado Autorizado de Produtos Físicos na Braip/Monetizze para encapsulados com despacho em 24h pelos Correios).
 - Repositório GitHub: https://github.com/silvaevandro815/Agentesdevendas
 - Acesso Direto Coolify: Evandro gerou API Tokens ativos para automação total da VPS.
+- **Supabase Oficial Conectado:**
+  - Project Ref: `qkopgftfrfftoyndhhfj`
+  - URL da API: `https://qkopgftfrfftoyndhhfj.supabase.co`
+  - Região: `sa-east-1` (São Paulo / Brasil)
+  - Banco: PostgreSQL 17 com extensão `vector` (pgvector ativo)
+  - Tabelas Criadas: `cerebro_conhecimento` (7 artigos), `leads_conversas`, `pedidos_braip`, `fila_aprovacoes`
+  - Credencial no n8n: ID `h8yD2TQTqUkaUCRh` ("Supabase - Marcao Personal")
+  - Sofia integrada: grava cada novo lead automaticamente em `leads_conversas`
 
 ## Confirmação do Vídeo de Referência (Assistido e Transcrito)
 - Sistema: "Sua Empresa 24h" (Central de comando de IA conectada a um Cérebro Central com objetivos do mês, ofertas, números e políticas).
