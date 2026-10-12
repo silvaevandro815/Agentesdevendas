@@ -65,11 +65,19 @@
   - Design neon dark mode com paleta oficial da logo (Cyan `#00e5ff`, Verde `#00ff88`, Laranja `#ff7a00`)
   - 3 Protocolos de Ouro estruturados (Capilar com Escova LED, Pele Firme Verisol, Definição & Tônus Muscular)
   - Botões interativos com mensagens personalizadas direcionando para o WhatsApp da Sofia (`553285066687`)
-- [ ] P2 — Máquina de Criativos e Conteúdo (Téo, Lia, Nina)
-- [ ] P3 — Motor de Vendas & Atendimento (Sofia no WhatsApp + integração canais)
-- [ ] P4 — Campanhas de Tráfego Pago (Rui + aprovação Telegram/Admin)
-- [ ] P5 — Operação e Logística sem estoque (Otto + Rastreio)
-- [ ] P6 — Painel Gerencial & Métricas (Iago + Marta)
+- [x] P2 — Máquina de Criativos e Conteúdo (Téo, Lia, Nina) Concluída!
+  - 10 Roteiros de Vídeos Virais estrelando o Mascote Marcão (`brain/05-marketing/roteiros-virais-mascote-teo.md`)
+  - 10 Anúncios de Alta Conversão para Meta Ads Feed/Stories (`brain/05-marketing/anuncios-meta-ads-lia.md`)
+  - Calendário Editorial Estratégico de 30 Dias (`brain/05-marketing/calendario-editorial-30dias-nina.md`)
+  - Fila de Aprovações no Painel Web (`apps/admin/server.js`) alimentada com os novos criativos e campanhas
+- [x] P3 — Cérebro RAG & Memória da Sofia (Supabase / Postgres com pgvector + Playbook de Vendas no n8n) Concluída!
+  - Schema SQL completo do Cérebro criado com tabelas de conhecimento RAG, leads e vendas (`brain/01-produto/schema_banco_cerebro.sql`)
+  - Conhecimento completo dos 5 produtos injetado (bulas, dosagens, ANVISA, preços e links oficiais Braip)
+  - Workflow `F3 - Atendimento WhatsApp 24h (Sofia)` atualizado no n8n com processador inteligente de mensagens conectado à Evolution API (`instance: sofia`)
+  - Sofia respondendo dúvidas de forma acolhedora, tirando objeções e entregando links de checkout em tempo real no WhatsApp
+- [ ] P4 — Conexão Meta Ads & Instagram (Rui e Nina com aprovação Human-in-the-Loop)
+- [ ] P5 — Recuperação de Vendas & Follow-up (Davi no WhatsApp com carrinho abandonado Braip)
+- [ ] P6 — Painel Gerencial & Métricas (Iago + Marta com cálculo diário de lucro líquido)
 
 
 
