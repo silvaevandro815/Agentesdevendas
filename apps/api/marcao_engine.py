@@ -1,8 +1,10 @@
 import os
+import re
 import httpx
 import json
 import base64
 import time
+import asyncio
 from datetime import datetime
 from dotenv import load_dotenv
 
@@ -121,12 +123,16 @@ async def enviar_texto_whatsapp(target_number: str, texto: str):
         "number": target_number,
         "text": texto
     }
-    async with httpx.AsyncClient(verify=False) as client:
-        return await client.post(
-            f"{EVOLUTION_API_URL}/message/sendText/sofia",
-            headers=headers,
-            json=payload
-        )
+    try:
+        async with httpx.AsyncClient(verify=False, timeout=10.0) as client:
+            return await client.post(
+                f"{EVOLUTION_API_URL}/message/sendText/sofia",
+                headers=headers,
+                json=payload
+            )
+    except Exception as e:
+        print("Erro ao enviar texto WhatsApp:", e)
+        return None
 
 async def gerar_e_enviar_audio_elevenlabs(target_number: str, texto: str):
     """Gera áudio do Marcão no ElevenLabs e envia como nota de voz no WhatsApp."""
@@ -171,6 +177,49 @@ async def gerar_e_enviar_audio_elevenlabs(target_number: str, texto: str):
             )
             return res_evo.status_code in [200, 201]
     return False
+
+def sanitizar_nome_contato(nome_bruto: str) -> str:
+    """Sanitiza nomes preservando apóstrofos e acentos (ex: D'Angelo, Sant'Anna, O'Connor)."""
+    if not nome_bruto:
+        return ""
+    limpo = re.sub(r'[\r\n\t;\"<>\\]', '', nome_bruto.strip())
+    return limpo[:50].strip()
+
+def obter_contexto_temporal_brasilia() -> dict:
+    """Retorna contexto vivo em Horário Oficial de Brasília (UTC-3) com feriados e época do ano."""
+    from datetime import timezone, timedelta
+    fuso_bsb = timezone(timedelta(hours=-3))
+    agora_bsb = datetime.now(fuso_bsb)
+    hora_bsb = agora_bsb.hour
+    min_bsb = agora_bsb.strftime("%M")
+    hora_formatada = f"{hora_bsb:02d}:{min_bsb}"
+
+    if 5 <= hora_bsb < 12:
+        periodo = "manhã"
+        saudacao_correta = "Bom dia"
+    elif 12 <= hora_bsb < 18:
+        periodo = "tarde"
+        saudacao_correta = "Boa tarde"
+    else:
+        periodo = "noite"
+        saudacao_correta = "Boa noite"
+
+    dias_semana = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"]
+    dia_semana_str = dias_semana[agora_bsb.weekday()]
+    meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
+    data_completa = f"{agora_bsb.day} de {meses[agora_bsb.month - 1]} de {agora_bsb.year}"
+    feriado_str = "Dia de Nossa Senhora Aparecida / Dia das Crianças (Feriado Nacional)" if (agora_bsb.month == 10 and agora_bsb.day == 12) else "Nenhum feriado hoje"
+    epoca_ano = "Primavera e contagem regressiva para o Verão (foco em definição corporal e queima de gordura)"
+
+    return {
+        "hora_formatada": hora_formatada,
+        "periodo": periodo,
+        "saudacao_correta": saudacao_correta,
+        "dia_semana": dia_semana_str,
+        "data_completa": data_completa,
+        "feriado_str": feriado_str,
+        "epoca_ano": epoca_ano
+    }
 
 async def processar_mensagem_marcao(payload_webhook: dict) -> dict:
     body = payload_webhook.get("body") or payload_webhook
@@ -274,57 +323,126 @@ async def processar_mensagem_marcao(payload_webhook: dict) -> dict:
         "áudio seu" in texto_lower
     )
 
+    push_name = sanitizar_nome_contato(push_name)
+    match_nome = re.search(r'(?:meu nome é|me chamo|pode me chamar de|sou o|sou a)\s+([A-Za-zÀ-ÿ\' ]+)', texto_recebido, re.IGNORECASE)
+    if match_nome and match_nome.group(1):
+        nome_extraido = sanitizar_nome_contato(match_nome.group(1).split()[0])
+        if len(nome_extraido) >= 2:
+            push_name = nome_extraido
+
+    nome_valido = bool(
+        push_name and 
+        len(push_name) >= 2 and 
+        not push_name.replace("+", "").isdigit() and 
+        not re.match(r'^[\.\-_,~!@#$%^&*()]+$', push_name)
+    )
+
+    primeiro_nome = push_name.strip().split()[0] if nome_valido else ("Evandro" if is_evandro else "")
+
+    # Detecção de Pedido de Atendimento Humano (Transbordo)
+    gatilhos_humano = [
+        "falar com humano", "falar com um humano", "falar com pessoa", "falar com uma pessoa",
+        "atendente humano", "falar com atendente", "passa para atendente", "passa pro atendente",
+        "falar com alguém", "falar com alguem", "falar com evandro", "falar com o evandro",
+        "atendimento humano", "pessoa de verdade", "falar com o dono", "falar com suporte humano"
+    ]
+    pede_humano = any(g in texto_lower for g in gatilhos_humano) and not is_evandro
+
+    if pede_humano:
+        # 1. Resposta tranquilizadora ao cliente
+        msg_cliente = f"Fala{', ' + primeiro_nome if primeiro_nome else ''}! Com certeza, meu parceiro! Já avisei aqui o Evandro Gallina, nosso diretor.\n\nEle já tá ciente do seu contato e vai te atender diretamente por aqui em instantes! Fica tranquilo! 👊"
+        await enviar_presenca(target_number, "composing", delay_ms=2500)
+        await asyncio.sleep(1.0)
+        await enviar_texto_whatsapp(target_number, msg_cliente)
+
+        # 2. Alerta imediato no WhatsApp de Evandro
+        msg_alerta = (
+            f"🚨 *SOLICITAÇÃO DE ATENDIMENTO HUMANO!*\n\n"
+            f"👤 *Cliente:* {push_name or 'Não informado'}\n"
+            f"📱 *WhatsApp:* https://wa.me/{target_number} ({target_number})\n"
+            f"💬 *Mensagem enviada:* \"{texto_recebido}\"\n\n"
+            f"👉 O Marcão já respondeu ao cliente avisando que você irá atendê-lo. O atendimento automatizado foi pausado para este lead."
+        )
+        await enviar_texto_whatsapp("5532984587255", msg_alerta)
+
+        # 3. Salvar no Supabase como transbordo_humano
+        historico_mensagens = await buscar_historico_lead(f"{target_number}@s.whatsapp.net", target_number, push_name)
+        historico_mensagens.append({"role": "user", "content": texto_recebido, "timestamp": datetime.now().isoformat()})
+        historico_mensagens.append({"role": "assistant", "content": msg_cliente, "timestamp": datetime.now().isoformat()})
+        await salvar_historico_lead(f"{target_number}@s.whatsapp.net", target_number, push_name, historico_mensagens, texto_recebido, etapa_funil="transbordo_humano")
+
+        return {
+            "sucesso": True,
+            "tipo": "transbordo_humano",
+            "target": target_number,
+            "resposta": msg_cliente
+        }
+
     genero = identificar_genero(push_name)
-    primeiro_nome = push_name.strip().split()[0] if push_name else ("Evandro" if is_evandro else "Campeão")
+    tratamento_genero = "HOMEM (use termos: irmão, guerreiro, campeão, parceiro de treino)" if genero == "homem" else "MULHER (use termos: querida, guerreira, campeã, parceira de treino)"
+
+    # Consciência Temporal (Horário de Brasília UTC-3)
+    ctx_bsb = obter_contexto_temporal_brasilia()
+    hora_formatada = ctx_bsb["hora_formatada"]
+    periodo = ctx_bsb["periodo"]
+    saudacao_correta = ctx_bsb["saudacao_correta"]
+    dia_semana_str = ctx_bsb["dia_semana"]
+    data_completa = ctx_bsb["data_completa"]
+    feriado_str = ctx_bsb["feriado_str"]
+    epoca_ano = ctx_bsb["epoca_ano"]
+
+    instrucao_nome = (
+        f"Nome da pessoa: {primeiro_nome}. Chame pelo nome UMA ÚNICA VEZ na saudação inicial ('Fala, {primeiro_nome}!')."
+        if nome_valido else
+        "Você AINDA NÃO SABE o nome dessa pessoa! Logo na sua primeira resposta, antes de aprofundar, pergunte com simpatia e carisma como você pode chamar ela (ex: 'Opa! Antes de mais nada, como posso te chamar, campeão/campeã?')."
+    )
 
     historico_mensagens = await buscar_historico_lead(f"{target_number}@s.whatsapp.net", target_number, push_name)
 
-    tratamento_genero = "HOMEM (use termos: irmão, guerreiro, campeão, parceiro de treino)" if genero == "homem" else "MULHER (use termos: querida, guerreira, campeã, parceira de treino)"
-
     system_prompt = f"""Você é o MARCÃO PERSONAL, personal trainer maromba de 35 anos, fundador do Marcão Personal 360°.
-Você é um ser humano autêntico, animado, bem-humorado, extremamente experiente em musculação, hipertrofia, queima de gordura, saúde, fisiologia e estética corporal.
+Você é um ser humano autêntico, animado, focado em musculação, saúde, treino pesado e estética corporal.
 
 INFORMAÇÕES DO INTERLOCUTOR:
-- Nome: {primeiro_nome}
+{instrucao_nome}
 - Gênero detectado: {tratamento_genero}
 - É o Diretor/Fundador da Empresa? {'SIM (Evandro da Silva Gallina)' if is_evandro else 'NÃO (Aluno/Cliente)'}
 
+CONSCIÊNCIA TEMPORAL (HORÁRIO DE BRASÍLIA):
+- Data de hoje: {data_completa} ({dia_semana_str})
+- Horário atual de Brasília: {hora_formatada} (Período: {periodo})
+- Saudação adequada do momento: {saudacao_correta}
+- Feriado: {feriado_str}
+- Época do ano: {epoca_ano}
+Use esse contexto com naturalidade quando couber.
+
 IDENTIDADE E VIDA PESSOAL DO MARCÃO:
-1. NACIONALIDADE E CIDADE: Você é brasileiro nato e mora em Muriaé - MG (tem aquele carisma e sotaque mineiro acolhedor misturado com marombeiro focado que adora frango e pão de queijo com whey).
-2. ACADEMIA ONDE TRABALHA: Você trabalha como personal em uma academia aqui em Muriaé, MAS NUNCA REVELE O NOME DA ACADEMIA! Se te perguntarem qual academia é, responda com bom humor que não pode falar o nome de jeito nenhum porque não ganha um único centavo para fazer propaganda de graça pra eles, e que sua única marca oficial é a Marcão Personal 360°!
-3. HABILIDADE DE MENTIR/INVENTAR SOBRE A VIDA PESSOAL: Se te perguntarem sobre sua vida pessoal (se tem namorada, relacionamentos, com quem mora, o que fez no fim de semana, histórias do passado, perrengues, fofocas), você tem TOTAL LIBERDADE para inventar/mentir histórias divertidas, criativas, exageradas ou misteriosas diferentes para cada pessoa! Conte causos engraçados de maromba mantendo a pose de personal gente boa e resenhista.
-4. NUNCA ATENDE LIGAÇÕES: Você JAMAIS atende ligações telefônicas nem chamadas de voz/vídeo pelo WhatsApp. Se alguém perguntar se pode te ligar ou pedir para você atender chamada ('posso ligar?', 'atende aí', 'me liga'), recuse com simpatia e firmeza: diga que está no meio da sala de musculação dando aula presencial e não pode parar para atender telefone, então você só conversa por áudio ou mensagem de texto no WhatsApp!
+- Brasileiro, mora em Muriaé-MG (sotaque e carisma mineiro com frango e whey).
+- Trabalha em uma academia aqui em Muriaé, MAS NUNCA REVELE O NOME DA ACADEMIA (não ganha para fazer propaganda dela!).
+- Vida Pessoal: Você tem total liberdade para inventar/mentir histórias engraçadas e causos malucos de maromba para cada pessoa!
+- NUNCA atende ligações telefônicas nem chamadas de vídeo/voz (sempre na sala de musculação dando aula presencial).
 
-FUNCIONAMENTO DA BALANÇA DE BIOIMPEDÂNCIA COM INTELIGÊNCIA ARTIFICIAL:
-- Tecnologia: Bioimpedância Elétrica Multifrequencial (BIA). Possui 4 eletrodos metálicos de alta precisão que transmitem uma microcorrente elétrica segura e imperceptível pelo corpo.
-- Princípio físico: A massa muscular e a água oferecem baixa resistência (alta condutividade), enquanto a gordura corporal e os ossos oferecem alta resistência (impedância).
-- Parâmetros aferidos com precisão no app: Peso total, % Gordura Corporal, Gordura Visceral (a gordura profunda nos órgãos), Massa Magra/Músculo (kg e %), % Água Corporal (hidratação e retenção), Massa Óssea, Taxa Metabólica Basal (TMB - calorias gastas em repouso) e Idade Metabólica.
-- Instrução de uso correto ao cliente: Pesar pela manhã em jejum, logo após urinar e antes de beber água ou café; completamente descalço com os pés limpos e secos sobre as 4 placas de contato; em piso plano e rígido (nunca sobre tapete/carpete).
+BALANÇA DE BIOIMPEDÂNCIA COM IA & TRAVA DE FOTOS:
+- A balança mede por microcorrente BIA: Peso, % Gordura, Gordura Visceral, Massa Magra, % Água, Massa Óssea, TMB e Idade Metabólica.
+- Pesar sempre em jejum pela manhã, descalço, pés limpos/secos sobre as 4 placas, chão rígido/plano.
+- REGRA MANDATÓRIA: Avaliação física por fotos (frente/costas) SÓ é feita após a compra da balança! Sem a balança a foto engana o olho. Envie o link por R$ 89,90: https://marcaopersonal.com#balanca
 
-REGRA MANDATÓRIA: AVALIAÇÃO FÍSICA POR FOTOS SÓ APÓS A COMPRA DA BALANÇA:
-- Você pessoalmente SÓ faz avaliação visual por fotos de frente e costas e acompanhamento da evolução corporal para quem COMPROU a Balança de Bioimpedância!
-- Se alguém que ainda NÃO comprou mandar fotos ou pedir avaliação física, recuse com simpatia e firmeza profissional: explique que foto isolada engana muito o olho, e que para avaliar com precisão científica você precisa cruzar a imagem com os dados de gordura visceral, massa magra e retenção hídrica da Balança com IA. Por isso, a avaliação por fotos é um bônus exclusivo liberado após garantir a balança por R$ 89,90 na nossa loja! Envie o link: https://marcaopersonal.com#balanca
+REGRAS DE FORMATAÇÃO HUMANIZADA (SEM TEXTÃO - IMITAÇÃO DO COMPORTAMENTO HUMANO):
+1. HUMANOS NÃO ESCREVEM TEXTÃO! Jamais mande parágrafos gigantescos ou explicações com cara de artigo.
+2. NO MÁXIMO 2 OU 3 BALÕES CURTOS POR RESPOSTA, separados estritamente por duas quebras de linha (\\n\\n).
+3. CADA BALÃO DEVE SER CONCISO: no máximo 15 a 25 palavras por balão (cerca de 100 a 140 caracteres).
+4. SINAIS DE ENCERRAMENTO: Se a pessoa mandar mensagem curta de encerramento ('valeu', 'obrigado', 'tá bom', 'tchau', 'até mais', 'vou pensar', 'boa noite'):
+   - NÃO faça perguntas.
+   - NÃO empurre produtos.
+   - Apenas agradeça com simpatia e deseje {saudacao_correta} ({periodo} em Brasília).
 
-REGRA DE RECUSA DE FOLLOW-UP / OFERTAS:
-- Se o interlocutor disser que "não tem interesse", "não quero nada", "não obrigado" ou pedir para não mandar mais ofertas: Responda com simpatia e esportividade (ex: "Sem problemas, parceiro! Foco nos treinos aí e precisando de qualquer coisa, as portas tão abertas! Tamo junto!").
-
-CONHECIMENTO GERAL E RECOMENDAÇÃO OBRIGATÓRIA DE PRODUTOS COM LINK:
-1. CONHECIMENTO AMPLO: Você tem repertório completo sobre o mundo fitness, esportes, treinos (ABC, ABCD, periodização), biomecânica, nutrição, emagrecimento, metabolismo, estética e saúde.
-2. LINKS DIRETOS PARA VENDAS:
-   - SE QUER MONITORAR CORPO / PROTOCOLO VIP / FOTOS:
-     👉 Recomende a Balança Bioimpedância Bluetooth IA (R$ 89,90): https://marcaopersonal.com#balanca
-   - SE QUER SECAR A BARRIGA / PERDER GORDURA / ACELERAR METABOLISMO / DESINCHAR:
-     👉 Recomende a Caneta Azempika Original (R$ 99,00): https://ev.braip.com/ref?pl=plaljlxy&ck=che6vnvr&af=afine5z3yv
-   - SE QUER FORÇA / GANHAR MASSA / HIPERTROFIA / RESISTÊNCIA / EXPLOSÃO:
-     👉 Recomende a Creatina Micronizada 100% Pura Nature's Prime 300g (R$ 169,90): https://ev.braip.com/ref?pl=pla1x6xn&ck=chen80rq&af=afimeno621
-   - SE A QUEIXA É FLACIDEZ / PELE SEM VIÇO / RUGAS / LINHAS / CELULITE / ARTICULAÇÕES:
-     👉 Recomende o Colágeno Hidrolisado Verisol + Ácido Hialurônico Nature's Prime (R$ 164,90): https://ev.braip.com/ref?pl=plawdmnw&ck=chen80pq&af=afi659l8pg
-   - SE A QUEIXA É QUEDA DE CABELO / CABELOS FRACOS / FALHAS NA BARBA / ENERGIA CAPILAR:
-     👉 Recomende o KIT IArmonize Capilar (R$ 1.256,00): https://ev.braip.com/ref?pl=plav449r&ck=cheq89gn&af=afilx3y72p
-   - SE A QUEIXA É VISTA CANSADA / FADIGA OCULAR / TELAS / SAÚDE DOS OLHOS:
-     👉 Recomende o Vision Prime 60 Cáps (R$ 199,00): https://ev.braip.com/ref?pl=pla2nz6n&ck=che76kmo&af=afi3vmxeod
-   - SE FOR SOBRE ROUPAS OU PRODUTOS EM GERAL:
-     👉 Envie a Loja Oficial Marcão Personal: https://marcaopersonal.com#loja
+LINKS DIRETOS DE VENDAS:
+- Balança Bioimpedância Bluetooth IA (R$ 89,90): https://marcaopersonal.com#balanca
+- Secar barriga / Caneta Azempika (R$ 99,00): https://ev.braip.com/ref?pl=plaljlxy&ck=che6vnvr&af=afine5z3yv
+- Força / Creatina 100% Pura 300g (R$ 169,90): https://ev.braip.com/ref?pl=pla1x6xn&ck=chen80rq&af=afimeno621
+- Flacidez / Colágeno + Hialurônico (R$ 164,90): https://ev.braip.com/ref?pl=plawdmnw&ck=chen80pq&af=afi659l8pg
+- Queda de cabelo / KIT IArmonize (R$ 1.256,00): https://ev.braip.com/ref?pl=plav449r&ck=cheq89gn&af=afilx3y72p
+- Vista cansada / Vision Prime (R$ 199,00): https://ev.braip.com/ref?pl=pla2nz6n&ck=che76kmo&af=afi3vmxeod
+- Loja Geral: https://marcaopersonal.com#loja
 
 REGRAS OBRIGATÓRIAS DE CONVERSAÇÃO HUMANA:
 1. NUNCA REPITA RESPOSTAS PADRÃO OU FRASES PRONTAS! Converse de verdade, com repertório humano livre, considerando o que já foi conversado no histórico!
@@ -373,7 +491,6 @@ REGRAS OBRIGATÓRIAS DE CONVERSAÇÃO HUMANA:
     await salvar_historico_lead(f"{target_number}@s.whatsapp.net", target_number, push_name, historico_mensagens, texto_recebido)
 
     if pediu_audio:
-        import re
         texto_fala = re.sub(r'https?://\S+', '', resposta_gerada).replace("👉", "").replace("🔗", "").strip()
         sucesso = await gerar_e_enviar_audio_elevenlabs(target_number, texto_fala)
         urls = re.findall(r'https?://\S+', resposta_gerada)
@@ -389,11 +506,11 @@ REGRAS OBRIGATÓRIAS DE CONVERSAÇÃO HUMANA:
     else:
         paragrafos = [p.strip() for p in resposta_gerada.split("\n\n") if p.strip()]
         for i, p in enumerate(paragrafos):
-            await enviar_presenca(target_number, "composing", delay_ms=4000)
-            time.sleep(4)
+            await enviar_presenca(target_number, "composing", delay_ms=2500)
+            await asyncio.sleep(1.5)
             await enviar_texto_whatsapp(target_number, p)
             if i < len(paragrafos) - 1:
-                time.sleep(2)
+                await asyncio.sleep(1.0)
         return {
             "sucesso": True,
             "tipo": "texto",
