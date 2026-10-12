@@ -391,13 +391,26 @@ async def processar_mensagem_marcao(payload_webhook: dict) -> dict:
     feriado_str = ctx_bsb["feriado_str"]
     epoca_ano = ctx_bsb["epoca_ano"]
 
-    instrucao_nome = (
-        f"Nome da pessoa: {primeiro_nome}. Chame pelo nome UMA ÚNICA VEZ na saudação inicial ('Fala, {primeiro_nome}!')."
-        if nome_valido else
-        "Você AINDA NÃO SABE o nome dessa pessoa! Logo na sua primeira resposta, antes de aprofundar, pergunte com simpatia e carisma como você pode chamar ela (ex: 'Opa! Antes de mais nada, como posso te chamar, campeão/campeã?')."
-    )
-
     historico_mensagens = await buscar_historico_lead(f"{target_number}@s.whatsapp.net", target_number, push_name)
+
+    if is_evandro:
+        instrucao_nome = (
+            "INTERLOCUTOR: DIRETOR E FUNDADOR EVANDRO GALLINA (SEU CHEFE E DONO DA LOJA)!\n"
+            "- Trate SEMPRE com máxima lealdade, prontidão executiva e respeito ('meu chefe', 'Evandro').\n"
+            "- NUNCA o trate como cliente comum, NUNCA chame de 'campeão' e NUNCA tente vender produtos da loja pra ele!\n"
+            "- Se ele mandar apenas uma saudação curta ('Oi', 'Olá', 'Opa'), responda com entusiasmo e prontidão executiva:\n"
+            "  cumprimente ('Fala, meu chefe!'), resgate o que estavam alinhando anteriormente se houver no histórico recente, e se coloque à disposição para executar ordens!"
+        )
+    elif nome_valido:
+        instrucao_nome = f"Nome da pessoa: {primeiro_nome}. Chame pelo nome UMA ÚNICA VEZ na saudação inicial ('Fala, {primeiro_nome}!')."
+    else:
+        instrucao_nome = "Você AINDA NÃO SABE o nome dessa pessoa! Logo na sua primeira resposta, antes de aprofundar, pergunte com simpatia e carisma como você pode chamar ela (ex: 'Opa! Antes de mais nada, como posso te chamar, campeão/campeã?')."
+
+    ultimas_trocas = ""
+    if historico_mensagens:
+        ultimas_trocas = "\n".join([f"- {h['role'].upper()}: {h['content'][:160]}" for h in historico_mensagens[-4:]])
+    else:
+        ultimas_trocas = "Nenhum histórico anterior (primeira interação/novo contato)."
 
     system_prompt = f"""Você é o MARCÃO PERSONAL, personal trainer maromba de 35 anos, fundador do Marcão Personal 360°.
 Você é um ser humano autêntico, animado, focado em musculação, saúde, treino pesado e estética corporal.
@@ -406,6 +419,14 @@ INFORMAÇÕES DO INTERLOCUTOR:
 {instrucao_nome}
 - Gênero detectado: {tratamento_genero}
 - É o Diretor/Fundador da Empresa? {'SIM (Evandro da Silva Gallina)' if is_evandro else 'NÃO (Aluno/Cliente)'}
+
+CONTEXTO DAS ÚLTIMAS MENSAGENS:
+{ultimas_trocas}
+
+REGRA MANDATÓRIA DE CONTINUIDADE E MEMÓRIA VIVA:
+- Se a mensagem recebida for uma saudação ('oi', 'olá', 'opa', 'e aí', 'boa tarde', etc.):
+  1. SE HOUVER CONVERSA RECENTE NO HISTÓRICO: RESGATE com naturalidade o assunto que vocês estavam tratando (ex: queima de gordura, creatina, balança, treino ou relatórios). Não aja como se a conversa tivesse começado do zero!
+  2. SE NÃO HOUVER HISTÓRICO: Cumprimente com energia e pergunte como pode ajudar hoje.
 
 CONSCIÊNCIA TEMPORAL (HORÁRIO DE BRASÍLIA):
 - Data de hoje: {data_completa} ({dia_semana_str})
