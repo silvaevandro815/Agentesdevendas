@@ -92,8 +92,41 @@ async def salvar_historico_lead(remote_jid: str, telefone: str, push_name: str, 
     except Exception as e:
         print("Erro salvando historico Supabase:", e)
 
+def eh_numero_teste_ou_invalido(numero: str) -> bool:
+    """Bloqueia números falsos ou de testes automatizados para proteger contra banimento da Meta."""
+    if not numero:
+        return True
+    digitos = "".join(filter(str.isdigit, str(numero)))
+    if len(digitos) < 10:
+        return True
+    
+    # Exceções permitidas (números reais oficiais)
+    if digitos in ["5532984587255", "553284587255", "553285066687"]:
+        return False
+        
+    # Padrões clássicos de mocks e números fictícios
+    padroes_mock = [
+        "99998888", "99997777", "988881111", "988882222", "988883333",
+        "988887777", "977776666", "977778888", "971112222", "973334444",
+        "975556666", "979990000", "966667777", "123456", "000000"
+    ]
+    for p in padroes_mock:
+        if p in digitos:
+            return True
+            
+    # Repetições anormais (ex: 5 dígitos iguais seguidos)
+    for d in "0123456789":
+        if d * 5 in digitos:
+            return True
+            
+    return False
+
 async def enviar_presenca(target_number: str, presenca: str, delay_ms: int = 4000):
     """Envia presença na Evolution API (composing ou recording)."""
+    if eh_numero_teste_ou_invalido(target_number):
+        print(f"[BLOQUEIO ANTI-SPAM] Presença ignorada para número fictício: {target_number}")
+        return None
+
     headers = {
         "apikey": EVOLUTION_API_KEY,
         "Content-Type": "application/json"
@@ -104,7 +137,7 @@ async def enviar_presenca(target_number: str, presenca: str, delay_ms: int = 400
         "delay": delay_ms
     }
     try:
-        async with httpx.AsyncClient(verify=False) as client:
+        async with httpx.AsyncClient(verify=False, timeout=10.0) as client:
             await client.post(
                 f"{EVOLUTION_API_URL}/chat/sendPresence/sofia",
                 headers=headers,
@@ -115,6 +148,10 @@ async def enviar_presenca(target_number: str, presenca: str, delay_ms: int = 400
 
 async def enviar_texto_whatsapp(target_number: str, texto: str):
     """Envia mensagem de texto no WhatsApp."""
+    if eh_numero_teste_ou_invalido(target_number):
+        print(f"[BLOQUEIO ANTI-SPAM] Disparo de texto bloqueado para número fictício: {target_number}")
+        return None
+
     headers = {
         "apikey": EVOLUTION_API_KEY,
         "Content-Type": "application/json"
@@ -136,6 +173,10 @@ async def enviar_texto_whatsapp(target_number: str, texto: str):
 
 async def gerar_e_enviar_audio_elevenlabs(target_number: str, texto: str):
     """Gera áudio do Marcão no ElevenLabs e envia como nota de voz no WhatsApp."""
+    if eh_numero_teste_ou_invalido(target_number):
+        print(f"[BLOQUEIO ANTI-SPAM] Disparo de áudio bloqueado para número fictício: {target_number}")
+        return False
+
     await enviar_presenca(target_number, "recording", delay_ms=5000)
     
     headers_eleven = {
