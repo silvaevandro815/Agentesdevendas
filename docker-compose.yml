@@ -150,6 +150,22 @@ services:
     networks:
       - loja_network
 
+  # ============================================================================
+  # 7. Motor de Inteligência & Protocolo Marcão 360° (Python FastAPI)
+  # ============================================================================
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: loja_api
+    restart: always
+    environment:
+      - PORT=8000
+      - SUPABASE_URL=https://qkopgftfrfftoyndhhfj.supabase.co
+      - SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrb3BnZnRmcmZmdG95bmRoaGZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MTgwMTU4MywiZXhwIjoyMTA3Mzc3NTgzfQ.S_RRdnI6SZTVR1UH7jryDVHf316YmnMOVEBuoedyKv8
+    networks:
+      - loja_network
+
 volumes:
   postgres_data:
   redis_data:
