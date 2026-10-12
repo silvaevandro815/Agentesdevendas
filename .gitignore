@@ -12,6 +12,7 @@ APYKEYs/
 *.mov
 *.avi
 scratch/
+Exemplos de workflows/
 
 # Dependências
 node_modules/

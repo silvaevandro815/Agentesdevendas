@@ -12,7 +12,7 @@ app = FastAPI(
 )
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "https://qkopgftfrfftoyndhhfj.supabase.co")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrb3BnZnRmcmZmdG95bmRoaGZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MTgwMTU4MywiZXhwIjoyMTA3Mzc3NTgzfQ.S_RRdnI6SZTVR1UH7jryDVHf316YmnMOVEBuoedyKv8")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
 
 class ProtocoloRequest(BaseModel):
     nome: str
@@ -151,4 +151,64 @@ async def validar_comprovante(req: ComprovanteRequest):
         "valido": valido,
         "confianca": round(len(matches) / 5.0, 2),
         "marketplace": req.marketplace
+    }
+
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+
+class AtendimentoIARequest(BaseModel):
+    texto: str
+    nome: Optional[str] = "Guerreiro(a)"
+    telefone: Optional[str] = None
+    contexto: Optional[str] = None
+
+@app.post("/api/atendimento/ia")
+async def atendimento_ia(req: AtendimentoIARequest):
+    system_prompt = """Você é a Sofia, consultora sênior e braço direito do Marcão Personal ("O Personal que não te deixa gastar dinheiro com bobagem").
+Sua missão é atender com calor humano, autoridade, empatia e clareza no WhatsApp.
+
+Nossos Pilares:
+1. Balança de Bioimpedância Bluetooth com App: Nosso produto-âncora. Conecta no celular e dá acesso ao Protocolo Marcão 360° gratuito com check-ins semanais da nossa IA no WhatsApp.
+2. Creatina Micronizada 100% Pura Nature's Prime: Para força, tônus muscular e preservação da massa magra.
+3. Colágeno Hidrolisado Verisol com Ácido Hialurônico: Para firmeza da pele e combate à flacidez pós-perda de peso.
+4. Kit IArmonize Facial e Corporal: Tratamento estético não invasivo.
+5. Caneta Azempika Emagrecedora: Alternativa fitoterápica sem picada (só cite se o cliente perguntar explicitamente).
+
+Regras de Ouro:
+- Seja natural, amigável e use emojis estratégicos (💪, 🦁, ✨).
+- Mantenha respostas curtas e objetivas (máximo 2 a 3 parágrafos curtos) para leitura fácil no WhatsApp.
+- NUNCA prometa cura milagrosa nem use termos médicos proibidos pela ANVISA.
+- Finalize com uma pergunta estimulando a continuação da conversa ou direcionando para o site https://marcaopersonal.com."""
+
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            headers = {
+                "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+                "Content-Type": "application/json"
+            }
+            body = {
+                "model": "openai/gpt-4o-mini",
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": f"Cliente: {req.nome}\nMensagem: {req.texto}"}
+                ],
+                "max_tokens": 300,
+                "temperature": 0.7
+            }
+            res = await client.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=body)
+            if res.status_code == 200:
+                data = res.json()
+                resposta = data["choices"][0]["message"]["content"]
+                return {
+                    "sucesso": True,
+                    "resposta": resposta,
+                    "modelo": "openai/gpt-4o-mini"
+                }
+    except Exception as e:
+        pass
+
+    # Fallback humanizado
+    return {
+        "sucesso": True,
+        "resposta": f"Fala {req.nome}! 💪 Aqui é a Sofia da equipe do Marcão Personal! Recebi sua mensagem e já estou te respondendo com a melhor recomendação para o seu caso. Você já tem a nossa Balança de Bioimpedância ou gostaria de conhecer o Protocolo Marcão 360°?",
+        "modelo": "fallback_local"
     }
