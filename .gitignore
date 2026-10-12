@@ -13,6 +13,10 @@ APYKEYs/
 *.avi
 *.mp3
 *.wav
+*.jpeg
+*.jpg
+*.png
+avaliacao_real_marcao.txt
 scratch/
 Exemplos de workflows/
 
