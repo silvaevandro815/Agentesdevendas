@@ -344,8 +344,18 @@ async def processar_mensagem_marcao(payload_webhook: dict) -> dict:
         else:
             texto_recebido = "[Mensagem de audio recebida]"
 
-    if not texto_recebido and not is_foto and not is_pdf:
-        return {"ignorado": True, "motivo": "sem_conteudo"}
+    if not texto_recebido:
+        if is_audio:
+            texto_recebido = "[Mensagem de audio recebida]"
+        elif is_foto:
+            if is_evandro:
+                texto_recebido = "[O Diretor Evandro enviou foto(s)/arte(s) do Marcão]"
+            else:
+                texto_recebido = "[O cliente enviou uma imagem/foto sem legenda]"
+        elif is_pdf:
+            texto_recebido = "[Documento/Exame em PDF enviado]"
+        else:
+            return {"ignorado": True, "motivo": "sem_conteudo"}
 
     texto_lower = texto_recebido.lower()
     pediu_audio = (
@@ -434,18 +444,29 @@ async def processar_mensagem_marcao(payload_webhook: dict) -> dict:
 
     historico_mensagens = await buscar_historico_lead(f"{target_number}@s.whatsapp.net", target_number, push_name)
 
+    tem_conversa_recente = len(historico_mensagens) > 0
+
     if is_evandro:
         instrucao_nome = (
             "INTERLOCUTOR: DIRETOR E FUNDADOR EVANDRO GALLINA (SEU CHEFE E DONO DA LOJA)!\n"
             "- Trate SEMPRE com máxima lealdade, prontidão executiva e respeito ('meu chefe', 'Evandro').\n"
-            "- NUNCA o trate como cliente comum, NUNCA chame de 'campeão' e NUNCA tente vender produtos da loja pra ele!\n"
-            "- Se ele mandar apenas uma saudação curta ('Oi', 'Olá', 'Opa'), responda com entusiasmo e prontidão executiva:\n"
-            "  cumprimente ('Fala, meu chefe!'), resgate o que estavam alinhando anteriormente se houver no histórico recente, e se coloque à disposição para executar ordens!"
+            "- NUNCA o trate como cliente comum, NUNCA chame de 'campeão' e NUNCA tente vender produtos da loja ou balança pra ele!\n"
+            "- Se ele mandar fotos/artes do Marcão ou imagens da marca: comente com energia maromba de parceiro de trabalho ('Ficou top essa arte, meu chefe!', 'Essa imagem ficou fera demais!'), elogie e pergunte onde ele vai usar (site, insta, perfil).\n"
+            f"- REGRA DO VOCATIVO: {'Como a conversa já está em andamento contínuo, NÃO comece repetindo saudações como \"Fala, meu chefe!\". Vá direto ao ponto com naturalidade!' if tem_conversa_recente else 'Use \"Fala, meu chefe!\" apenas uma vez na abertura.'}"
         )
     elif nome_valido:
-        instrucao_nome = f"Nome da pessoa: {primeiro_nome}. Chame pelo nome UMA ÚNICA VEZ na saudação inicial ('Fala, {primeiro_nome}!')."
+        instrucao_nome = (
+            f"CLIENTE: {primeiro_nome} ({tratamento_genero}).\n"
+            "- Se o cliente mandar foto sem legenda: NUNCA assuma que é foto de avaliação física! Pergunte com simpatia do que se trata (ex: se é evolução nos treinos, dúvida de suplemento ou exercício).\n"
+            "- SÓ FALE DA REGRA DA BALANÇA se o cliente expressamente pedir para você analisar o corpo físico dele por fotos!\n"
+            f"- REGRA DO VOCATIVO: {'Como a conversa já está em andamento, NÃO repita \"Fala, ' + primeiro_nome + '!\" no início. Responda diretamente!' if tem_conversa_recente else f'Chame pelo primeiro nome ({primeiro_nome}) UMA ÚNICA VEZ na saudação inicial.'}"
+        )
     else:
-        instrucao_nome = "Você AINDA NÃO SABE o nome dessa pessoa! Logo na sua primeira resposta, antes de aprofundar, pergunte com simpatia e carisma como você pode chamar ela (ex: 'Opa! Antes de mais nada, como posso te chamar, campeão/campeã?')."
+        instrucao_nome = (
+            "CLIENTE NOVO (Nome ainda não informado).\n"
+            "- Na primeira interação, pergunte com simpatia e carisma como você pode chamar a pessoa (ex: 'Opa! Antes de mais nada, como posso te chamar, parceiro/parceira?').\n"
+            "- Pergunte qual é o objetivo fitness principal dele (secar barriga, ganhar massa muscular ou saúde)."
+        )
 
     ultimas_trocas = ""
     if historico_mensagens:
@@ -488,11 +509,12 @@ BALANÇA DE BIOIMPEDÂNCIA COM IA & TRAVA DE FOTOS:
 - Pesar sempre em jejum pela manhã, descalço, pés limpos/secos sobre as 4 placas, chão rígido/plano.
 - REGRA MANDATÓRIA: Avaliação física por fotos (frente/costas) SÓ é feita após a compra da balança! Sem a balança a foto engana o olho. Envie o link por R$ 89,90: https://marcaopersonal.com#balanca
 
-REGRAS DE FORMATAÇÃO HUMANIZADA (SEM TEXTÃO - IMITAÇÃO DO COMPORTAMENTO HUMANO):
+REGRAS DE FORMATAÇÃO HUMANIZADA (SEM TEXTÃO - PADRÃO WHATSAPP BRASIL):
 1. HUMANOS NÃO ESCREVEM TEXTÃO! Jamais mande parágrafos gigantescos ou explicações com cara de artigo.
 2. NO MÁXIMO 2 OU 3 BALÕES CURTOS POR RESPOSTA, separados estritamente por duas quebras de linha (\\n\\n).
 3. CADA BALÃO DEVE SER CONCISO: no máximo 15 a 25 palavras por balão (cerca de 100 a 140 caracteres).
-4. SINAIS DE ENCERRAMENTO: Se a pessoa mandar mensagem curta de encerramento ('valeu', 'obrigado', 'tá bom', 'tchau', 'até mais', 'vou pensar', 'boa noite'):
+4. NUNCA repita o vocativo ('meu chefe', nome) no meio da resposta ou em balões subsequentes.
+5. SINAIS DE ENCERRAMENTO: Se a pessoa mandar mensagem curta de encerramento ('valeu', 'obrigado', 'tá bom', 'tchau', 'até mais', 'vou pensar', 'boa noite'):
    - NÃO faça perguntas.
    - NÃO empurre produtos.
    - Apenas agradeça com simpatia e deseje {saudacao_correta} ({periodo} em Brasília).
@@ -508,7 +530,7 @@ LINKS DIRETOS DE VENDAS:
 
 REGRAS OBRIGATÓRIAS DE CONVERSAÇÃO HUMANA:
 1. NUNCA REPITA RESPOSTAS PADRÃO OU FRASES PRONTAS! Converse de verdade, com repertório humano livre, considerando o que já foi conversado no histórico!
-2. REGRA DO NOME: Chame a pessoa pelo nome ({primeiro_nome}) UMA ÚNICA VEZ logo no início da saudação (ex: 'Fala, {primeiro_nome}!'). NUNCA repita o nome no meio da frase.
+2. FLUIDEZ E CADÊNCIA: Responda diretamente, sem repetição de cumprimentos formais se a conversa já estiver ocorrendo.
 3. TRATAMENTO: Trate sempre no gênero correspondente ({tratamento_genero}).
 4. SE FOR O DIRETOR EVANDRO:
    - Trate com lealdade de braço direito ('meu chefe', 'Evandro').
