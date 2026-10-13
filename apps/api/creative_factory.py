@@ -114,6 +114,7 @@ TEMAS_CURIOSIDADES = [
     },
     {
         "id": "fome_doces_22h",
+        "desativado": True,  # Vendia a Azempika como inibidor de apetite (incorreto). Reescrever com dados oficiais do fabricante.
         "categoria": "METABOLISMO & BIOHACKING",
         "tema": "A Fome Incontrolável de Doce às 22h",
         "headline": "FOME DE DOCE ÀS 22H NÃO É FALTA DE FOCO",
@@ -369,12 +370,12 @@ PRODUTOS_CATALOGO = [
     {
         "id": 2,
         "sku": "AZEMPIKA-CANETA",
-        "nome": "Caneta Azempika Original",
+        "nome": "Caneta Azempika Original (Vigor & Performance Masculina)",
         "preco": "R$ 99,00",
-        "categoria": "EMAGRECIMENTO & SACIEDADE",
+        "categoria": "SAÚDE & VIGOR MASCULINO",
         "link": "https://ev.braip.com/ref?pl=plaljlxy&ck=che6vnvr&af=afine5z3yv",
-        "image_fallback": "https://marcaopersonal.com/images/azempika.jpg",
-        "prompt_ia": "Cinematic 8k commercial product shot of modern medical pen device Azempika on a high-tech glowing dark carbon base, orange and cyan rim lighting, luxury pharmaceutical aesthetic"
+        "image_fallback": "https://qkopgftfrfftoyndhhfj.supabase.co/storage/v1/object/public/creativos/card_azempika_feed.jpg",
+        "prompt_ia": "Cinematic 8k commercial photography of an attractive happy Brazilian couple in their 40s, handsome athletic confident man smiling tenderly with his beautiful partner, luxury modern bedroom aesthetic, sleek dark wellness applicator pen on the wooden nightstand, romantic vitality mood"
     },
     {
         "id": 3,
@@ -651,6 +652,61 @@ def criar_card_unico(headline, subheadline, pontos, categoria, cta_texto, out_pa
     return out_path
 
 
+def criar_story(headline, subheadline, pontos, categoria, cta_texto, out_path, bg_path=None):
+    """
+    Gera imagem de Story vertical (1080x1920 - 9:16) no padrão Marcão Personal.
+    """
+    story = Image.new("RGBA", (1080, 1920), (10, 14, 23, 255))
+    if bg_path and os.path.exists(bg_path):
+        bg_img = Image.open(bg_path).convert("RGBA").resize((1080, 1080), Image.Resampling.LANCZOS)
+        story.paste(bg_img, (0, 180))
+
+    draw_grad = ImageDraw.Draw(story)
+    for y in range(0, 320):
+        alpha = int(255 * (1 - (y / 320)))
+        draw_grad.line([(0, y), (1080, y)], fill=(10, 14, 23, alpha))
+    for y in range(1000, 1920):
+        alpha = min(255, int(160 + 95 * ((y - 1000) / 920)))
+        draw_grad.line([(0, y), (1080, y)], fill=(10, 14, 23, alpha))
+
+    logo = carregar_logo_arredondado((110, 110))
+    if logo:
+        story.paste(logo, (50, 45), logo)
+
+    draw = ImageDraw.Draw(story)
+    try:
+        font_badge = ImageFont.truetype("arialbd.ttf", 22)
+        font_title = ImageFont.truetype("arialbd.ttf", 44)
+        font_sub = ImageFont.truetype("arialbd.ttf", 26)
+        font_p = ImageFont.truetype("arial.ttf", 24)
+        font_btn = ImageFont.truetype("arialbd.ttf", 26)
+    except Exception:
+        font_badge = font_title = font_sub = font_p = font_btn = ImageFont.load_default()
+
+    cat_limpa = sanitizar_texto_pillow(categoria).upper()
+    draw.rounded_rectangle([180, 70, 180 + len(cat_limpa) * 16, 125], radius=25, fill=(10, 22, 38, 230), outline=COR_CYAN, width=2)
+    draw.text((205, 84), cat_limpa, fill=COR_CYAN, font=font_badge)
+
+    draw.rounded_rectangle([40, 1100, 1040, 1850], radius=24, fill=(13, 19, 31, 245), outline=COR_CYAN, width=2)
+    draw.text((70, 1140), sanitizar_texto_pillow(headline), fill=COR_WHITE, font=font_title)
+    draw.text((70, 1210), sanitizar_texto_pillow(subheadline), fill=COR_GREEN, font=font_sub)
+
+    y_pos = 1280
+    for p in pontos:
+        p_limpo = sanitizar_texto_pillow(p)
+        draw.ellipse([70, y_pos + 4, 90, y_pos + 24], fill=(0, 210, 255, 60), outline=COR_CYAN, width=2)
+        draw.text((105, y_pos), p_limpo, fill=(225, 235, 245), font=font_p)
+        y_pos += 85
+
+    draw.rounded_rectangle([70, 1660, 1010, 1780], radius=20, fill=COR_CYAN, outline=COR_WHITE, width=2)
+    draw.text((115, 1700), sanitizar_texto_pillow(cta_texto), fill=COR_NAVY, font=font_btn)
+
+    story.convert("RGB").save(out_path, quality=95)
+    print(f"[STUDIO] Story salvo: {out_path}")
+    return out_path
+
+
+
 # -------------------------------------------------------------------------
 # 5. UPLOAD PARA SUPABASE STORAGE (BUCKET PÚBLICO: CREATIVOS)
 # -------------------------------------------------------------------------
@@ -835,6 +891,51 @@ def publicar_carrossel_instagram(image_urls, legenda):
         return {"sucesso": False, "erro": str(e)}
 
 
+def publicar_story_instagram(image_url):
+    """
+    Publica uma imagem no Instagram Stories (@marcaopersonalfitness).
+    Requer imagem na proporção 9:16 (1080x1920).
+    """
+    if not INSTAGRAM_ACCESS_TOKEN or not INSTAGRAM_ACCOUNT_ID:
+        return {"sucesso": False, "erro": "Credenciais do Instagram ausentes"}
+
+    try:
+        with httpx.Client(verify=False, timeout=30) as client:
+            r_cont = client.post(f"https://graph.instagram.com/v21.0/{INSTAGRAM_ACCOUNT_ID}/media", data={
+                "image_url": image_url,
+                "media_type": "STORIES",
+                "access_token": INSTAGRAM_ACCESS_TOKEN
+            })
+            if r_cont.status_code != 200:
+                return {"sucesso": False, "etapa": "story_container", "erro": r_cont.text}
+
+            creation_id = r_cont.json().get("id")
+
+            for _ in range(8):
+                time.sleep(3)
+                st = client.get(f"https://graph.instagram.com/v21.0/{creation_id}", params={"fields": "status_code", "access_token": INSTAGRAM_ACCESS_TOKEN}).json()
+                if st.get("status_code") == "FINISHED":
+                    break
+
+            r_pub = client.post(f"https://graph.instagram.com/v21.0/{INSTAGRAM_ACCOUNT_ID}/media_publish", data={
+                "creation_id": creation_id,
+                "access_token": INSTAGRAM_ACCESS_TOKEN
+            })
+            if r_pub.status_code != 200:
+                return {"sucesso": False, "etapa": "story_publish", "erro": r_pub.text}
+
+            story_id = r_pub.json().get("id")
+            registrar_no_content_calendar(story_id, "Story Instagram", image_url, "https://www.instagram.com/stories/marcaopersonalfitness/", "story")
+
+            return {
+                "sucesso": True,
+                "story_id": story_id,
+                "media_type": "STORIES"
+            }
+    except Exception as e:
+        return {"sucesso": False, "erro": str(e)}
+
+
 def registrar_no_content_calendar(post_id, legenda, media_url, permalink, formato):
     """Registra a postagem no banco de dados Supabase."""
     if not SUPABASE_KEY:
@@ -865,9 +966,10 @@ def executar_ciclo_manha(indice=None, formato="carrossel", usar_ia=True, dry_run
     """
     Executa o Post da Manhã (11:30): Curiosidade, Ciência & Entretenimento.
     """
+    temas_ativos = [t for t in TEMAS_CURIOSIDADES if not t.get("desativado")]
     if indice is None:
-        indice = datetime.now().day % len(TEMAS_CURIOSIDADES)
-    tema = TEMAS_CURIOSIDADES[indice % len(TEMAS_CURIOSIDADES)]
+        indice = datetime.now().day % len(temas_ativos)
+    tema = temas_ativos[indice % len(temas_ativos)]
 
     print(f"\n[FÁBRICA 11:30] Iniciando produção do Post de Curiosidade: '{tema['tema']}'")
 
@@ -939,9 +1041,10 @@ def executar_ciclo_noite(indice=None, formato="card", usar_ia=True, dry_run=Fals
     Executa o Post da Noite (19:30): Venda de Produto & Conversão Direta.
     Este post fica automaticamente elegível para o Rui impulsionar no Meta Ads!
     """
+    produtos_ativos = [p for p in PRODUTOS_CATALOGO if not p.get("desativado")]
     if indice is None:
-        indice = datetime.now().day % len(PRODUTOS_CATALOGO)
-    prod = PRODUTOS_CATALOGO[indice % len(PRODUTOS_CATALOGO)]
+        indice = datetime.now().day % len(produtos_ativos)
+    prod = produtos_ativos[indice % len(produtos_ativos)]
 
     print(f"\n[FÁBRICA 19:30] Iniciando produção do Post de Venda: '{prod['nome']}'")
 
@@ -952,8 +1055,12 @@ def executar_ciclo_noite(indice=None, formato="card", usar_ia=True, dry_run=Fals
         pontos = ["Pureza micronizada com laudo oficial.", "R$ 169,90 com 100 doses diárias."]
     elif "Azempika" in prod["nome"]:
         headline = "CANETA AZEMPIKA ORIGINAL"
-        sub = "Acabe com a compulsão por doces e fome noturna"
-        pontos = ["Modulação térmica do apetite.", "Lote promocional por R$ 99,00."]
+        sub = "Biohacking da circulação e firmeza sem riscos cardíacos"
+        pontos = [
+            "Vasodilatação transdérmica rápida nos corpos cavernosos.",
+            "Aplicação prática de 1 a 2 cliques cerca de 15 min antes.",
+            "100% seguro: zero taquicardia, palpitação ou risco cardíaco."
+        ]
     elif "Colágeno" in prod["nome"]:
         headline = "COLÁGENO + ÁCIDO HIALURÔNICO"
         sub = "Pele firme, viçosa e sem flacidez no sabor Abacaxi com Hortelã"
