@@ -115,7 +115,7 @@ services:
   # 6. Evolution API v2 (WhatsApp Oficial para Sofia e Davi)
   # ============================================================================
   evolution_api:
-    image: atendai/evolution-api:v2.2.3
+    image: evoapicloud/evolution-api:v2.2.3
     container_name: loja_evolution_api
     restart: always
     expose:
