@@ -115,7 +115,7 @@ services:
   # 6. Evolution API v2 (WhatsApp Oficial para Sofia e Davi)
   # ============================================================================
   evolution_api:
-    image: evoapicloud/evolution-api:v2.2.3
+    image: evoapicloud/evolution-api:2.4.0-rc2
     container_name: loja_evolution_api
     restart: always
     expose:
@@ -129,9 +129,10 @@ services:
       - SERVER_URL=https://${DOMAIN_EVOLUTION:-evolution.marcaopersonal.com}
       - AUTHENTICATION_API_KEY=${EVOLUTION_API_KEY}
       - AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES=true
-      - CONFIG_SESSION_PHONE_VERSION=2.3000.1043857760
+      - CONFIG_SESSION_PHONE_VERSION=2.3000.1039700148
       - CONFIG_SESSION_PHONE_CLIENT=Chrome
       - CONFIG_SESSION_PHONE_NAME=Chrome
+      - WPP_LID_MODE=false
       - DATABASE_ENABLED=true
       - DATABASE_PROVIDER=postgresql
       - DATABASE_CONNECTION_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=evolution
