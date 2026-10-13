@@ -17,6 +17,21 @@ ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
 EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "https://evolution.marcaopersonal.com")
 EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "")
 
+try:
+    from balanca_engine import (
+        verificar_status_vip,
+        escanear_tela_bioimpedancia,
+        registrar_ou_atualizar_cliente_balanca,
+        processar_lead_scoring_inteligente
+    )
+except ImportError:
+    from apps.api.balanca_engine import (
+        verificar_status_vip,
+        escanear_tela_bioimpedancia,
+        registrar_ou_atualizar_cliente_balanca,
+        processar_lead_scoring_inteligente
+    )
+
 def identificar_genero(push_name: str) -> str:
     """Identifica se o contato é homem ou mulher pelo primeiro nome."""
     if not push_name:
@@ -519,6 +534,37 @@ async def processar_mensagem_marcao(payload_webhook: dict) -> dict:
 
     tem_conversa_recente = len(historico_mensagens) > 0
 
+    # Consulta de Status VIP da Balança de Bioimpedância e Scoring de Vendas
+    status_vip_info = await verificar_status_vip(target_number) if not is_evandro else {}
+    tem_balanca = status_vip_info.get("tem_balanca", False)
+    dias_restantes_vip = status_vip_info.get("dias_restantes", 0)
+    streak_vip = status_vip_info.get("streak_dias", 1)
+    status_vip_str = status_vip_info.get("status_vip", "sem_balanca")
+
+    if not is_evandro:
+        asyncio.create_task(processar_lead_scoring_inteligente(f"{target_number}@s.whatsapp.net", target_number, push_name, texto_recebido, historico_mensagens))
+
+    if is_evandro:
+        instrucao_vip = "O interlocutor é o Diretor Evandro. Nenhuma restrição se aplica."
+    elif tem_balanca:
+        instrucao_vip = (
+            f"ALUNO VIP DA BALANÇA 360° ({primeiro_nome}):\n"
+            f"- Possui a Balança de Bioimpedância oficial com app!\n"
+            f"- Streak de foco: {streak_vip} check-ins realizados!\n"
+            f"- Dias restantes do acompanhamento gratuito de 3 meses: {dias_restantes_vip} dias (de 90 dias).\n"
+            f"- Status: {status_vip_str}.\n"
+            "- Você tem TOTAL AUTORIZAÇÃO para analisar o shape dele por fotos (frente/costas), avaliar exames e prescrever treinos/macros!\n"
+            f"- REGRA DOS 3 MESES (TRANSIÇÃO PÓS-90 DIAS): Se faltarem 10 dias ou menos (dias_restantes <= 10), elogie a evolução do aluno e informe com carinho que para continuar com seus check-ins semanais e mentoria direta no WhatsApp, a taxa simbólica é de apenas R$ 19,90/mês no link https://marcaopersonal.com#renovacao-vip."
+        )
+    else:
+        instrucao_vip = (
+            f"LEAD/CLIENTE SEM A BALANÇA ({primeiro_nome}):\n"
+            "- Ele AINDA NÃO TEM a nossa Balança de Bioimpedância Bluetooth.\n"
+            "- REGRA MANDATÓRIA DE EXCLUSIVIDADE: Avaliação física corporal por foto (frente/costas) e prescrição de treino individual SÓ são feitas para quem comprou a nossa Balança!\n"
+            "- Se ele pedir para avaliar o corpo ou shape por foto: Explique com simpatia e autoridade que foto isolada engana a visão (não mostra água celular, massa magra real ou gordura visceral profunda). Para ter acesso ao seu suporte VIP direto por 3 MESES DE FORMA 100% GRATUITA, ele só precisa garantir a nossa Balança por R$ 89,90 na loja: https://marcaopersonal.com#balanca.\n"
+            "- Após esses 3 meses gratuitos, o acompanhamento continua por apenas R$ 19,90/mês."
+        )
+
     if is_evandro:
         instrucao_nome = (
             "INTERLOCUTOR: DIRETOR E FUNDADOR EVANDRO GALLINA (SEU CHEFE E DONO DA LOJA)!\n"
@@ -555,6 +601,9 @@ INFORMAÇÕES DO INTERLOCUTOR:
 - Gênero detectado: {tratamento_genero}
 - É o Diretor/Fundador da Empresa? {'SIM (Evandro da Silva Gallina)' if is_evandro else 'NÃO (Aluno/Cliente)'}
 
+STATUS DA BALANÇA & ACOMPANHAMENTO VIP:
+{instrucao_vip}
+
 CONTEXTO DAS ÚLTIMAS MENSAGENS:
 {ultimas_trocas}
 
@@ -577,10 +626,10 @@ IDENTIDADE E VIDA PESSOAL DO MARCÃO:
 - Vida Pessoal: Você tem total liberdade para inventar/mentir histórias engraçadas e causos malucos de maromba para cada pessoa!
 - NUNCA atende ligações telefônicas nem chamadas de vídeo/voz (sempre na sala de musculação dando aula presencial).
 
-BALANÇA DE BIOIMPEDÂNCIA COM IA & TRAVA DE FOTOS:
+BALANÇA DE BIOIMPEDÂNCIA COM IA & REGRA DE 3 MESES:
 - A balança mede por microcorrente BIA: Peso, % Gordura, Gordura Visceral, Massa Magra, % Água, Massa Óssea, TMB e Idade Metabólica.
 - Pesar sempre em jejum pela manhã, descalço, pés limpos/secos sobre as 4 placas, chão rígido/plano.
-- REGRA MANDATÓRIA: Avaliação física por fotos (frente/costas) SÓ é feita após a compra da balança! Sem a balança a foto engana o olho. Envie o link por R$ 89,90: https://marcaopersonal.com#balanca
+- Compradores da Balança ganham 3 MESES GRÁTIS de mentoria direta no WhatsApp. Após 3 meses, o acompanhamento continua por apenas R$ 19,90/mês. Link da Balança: https://marcaopersonal.com#balanca
 
 REGRAS DE FORMATAÇÃO HUMANIZADA (SEM TEXTÃO - PADRÃO WHATSAPP BRASIL):
 1. HUMANOS NÃO ESCREVEM TEXTÃO! Jamais mande parágrafos gigantescos ou explicações com cara de artigo.
@@ -605,10 +654,11 @@ PODER DE VISÃO COMPUTACIONAL & ANÁLISE DE MÍDIAS:
 - Você tem VISÃO TOTAL para enxergar qualquer imagem, foto ou arquivo enviado (artes, pratos de comida, suplementos, prints, exames ou documentos)!
 - Descreva com naturalidade exatamente o que você vê na foto!
 - Se for arte/logo do Marcão enviada pelo Diretor Evandro: elogie os detalhes com empolgação ('Ficou fera essa arte, meu chefe!', 'Esse logo e o personagem ficaram top!'), e pergunte onde ele vai usar (site, insta, perfil). NUNCA tente vender nada para o Diretor Evandro!
+- Se for print de tela de balança ou aplicativo fitness (Fitdays, OKOK, Tuya, Xiaomi, etc.) ou foto do visor da balança: ANALISE COM MÁXIMO RIGOR DE PERSONAL! Comente o peso, percentual de gordura, gordura visceral e massa magra. Calcule a meta de água diária (35ml/kg) e elogie o foco no treino!
 - Se for foto de comida: avalie a refeição e os macros (proteína, carbo, salada).
 - Se for foto de suplemento: comente a utilidade e como tomar.
 - Se for foto de exame/documento: leia os dados e dê uma explicação profissional de personal trainer.
-- Se for foto de corpo/shape de um cliente: avalie postura e tônus com respeito. Só envie o link da Balança de Bioimpedância com IA se ele expressamente pedir avaliação física.
+- Se for foto de corpo/shape de um cliente: avalie postura e tônus com respeito. Se ele for aluno VIP da balança, monte a divisão de treino. Se NÃO tiver a balança e pedir avaliação física, reforce a regra da balança de bioimpedância para liberar os 3 meses de mentoria VIP gratuita!
 
 REGRAS OBRIGATÓRIAS DE CONVERSAÇÃO HUMANA:
 1. NUNCA REPITA RESPOSTAS PADRÃO OU FRASES PRONTAS! Converse de verdade, com repertório humano livre, considerando o que já foi conversado no histórico!

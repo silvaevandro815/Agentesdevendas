@@ -83,9 +83,24 @@
   - Conhecimento completo dos 5 produtos injetado (bulas, dosagens, ANVISA, preços e links oficiais Braip)
   - Workflow `F3 - Atendimento WhatsApp 24h (Sofia)` atualizado no n8n com processador inteligente de mensagens conectado à Evolution API (`instance: sofia`)
   - Sofia respondendo dúvidas de forma acolhedora, tirando objeções e entregando links de checkout em tempo real no WhatsApp
-- [ ] P4 — Conexão Meta Ads & Instagram (Rui e Nina com aprovação Human-in-the-Loop)
-- [ ] P5 — Recuperação de Vendas & Follow-up (Davi no WhatsApp com carrinho abandonado Braip)
-- [ ] P6 — Painel Gerencial & Métricas (Iago + Marta com cálculo diário de lucro líquido)
+- [x] P4 — Conexão Meta Ads & Instagram (Rui e Nina com aprovação Human-in-the-Loop) Concluída!
+  - `T1`: Gestor de Tráfego Pago (Rui) com propostas cirúrgicas e guardrail travado em R$ 20,00/dia.
+  - `T2`: Inteligência de Mercado com Google Trends Brasil sincronizado diariamente às 07:00.
+  - `T3`: Monitor de Expiração de Tokens Meta com alerta proativo para Evandro às 09:00.
+  - `I2`: Fábrica autônoma de criativos com publicação 2x/dia (11:30h e 19:30h) no `@marcaopersonalfitness` para Feed e Stories.
+  - Painel Admin 360° integrado para aprovações e ajustes de orçamento sem consumo de tokens de WhatsApp.
+- [x] P5 — Recuperação de Vendas & Follow-up (Davi no WhatsApp com carrinho abandonado Braip) Concluída!
+  - `M8`: Recuperador de Vendas Braip ativo para Boletos e PIX com cadência inteligente (10h e 18h).
+  - `M9`: CRM Follow-Up & Aquecimento de Leads Inativos ativo aos 7 e 30 dias com ofertas cirúrgicas.
+  - Motor de Lead Scoring em tempo real (0 a 100) com detecção e quebra imediata de objeções (`leads_scoring`).
+- [x] P6 — Painel Gerencial & Métricas (Iago + Marta com cálculo diário de lucro líquido) Concluída!
+  - `M5`: CFO Marcão & Central Executiva do Diretor Evandro com relatório diário de lucratividade e ROAS.
+  - Painel Admin com aba exclusiva de Finanças & CFO (`/api/cfo/overview`) e tabela `metricas_cfo` no Supabase.
+- [x] P7 — Balança de Bioimpedância 360° & Retenção VIP (3 Meses Grátis -> R$ 19,90/mês) Concluída!
+  - Scanner Multimodal de Bioimpedância (`balanca_engine.py`): extração de 12 biomarcadores de prints de apps (Fitdays, OKOK, Tuya, Xiaomi) e display da balança.
+  - Emissão instantânea do "Relatório 360° do Marcão" com metas de hidratação (35ml/kg), calorias, divisão de macros e periodização de treino.
+  - Regra de Exclusividade VIP: Avaliação física e mentoria direta no WhatsApp 100% exclusivas para donos da balança.
+  - Esteira de Retenção: 90 dias de acompanhamento gratuito com contagem regressiva e gamificação (`streak_dias`), transacionando para a assinatura de R$ 19,90/mês através do workflow `M10` no n8n.
 
 
 

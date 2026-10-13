@@ -317,8 +317,11 @@
 
     <div class="tabs">
       <button class="tab-btn active" onclick="switchTab('approvals')">Decisões & Tráfego Pago (Rui) <span id="count-pending" style="color:var(--accent-cyan); font-weight:700;"></span></button>
-      <button class="tab-btn" onclick="switchTab('creatives')">📸 Fábrica de Criativos Instagram (2x/dia)</button>
-      <button class="tab-btn" onclick="switchTab('agents')">Organograma & Agentes 24h</button>
+      <button class="tab-btn" onclick="switchTab('cfo')">📊 Finanças & CFO</button>
+      <button class="tab-btn" onclick="switchTab('vip')">⚖️ Balança VIP (R$ 19,90)</button>
+      <button class="tab-btn" onclick="switchTab('leads')">🎯 Funil & Lead Scoring</button>
+      <button class="tab-btn" onclick="switchTab('creatives')">📸 Fábrica de Criativos</button>
+      <button class="tab-btn" onclick="switchTab('agents')">Organograma & Agentes</button>
     </div>
 
     <!-- TAB 1: Central de Aprovações & Tráfego Rui -->
@@ -331,6 +334,78 @@
       </div>
 
       <div id="approvals-container"></div>
+    </div>
+
+
+    <!-- TAB: CFO & Finanças -->
+    <div id="tab-cfo" style="display:none;">
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:24px;" id="cfo-cards">
+        <div style="background:#131822; border:1px solid #1f2737; border-radius:10px; padding:18px;">
+          <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Faturamento Bruto</div>
+          <div style="font-size:24px; font-weight:800; color:var(--accent-cyan);" id="cfo-fat">R$ 0,00</div>
+          <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">Vendas Braip e Balança</div>
+        </div>
+        <div style="background:#131822; border:1px solid #1f2737; border-radius:10px; padding:18px;">
+          <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Comissões Líquidas</div>
+          <div style="font-size:24px; font-weight:800; color:var(--accent-green);" id="cfo-comiss">R$ 0,00</div>
+          <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">Receita Direta no Caixa</div>
+        </div>
+        <div style="background:#131822; border:1px solid #1f2737; border-radius:10px; padding:18px;">
+          <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Gasto Meta Ads</div>
+          <div style="font-size:24px; font-weight:800; color:var(--accent-orange);" id="cfo-gasto">R$ 0,00</div>
+          <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">Campanhas do Rui</div>
+        </div>
+        <div style="background:#131822; border:1px solid #1f2737; border-radius:10px; padding:18px;">
+          <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Lucro Líquido Real</div>
+          <div style="font-size:24px; font-weight:800; color:#38d39f;" id="cfo-lucro">R$ 0,00</div>
+          <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">Resultado Final</div>
+        </div>
+        <div style="background:#131822; border:1px solid #1f2737; border-radius:10px; padding:18px;">
+          <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">ROAS Médio</div>
+          <div style="font-size:24px; font-weight:800; color:var(--accent-purple);" id="cfo-roas">0.0x</div>
+          <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">Retorno sobre Anúncios</div>
+        </div>
+      </div>
+      <div style="background:#131822; border:1px solid #1f2737; border-radius:10px; padding:20px;">
+        <h3 style="font-size:16px; margin-bottom:12px; color:white;">Resumo Operacional Iago & Marta</h3>
+        <p style="font-size:13px; color:var(--text-muted); line-height:1.6;">
+          • Total de Pedidos Concluídos: <strong id="cfo-total-pedidos" style="color:white;">0</strong><br>
+          • Total de Leads Atendidos pela Sofia no WhatsApp: <strong id="cfo-total-leads" style="color:white;">0</strong><br>
+          • Alunos Ativos com Mentoria VIP da Balança 360°: <strong id="cfo-total-vip" style="color:var(--accent-cyan);">0</strong>
+        </p>
+      </div>
+    </div>
+
+    <!-- TAB: Balança VIP & Assinaturas R$ 19,90 -->
+    <div id="tab-vip" style="display:none;">
+      <div style="background:var(--card-bg); border:1px solid #232b3c; border-radius:12px; padding:20px; margin-bottom:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <div>
+            <h2 style="font-size:18px; color:white; margin-bottom:4px;">Acompanhamento VIP da Balança de Bioimpedância</h2>
+            <p style="font-size:13px; color:var(--text-muted);">Clientes da balança ganham <strong>3 meses (90 dias) de mentoria gratuita</strong> no WhatsApp. Após os 90 dias, o sistema faz o transbordo para a mensalidade de <strong>R$ 19,90/mês</strong>.</p>
+          </div>
+          <button class="btn btn-approve" onclick="loadVIPClients()">🔄 Atualizar Lista</button>
+        </div>
+      </div>
+      <div id="vip-clients-container">
+        <p style="color:var(--text-muted); font-size:13px;">Carregando alunos VIP...</p>
+      </div>
+    </div>
+
+    <!-- TAB: Funil & Lead Scoring -->
+    <div id="tab-leads" style="display:none;">
+      <div style="background:var(--card-bg); border:1px solid #232b3c; border-radius:12px; padding:20px; margin-bottom:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <div>
+            <h2 style="font-size:18px; color:white; margin-bottom:4px;">Pipeline de Vendas Inteligente & Lead Scoring</h2>
+            <p style="font-size:13px; color:var(--text-muted);">Classificação automática de 0 a 100 baseada em sinais de compra e quebra de objeções em tempo real.</p>
+          </div>
+          <button class="btn btn-approve" onclick="loadSalesLeads()">🔄 Atualizar Leads</button>
+        </div>
+      </div>
+      <div id="leads-container">
+        <p style="color:var(--text-muted); font-size:13px;">Carregando mapa de calor de leads...</p>
+      </div>
     </div>
 
     <!-- TAB 2: Fábrica de Criativos Instagram -->
@@ -402,14 +477,27 @@
 
     function switchTab(tab) {
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-      document.getElementById('tab-approvals').style.display = 'none';
-      document.getElementById('tab-creatives').style.display = 'none';
-      document.getElementById('tab-agents').style.display = 'none';
+      ['tab-approvals', 'tab-cfo', 'tab-vip', 'tab-leads', 'tab-creatives', 'tab-agents'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
 
       if(tab === 'approvals') {
         document.getElementById('tab-approvals').style.display = 'block';
         event.target.classList.add('active');
         loadApprovals();
+      } else if(tab === 'cfo') {
+        document.getElementById('tab-cfo').style.display = 'block';
+        event.target.classList.add('active');
+        loadCFO();
+      } else if(tab === 'vip') {
+        document.getElementById('tab-vip').style.display = 'block';
+        event.target.classList.add('active');
+        loadVIPClients();
+      } else if(tab === 'leads') {
+        document.getElementById('tab-leads').style.display = 'block';
+        event.target.classList.add('active');
+        loadSalesLeads();
       } else if(tab === 'creatives') {
         document.getElementById('tab-creatives').style.display = 'block';
         event.target.classList.add('active');
@@ -418,6 +506,130 @@
         document.getElementById('tab-agents').style.display = 'block';
         event.target.classList.add('active');
         loadAgents();
+      }
+    }
+
+    async function loadCFO() {
+      try {
+        const res = await fetch('/api/cfo/overview');
+        const data = await res.json();
+        document.getElementById('cfo-fat').innerText = `R$ ${data.faturamento_bruto || '0,00'}`;
+        document.getElementById('cfo-comiss').innerText = `R$ ${data.comissoes_liquidas || '0,00'}`;
+        document.getElementById('cfo-gasto').innerText = `R$ ${data.custo_meta_ads || '0,00'}`;
+        document.getElementById('cfo-lucro').innerText = `R$ ${data.lucro_liquido || '0,00'}`;
+        document.getElementById('cfo-roas').innerText = `${data.roas || '0.0'}x`;
+        document.getElementById('cfo-total-pedidos').innerText = data.total_pedidos || 0;
+        document.getElementById('cfo-total-leads').innerText = data.total_leads || 0;
+        document.getElementById('cfo-total-vip').innerText = data.total_vip_balanca || 0;
+      } catch(e) {
+        showToast('Erro ao carregar dados do CFO');
+      }
+    }
+
+    async function loadVIPClients() {
+      const container = document.getElementById('vip-clients-container');
+      container.innerHTML = '<p style="color:var(--text-muted);">Carregando alunos VIP...</p>';
+      try {
+        const res = await fetch('/api/vip/clientes');
+        const list = await res.json();
+        if(!list || list.length === 0) {
+          container.innerHTML = '<p style="color:var(--text-muted); font-size:13px;">Nenhum cliente registrado na balança ainda.</p>';
+          return;
+        }
+        container.innerHTML = `
+          <table style="width:100%; border-collapse:collapse; font-size:13px; text-align:left;">
+            <thead>
+              <tr style="border-bottom:1px solid #1f2737; color:var(--text-muted);">
+                <th style="padding:10px;">Aluno</th>
+                <th style="padding:10px;">WhatsApp</th>
+                <th style="padding:10px;">Último Peso</th>
+                <th style="padding:10px;">Gordura</th>
+                <th style="padding:10px;">Streak</th>
+                <th style="padding:10px;">Dias Restantes (VIP)</th>
+                <th style="padding:10px;">Status</th>
+                <th style="padding:10px;">Ação</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${list.map(c => {
+                const badgeColor = c.dias_restantes <= 10 ? 'var(--accent-orange)' : 'var(--accent-green)';
+                const badgeBg = c.dias_restantes <= 10 ? '#3b2a08' : '#0e3818';
+                return `
+                  <tr style="border-bottom:1px solid #151c27;">
+                    <td style="padding:12px 10px; font-weight:600; color:white;">${c.nome}</td>
+                    <td style="padding:12px 10px; color:var(--text-muted);"><a href="https://wa.me/${c.telefone}" target="_blank" style="color:var(--accent-cyan); text-decoration:none;">${c.telefone}</a></td>
+                    <td style="padding:12px 10px;">${c.ultimo_peso}</td>
+                    <td style="padding:12px 10px;">${c.ultima_gordura}</td>
+                    <td style="padding:12px 10px; color:var(--accent-cyan); font-weight:700;">🔥 ${c.streak_dias}d</td>
+                    <td style="padding:12px 10px;"><span style="background:${badgeBg}; color:${badgeColor}; padding:3px 8px; border-radius:4px; font-weight:700;">${c.dias_restantes} dias</span></td>
+                    <td style="padding:12px 10px; text-transform:uppercase; font-size:11px;">${c.status_vip}</td>
+                    <td style="padding:12px 10px;">
+                      <button onclick="renewVIP(${c.id})" class="btn btn-budget" style="padding:4px 10px; font-size:11px;">Renovar R$ 19,90</button>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        `;
+      } catch(e) {
+        container.innerHTML = '<p style="color:var(--danger-red);">Erro ao consultar alunos VIP.</p>';
+      }
+    }
+
+    async function renewVIP(id) {
+      showToast('Processando renovação VIP...');
+      try {
+        const res = await fetch(`/api/vip/${id}/renovar`, { method:'POST' });
+        const d = await res.json();
+        showToast(d.message || 'Assinatura atualizada!');
+        loadVIPClients();
+      } catch(e) {
+        showToast('Erro ao renovar assinatura.');
+      }
+    }
+
+    async function loadSalesLeads() {
+      const container = document.getElementById('leads-container');
+      container.innerHTML = '<p style="color:var(--text-muted);">Carregando mapa de calor de leads...</p>';
+      try {
+        const res = await fetch('/api/sales/leads');
+        const list = await res.json();
+        if(!list || list.length === 0) {
+          container.innerHTML = '<p style="color:var(--text-muted); font-size:13px;">Nenhum lead com score registrado no funil.</p>';
+          return;
+        }
+        container.innerHTML = `
+          <table style="width:100%; border-collapse:collapse; font-size:13px; text-align:left;">
+            <thead>
+              <tr style="border-bottom:1px solid #1f2737; color:var(--text-muted);">
+                <th style="padding:10px;">Lead / Contato</th>
+                <th style="padding:10px;">WhatsApp</th>
+                <th style="padding:10px;">Score de Compra</th>
+                <th style="padding:10px;">Estágio do Funil</th>
+                <th style="padding:10px;">Produto de Interesse</th>
+                <th style="padding:10px;">Objeção Detectada</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${list.map(l => {
+                const scoreColor = l.pontuacao >= 70 ? 'var(--accent-green)' : (l.pontuacao >= 40 ? 'var(--accent-orange)' : 'var(--text-muted)');
+                return `
+                  <tr style="border-bottom:1px solid #151c27;">
+                    <td style="padding:12px 10px; font-weight:600; color:white;">${l.nome || 'Lead'}</td>
+                    <td style="padding:12px 10px;"><a href="https://wa.me/${l.telefone}" target="_blank" style="color:var(--accent-cyan); text-decoration:none;">${l.telefone}</a></td>
+                    <td style="padding:12px 10px; font-weight:800; color:${scoreColor}; font-size:15px;">${l.pontuacao} / 100</td>
+                    <td style="padding:12px 10px; text-transform:uppercase; font-size:11px; font-weight:700;">${l.estagio_funil}</td>
+                    <td style="padding:12px 10px; color:var(--accent-cyan);">${l.produto_alvo || 'Geral'}</td>
+                    <td style="padding:12px 10px; color:var(--accent-orange);">${l.objecao_atual || 'Nenhuma'}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        `;
+      } catch(e) {
+        container.innerHTML = '<p style="color:var(--danger-red);">Erro ao consultar leads.</p>';
       }
     }
 

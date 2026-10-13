@@ -318,6 +318,116 @@ app.get('/api/creatives/recent', async (req, res) => {
   }
 });
 
+// 6. Endpoint CFO Overview (Iago & Marta)
+app.get('/api/cfo/overview', async (req, res) => {
+  try {
+    const headers = getSupabaseHeaders();
+    // Vendas Braip
+    const rPed = await fetch(`${SUPABASE_URL}/rest/v1/pedidos_braip?select=valor_total,comissao,status_pagamento`, { headers });
+    const pedidos = rPed.ok ? await rPed.json() : [];
+
+    const faturamentoBruto = pedidos.reduce((acc, p) => acc + (parseFloat(p.valor_total) || 0), 0);
+    const comissoesLiquidas = pedidos.reduce((acc, p) => acc + (parseFloat(p.comissao) || 0), 0);
+
+    // Campanhas aprovadas Meta Ads (estimativa de R$ 20/dia por proposta)
+    const rApp = await fetch(`${SUPABASE_URL}/rest/v1/fila_aprovacoes?status=eq.approved&select=id`, { headers });
+    const aprovadas = rApp.ok ? await rApp.json() : [];
+    const custoMetaAds = aprovadas.length * 20.0;
+
+    // Leads e Alunos VIP
+    const rLeads = await fetch(`${SUPABASE_URL}/rest/v1/leads_conversas?select=id`, { headers });
+    const leads = rLeads.ok ? await rLeads.json() : [];
+
+    const rVip = await fetch(`${SUPABASE_URL}/rest/v1/clientes_balanca?select=id,status_vip`, { headers });
+    const vips = rVip.ok ? await rVip.json() : [];
+    const totalVipAtivos = vips.filter(v => ['ativo_gratis', 'assinante_pago'].includes(v.status_vip)).length;
+
+    const lucroLiquido = comissoesLiquidas - custoMetaAds;
+    const roas = custoMetaAds > 0 ? (comissoesLiquidas / custoMetaAds).toFixed(2) : '0.00';
+
+    res.json({
+      faturamento_bruto: faturamentoBruto.toFixed(2),
+      comissoes_liquidas: comissoesLiquidas.toFixed(2),
+      custo_meta_ads: custoMetaAds.toFixed(2),
+      lucro_liquido: lucroLiquido.toFixed(2),
+      roas: parseFloat(roas),
+      total_pedidos: pedidos.length,
+      total_leads: leads.length,
+      total_vip_balanca: totalVipAtivos
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 7. Endpoint Lista de Clientes VIP da Balança (3 meses grátis -> R$ 19,90/mês)
+app.get('/api/vip/clientes', async (req, res) => {
+  try {
+    const headers = getSupabaseHeaders();
+    const resp = await fetch(`${SUPABASE_URL}/rest/v1/clientes_balanca?order=created_at.desc&limit=50`, { headers });
+    if (!resp.ok) return res.status(resp.status).json({ error: await resp.text() });
+    const clients = await resp.json();
+
+    const agora = new Date();
+    const formatted = clients.map(c => {
+      let diasRestantes = 90;
+      if (c.data_expiracao_vip) {
+        const dtFim = new Date(c.data_expiracao_vip);
+        diasRestantes = Math.max(0, Math.ceil((dtFim - agora) / (1000 * 60 * 60 * 24)));
+      }
+      return {
+        id: c.id,
+        nome: c.nome_cliente || 'Aluno(a)',
+        telefone: c.telefone,
+        data_compra: c.data_compra ? new Date(c.data_compra).toLocaleDateString('pt-BR') : 'Recente',
+        dias_restantes: diasRestantes,
+        status_vip: c.status_vip || 'ativo_gratis',
+        streak_dias: c.streak_dias || 1,
+        ultimo_peso: c.ultimo_peso ? `${c.ultimo_peso}kg` : '--',
+        ultima_gordura: c.ultima_gordura_pct ? `${c.ultima_gordura_pct}%` : '--',
+        link_renovacao: c.link_renovacao || 'https://marcaopersonal.com#renovacao-vip'
+      };
+    });
+    res.json(formatted);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 8. Endpoint Renovar Assinatura VIP
+app.post('/api/vip/:id/renovar', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const headers = getSupabaseHeaders();
+    const novaExp = new Date();
+    novaExp.setDate(novaExp.getDate() + 30); // Mais 30 dias de recorrência paga
+
+    await fetch(`${SUPABASE_URL}/rest/v1/clientes_balanca?id=eq.${id}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({
+        status_vip: 'assinante_pago',
+        data_expiracao_vip: novaExp.toISOString()
+      })
+    });
+    res.json({ success: true, message: 'Assinatura VIP renovada por 30 dias!' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 9. Endpoint Leads Scoring (Davi & Sofia)
+app.get('/api/sales/leads', async (req, res) => {
+  try {
+    const headers = getSupabaseHeaders();
+    const resp = await fetch(`${SUPABASE_URL}/rest/v1/leads_scoring?order=pontuacao.desc&limit=50`, { headers });
+    if (!resp.ok) return res.status(resp.status).json({ error: await resp.text() });
+    res.json(await resp.json());
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Centro de Comando Marcão Personal rodando na porta ${PORT}`);
 });

@@ -724,3 +724,99 @@ async def listar_posts_instagram():
     return []
 
 
+
+
+# -------------------------------------------------------------------------
+# 6. SCANNER MULTIMODAL DE BIOIMPEDÂNCIA, VIP 360° & MOTOR DE VENDAS
+# -------------------------------------------------------------------------
+try:
+    from balanca_engine import (
+        escanear_tela_bioimpedancia,
+        registrar_ou_atualizar_cliente_balanca,
+        verificar_status_vip,
+        processar_lead_scoring_inteligente,
+        obter_metricas_cfo_consolidadas
+    )
+except ImportError:
+    from apps.api.balanca_engine import (
+        escanear_tela_bioimpedancia,
+        registrar_ou_atualizar_cliente_balanca,
+        verificar_status_vip,
+        processar_lead_scoring_inteligente,
+        obter_metricas_cfo_consolidadas
+    )
+
+class BalancaScanRequest(BaseModel):
+    telefone: str
+    nome: Optional[str] = "Guerreiro(a)"
+    imagem_base64: str
+    objetivo: Optional[str] = "secar e definir"
+
+@app.post("/api/balanca/escanear-tela")
+async def escanear_balanca_api(req: BalancaScanRequest):
+    """
+    Escaner multimodal de alta precisão para telas de apps de balança (Fitdays, OKOK, Tuya, Xiaomi)
+    ou foto do display da balança. Extrai 12 biomarcadores, calcula metas de hidratação/macros,
+    emite o Relatório 360° do Marcão e registra no banco de dados.
+    """
+    scan = await escanear_tela_bioimpedancia(
+        imagem_base64=req.imagem_base64,
+        nome=req.nome,
+        objetivo=req.objetivo
+    )
+    if scan.get("sucesso"):
+        reg = await registrar_ou_atualizar_cliente_balanca(
+            remote_jid=f"{req.telefone}@s.whatsapp.net",
+            telefone=req.telefone,
+            nome=req.nome,
+            dados_bio=scan.get("metricas", {}),
+            relatorio_texto=scan.get("relatorio_texto", "")
+        )
+        scan["registro_vip"] = reg
+    return scan
+
+class AtivarVIPRequest(BaseModel):
+    telefone: str
+    nome: str
+    canal_compra: Optional[str] = "site"
+    codigo_pedido: Optional[str] = None
+
+@app.post("/api/balanca/ativar-vip")
+async def ativar_vip_api(req: AtivarVIPRequest):
+    """Ativa os 3 meses (90 dias) de suporte VIP gratuito para compradores da balança."""
+    dados_iniciais = {"peso_kg": 75.0, "gordura_corporal_pct": 20.0, "massa_muscular_kg": 55.0}
+    relatorio = f"VIP ativado com sucesso para {req.nome}! 90 dias de mentoria liberados!"
+    return await registrar_ou_atualizar_cliente_balanca(
+        remote_jid=f"{req.telefone}@s.whatsapp.net",
+        telefone=req.telefone,
+        nome=req.nome,
+        dados_bio=dados_iniciais,
+        relatorio_texto=relatorio
+    )
+
+@app.get("/api/balanca/status-vip/{telefone}")
+async def status_vip_api(telefone: str):
+    """Consulta o status VIP da balança, contagem regressiva dos 90 dias e link de renovação."""
+    return await verificar_status_vip(telefone)
+
+class LeadScoringRequest(BaseModel):
+    remote_jid: Optional[str] = None
+    telefone: str
+    nome: Optional[str] = "Lead"
+    ultima_mensagem: str
+
+@app.post("/api/vendas/lead-scoring")
+async def lead_scoring_api(req: LeadScoringRequest):
+    """Calcula lead score (0-100), detecta intenções/objeções e estágio no funil."""
+    r_jid = req.remote_jid or f"{req.telefone}@s.whatsapp.net"
+    return await processar_lead_scoring_inteligente(
+        remote_jid=r_jid,
+        telefone=req.telefone,
+        nome=req.nome,
+        ultima_msg=req.ultima_mensagem
+    )
+
+@app.get("/api/cfo/metricas")
+async def cfo_metricas_api():
+    """Retorna métricas consolidadas de vendas, faturamento bruto, custos e ROAS."""
+    return await obter_metricas_cfo_consolidadas()

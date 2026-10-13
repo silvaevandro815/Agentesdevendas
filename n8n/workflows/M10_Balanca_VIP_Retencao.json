@@ -1,0 +1,379 @@
+{
+  "id": "jGGDRdYMXLM6w5UP",
+  "name": "M10 - Balança VIP & Retenção de Assinaturas (R$ 19,90)",
+  "description": null,
+  "active": true,
+  "activeVersionId": "61c4ca3a-7e07-40c6-ad5a-a5bb4b723b54",
+  "createdAt": "2026-10-13T11:43:01.569Z",
+  "updatedAt": "2026-10-13T11:43:01.569Z",
+  "isArchived": false,
+  "versionId": "61c4ca3a-7e07-40c6-ad5a-a5bb4b723b54",
+  "versionCounter": 1,
+  "sourceWorkflowId": null,
+  "triggerCount": 2,
+  "nodes": [
+    {
+      "id": "m10-cron",
+      "name": "Diário 09:30",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        200,
+        200
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 9 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "m10-hook",
+      "name": "Webhook Teste Retenção VIP",
+      "webhookId": "9b3c4d5e-6f7a-8b9c-0d1e-2f3a4b5c6d7e",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        200,
+        400
+      ],
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "teste-balanca-vip-retencao",
+        "responseMode": "onReceived"
+      }
+    },
+    {
+      "id": "m10-sb",
+      "name": "Buscar Clientes VIP Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        440,
+        300
+      ],
+      "parameters": {
+        "url": "https://qkopgftfrfftoyndhhfj.supabase.co/rest/v1/clientes_balanca?status_vip=in.(ativo_gratis,expirando)&select=*",
+        "headers": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrb3BnZnRmcmZmdG95bmRoaGZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MTgwMTU4MywiZXhwIjoyMTA3Mzc3NTgzfQ.S_RRdnI6SZTVR1UH7jryDVHf316YmnMOVEBuoedyKv8"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrb3BnZnRmcmZmdG95bmRoaGZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MTgwMTU4MywiZXhwIjoyMTA3Mzc3NTgzfQ.S_RRdnI6SZTVR1UH7jryDVHf316YmnMOVEBuoedyKv8"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "m10-code",
+      "name": "Filtrar Prazos 80 e 87 Dias",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        300
+      ],
+      "parameters": {
+        "jsCode": "\nconst clientes = $('Buscar Clientes VIP Supabase').all().map(i => i.json);\nconst agora = Date.now();\nconst disparos = [];\n\nfor (const c of clientes) {\n  if (!c.telefone || !c.data_expiracao_vip) continue;\n  const fim = new Date(c.data_expiracao_vip).getTime();\n  const dias = Math.ceil((fim - agora) / (1000 * 60 * 60 * 24));\n  const nome = c.nome_cliente ? c.nome_cliente.split(' ')[0] : 'Guerreiro(a)';\n  const link = c.link_renovacao || 'https://marcaopersonal.com#renovacao-vip';\n\n  if (dias === 10 || dias === 9) {\n    disparos.push({\n      telefone: c.telefone,\n      id: c.id,\n      tipo: 'aviso_10dias',\n      texto: `Fala, ${nome}! 🦁 Marcão na área! Passando pra te dar os parabéns pelo seu foco na balança de bioimpedância!\\n\\nFaltam só 10 dias pra fechar seus 3 meses de acompanhamento gratuito comigo! Como você evoluiu demais, liberei sua assinatura VIP por apenas R$ 19,90 por mês pra você continuar recebendo meus check-ins semanais e ajuste de treino!\\n\\n👉 Mantém seu foco ativo aqui: ${link}`\n    });\n  } else if (dias === 3 || dias === 2) {\n    disparos.push({\n      telefone: c.telefone,\n      id: c.id,\n      tipo: 'aviso_3dias',\n      texto: `E aí, ${nome}! 💪 Faltam só 3 dias pra encerrar seus 3 meses gratuitos da Balança 360°!\\n\\nNão deixa a peteca cair agora que o shape tá encaixando! Garante sua renovação por R$ 19,90/mês aqui: ${link} 👊`\n    });\n  }\n}\n\nreturn disparos.map(d => ({ json: d }));\n"
+      }
+    },
+    {
+      "id": "m10-evo",
+      "name": "Enviar WhatsApp Retenção (Sofia/Marcão)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        880,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://evolution.marcaopersonal.com/message/sendText/sofia",
+        "headers": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "Marcao_Evo_Key_2026_Secure!"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ number: $json.telefone, text: $json.texto }) }}"
+      }
+    }
+  ],
+  "connections": {
+    "Diário 09:30": {
+      "main": [
+        [
+          {
+            "node": "Buscar Clientes VIP Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Teste Retenção VIP": {
+      "main": [
+        [
+          {
+            "node": "Buscar Clientes VIP Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Clientes VIP Supabase": {
+      "main": [
+        [
+          {
+            "node": "Filtrar Prazos 80 e 87 Dias",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtrar Prazos 80 e 87 Dias": {
+      "main": [
+        [
+          {
+            "node": "Enviar WhatsApp Retenção (Sofia/Marcão)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "timezone": "America/Sao_Paulo",
+    "executionOrder": "v1"
+  },
+  "staticData": {
+    "node:Diário 09:30": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "jGGDRdYMXLM6w5UP",
+      "projectId": "o73CYLdeW5HvCHUj",
+      "project": {
+        "id": "o73CYLdeW5HvCHUj",
+        "name": "Evandrosilva Silva <silvaev549@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "5f37e26b-bd4f-4342-84e1-d7060e6c7c97",
+        "createdAt": "2026-10-11T16:32:09.514Z",
+        "updatedAt": "2026-10-11T16:48:24.539Z"
+      },
+      "createdAt": "2026-10-13T11:43:01.569Z",
+      "updatedAt": "2026-10-13T11:43:01.569Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "61c4ca3a-7e07-40c6-ad5a-a5bb4b723b54",
+    "workflowId": "jGGDRdYMXLM6w5UP",
+    "nodes": [
+      {
+        "id": "m10-cron",
+        "name": "Diário 09:30",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          200,
+          200
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "30 9 * * *"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "m10-hook",
+        "name": "Webhook Teste Retenção VIP",
+        "webhookId": "9b3c4d5e-6f7a-8b9c-0d1e-2f3a4b5c6d7e",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          200,
+          400
+        ],
+        "parameters": {
+          "httpMethod": "GET",
+          "path": "teste-balanca-vip-retencao",
+          "responseMode": "onReceived"
+        }
+      },
+      {
+        "id": "m10-sb",
+        "name": "Buscar Clientes VIP Supabase",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          440,
+          300
+        ],
+        "parameters": {
+          "url": "https://qkopgftfrfftoyndhhfj.supabase.co/rest/v1/clientes_balanca?status_vip=in.(ativo_gratis,expirando)&select=*",
+          "headers": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrb3BnZnRmcmZmdG95bmRoaGZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MTgwMTU4MywiZXhwIjoyMTA3Mzc3NTgzfQ.S_RRdnI6SZTVR1UH7jryDVHf316YmnMOVEBuoedyKv8"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrb3BnZnRmcmZmdG95bmRoaGZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MTgwMTU4MywiZXhwIjoyMTA3Mzc3NTgzfQ.S_RRdnI6SZTVR1UH7jryDVHf316YmnMOVEBuoedyKv8"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "m10-code",
+        "name": "Filtrar Prazos 80 e 87 Dias",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          660,
+          300
+        ],
+        "parameters": {
+          "jsCode": "\nconst clientes = $('Buscar Clientes VIP Supabase').all().map(i => i.json);\nconst agora = Date.now();\nconst disparos = [];\n\nfor (const c of clientes) {\n  if (!c.telefone || !c.data_expiracao_vip) continue;\n  const fim = new Date(c.data_expiracao_vip).getTime();\n  const dias = Math.ceil((fim - agora) / (1000 * 60 * 60 * 24));\n  const nome = c.nome_cliente ? c.nome_cliente.split(' ')[0] : 'Guerreiro(a)';\n  const link = c.link_renovacao || 'https://marcaopersonal.com#renovacao-vip';\n\n  if (dias === 10 || dias === 9) {\n    disparos.push({\n      telefone: c.telefone,\n      id: c.id,\n      tipo: 'aviso_10dias',\n      texto: `Fala, ${nome}! 🦁 Marcão na área! Passando pra te dar os parabéns pelo seu foco na balança de bioimpedância!\\n\\nFaltam só 10 dias pra fechar seus 3 meses de acompanhamento gratuito comigo! Como você evoluiu demais, liberei sua assinatura VIP por apenas R$ 19,90 por mês pra você continuar recebendo meus check-ins semanais e ajuste de treino!\\n\\n👉 Mantém seu foco ativo aqui: ${link}`\n    });\n  } else if (dias === 3 || dias === 2) {\n    disparos.push({\n      telefone: c.telefone,\n      id: c.id,\n      tipo: 'aviso_3dias',\n      texto: `E aí, ${nome}! 💪 Faltam só 3 dias pra encerrar seus 3 meses gratuitos da Balança 360°!\\n\\nNão deixa a peteca cair agora que o shape tá encaixando! Garante sua renovação por R$ 19,90/mês aqui: ${link} 👊`\n    });\n  }\n}\n\nreturn disparos.map(d => ({ json: d }));\n"
+        }
+      },
+      {
+        "id": "m10-evo",
+        "name": "Enviar WhatsApp Retenção (Sofia/Marcão)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          880,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://evolution.marcaopersonal.com/message/sendText/sofia",
+          "headers": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "Marcao_Evo_Key_2026_Secure!"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ number: $json.telefone, text: $json.texto }) }}"
+        }
+      }
+    ],
+    "connections": {
+      "Diário 09:30": {
+        "main": [
+          [
+            {
+              "node": "Buscar Clientes VIP Supabase",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook Teste Retenção VIP": {
+        "main": [
+          [
+            {
+              "node": "Buscar Clientes VIP Supabase",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Buscar Clientes VIP Supabase": {
+        "main": [
+          [
+            {
+              "node": "Filtrar Prazos 80 e 87 Dias",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Filtrar Prazos 80 e 87 Dias": {
+        "main": [
+          [
+            {
+              "node": "Enviar WhatsApp Retenção (Sofia/Marcão)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Evandrosilva Silva",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-10-13T11:43:01.569Z",
+    "updatedAt": "2026-10-13T11:43:01.569Z",
+    "workflowPublishHistory": [
+      {
+        "id": 242,
+        "workflowId": "jGGDRdYMXLM6w5UP",
+        "versionId": "61c4ca3a-7e07-40c6-ad5a-a5bb4b723b54",
+        "event": "activated",
+        "userId": "5f37e26b-bd4f-4342-84e1-d7060e6c7c97",
+        "createdAt": "2026-10-13T11:43:02.563Z"
+      }
+    ]
+  }
+}
