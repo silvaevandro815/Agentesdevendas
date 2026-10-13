@@ -1,0 +1,304 @@
+{
+  "id": "twaIdBJADtfS8evK",
+  "name": "M11 - Personal Proativo VIP (Check-ins & Upsells 30d)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-10-13T12:25:54.060Z",
+  "updatedAt": "2026-10-13T12:25:54.060Z",
+  "isArchived": false,
+  "versionId": "c4fb6d21-f294-4a79-a063-620e0f5bc618",
+  "versionCounter": 1,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "m11-cron-segunda",
+      "name": "Segunda 07:30",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        200,
+        160
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 7 * * 1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "m11-cron-quarta",
+      "name": "Quarta 18:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        200,
+        320
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 18 * * 3"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "m11-cron-sexta",
+      "name": "Sexta 18:30",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        200,
+        480
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 18 * * 5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "m11-cron-upsell",
+      "name": "Diário 10:00 (Upsell 30d)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        200,
+        640
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 10 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "m11-hook",
+      "name": "Webhook Teste Proativo VIP",
+      "webhookId": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        200,
+        800
+      ],
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "teste-personal-proativo-vip",
+        "responseMode": "onReceived"
+      }
+    },
+    {
+      "id": "m11-sb",
+      "name": "Buscar Alunos VIP Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        400
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://qkopgftfrfftoyndhhfj.supabase.co/rest/v1/fichas_alunos?status_acompanhamento=eq.ativo&select=*",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrb3BnZnRmcmZmdG95bmRoaGZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MTgwMTU4MywiZXhwIjoyMTA3Mzc3NTgzfQ.S_RRdnI6SZTVR1UH7jryDVHf316YmnMOVEBuoedyKv8"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrb3BnZnRmcmZmdG95bmRoaGZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MTgwMTU4MywiZXhwIjoyMTA3Mzc3NTgzfQ.S_RRdnI6SZTVR1UH7jryDVHf316YmnMOVEBuoedyKv8"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "neverError": true
+          }
+        }
+      }
+    },
+    {
+      "id": "m11-code",
+      "name": "Gerar Mensagens Proativas Marcão",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        400
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst alunos = $('Buscar Alunos VIP Supabase').all().map(i => i.json);\nconst agora = new Date();\nconst diaSemana = agora.getDay(); // 0=Dom, 1=Seg, 2=Ter, 3=Qua, 4=Qui, 5=Sex, 6=Sab\nconst hora = agora.getHours();\nconst disparos = [];\n\n// Função anti-mock\nfunction ehMock(num) {\n  if (!num) return true;\n  const dig = num.replace(/\\D/g, '');\n  if (dig.length < 10) return true;\n  if (['5532984587255', '553284587255', '553285066687'].includes(dig)) return false;\n  const mocks = ['99998888', '99997777', '988881111', '123456', '000000'];\n  return mocks.some(m => dig.includes(m));\n}\n\nfor (const a of alunos) {\n  if (!a.telefone || ehMock(a.telefone)) continue;\n  const nome = a.nome || a.nome_aluno ? (a.nome || a.nome_aluno).split(' ')[0] : 'Guerreiro';\n  const treino = a.treino_divisao || a.treino_atual || {};\n  const treinoA = treino.treino_a || 'Peitoral & Ombros';\n  const obj = (a.objetivo || '').toLowerCase();\n  const restricoes = (a.restricoes_saude || '').toLowerCase();\n\n  // 1. Verificação de Upsell de 30 dias\n  let diasAtivos = 0;\n  if (a.created_at || a.criado_em) {\n    const inicio = new Date(a.created_at || a.criado_em);\n    diasAtivos = Math.floor((agora - inicio) / (1000 * 60 * 60 * 24));\n  }\n\n  let elegivelUpsell = false;\n  if (diasAtivos >= 28) {\n    if (!a.ultimo_upsell_em && !a.ultimo_upsell_data) {\n      elegivelUpsell = true;\n    } else {\n      const ultUpsell = new Date(a.ultimo_upsell_em || a.ultimo_upsell_data);\n      const diasDesdeUlt = Math.floor((agora - ultUpsell) / (1000 * 60 * 60 * 24));\n      if (diasDesdeUlt >= 28) elegivelUpsell = true;\n    }\n  }\n\n  // Determinar se é teste manual ou rotina por cron\n  const isTeste = $input.first().json.query && $input.first().json.query.teste;\n\n  if (elegivelUpsell && hora >= 9 && hora <= 11) {\n    let msgUpsell = '';\n    if (restricoes.includes('dor') || restricoes.includes('joelho') || restricoes.includes('coluna')) {\n      msgUpsell = `Fala, ${nome}! Fechando nosso ciclo de 30 dias de acompanhamento firme! 👊\\n\\nComo você me falou daquela sensibilidade nas articulações, muitos alunos meus zeram o incômodo usando o Colágeno Tipo II com Cúrcuma e Magnésio da nossa loja oficial: https://marcaopersonal.com#produtos\\n\\nSem pressão nenhuma, é recomendação técnica de treinador pra proteger sua estrutura! Bora pro treino!`;\n    } else if (obj.includes('massa') || obj.includes('hipertrofia') || obj.includes('força')) {\n      msgUpsell = `Fala, ${nome}! Completamos 30 dias de treino consistente, parabéns pela dedicação! 🔥\\n\\nPra essa fase de progressão de carga e ganho de volume muscular seco, a Creatina monohidratada 100% pura é o suplemento número 1 do mundo com comprovação total. Dá um confere lá no site oficial: https://marcaopersonal.com#produtos\\n\\nVai te dar aquela força na última repetição! Tamo junto!`;\n    } else {\n      msgUpsell = `Fala, ${nome}! 30 dias de foco e evolução na balança! Orgulho demais da sua disciplina! 🦁\\n\\nNormalmente a partir do primeiro mês o metabolismo dá uma desacelerada natural pra defender a gordura. Pra manter a queima acelerada e evitar aquele platô chato de estagnação, o ativador Azempika do nosso site ajuda demais a controlar apetite e acelerar a queima: https://marcaopersonal.com#produtos\\n\\nSe fizer sentido pra sua rotina, dá um confere lá!`;\n    }\n\n    disparos.push({\n      telefone: a.telefone,\n      remote_jid: a.remote_jid,\n      tipo: 'upsell_30dias',\n      eh_upsell: true,\n      texto: msgUpsell\n    });\n  } else if (diaSemana === 1 || isTeste === 'segunda') {\n    // Segunda-feira (07:30)\n    disparos.push({\n      telefone: a.telefone,\n      remote_jid: a.remote_jid,\n      tipo: 'checkin_segunda',\n      eh_upsell: false,\n      texto: `Fala, ${nome}! 🦁 Marcão na área! Segunda-feira é dia sagrado de recomeço com foco total!\\n\\nPrimeira missão do dia em jejum: sobe na sua Balança de Bioimpedância e me manda o print ou peso aqui! Sua meta hoje é água na garrafa (35ml por kg) e foco no Treino A (${treinoA})!\\n\\nBora começar a semana vencendo! Tamo junto!`\n    });\n  } else if (diaSemana === 3 || isTeste === 'quarta') {\n    // Quarta-feira (18:00)\n    disparos.push({\n      telefone: a.telefone,\n      remote_jid: a.remote_jid,\n      tipo: 'checkin_quarta',\n      eh_upsell: false,\n      texto: `E aí, ${nome}! 👊 Quarta-feira, metade da semana vencida! Como tá a pegada dos treinos?\\n\\nPassando pra checar se o treino de hoje já tá pago! Me manda uma foto do seu prato de almoço ou jantar aqui pra eu dar uma olhada nos seus macros e calibrar sua dieta!\\n\\nMantém o ritmo firme, guerreiro!`\n    });\n  } else if (diaSemana === 5 || isTeste === 'sexta') {\n    // Sexta-feira (18:30)\n    disparos.push({\n      telefone: a.telefone,\n      remote_jid: a.remote_jid,\n      tipo: 'checkin_sexta',\n      eh_upsell: false,\n      texto: `Fala, ${nome}! 🦁 Sextou com a sensação de dever cumprido!\\n\\nFechamos a meta semanal de treinos com chave de ouro! Agora no fim de semana, descanso com moderação e nada de jogar fora o esforço dos últimos 5 dias, combinado?\\n\\nSegura a hidratação e excelente descanso!`\n    });\n  }\n}\n\nreturn disparos.map(d => ({ json: d }));\n"
+      }
+    },
+    {
+      "id": "m11-evo",
+      "name": "Disparar WhatsApp Marcão",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        400
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://evolution.marcaopersonal.com/message/sendText/sofia",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "Marcao_Evo_Key_2026_Secure!"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"number\": \"{{ $json.telefone }}\",\n  \"text\": \"{{ $json.texto }}\"\n}",
+        "options": {
+          "response": {
+            "neverError": true
+          }
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Segunda 07:30": {
+      "main": [
+        [
+          {
+            "node": "Buscar Alunos VIP Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Quarta 18:00": {
+      "main": [
+        [
+          {
+            "node": "Buscar Alunos VIP Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sexta 18:30": {
+      "main": [
+        [
+          {
+            "node": "Buscar Alunos VIP Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Diário 10:00 (Upsell 30d)": {
+      "main": [
+        [
+          {
+            "node": "Buscar Alunos VIP Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Teste Proativo VIP": {
+      "main": [
+        [
+          {
+            "node": "Buscar Alunos VIP Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Alunos VIP Supabase": {
+      "main": [
+        [
+          {
+            "node": "Gerar Mensagens Proativas Marcão",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gerar Mensagens Proativas Marcão": {
+      "main": [
+        [
+          {
+            "node": "Disparar WhatsApp Marcão",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "timezone": "America/Sao_Paulo",
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "twaIdBJADtfS8evK",
+      "projectId": "o73CYLdeW5HvCHUj",
+      "project": {
+        "id": "o73CYLdeW5HvCHUj",
+        "name": "Evandrosilva Silva <silvaev549@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "5f37e26b-bd4f-4342-84e1-d7060e6c7c97",
+        "createdAt": "2026-10-11T16:32:09.514Z",
+        "updatedAt": "2026-10-11T16:48:24.539Z"
+      },
+      "createdAt": "2026-10-13T12:25:54.060Z",
+      "updatedAt": "2026-10-13T12:25:54.060Z"
+    }
+  ],
+  "activeVersion": null,
+  "parentFolder": null
+}

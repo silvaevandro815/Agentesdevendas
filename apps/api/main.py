@@ -820,3 +820,72 @@ async def lead_scoring_api(req: LeadScoringRequest):
 async def cfo_metricas_api():
     """Retorna métricas consolidadas de vendas, faturamento bruto, custos e ROAS."""
     return await obter_metricas_cfo_consolidadas()
+
+# -------------------------------------------------------------------------
+# 7. MOTOR DE FICHAS DE ALUNO, ANAMNESE E CRIPTOGRAFIA LGPD
+# -------------------------------------------------------------------------
+try:
+    from fichas_engine import (
+        buscar_ou_criar_ficha_aluno,
+        processar_etapa_onboarding,
+        armazenar_foto_aluno_criptografada,
+        avaliar_prato_comida,
+        verificar_e_gerar_upsell_30dias,
+        disparar_rotina_proativa_vip
+    )
+except ImportError:
+    from apps.api.fichas_engine import (
+        buscar_ou_criar_ficha_aluno,
+        processar_etapa_onboarding,
+        armazenar_foto_aluno_criptografada,
+        avaliar_prato_comida,
+        verificar_e_gerar_upsell_30dias,
+        disparar_rotina_proativa_vip
+    )
+
+@app.get("/api/fichas/{telefone}")
+async def obter_ficha_aluno_api(telefone: str):
+    """Retorna a ficha de anamnese completa do aluno pelo telefone."""
+    remote_jid = f"{telefone}@s.whatsapp.net"
+    return await buscar_ou_criar_ficha_aluno(remote_jid, telefone, "Aluno")
+
+class FichaOnboardingRequest(BaseModel):
+    telefone: str
+    nome: Optional[str] = "Aluno"
+    mensagem: str
+
+@app.post("/api/fichas/onboarding")
+async def onboarding_aluno_api(req: FichaOnboardingRequest):
+    """Executa etapa de anamnese conversacional guiada para preenchimento de ficha."""
+    remote_jid = f"{req.telefone}@s.whatsapp.net"
+    ficha = await buscar_ou_criar_ficha_aluno(remote_jid, req.telefone, req.nome)
+    return await processar_etapa_onboarding(remote_jid, req.telefone, req.nome, req.mensagem, ficha)
+
+class FotoCriptoRequest(BaseModel):
+    telefone: str
+    imagem_base64: str
+    tipo_foto: Optional[str] = "frente_costas"
+
+@app.post("/api/fichas/foto-criptografada")
+async def salvar_foto_criptografada_api(req: FotoCriptoRequest):
+    """Criptografa via AES-256 Fernet a foto de evolução do aluno e salva no Supabase (LGPD)."""
+    remote_jid = f"{req.telefone}@s.whatsapp.net"
+    return await armazenar_foto_aluno_criptografada(remote_jid, req.imagem_base64, req.tipo_foto)
+
+class AvaliarPratoRequest(BaseModel):
+    nome: Optional[str] = "Guerreiro"
+    imagem_base64: str
+
+@app.post("/api/fichas/avaliar-prato")
+async def avaliar_prato_api(req: AvaliarPratoRequest):
+    """Avaliação por visão computacional do prato de comida e estimativa de macros."""
+    avaliacao = await avaliar_prato_comida(req.imagem_base64, req.nome)
+    return {"sucesso": True, "avaliacao": avaliacao}
+
+class ProativoCronRequest(BaseModel):
+    tipo_dia: str  # 'segunda', 'quarta', 'sexta', 'upsell_30dias'
+
+@app.post("/api/fichas/proativo-cron")
+async def proativo_cron_api(req: ProativoCronRequest):
+    """Dispara a rotina proativa do Marcão Personal no WhatsApp (Segunda, Quarta, Sexta ou Upsell 30d)."""
+    return await disparar_rotina_proativa_vip(req.tipo_dia)

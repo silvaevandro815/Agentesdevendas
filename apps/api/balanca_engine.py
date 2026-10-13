@@ -292,6 +292,24 @@ async def verificar_status_vip(telefone: str) -> dict:
                     "ultimo_peso": c.get("ultimo_peso"),
                     "ultima_gordura": c.get("ultima_gordura_pct")
                 }
+
+            # Verificação secundária na tabela fichas_alunos
+            res_ficha = await client.get(
+                f"{SUPABASE_URL}/rest/v1/fichas_alunos?telefone=eq.{telefone}",
+                headers=headers
+            )
+            if res_ficha.status_code == 200 and res_ficha.json():
+                fa = res_ficha.json()[0]
+                return {
+                    "tem_balanca": True,
+                    "nome": fa.get("nome_aluno"),
+                    "dias_restantes": 90,
+                    "status_vip": fa.get("status_acompanhamento", "ativo"),
+                    "streak_dias": 1,
+                    "link_renovacao": "https://marcaopersonal.com#renovacao-vip",
+                    "ultimo_peso": None,
+                    "ultima_gordura": None
+                }
     except Exception:
         pass
     return {"tem_balanca": False, "dias_restantes": 0, "status_vip": "sem_balanca"}

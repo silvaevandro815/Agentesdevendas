@@ -24,12 +24,26 @@ try:
         registrar_ou_atualizar_cliente_balanca,
         processar_lead_scoring_inteligente
     )
+    from fichas_engine import (
+        buscar_ou_criar_ficha_aluno,
+        processar_etapa_onboarding,
+        armazenar_foto_aluno_criptografada,
+        avaliar_prato_comida,
+        verificar_e_gerar_upsell_30dias
+    )
 except ImportError:
     from apps.api.balanca_engine import (
         verificar_status_vip,
         escanear_tela_bioimpedancia,
         registrar_ou_atualizar_cliente_balanca,
         processar_lead_scoring_inteligente
+    )
+    from apps.api.fichas_engine import (
+        buscar_ou_criar_ficha_aluno,
+        processar_etapa_onboarding,
+        armazenar_foto_aluno_criptografada,
+        avaliar_prato_comida,
+        verificar_e_gerar_upsell_30dias
     )
 
 def identificar_genero(push_name: str) -> str:
@@ -541,19 +555,97 @@ async def processar_mensagem_marcao(payload_webhook: dict) -> dict:
     streak_vip = status_vip_info.get("streak_dias", 1)
     status_vip_str = status_vip_info.get("status_vip", "sem_balanca")
 
+    ficha_aluno = None
+    if tem_balanca and not is_evandro:
+        try:
+            ficha_aluno = await buscar_ou_criar_ficha_aluno(f"{target_number}@s.whatsapp.net", target_number, push_name or primeiro_nome)
+            etapa_onb = ficha_aluno.get("etapa_onboarding", 0)
+
+            # Se o aluno VIP ainda não concluiu o onboarding guiado (etapas 0 a 4)
+            if etapa_onb < 5:
+                res_onb = await processar_etapa_onboarding(
+                    remote_jid=f"{target_number}@s.whatsapp.net",
+                    telefone=target_number,
+                    nome=push_name or primeiro_nome,
+                    texto_recebido=texto_recebido,
+                    ficha=ficha_aluno
+                )
+                if res_onb.get("resposta"):
+                    resp_onb_texto = res_onb["resposta"]
+                    historico_mensagens.append({"role": "user", "content": texto_recebido, "timestamp": datetime.now().isoformat()})
+                    historico_mensagens.append({"role": "assistant", "content": resp_onb_texto, "timestamp": datetime.now().isoformat()})
+                    await salvar_historico_lead(f"{target_number}@s.whatsapp.net", target_number, push_name, historico_mensagens, texto_recebido)
+
+                    parags = [p.strip() for p in resp_onb_texto.split("\n\n") if p.strip()]
+                    for i, p in enumerate(parags):
+                        await enviar_presenca(target_number, "composing", delay_ms=2000)
+                        await asyncio.sleep(1.2)
+                        await enviar_texto_whatsapp(target_number, p)
+                        if i < len(parags) - 1:
+                            await asyncio.sleep(1.0)
+                    return {
+                        "sucesso": True,
+                        "tipo": "onboarding_anamnese",
+                        "target": target_number,
+                        "etapa": etapa_onb,
+                        "resposta": resp_onb_texto
+                    }
+
+            # Se mandou foto de refeição/prato
+            eh_foto_comida = any(w in texto_recebido.lower() for w in ["prato", "comida", "almoço", "almoco", "jantar", "janta", "refeição", "refeicao", "dieta", "comendo"])
+            if is_foto and media_b64 and eh_foto_comida:
+                avaliacao_prato = await avaliar_prato_comida(media_b64, primeiro_nome)
+                if avaliacao_prato:
+                    historico_mensagens.append({"role": "user", "content": f"[Foto de prato de refeição]: {texto_recebido}", "timestamp": datetime.now().isoformat()})
+                    historico_mensagens.append({"role": "assistant", "content": avaliacao_prato, "timestamp": datetime.now().isoformat()})
+                    await salvar_historico_lead(f"{target_number}@s.whatsapp.net", target_number, push_name, historico_mensagens, texto_recebido)
+
+                    parags = [p.strip() for p in avaliacao_prato.split("\n\n") if p.strip()]
+                    for i, p in enumerate(parags):
+                        await enviar_presenca(target_number, "composing", delay_ms=2500)
+                        await asyncio.sleep(1.5)
+                        await enviar_texto_whatsapp(target_number, p)
+                        if i < len(parags) - 1:
+                            await asyncio.sleep(1.0)
+                    return {
+                        "sucesso": True,
+                        "tipo": "analise_prato",
+                        "target": target_number,
+                        "resposta": avaliacao_prato
+                    }
+
+            # Se mandou foto corporal e autorizou LGPD
+            if is_foto and media_b64 and ficha_aluno and ficha_aluno.get("consentimento_lgpd"):
+                asyncio.create_task(armazenar_foto_aluno_criptografada(f"{target_number}@s.whatsapp.net", media_b64, "frente_costas"))
+        except Exception as e_onb:
+            print(f"[MARCAO_ENGINE] Erro no processamento da ficha/VIP: {e_onb}")
+
     if not is_evandro:
         asyncio.create_task(processar_lead_scoring_inteligente(f"{target_number}@s.whatsapp.net", target_number, push_name, texto_recebido, historico_mensagens))
 
     if is_evandro:
         instrucao_vip = "O interlocutor é o Diretor Evandro. Nenhuma restrição se aplica."
     elif tem_balanca:
+        obj_ficha = (ficha_aluno.get("objetivo") or "Definição corporal") if ficha_aluno else "Definição corporal"
+        rest_ficha = (ficha_aluno.get("restricoes_saude") or "Nenhuma restrição articular informada") if ficha_aluno else "Nenhuma restrição"
+        loc_ficha = (ficha_aluno.get("local_treino") or "Academia") if ficha_aluno else "Academia"
+        dias_ficha = (ficha_aluno.get("dias_disponiveis_semana") or 3) if ficha_aluno else 3
+        t_atual = (ficha_aluno.get("treino_atual") or {}) if ficha_aluno else {}
+        treino_resumo = f"A: {t_atual.get('treino_a', 'Peito/Ombro')} | B: {t_atual.get('treino_b', 'Costas/Bíceps')} | C: {t_atual.get('treino_c', 'Pernas')}" if t_atual else "Divisão ABC personalizada"
+
         instrucao_vip = (
             f"ALUNO VIP DA BALANÇA 360° ({primeiro_nome}):\n"
             f"- Possui a Balança de Bioimpedância oficial com app!\n"
             f"- Streak de foco: {streak_vip} check-ins realizados!\n"
             f"- Dias restantes do acompanhamento gratuito de 3 meses: {dias_restantes_vip} dias (de 90 dias).\n"
             f"- Status: {status_vip_str}.\n"
-            "- Você tem TOTAL AUTORIZAÇÃO para analisar o shape dele por fotos (frente/costas), avaliar exames e prescrever treinos/macros!\n"
+            f"- FICHA INDIVIDUAL DE ANAMNESE (MEMÓRIA VIVA DO COACH):\n"
+            f"  * Objetivo do Aluno: {obj_ficha}\n"
+            f"  * Restrições / Dores Articulares: {rest_ficha} (PROTEJA ESSAS ARTICULAÇÕES EM QUALQUER PRESCRIÇÃO!)\n"
+            f"  * Rotina de Treino: {dias_ficha} dias na semana ({loc_ficha})\n"
+            f"  * Estrutura de Treino Ativa: {treino_resumo}\n"
+            f"  * Segurança LGPD: Foto Criptografada AES-256 no banco militar do Supabase com consentimento formal.\n"
+            f"- Você tem TOTAL AUTORIZAÇÃO para analisar o shape dele por fotos (frente/costas), avaliar pratos e calibrar treinos!\n"
             f"- REGRA DOS 3 MESES (TRANSIÇÃO PÓS-90 DIAS): Se faltarem 10 dias ou menos (dias_restantes <= 10), elogie a evolução do aluno e informe com carinho que para continuar com seus check-ins semanais e mentoria direta no WhatsApp, a taxa simbólica é de apenas R$ 19,90/mês no link https://marcaopersonal.com#renovacao-vip."
         )
     else:
