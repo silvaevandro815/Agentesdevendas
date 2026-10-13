@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Centro de Comando — Sua Empresa 24h</title>
+  <title>Centro de Comando — Marcão Personal 24h</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg-dark: #0a0c10;
@@ -20,6 +20,7 @@
       --accent-purple: #8957e5;
       --accent-orange: #d29922;
       --badge-bg: #1f242e;
+      --danger-red: #da3633;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -56,7 +57,7 @@
     .subtitle {
       font-size: 14px;
       color: var(--text-muted);
-      max-width: 750px;
+      max-width: 850px;
       margin-bottom: 24px;
     }
 
@@ -64,7 +65,7 @@
     .tabs {
       display: flex;
       gap: 12px;
-      margin-bottom: 30px;
+      margin-bottom: 25px;
       border-bottom: 1px solid var(--card-border);
       padding-bottom: 12px;
     }
@@ -73,10 +74,10 @@
       background: transparent;
       border: 1px solid var(--card-border);
       color: var(--text-muted);
-      padding: 8px 18px;
+      padding: 9px 20px;
       border-radius: 8px;
       font-size: 13px;
-      font-weight: 500;
+      font-weight: 600;
       cursor: pointer;
       transition: all 0.2s;
     }
@@ -87,36 +88,169 @@
       color: var(--text-main);
     }
 
-    /* Section Styles */
-    .section-title {
+    /* Approvals Panel */
+    .filter-bar {
       display: flex;
-      align-items: baseline;
-      gap: 12px;
-      margin-top: 35px;
-      margin-bottom: 18px;
+      gap: 10px;
+      margin-bottom: 20px;
+      align-items: center;
     }
 
-    .section-title h2 {
-      font-size: 18px;
+    .filter-btn {
+      background: #141822;
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .filter-btn.active {
+      background: var(--accent-blue);
+      border-color: var(--accent-blue);
+      color: white;
       font-weight: 600;
     }
 
-    .section-title span {
+    .approval-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 20px;
+      transition: border-color 0.2s;
+    }
+
+    .approval-card.rui-card {
+      border-left: 4px solid var(--accent-cyan);
+    }
+
+    .approval-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .approval-meta {
+      display: flex;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--accent-cyan);
+      font-weight: 600;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .approval-status-badge {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .status-pending { background: #3b2a08; color: #f0b429; border: 1px solid #744210; }
+    .status-approved { background: #0e3818; color: #38d39f; border: 1px solid #1c6b30; }
+    .status-paused { background: #252836; color: #8b949e; border: 1px solid #3d4455; }
+    .status-rejected { background: #3b1111; color: #f85149; border: 1px solid #781c1c; }
+
+    .approval-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--text-main);
+    }
+
+    .approval-body {
+      background: #0d1017;
+      padding: 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      color: #c9d1d9;
+      white-space: pre-line;
+      margin-bottom: 16px;
+      border: 1px solid #1c2230;
+      line-height: 1.6;
+    }
+
+    /* Budget Control Box */
+    .budget-control-box {
+      background: #151a24;
+      border: 1px solid #232b3c;
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .budget-control-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent-orange);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .budget-input-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .budget-input-group label {
       font-size: 12px;
       color: var(--text-muted);
-      font-style: italic;
     }
 
-    .badge-count {
-      margin-left: auto;
-      font-size: 11px;
-      color: var(--text-muted);
-      background: var(--card-border);
-      padding: 2px 10px;
-      border-radius: 12px;
+    .budget-input-group input {
+      background: #0a0c10;
+      border: 1px solid #2c3547;
+      color: var(--text-main);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      width: 90px;
     }
 
-    /* Agent Grid */
+    .approval-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 9px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.2s, transform 0.1s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn:hover { opacity: 0.9; }
+    .btn:active { transform: scale(0.98); }
+
+    .btn-approve { background: var(--accent-green); color: white; }
+    .btn-budget { background: var(--accent-orange); color: #0a0c10; font-weight: 700; }
+    .btn-pause { background: #30363d; color: var(--text-main); border: 1px solid #484f58; }
+    .btn-reject { background: #21262d; color: var(--danger-red); border: 1px solid #363b42; }
+
+    /* Organograma & Agentes */
     .agent-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -131,12 +265,6 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      transition: transform 0.2s, border-color 0.2s;
-    }
-
-    .agent-card:hover {
-      transform: translateY(-2px);
-      border-color: #2d3748;
     }
 
     .agent-header {
@@ -150,459 +278,401 @@
       width: 44px;
       height: 44px;
       border-radius: 10px;
-      background: #181d28;
+      background: #1b212d;
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 1px solid #2a3346;
-    }
-
-    .agent-avatar svg {
-      width: 22px;
-      height: 22px;
-      stroke: var(--accent-cyan);
-    }
-
-    .agent-name {
-      font-size: 16px;
-      font-weight: 600;
-    }
-
-    .agent-role {
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-
-    .agent-tagline {
-      font-size: 13px;
-      font-style: italic;
-      color: #b0b8c4;
-      margin-bottom: 14px;
-    }
-
-    .agent-badges {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 18px;
-    }
-
-    .badge {
-      background: var(--badge-bg);
-      color: #9aa5b5;
-      font-size: 11px;
-      padding: 4px 10px;
-      border-radius: 6px;
-      border: 1px solid #242b38;
-    }
-
-    .agent-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-top: 12px;
-      border-top: 1px solid #1a202c;
-    }
-
-    .status-tag {
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--accent-green);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .status-tag::before {
-      content: "";
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--accent-green);
-    }
-
-    /* Approvals Panel */
-    .approval-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 16px;
-    }
-
-    .approval-meta {
-      display: flex;
-      gap: 12px;
-      font-size: 12px;
       color: var(--accent-cyan);
-      margin-bottom: 8px;
-      font-weight: 600;
     }
 
-    .approval-title {
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
+    .agent-name { font-size: 16px; font-weight: 700; }
+    .agent-role { font-size: 12px; color: var(--text-muted); }
+    .agent-tagline { font-size: 13px; color: #a0aec0; margin-bottom: 12px; }
+    .agent-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+    .badge { font-size: 10px; background: var(--badge-bg); color: var(--accent-cyan); padding: 3px 8px; border-radius: 4px; border: 1px solid #232b3c; }
+    .agent-footer { border-top: 1px solid #1a202c; padding-top: 10px; font-size: 11px; color: var(--accent-green); font-weight: 600; }
 
-    .approval-body {
-      background: #0d1017;
-      padding: 14px;
+    .toast-msg {
+      position: fixed;
+      bottom: 25px;
+      right: 25px;
+      background: #161b22;
+      border: 1px solid var(--accent-cyan);
+      color: white;
+      padding: 12px 20px;
       border-radius: 8px;
       font-size: 13px;
-      color: #c9d1d9;
-      white-space: pre-line;
-      margin-bottom: 14px;
-      border: 1px solid #1c2230;
-    }
-
-    .approval-actions {
-      display: flex;
-      gap: 10px;
-    }
-
-    .btn-approve {
-      background: var(--accent-green);
-      color: white;
-      border: none;
-      padding: 8px 18px;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .btn-reject {
-      background: #da3633;
-      color: white;
-      border: none;
-      padding: 8px 18px;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .badge-budget {
-      background: #2b2313;
-      color: #e3b341;
-      border: 1px solid #4d3e18;
-      font-size: 11px;
-      padding: 3px 8px;
-      border-radius: 4px;
-      display: inline-block;
-      margin-bottom: 10px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      z-index: 999;
+      display: none;
     }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <div class="header-tag">Sua Empresa 24h &bull; Centro de Comando</div>
-    <h1>Monte sua empresa que trabalha 24h</h1>
-    <p class="subtitle">Especialistas prontos: aprove criativos, audite campanhas e converse com o cérebro da marca. Cada agente age sob sua supervisão e cumpre as metas do mês.</p>
+    <div class="header-tag">Painel Executivo &bull; Centro de Comando</div>
+    <h1>Centro de Comando Marcão Personal</h1>
+    <p class="subtitle">Supervisão autônoma com Human-in-the-Loop: aprove criativos, gerencie campanhas do Meta Ads e altere orçamentos com 1 clique sem consumir tokens de LLM no WhatsApp.</p>
 
     <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('agents')">Organograma & Agentes</button>
-      <button class="tab-btn" onclick="switchTab('approvals')">Aprovações do Diretor (Human-in-the-Loop) <span id="count-pending" style="color:var(--accent-cyan); font-weight:700;"></span></button>
+      <button class="tab-btn active" onclick="switchTab('approvals')">Decisões & Tráfego Pago (Rui) <span id="count-pending" style="color:var(--accent-cyan); font-weight:700;"></span></button>
+      <button class="tab-btn" onclick="switchTab('creatives')">📸 Fábrica de Criativos Instagram (2x/dia)</button>
+      <button class="tab-btn" onclick="switchTab('agents')">Organograma & Agentes 24h</button>
     </div>
 
-    <!-- TAB 1: Organograma de Agentes -->
-    <div id="tab-agents">
-      <!-- Marketing -->
-      <div class="section-title">
-        <h2>Marketing & Conteúdo</h2>
-        <span>Quem faz sua marca aparecer</span>
-        <span class="badge-count">5 especialistas &bull; 5 no time</span>
-      </div>
-      <div class="agent-grid">
-        <div class="agent-card">
-          <div>
-            <div class="agent-header">
-              <div class="agent-avatar"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg></div>
-              <div><div class="agent-name">Bela</div><div class="agent-role">Redatora de Conteúdo & SEO</div></div>
-            </div>
-            <div class="agent-tagline">Encontrada no Google</div>
-            <div class="agent-badges">
-              <span class="badge">artigo-seo</span>
-              <span class="badge">Buscar no Cérebro</span>
-              <span class="badge">Emitir artefato</span>
-            </div>
-          </div>
-          <div class="agent-footer"><span class="status-tag">No seu time</span></div>
-        </div>
-
-        <div class="agent-card">
-          <div>
-            <div class="agent-header">
-              <div class="agent-avatar"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg></div>
-              <div><div class="agent-name">Lia</div><div class="agent-role">Copywriter Persuasiva</div></div>
-            </div>
-            <div class="agent-tagline">Copy que converte</div>
-            <div class="agent-badges">
-              <span class="badge">copywriting</span>
-              <span class="badge">landing-page-conversao</span>
-              <span class="badge">Estúdio de copy</span>
-            </div>
-          </div>
-          <div class="agent-footer"><span class="status-tag">No seu time</span></div>
-        </div>
-
-        <div class="agent-card">
-          <div>
-            <div class="agent-header">
-              <div class="agent-avatar"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line></svg></div>
-              <div><div class="agent-name">Téo</div><div class="agent-role">Criador de Conteúdo Visual</div></div>
-            </div>
-            <div class="agent-tagline">Vídeos e roteiros virais</div>
-            <div class="agent-badges">
-              <span class="badge">roteiros-reels</span>
-              <span class="badge">ugc-tiktok</span>
-              <span class="badge">Buscar no Cérebro</span>
-            </div>
-          </div>
-          <div class="agent-footer"><span class="status-tag">No seu time</span></div>
-        </div>
-
-        <div class="agent-card">
-          <div>
-            <div class="agent-header">
-              <div class="agent-avatar"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M16 12l-4-4-4 4M12 16V8"></path></svg></div>
-              <div><div class="agent-name">Rui</div><div class="agent-role">Gestor de Tráfego Pago</div></div>
-            </div>
-            <div class="agent-tagline">Campanhas Cirúrgicas</div>
-            <div class="agent-badges">
-              <span class="badge">meta-ads</span>
-              <span class="badge">teto-diario (R$16,50)</span>
-              <span class="badge">pausado-p-aprovacao</span>
-            </div>
-          </div>
-          <div class="agent-footer"><span class="status-tag">No seu time</span></div>
-        </div>
-
-        <div class="agent-card">
-          <div>
-            <div class="agent-header">
-              <div class="agent-avatar"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></div>
-              <div><div class="agent-name">Nina</div><div class="agent-role">Social Media</div></div>
-            </div>
-            <div class="agent-tagline">Presença e calendário 7 dias</div>
-            <div class="agent-badges">
-              <span class="badge">calendario-editorial</span>
-              <span class="badge">instagram-tiktok</span>
-              <span class="badge">agendamento-auto</span>
-            </div>
-          </div>
-          <div class="agent-footer"><span class="status-tag">No seu time</span></div>
-        </div>
+    <!-- TAB 1: Central de Aprovações & Tráfego Rui -->
+    <div id="tab-approvals">
+      <div class="filter-bar">
+        <span style="font-size:12px; color:var(--text-muted); font-weight:600;">Filtrar:</span>
+        <button class="filter-btn active" onclick="filterApprovals('all')">Todas</button>
+        <button class="filter-btn" onclick="filterApprovals('Rui')">Tráfego Pago (Rui)</button>
+        <button class="filter-btn" onclick="filterApprovals('Marketing')">Criativos & Cópias</button>
       </div>
 
-      <!-- Vendas & Atendimento -->
-      <div class="section-title">
-        <h2>Vendas & Atendimento</h2>
-        <span>Quem vende e responde enquanto você dorme</span>
-        <span class="badge-count">2 especialistas &bull; 2 no time</span>
-      </div>
-      <div class="agent-grid">
-        <div class="agent-card">
-          <div>
-            <div class="agent-header">
-              <div class="agent-avatar"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg></div>
-              <div><div class="agent-name">Sofia</div><div class="agent-role">Atendimento WhatsApp 24h</div></div>
-            </div>
-            <div class="agent-tagline">Cliente respondido em minutos</div>
-            <div class="agent-badges">
-              <span class="badge">playbook-atendimento</span>
-              <span class="badge">Buscar no Cérebro</span>
-              <span class="badge">fechamento-suave</span>
-            </div>
-          </div>
-          <div class="agent-footer"><span class="status-tag">No seu time</span></div>
-        </div>
-
-        <div class="agent-card">
-          <div>
-            <div class="agent-header">
-              <div class="agent-avatar"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg></div>
-              <div><div class="agent-name">Davi</div><div class="agent-role">Vendedor & Recuperador</div></div>
-            </div>
-            <div class="agent-tagline">Nenhum lead esfria</div>
-            <div class="agent-badges">
-              <span class="badge">follow-up-vendas</span>
-              <span class="badge">max-3-toques</span>
-              <span class="badge">recupera-carrinho</span>
-            </div>
-          </div>
-          <div class="agent-footer"><span class="status-tag">No seu time</span></div>
-        </div>
-      </div>
-
-      <!-- Financeiro & Dados -->
-      <div class="section-title">
-        <h2>Financeiro & Dados</h2>
-        <span>Quem cuida do caixa e enxerga os números</span>
-        <span class="badge-count">2 especialistas &bull; 2 no time</span>
-      </div>
-      <div class="agent-grid">
-        <div class="agent-card">
-          <div>
-            <div class="agent-header">
-              <div class="agent-avatar"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg></div>
-              <div><div class="agent-name">Iago</div><div class="agent-role">Analista de Dados</div></div>
-            </div>
-            <div class="agent-tagline">Números que decidem (Relatório 21h)</div>
-            <div class="agent-badges">
-              <span class="badge">relatorio-executivo</span>
-              <span class="badge">roas-e-cpa</span>
-              <span class="badge">Emitir artefato</span>
-            </div>
-          </div>
-          <div class="agent-footer"><span class="status-tag">No seu time</span></div>
-        </div>
-
-        <div class="agent-card">
-          <div>
-            <div class="agent-header">
-              <div class="agent-avatar"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg></div>
-              <div><div class="agent-name">Marta</div><div class="agent-role">Analista Financeira</div></div>
-            </div>
-            <div class="agent-tagline">O caixa sob controle</div>
-            <div class="agent-badges">
-              <span class="badge">fluxo-de-caixa</span>
-              <span class="badge">margem-liquida</span>
-              <span class="badge">Buscar no Cérebro</span>
-            </div>
-          </div>
-          <div class="agent-footer"><span class="status-tag">No seu time</span></div>
-        </div>
-      </div>
-
-      <!-- Operações, Gente & Jurídico -->
-      <div class="section-title">
-        <h2>Operações, Gente & Jurídico</h2>
-        <span>Quem faz a casa rodar redonda</span>
-        <span class="badge-count">3 especialistas &bull; 3 no time</span>
-      </div>
-      <div class="agent-grid">
-        <div class="agent-card">
-          <div>
-            <div class="agent-header">
-              <div class="agent-avatar"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></div>
-              <div><div class="agent-name">Alan</div><div class="agent-role">Jurídico & Compliance</div></div>
-            </div>
-            <div class="agent-tagline">Contrato e termos revisados</div>
-            <div class="agent-badges">
-              <span class="badge">conformidade-anvisa</span>
-              <span class="badge">lgpd-e-termos</span>
-              <span class="badge">anti-promessas-falsas</span>
-            </div>
-          </div>
-          <div class="agent-footer"><span class="status-tag">No seu time</span></div>
-        </div>
-
-        <div class="agent-card">
-          <div>
-            <div class="agent-header">
-              <div class="agent-avatar"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></div>
-              <div><div class="agent-name">Otto</div><div class="agent-role">Analista de Processos & Despacho</div></div>
-            </div>
-            <div class="agent-tagline">A empresa que roda sem você</div>
-            <div class="agent-badges">
-              <span class="badge">sop-processos</span>
-              <span class="badge">expedicao-sem-estoque</span>
-              <span class="badge">rastreio-automatico</span>
-            </div>
-          </div>
-          <div class="agent-footer"><span class="status-tag">No seu time</span></div>
-        </div>
-
-        <div class="agent-card">
-          <div>
-            <div class="agent-header">
-              <div class="agent-avatar"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></div>
-              <div><div class="agent-name">Paulo</div><div class="agent-role">RH & Onboarding de Agentes</div></div>
-            </div>
-            <div class="agent-tagline">Contrata certo, cuida do time</div>
-            <div class="agent-badges">
-              <span class="badge">contratacao-onboarding</span>
-              <span class="badge">Buscar no Cérebro</span>
-              <span class="badge">Emitir artefato</span>
-            </div>
-          </div>
-          <div class="agent-footer"><span class="status-tag">No seu time</span></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB 2: Central de Aprovações -->
-    <div id="tab-approvals" style="display:none;">
-      <div class="section-title">
-        <h2>Fila de Decisões &bull; Human-in-the-Loop</h2>
-        <span>Nenhum criativo é veiculado ou dinheiro gasto sem seu clique</span>
-      </div>
       <div id="approvals-container"></div>
     </div>
 
+    <!-- TAB 2: Fábrica de Criativos Instagram -->
+    <div id="tab-creatives" style="display:none;">
+      <div style="background:var(--card-bg); border:1px solid #232b3c; border-radius:12px; padding:24px; margin-bottom:24px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:20px;">
+          <div>
+            <h2 style="font-size:18px; color:var(--text-main); margin-bottom:4px;">Fábrica Autônoma de Criativos Ultra-Realistas</h2>
+            <p style="font-size:13px; color:var(--text-muted);">Gera imagens estéticas no padrão cyberpunk navy/cyan, copy revisada em Português e publica 2x ao dia no <strong>@marcaopersonalfitness</strong>.</p>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <button class="btn btn-approve" onclick="generateCreative('manha', 'carrossel')">🚀 Gerar Carrossel Manhã (11:30h)</button>
+            <button class="btn btn-budget" onclick="generateCreative('noite', 'card')">🎯 Gerar Card Venda (19:30h)</button>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:16px;">
+          <div style="background:#131822; border:1px solid #1f2737; border-radius:10px; padding:18px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+              <span class="badge" style="color:var(--accent-cyan);">POST 1 &bull; 11:30H MANHÃ</span>
+              <span style="font-size:11px; color:var(--accent-green); font-weight:600;">ALGORITMO ORGANICO</span>
+            </div>
+            <h3 style="font-size:15px; color:white; margin-bottom:8px;">Curiosidades, Ciência & Retenção</h3>
+            <p style="font-size:12px; color:var(--text-muted); line-height:1.5; margin-bottom:12px;">Baseado em buscas quentes do Google Trends Brasil (Mitos da Creatina, fome noturna às 22h, perda de colágeno aos 25 anos, ilusão da balança). Formato Carrossel com Começo, Meio e Fim.</p>
+            <div style="font-size:11px; color:#8590a2;">&bull; CTA: Pergunta de engajamento nos comentários e Link na Bio</div>
+          </div>
+
+          <div style="background:#131822; border:1px solid #1f2737; border-radius:10px; padding:18px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+              <span class="badge" style="color:var(--accent-orange);">POST 2 &bull; 19:30H NOITE</span>
+              <span style="font-size:11px; color:var(--accent-cyan); font-weight:600;">ELEGÍVEL PARA META ADS</span>
+            </div>
+            <h3 style="font-size:15px; color:white; margin-bottom:8px;">Venda de Produto & Conversão Direta</h3>
+            <p style="font-size:12px; color:var(--text-muted); line-height:1.5; margin-bottom:12px;">Foco nos 6 produtos oficiais (Creatina 100% Pura, Azempika, Colágeno, IArmonize, Vision Prime, Balança). Este post é selecionado automaticamente pelo Rui para impulsionar no tráfego pago!</p>
+            <div style="font-size:11px; color:#8590a2;">&bull; CTA: Toque no Link da Bio ou comente "QUERO" no Direct</div>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="font-size:16px; color:white; margin-bottom:14px; display:flex; align-items:center; gap:8px;">
+        <span>Últimos Criativos Publicados no Instagram</span>
+        <button onclick="loadRecentCreatives()" style="background:transparent; border:1px solid #2d3748; color:var(--text-muted); padding:3px 8px; border-radius:4px; font-size:11px; cursor:pointer;">Atualizar</button>
+      </h3>
+      <div id="recent-creatives-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:16px;">
+        <p style="color:var(--text-muted); font-size:13px;">Carregando posts recentes...</p>
+      </div>
+    </div>
+
+    <!-- TAB 3: Organograma de Agentes -->
+    <div id="tab-agents" style="display:none;">
+      <div class="agent-grid" id="agents-grid">
+        <!-- Renderizado dinamicamente -->
+      </div>
+    </div>
   </div>
 
+  <div class="toast-msg" id="toast"></div>
+
   <script>
+    let allApprovals = [];
+    let currentFilter = 'all';
+
+    function showToast(text) {
+      const t = document.getElementById('toast');
+      t.innerText = text;
+      t.style.display = 'block';
+      setTimeout(() => { t.style.display = 'none'; }, 4000);
+    }
+
     function switchTab(tab) {
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-      if(tab === 'agents') {
-        document.getElementById('tab-agents').style.display = 'block';
-        document.getElementById('tab-approvals').style.display = 'none';
-        event.target.classList.add('active');
-      } else {
-        document.getElementById('tab-agents').style.display = 'none';
+      document.getElementById('tab-approvals').style.display = 'none';
+      document.getElementById('tab-creatives').style.display = 'none';
+      document.getElementById('tab-agents').style.display = 'none';
+
+      if(tab === 'approvals') {
         document.getElementById('tab-approvals').style.display = 'block';
         event.target.classList.add('active');
         loadApprovals();
+      } else if(tab === 'creatives') {
+        document.getElementById('tab-creatives').style.display = 'block';
+        event.target.classList.add('active');
+        loadRecentCreatives();
+      } else {
+        document.getElementById('tab-agents').style.display = 'block';
+        event.target.classList.add('active');
+        loadAgents();
       }
+    }
+
+    function filterApprovals(filter) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+      renderApprovals();
     }
 
     async function loadApprovals() {
       const container = document.getElementById('approvals-container');
-      container.innerHTML = '<p style="color:var(--text-muted);">Carregando decisões pendentes...</p>';
+      container.innerHTML = '<p style="color:var(--text-muted);">Carregando decisões pendentes do Supabase...</p>';
       try {
         const res = await fetch('/api/approvals');
-        const data = await res.json();
+        allApprovals = await res.json();
         
-        const pending = data.filter(i => i.status === 'pending');
-        document.getElementById('count-pending').innerText = pending.length ? `(${pending.length})` : '';
+        const pendingCount = allApprovals.filter(i => i.status === 'pending').length;
+        document.getElementById('count-pending').innerText = pendingCount ? `(${pendingCount})` : '';
 
-        if(pending.length === 0) {
-          container.innerHTML = '<div class="approval-card"><p style="color:var(--accent-green); font-weight:500;">Tudo limpo! Nenhuma decisão pendente no momento. Os agentes continuam operando.</p></div>';
-          return;
-        }
-
-        container.innerHTML = pending.map(item => `
-          <div class="approval-card" id="card-${item.id}">
-            <div class="approval-meta">
-              <span>AGENTE: ${item.agent.toUpperCase()} (${item.department})</span> &bull;
-              <span>${item.type}</span> &bull;
-              <span>DATA: ${item.date}</span>
-            </div>
-            <div class="approval-title">${item.title}</div>
-            ${item.budget ? `<div class="badge-budget">TETO ORÇAMENTÁRIO: ${item.budget}</div>` : ''}
-            <div class="approval-body">${item.content}</div>
-            <div class="approval-actions">
-              <button class="btn-approve" onclick="handleDecision(${item.id}, 'approved')">&check; Aprovar & Publicar</button>
-              <button class="btn-reject" onclick="handleDecision(${item.id}, 'rejected')">&times; Rejeitar / Ajustar</button>
-            </div>
-          </div>
-        `).join('');
+        renderApprovals();
       } catch(e) {
-        container.innerHTML = '<p style="color:#da3633;">Erro ao carregar aprovações.</p>';
+        container.innerHTML = '<p style="color:var(--danger-red);">Erro ao carregar aprovações do Supabase.</p>';
       }
     }
 
-    async function handleDecision(id, action) {
-      await fetch(`/api/approvals/${id}`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ action })
-      });
-      loadApprovals();
+    function renderApprovals() {
+      const container = document.getElementById('approvals-container');
+      let list = allApprovals;
+
+      if(currentFilter === 'Rui') {
+        list = list.filter(i => i.agent === 'Rui' || i.department === 'Tráfego Pago');
+      } else if(currentFilter === 'Marketing') {
+        list = list.filter(i => i.agent !== 'Rui' && i.department !== 'Tráfego Pago');
+      }
+
+      if(list.length === 0) {
+        container.innerHTML = '<div class="approval-card"><p style="color:var(--accent-green); font-weight:600;">Nenhuma proposta encontrada para este filtro. Tudo operando com segurança!</p></div>';
+        return;
+      }
+
+      container.innerHTML = list.map(item => {
+        const isRui = item.agent === 'Rui' || item.department === 'Tráfego Pago';
+        const metaTag = item.meta_campaign_id ? `&bull; <span>META CAMPAIGN: <code>${item.meta_campaign_id}</code></span>` : '';
+        
+        let statusBadgeClass = 'status-pending';
+        let statusLabel = 'Pendente';
+        if(item.status === 'approved') { statusBadgeClass = 'status-approved'; statusLabel = 'Ativa no Meta Ads'; }
+        else if(item.status === 'paused') { statusBadgeClass = 'status-paused'; statusLabel = 'Pausada'; }
+        else if(item.status === 'rejected') { statusBadgeClass = 'status-rejected'; statusLabel = 'Rejeitada'; }
+
+        // Extrair valor numérico do orçamento atual se possível
+        let orcamentoNum = '20.00';
+        const matchVal = (item.budget || '').match(/(\d+(?:[.,]\d{1,2})?)/);
+        if(matchVal) orcamentoNum = parseFloat(matchVal[1].replace(',', '.')).toFixed(2);
+
+        return `
+          <div class="approval-card ${isRui ? 'rui-card' : ''}" id="card-${item.id}">
+            <div class="approval-header">
+              <div class="approval-meta">
+                <span>AGENTE: ${item.agent.toUpperCase()} (${item.department})</span> &bull;
+                <span>${item.type}</span> ${metaTag} &bull;
+                <span>DATA: ${item.date}</span>
+              </div>
+              <div class="approval-status-badge ${statusBadgeClass}">${statusLabel}</div>
+            </div>
+
+            <div class="approval-title">${item.title}</div>
+            
+            <div class="approval-body">${item.content}</div>
+
+            ${isRui ? `
+              <div class="budget-control-box">
+                <div class="budget-control-title">💰 Gestão de Orçamento & Prazo</div>
+                <div class="budget-input-group">
+                  <label>Teto Diário:</label>
+                  <span>R$</span>
+                  <input type="number" id="input-val-${item.id}" value="${orcamentoNum}" step="5.00" min="10.00">
+                </div>
+                <div class="budget-input-group">
+                  <label>Duração:</label>
+                  <input type="number" id="input-dias-${item.id}" value="1" min="1" max="30">
+                  <span style="font-size:12px; color:var(--text-muted);">dia(s)</span>
+                </div>
+                <button class="btn btn-budget" onclick="adjustBudget(${item.id})">💾 Salvar no Meta Ads</button>
+              </div>
+            ` : ''}
+
+            <div class="approval-actions">
+              ${item.status !== 'approved' ? `
+                <button class="btn btn-approve" onclick="approveCampaign(${item.id})">🚀 Aprovar & Colocar no Ar (Meta Ads)</button>
+              ` : `
+                <button class="btn btn-pause" onclick="pauseCampaign(${item.id})">⏸️ Pausar Campanha</button>
+              `}
+              ${item.status !== 'rejected' ? `
+                <button class="btn btn-reject" onclick="rejectProposal(${item.id})">❌ Rejeitar Proposta</button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function approveCampaign(id) {
+      showToast('Ativando campanha no Meta Ads e atualizando Supabase...');
+      try {
+        const res = await fetch(`/api/approvals/${id}/approve`, { method: 'POST' });
+        const data = await res.json();
+        if(data.success) {
+          showToast('✅ Campanha aprovada e colocada no ar no Meta Ads com sucesso!');
+          loadApprovals();
+        } else {
+          showToast('Erro ao aprovar: ' + (data.error || 'Verifique conexão com a Meta API'));
+        }
+      } catch(e) {
+        showToast('Erro de requisição.');
+      }
+    }
+
+    async function adjustBudget(id) {
+      const val = document.getElementById(`input-val-${id}`).value;
+      const dias = document.getElementById(`input-dias-${id}`).value;
+      showToast(`Atualizando orçamento para R$ ${val}/dia por ${dias} dia(s)...`);
+
+      try {
+        const res = await fetch(`/api/approvals/${id}/budget`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ novo_valor_diario: val, dias_duracao: dias })
+        });
+        const data = await res.json();
+        if(data.success) {
+          showToast(`💰 Orçamento atualizado no Meta Ads! Total previsto: R$ ${data.investimento_total.toFixed(2)}`);
+          loadApprovals();
+        } else {
+          showToast('Erro ao ajustar orçamento: ' + (data.error || 'Erro na API'));
+        }
+      } catch(e) {
+        showToast('Erro de requisição.');
+      }
+    }
+
+    async function pauseCampaign(id) {
+      showToast('Pausando campanha no Meta Ads...');
+      try {
+        const res = await fetch(`/api/approvals/${id}/pause`, { method: 'POST' });
+        const data = await res.json();
+        if(data.success) {
+          showToast('⏸️ Campanha pausada no Meta Ads para segurança!');
+          loadApprovals();
+        }
+      } catch(e) {
+        showToast('Erro de requisição.');
+      }
+    }
+
+    async function rejectProposal(id) {
+      if(!confirm('Deseja rejeitar esta proposta?')) return;
+      try {
+        await fetch(`/api/approvals/${id}/reject`, { method: 'POST' });
+        showToast('Proposta marcada como rejeitada.');
+        loadApprovals();
+      } catch(e) {
+        showToast('Erro de requisição.');
+      }
+    }
+
+    async function loadAgents() {
+      const grid = document.getElementById('agents-grid');
+      grid.innerHTML = '<p style="color:var(--text-muted);">Carregando organograma...</p>';
+      try {
+        const res = await fetch('/api/agents');
+        const data = await res.json();
+        const all = [...(data.marketing || []), ...(data.vendas || []), ...(data.financeiro || []), ...(data.operacoes || [])];
+
+        grid.innerHTML = all.map(a => `
+          <div class="agent-card">
+            <div>
+              <div class="agent-header">
+                <div class="agent-avatar"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:22px;height:22px;"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4M12 8h.01"></path></svg></div>
+                <div>
+                  <div class="agent-name">${a.name}</div>
+                  <div class="agent-role">${a.role}</div>
+                </div>
+              </div>
+              <div class="agent-tagline">${a.tag}</div>
+              <div class="agent-badges">
+                ${(a.badges || []).map(b => `<span class="badge">${b}</span>`).join('')}
+              </div>
+            </div>
+            <div class="agent-footer">&bull; Operando 24h sob supervisão</div>
+          </div>
+        `).join('');
+      } catch(e) {
+        grid.innerHTML = '<p>Erro ao carregar agentes.</p>';
+      }
+    }
+
+    async function generateCreative(tipo, formato) {
+      showToast(`🎬 Iniciando produção de criativo (${tipo} - ${formato})...`);
+      try {
+        const res = await fetch('/api/creatives/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tipo, formato })
+        });
+        const data = await res.json();
+        if (data.sucesso) {
+          showToast(`✅ Criativo publicado com sucesso no Instagram! Post ID: ${data.post_id || ''}`);
+          loadRecentCreatives();
+        } else {
+          showToast(`Aviso: ${data.erro || 'Criativo gerado com sucesso!'}`);
+          loadRecentCreatives();
+        }
+      } catch (e) {
+        showToast('Erro ao solicitar produção do criativo.');
+      }
+    }
+
+    async function loadRecentCreatives() {
+      const grid = document.getElementById('recent-creatives-grid');
+      grid.innerHTML = '<p style="color:var(--text-muted); font-size:13px;">Carregando posts recentes do Instagram...</p>';
+      try {
+        const res = await fetch('/api/creatives/recent');
+        const posts = await res.json();
+        if (!posts || posts.length === 0) {
+          grid.innerHTML = '<p style="color:var(--text-muted); font-size:13px;">Nenhum post retornado pelo Instagram Graph API.</p>';
+          return;
+        }
+
+        grid.innerHTML = posts.map(p => {
+          const cap = (p.caption || '').split('\n')[0].substring(0, 60);
+          const typeLabel = p.media_type === 'CAROUSEL_ALBUM' ? 'ÁLBUM CARROSSEL' : 'CARD IMAGEM';
+          const typeBadge = p.media_type === 'CAROUSEL_ALBUM' ? 'color:var(--accent-cyan)' : 'color:var(--accent-green)';
+          return `
+            <div style="background:#131822; border:1px solid #1f2737; border-radius:10px; overflow:hidden; display:flex; flex-direction:column;">
+              <div style="height:180px; background:#0a0d14; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                ${p.media_url ? `<img src="${p.media_url}" style="width:100%; height:100%; object-fit:cover;" />` : `<div style="color:var(--text-muted); font-size:12px;">Mídia Instagram</div>`}
+              </div>
+              <div style="padding:14px; flex:1; display:flex; flex-direction:column; justify-content:space-between;">
+                <div>
+                  <span class="badge" style="${typeBadge}; margin-bottom:8px; display:inline-block;">${typeLabel}</span>
+                  <p style="font-size:12px; color:var(--text-main); font-weight:600; line-height:1.4; margin-bottom:10px;">${cap || 'Sem legenda'}...</p>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; border-top:1px solid #1e2636; padding-top:10px;">
+                  <span style="font-size:10px; color:var(--text-muted);">${new Date(p.timestamp).toLocaleDateString('pt-BR')}</span>
+                  <a href="${p.permalink}" target="_blank" style="font-size:11px; color:var(--accent-cyan); text-decoration:none; font-weight:600;">Ver no Insta &rarr;</a>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (e) {
+        grid.innerHTML = '<p style="color:var(--danger-red); font-size:13px;">Erro ao carregar posts recentes.</p>';
+      }
     }
 
     // Inicialização

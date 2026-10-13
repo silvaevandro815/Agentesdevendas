@@ -146,7 +146,36 @@ async def enviar_presenca(target_number: str, presenca: str, delay_ms: int = 400
     except Exception as e:
         print("Erro ao enviar presenca:", e)
 
+async def reagir_mensagem_whatsapp(remote_jid: str, msg_id: str, emoji: str = "💪"):
+    """Envia reação de emoji na mensagem do WhatsApp via Evolution API."""
+    if not remote_jid or not msg_id:
+        return False
+    headers = {
+        "apikey": EVOLUTION_API_KEY,
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "key": {
+            "remoteJid": remote_jid,
+            "fromMe": False,
+            "id": msg_id
+        },
+        "reaction": emoji
+    }
+    try:
+        async with httpx.AsyncClient(verify=False, timeout=8.0) as client:
+            res = await client.post(
+                f"{EVOLUTION_API_URL}/message/sendReaction/sofia",
+                headers=headers,
+                json=payload
+            )
+            return res.status_code in [200, 201]
+    except Exception as e:
+        print("Erro ao reagir mensagem WhatsApp:", e)
+        return False
+
 async def enviar_texto_whatsapp(target_number: str, texto: str):
+
     """Envia mensagem de texto no WhatsApp."""
     if eh_numero_teste_ou_invalido(target_number):
         print(f"[BLOQUEIO ANTI-SPAM] Disparo de texto bloqueado para número fictício: {target_number}")
@@ -356,6 +385,21 @@ async def processar_mensagem_marcao(payload_webhook: dict) -> dict:
             texto_recebido = "[Documento/Exame em PDF enviado]"
         else:
             return {"ignorado": True, "motivo": "sem_conteudo"}
+
+    # 4. Efeito Reação de Emoji no WhatsApp (Surpreender e Acolher o Usuário)
+    msg_id = key.get("id")
+    if raw_jid and msg_id:
+        if is_evandro:
+            emoji_reacao = "💪"
+        elif is_foto or is_pdf:
+            emoji_reacao = "🔥"
+        elif any(w in texto_recebido.lower() for w in ["treino", "academia", "musculo", "massa", "creatina", "hipertrofia"]):
+            emoji_reacao = "💪"
+        elif any(w in texto_recebido.lower() for w in ["secar", "emagrecer", "gordura", "barriga", "dieta", "peso"]):
+            emoji_reacao = "👊"
+        else:
+            emoji_reacao = "👊"
+        asyncio.create_task(reagir_mensagem_whatsapp(raw_jid, msg_id, emoji_reacao))
 
     # Download de mídia para visão computacional e leitura de PDF
     media_b64 = None

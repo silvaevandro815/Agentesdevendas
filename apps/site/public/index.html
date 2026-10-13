@@ -10,6 +10,25 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <link rel="icon" type="image/jpeg" href="images/logo_marcao.jpg">
+
+  <!-- Meta Pixel Code Oficial Marcão Personal (ID: 1417931927184389) -->
+  <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '1417931927184389');
+    fbq('track', 'PageView');
+  </script>
+  <noscript>
+    <img height="1" width="1" style="display:none" 
+         src="https://www.facebook.com/tr?id=1417931927184389&ev=PageView&noscript=1"/>
+  </noscript>
+  <!-- End Meta Pixel Code -->
 </head>
 <body>
 
@@ -617,5 +636,129 @@
       });
     });
   </script>
+
+  <!-- ========================================================================= -->
+  <!-- TELEMETRIA AVANÇADA DE TRÁFEGO PAGO (RUI 360° & META CAPI LEAD TRAIL)     -->
+  <!-- ========================================================================= -->
+  <script>
+    (function() {
+      // 1. Capturar e persistir UTMs e fbclid
+      const urlParams = new URLSearchParams(window.location.search);
+      const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid'];
+      let trafficTrail = {};
+
+      try {
+        const stored = localStorage.getItem('marcao_traffic_trail');
+        if (stored) trafficTrail = JSON.parse(stored);
+      } catch (e) {}
+
+      let hasNewParams = false;
+      utmKeys.forEach(key => {
+        if (urlParams.has(key)) {
+          trafficTrail[key] = urlParams.get(key);
+          hasNewParams = true;
+        }
+      });
+
+      if (hasNewParams) {
+        trafficTrail['timestamp'] = new Date().toISOString();
+        trafficTrail['referrer'] = document.referrer || 'direto';
+        try {
+          localStorage.setItem('marcao_traffic_trail', JSON.stringify(trafficTrail));
+        } catch (e) {}
+      }
+
+      // Função universal de disparo (Pixel + Conversions API Server-Side)
+      window.trackMarcaoEvent = function(eventName, customData = {}) {
+        // Disparo no Pixel (Client-Side)
+        if (window.fbq) {
+          fbq('track', eventName, customData);
+        }
+
+        // Disparo na Conversions API (Server-Side Relay)
+        const payload = {
+          event_name: eventName,
+          event_source_url: window.location.href,
+          custom_data: {
+            ...customData,
+            ...trafficTrail
+          },
+          user_data: {
+            client_user_agent: navigator.userAgent
+          }
+        };
+
+        fetch('/api/track', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).catch(() => {});
+      };
+
+      // 2. Rastreamento de Visualização de Produtos (ViewContent)
+      const produtosObservados = {
+        'loja': { content_name: 'Vitrine Completa Marcão', value: 99.00 },
+        'capilar': { content_name: 'KIT IArmonize Capilar', value: 1256.00 },
+        'pele': { content_name: 'Colágeno com Hialurônico Nature Prime', value: 164.90 },
+        'definicao': { content_name: 'Creatina Micronizada & Caneta Azempika', value: 169.90 },
+        'visao': { content_name: 'Vision Prime Saúde Ocular', value: 199.00 }
+      };
+
+      const produtosVistos = new Set();
+      if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              const id = entry.target.id;
+              if (produtosObservados[id] && !produtosVistos.has(id)) {
+                produtosVistos.add(id);
+                trackMarcaoEvent('ViewContent', {
+                  content_name: produtosObservados[id].content_name,
+                  value: produtosObservados[id].value,
+                  currency: 'BRL'
+                });
+              }
+            }
+          });
+        }, { threshold: 0.35 });
+
+        Object.keys(produtosObservados).forEach(id => {
+          const el = document.getElementById(id);
+          if (el) observer.observe(el);
+        });
+      }
+
+      // 3. Rastreamento de Cliques em Checkout Braip (InitiateCheckout)
+      document.querySelectorAll('a[href*="braip.com"]').forEach(link => {
+        link.addEventListener('click', function(e) {
+          const href = this.getAttribute('href');
+          trackMarcaoEvent('InitiateCheckout', {
+            checkout_url: href,
+            currency: 'BRL'
+          });
+        });
+      });
+
+      // 4. Rastreamento de Cliques em WhatsApp (Lead com Enriquecimento de UTM)
+      document.querySelectorAll('a[href*="wa.me"]').forEach(link => {
+        link.addEventListener('click', function(e) {
+          trackMarcaoEvent('Lead', {
+            lead_channel: 'whatsapp_sofia',
+            currency: 'BRL'
+          });
+
+          // Enriquecer a mensagem do WhatsApp com a trilha do anúncio
+          let currentHref = this.getAttribute('href');
+          if (trafficTrail.utm_campaign || trafficTrail.utm_source) {
+            const tag = ` [Origem: ${trafficTrail.utm_source || 'meta'} | Campanha: ${trafficTrail.utm_campaign || 'direto'}]`;
+            if (!currentHref.includes('[Origem:')) {
+              this.setAttribute('href', currentHref + encodeURIComponent(tag));
+            }
+          }
+        });
+      });
+    })();
+  </script>
 </body>
 </html>
+

@@ -587,3 +587,140 @@ async def obter_historico_cliente(telefone: str):
                 "historico": []
             }
 
+# -------------------------------------------------------------------------
+# 5. AGENTE RUI — TRÁFEGO PAGO (META MARKETING API & APROVAÇÃO)
+# -------------------------------------------------------------------------
+try:
+    from rui_traffic_engine import (
+        verificar_conta_anuncios,
+        gerar_proposta_diaria,
+        criar_campanha_meta,
+        ativar_campanha_meta,
+        pausar_campanha_meta,
+        verificar_e_aplicar_guardrails,
+        registrar_proposta_supabase,
+        enviar_proposta_whatsapp_evandro,
+        processar_comando_aprovacao,
+        TETO_DIARIO_REAIS
+    )
+except ImportError:
+    from apps.api.rui_traffic_engine import (
+        verificar_conta_anuncios,
+        gerar_proposta_diaria,
+        criar_campanha_meta,
+        ativar_campanha_meta,
+        pausar_campanha_meta,
+        verificar_e_aplicar_guardrails,
+        registrar_proposta_supabase,
+        enviar_proposta_whatsapp_evandro,
+        processar_comando_aprovacao,
+        TETO_DIARIO_REAIS
+    )
+
+@app.get("/api/trafego/status")
+async def obter_status_trafego():
+    """Consulta o status da conta de anúncios Meta Ads e teto diário."""
+    return verificar_conta_anuncios()
+
+@app.post("/api/trafego/proposta/gerar")
+async def gerar_e_enviar_proposta(indice: int = 1, enviar_whatsapp: bool = True, criar_no_meta: bool = True):
+    """Gera a proposta diária do Rui, cria campanha PAUSADA no Meta Ads, registra no Supabase e notifica no WhatsApp."""
+    proposta = gerar_proposta_diaria(indice)
+    meta_id = None
+    if criar_no_meta:
+        meta_id = criar_campanha_meta(proposta)
+    registro = registrar_proposta_supabase(proposta, meta_campaign_id=meta_id)
+    enviado = False
+    if enviar_whatsapp:
+        enviado = enviar_proposta_whatsapp_evandro(proposta, meta_campaign_id=meta_id)
+    return {
+        "sucesso": True,
+        "proposta": proposta,
+        "meta_campaign_id": meta_id,
+        "registro_supabase": registro,
+        "enviado_whatsapp": enviado
+    }
+
+class AprovacaoRequest(BaseModel):
+    comando: str
+
+@app.post("/api/trafego/proposta/aprovar")
+async def aprovar_proposta_trafego(req: AprovacaoRequest):
+    """Processa a aprovação da campanha pelo Diretor Evandro."""
+    resultado = processar_comando_aprovacao(req.comando)
+    return resultado
+
+@app.get("/api/trafego/guardrails/verificar")
+async def checar_guardrails():
+    """Verifica teto de gastos diário e pausa campanhas se atingir R$ 20,00."""
+    return verificar_e_aplicar_guardrails()
+
+class AjusteOrcamentoRequest(BaseModel):
+    campaign_id: Optional[str] = None
+    novo_valor_diario: float = 20.00
+    dias_duracao: int = 1
+
+@app.post("/api/trafego/orcamento/ajustar")
+async def ajustar_orcamento_api(req: AjusteOrcamentoRequest):
+    """Ajusta o orçamento de uma campanha via comando ou painel."""
+    from rui_traffic_engine import ajustar_orcamento_campanha
+    return ajustar_orcamento_campanha(req.campaign_id, req.novo_valor_diario, req.dias_duracao)
+
+class CAPIEventRequest(BaseModel):
+    event_name: str
+    event_source_url: str = "https://marcaopersonal.com"
+    user_data: Optional[dict] = None
+    custom_data: Optional[dict] = None
+
+@app.post("/api/tracking/capi")
+async def disparar_evento_capi(req: CAPIEventRequest):
+    """Dispara evento server-side diretamente para a Meta Conversions API (CAPI)."""
+    from rui_traffic_engine import enviar_evento_capi
+    return enviar_evento_capi(req.event_name, req.event_source_url, req.user_data, req.custom_data)
+
+@app.get("/api/trafego/inteligencia")
+async def obter_inteligencia_trafego():
+    """Retorna relatório de inteligência com tendências Google Trends e público por estado."""
+    from rui_intelligence_engine import gerar_relatorio_inteligencia_diario
+    return gerar_relatorio_inteligencia_diario()
+
+class InstagramPostRequest(BaseModel):
+    tipo: str = "manha"  # "manha" ou "noite"
+    formato: str = "carrossel"  # "carrossel" ou "card"
+    usar_ia: bool = False
+    dry_run: bool = False
+    indice: Optional[int] = None
+
+@app.post("/api/instagram/gerar-e-publicar")
+async def gerar_e_publicar_criativo(req: InstagramPostRequest):
+    """
+    Gera criativo ultra-realista com copy persuasiva, temas do Google Trends Brasil,
+    e publica automaticamente no Instagram (@marcaopersonalfitness).
+    """
+    from creative_factory import executar_ciclo_manha, executar_ciclo_noite
+    if req.tipo.lower() in ["manha", "curiosidade", "entretenimento"]:
+        res = executar_ciclo_manha(indice=req.indice, formato=req.formato, usar_ia=req.usar_ia, dry_run=req.dry_run)
+    else:
+        res = executar_ciclo_noite(indice=req.indice, formato=req.formato, usar_ia=req.usar_ia, dry_run=req.dry_run)
+    return res
+
+@app.get("/api/instagram/posts-recentes")
+async def listar_posts_instagram():
+    """Consulta posts recentes publicados no Instagram oficial da marca."""
+    from creative_factory import INSTAGRAM_ACCOUNT_ID, INSTAGRAM_ACCESS_TOKEN
+    import httpx
+    if not INSTAGRAM_ACCESS_TOKEN:
+        return []
+    url = f"https://graph.instagram.com/v21.0/{INSTAGRAM_ACCOUNT_ID}/media"
+    params = {
+        "fields": "id,caption,media_type,media_url,permalink,timestamp",
+        "access_token": INSTAGRAM_ACCESS_TOKEN,
+        "limit": 10
+    }
+    async with httpx.AsyncClient(verify=False, timeout=15) as client:
+        r = await client.get(url, params=params)
+        if r.status_code == 200:
+            return r.json().get("data", [])
+    return []
+
+
