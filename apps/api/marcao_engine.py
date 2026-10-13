@@ -446,6 +446,20 @@ async def processar_mensagem_marcao(payload_webhook: dict) -> dict:
                     media_json = evo_media_res.json()
                     media_b64 = media_json.get("base64")
                     media_mimetype = media_json.get("mimetype", "image/jpeg")
+
+                    if is_evandro and is_foto and media_b64:
+                        try:
+                            pasta_evandro = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "assets", "evandro"))
+                            os.makedirs(pasta_evandro, exist_ok=True)
+                            ts = int(time.time())
+                            caminho_foto_ev = os.path.join(pasta_evandro, f"rosto_evandro_{ts}.jpg")
+                            raw_b64_ev = media_b64.split("base64,")[1] if "base64," in media_b64 else media_b64
+                            with open(caminho_foto_ev, "wb") as f_ev:
+                                f_ev.write(base64.b64decode(raw_b64_ev))
+                            print(f"[MARCAO_ENGINE] Foto do Diretor Evandro salva para IA em: {caminho_foto_ev}")
+                        except Exception as e_ev_pic:
+                            print(f"[MARCAO_ENGINE] Erro salvando foto do Evandro: {e_ev_pic}")
+
                     if is_pdf and media_b64:
                         try:
                             import io
@@ -662,7 +676,7 @@ async def processar_mensagem_marcao(payload_webhook: dict) -> dict:
             "INTERLOCUTOR: DIRETOR E FUNDADOR EVANDRO GALLINA (SEU CHEFE E DONO DA LOJA)!\n"
             "- Trate SEMPRE com máxima lealdade, prontidão executiva e respeito ('meu chefe', 'Evandro').\n"
             "- NUNCA o trate como cliente comum, NUNCA chame de 'campeão' e NUNCA tente vender produtos da loja ou balança pra ele!\n"
-            "- Se ele mandar fotos/artes do Marcão ou imagens da marca: comente com energia maromba de parceiro de trabalho ('Ficou top essa arte, meu chefe!', 'Essa imagem ficou fera demais!'), elogie e pergunte onde ele vai usar (site, insta, perfil).\n"
+            "- Se ele mandar fotos/artes do Marcão, imagens da marca ou fotos do próprio rosto dele: comente com energia maromba e lealdade de braço direito ('Ficou top essa foto, meu chefe!', 'Já salvei aqui na nossa pasta de ativos da IA para gerar os criativos variados do Instagram com o seu rosto!'), elogie e demonstre total prontidão executiva.\n"
             f"- REGRA DO VOCATIVO: {'Como a conversa já está em andamento contínuo, NÃO comece repetindo saudações como \"Fala, meu chefe!\". Vá direto ao ponto com naturalidade!' if tem_conversa_recente else 'Use \"Fala, meu chefe!\" apenas uma vez na abertura.'}"
         )
     elif nome_valido:

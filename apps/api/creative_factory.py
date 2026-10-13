@@ -452,11 +452,105 @@ def sanitizar_texto_pillow(texto):
 
 
 # -------------------------------------------------------------------------
-# 3. GERAÇÃO DE IMAGEM ULTRA-REALISTA VIA OPENROUTER
+# 3. GERAÇÃO DE IMAGEM ULTRA-REALISTA VIA OPENROUTER & MATRIZ DE 5 ESTILOS
 # -------------------------------------------------------------------------
-def gerar_imagem_ultra_realista(prompt, nome_arquivo="gen_image.png"):
+DIR_FOTOS_EVANDRO = os.path.join(ROOT_DIR, "assets", "evandro")
+os.makedirs(DIR_FOTOS_EVANDRO, exist_ok=True)
+
+ESTILOS_VISUAIS = [
+    "evandro",          # 1. Rosto do Fundador Evandro em cenários de alta autoridade & saúde
+    "marcao",           # 2. Marcão Personal (Mascote e personal maromba de 35 anos)
+    "pessoas_ia",       # 3. Pessoas reais geradas por IA (diversidade de homens e mulheres em evolução)
+    "produto_only",     # 4. Apenas o produto em foto comercial de luxo / Still sem pessoas
+    "infografico_trends"# 5. Infográfico científico dark neon com dados do Google Trends
+]
+
+def obter_fotos_referencia_evandro():
+    """Retorna lista de fotos de referência de rosto do Evandro disponíveis para a IA."""
+    caminhos = []
+    pastas = [DIR_FOTOS_EVANDRO, os.path.join(BASE_DIR, "assets", "evandro")]
+    for p in pastas:
+        if os.path.exists(p):
+            for f in os.listdir(p):
+                if f.lower().endswith((".jpg", ".jpeg", ".png", ".webp")):
+                    full = os.path.join(p, f)
+                    if full not in caminhos:
+                        caminhos.append(full)
+    return sorted(caminhos)
+
+def montar_prompt_por_estilo(estilo: str, item: dict, eh_venda: bool = False) -> tuple:
+    """
+    Constrói prompt e seleciona imagem de referência com base na matriz dos 5 estilos:
+    Retorna (prompt_formatado, imagem_referencia_path).
+    """
+    ref_path = None
+    fotos_evandro = obter_fotos_referencia_evandro()
+
+    nome_item = item.get("nome") or item.get("tema") or "Fitness & Saúde"
+    categoria = item.get("categoria", "SAÚDE")
+
+    if estilo == "evandro":
+        if fotos_evandro:
+            ref_path = fotos_evandro[0]
+            instrucao_face = "Using the exact facial structure, hair and facial identity from the reference image, "
+        else:
+            instrucao_face = "Cinematic 8k photograph of charismatic executive and health founder Evandro Gallina, sharp athletic look, "
+
+        if eh_venda:
+            prompt = (
+                f"{instrucao_face}presenting the official product '{nome_item}' in a modern elite biohacking wellness clinic. "
+                f"Wearing a stylish dark fitted polo, confident natural expression, warm studio lighting, 85mm lens portrait, hyper-realistic, photorealistic."
+            )
+        else:
+            prompt = (
+                f"{instrucao_face}speaking with authority about modern fitness science and '{nome_item}' in a high-tech gym facility. "
+                f"Natural engaging gesture, cinematic depth of field, 8k commercial photography standard, realistic skin texture."
+            )
+
+    elif estilo == "marcao":
+        if eh_venda:
+            prompt = (
+                f"Cinematic 8k photograph of athletic muscular personal trainer Marcão (35 years old, fit, friendly and fierce) "
+                f"holding '{nome_item}' in an elite modern gym, energetic motivative atmosphere, rim lighting, photorealistic."
+            )
+        else:
+            prompt = (
+                f"Hyper-realistic photograph of muscular coach Marcão with a motivational smile in an authentic gym setting, "
+                f"explaining fitness mechanics about '{nome_item}', cinematic lighting, ultra-detailed 8k photography."
+            )
+
+    elif estilo == "pessoas_ia":
+        # Alterna entre mulher e homem para diversidade de público
+        eh_mulher = any(w in nome_item.lower() for w in ["colágeno", "glúteo", "pele", "inchaço"])
+        if eh_mulher:
+            prompt = (
+                f"Hyper-realistic authentic photograph of an athletic 28-year-old Brazilian woman with radiant glowing skin and toned physique, "
+                f"experiencing wellness and vitality, sunlit modern architectural fitness kitchen, clean aesthetic, candid expression, 8k resolution."
+            )
+        else:
+            prompt = (
+                f"Photorealistic 8k portrait of an active 42-year-old man full of vitality and stamina, smiling with pride after workout, "
+                f"holding healthy water bottle in a premium gym, realistic skin, natural lighting, magazine quality."
+            )
+
+    elif estilo == "produto_only":
+        prompt = (
+            f"Luxury commercial product photography of '{nome_item}' resting on a wet dark obsidian and white marble pedestal, "
+            f"subtle neon cyan and golden reflections, micro water droplets, elegant studio lighting, zero humans in frame, clean commercial advertising standard, 8k."
+        )
+
+    else:  # infografico_trends
+        prompt = (
+            f"Futuristic dark cybernetic background with glowing cyan and emerald bioluminescent particles, soft medical grid lines, "
+            f"minimalist high-tech aesthetic for fitness science and Google Trends queries regarding '{nome_item}', zero text, crisp 8k render."
+        )
+
+    return prompt, ref_path
+
+def gerar_imagem_ultra_realista(prompt, nome_arquivo="gen_image.png", imagem_referencia_path=None):
     """
     Gera imagem cinematográfica 8k via OpenRouter (google/gemini-2.5-flash-image)
+    com suporte multimodal a imagens de referência de rosto (ex: Evandro).
     Retorna o caminho local da imagem gerada, ou None se falhar.
     """
     if not OPENROUTER_API_KEY:
@@ -468,14 +562,42 @@ def gerar_imagem_ultra_realista(prompt, nome_arquivo="gen_image.png"):
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
         "Content-Type": "application/json"
     }
+
+    # Se houver imagem de referência de rosto
+    if imagem_referencia_path and os.path.exists(imagem_referencia_path):
+        try:
+            with open(imagem_referencia_path, "rb") as rf:
+                ref_bytes = rf.read()
+                ref_b64 = base64.b64encode(ref_bytes).decode("utf-8")
+            ext = "jpeg" if imagem_referencia_path.lower().endswith((".jpg", ".jpeg")) else "png"
+            content = [
+                {
+                    "type": "text",
+                    "text": (
+                        f"CRITICAL INSTRUCTION: Replicate the exact facial structure, facial features, hair, eyes and identity "
+                        f"of the person shown in this reference image. Render this exact person in the following scene with hyper-realistic photography quality: "
+                        f"{prompt}"
+                    )
+                },
+                {
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/{ext};base64,{ref_b64}"}
+                }
+            ]
+        except Exception as e:
+            print(f"[AI IMAGE] Erro carregando foto de referência: {e}")
+            content = prompt
+    else:
+        content = prompt
+
     payload = {
         "model": "google/gemini-2.5-flash-image",
-        "messages": [{"role": "user", "content": prompt}]
+        "messages": [{"role": "user", "content": content}]
     }
 
     try:
         print(f"[AI IMAGE] Solicitando geração de imagem ultra-realista via OpenRouter...")
-        with httpx.Client(verify=False, timeout=50) as client:
+        with httpx.Client(verify=False, timeout=55) as client:
             resp = client.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload)
             if resp.status_code == 200:
                 data = resp.json()
@@ -962,7 +1084,7 @@ def registrar_no_content_calendar(post_id, legenda, media_url, permalink, format
 # -------------------------------------------------------------------------
 # 7. CICLOS DIÁRIOS DE PRODUÇÃO (MANHÃ 11:30 & NOITE 19:30)
 # -------------------------------------------------------------------------
-def executar_ciclo_manha(indice=None, formato="carrossel", usar_ia=True, dry_run=False):
+def executar_ciclo_manha(indice=None, formato="carrossel", usar_ia=True, dry_run=False, estilo_visual="auto"):
     """
     Executa o Post da Manhã (11:30): Curiosidade, Ciência & Entretenimento.
     """
@@ -971,13 +1093,19 @@ def executar_ciclo_manha(indice=None, formato="carrossel", usar_ia=True, dry_run
         indice = datetime.now().day % len(temas_ativos)
     tema = temas_ativos[indice % len(temas_ativos)]
 
-    print(f"\n[FÁBRICA 11:30] Iniciando produção do Post de Curiosidade: '{tema['tema']}'")
+    if estilo_visual == "auto":
+        estilo_escolhido = ESTILOS_VISUAIS[((indice if indice is not None else datetime.now().day) * 2) % len(ESTILOS_VISUAIS)]
+    else:
+        estilo_escolhido = estilo_visual
+
+    print(f"\n[FÁBRICA 11:30] Iniciando produção do Post de Curiosidade: '{tema['tema']}' | Estilo: {estilo_escolhido.upper()}")
 
     # 1. Obter imagem base (IA Ultra-Realista ou Fallback)
     bg_local = None
     if usar_ia:
-        nome_ia = f"bg_{tema['id']}_{int(time.time())}.png"
-        bg_local = gerar_imagem_ultra_realista(tema["prompt_ia"], nome_ia)
+        prompt_estilo, ref_img = montar_prompt_por_estilo(estilo_escolhido, tema, eh_venda=False)
+        nome_ia = f"bg_{tema['id']}_{estilo_escolhido}_{int(time.time())}.png"
+        bg_local = gerar_imagem_ultra_realista(prompt_estilo, nome_ia, imagem_referencia_path=ref_img)
 
     if not bg_local or not os.path.exists(bg_local):
         bg_local = MASCOTE_PATH if os.path.exists(MASCOTE_PATH) else None
@@ -1036,7 +1164,7 @@ def executar_ciclo_manha(indice=None, formato="carrossel", usar_ia=True, dry_run
         return res_pub
 
 
-def executar_ciclo_noite(indice=None, formato="card", usar_ia=True, dry_run=False):
+def executar_ciclo_noite(indice=None, formato="card", usar_ia=True, dry_run=False, estilo_visual="auto"):
     """
     Executa o Post da Noite (19:30): Venda de Produto & Conversão Direta.
     Este post fica automaticamente elegível para o Rui impulsionar no Meta Ads!
@@ -1046,7 +1174,12 @@ def executar_ciclo_noite(indice=None, formato="card", usar_ia=True, dry_run=Fals
         indice = datetime.now().day % len(produtos_ativos)
     prod = produtos_ativos[indice % len(produtos_ativos)]
 
-    print(f"\n[FÁBRICA 19:30] Iniciando produção do Post de Venda: '{prod['nome']}'")
+    if estilo_visual == "auto":
+        estilo_escolhido = ESTILOS_VISUAIS[((indice if indice is not None else datetime.now().day) * 2 + 1) % len(ESTILOS_VISUAIS)]
+    else:
+        estilo_escolhido = estilo_visual
+
+    print(f"\n[FÁBRICA 19:30] Iniciando produção do Post de Venda: '{prod['nome']}' | Estilo: {estilo_escolhido.upper()}")
 
     # Montar copy persuasiva da Lia
     if "Creatina" in prod["nome"]:
@@ -1088,8 +1221,9 @@ def executar_ciclo_noite(indice=None, formato="card", usar_ia=True, dry_run=Fals
     # 1. Imagem Ultra-Realista
     bg_local = None
     if usar_ia:
-        nome_ia = f"bg_{prod['sku']}_{int(time.time())}.png"
-        bg_local = gerar_imagem_ultra_realista(prod["prompt_ia"], nome_ia)
+        prompt_estilo, ref_img = montar_prompt_por_estilo(estilo_escolhido, prod, eh_venda=True)
+        nome_ia = f"bg_{prod['sku']}_{estilo_escolhido}_{int(time.time())}.png"
+        bg_local = gerar_imagem_ultra_realista(prompt_estilo, nome_ia, imagem_referencia_path=ref_img)
 
     timestamp = int(time.time())
 
