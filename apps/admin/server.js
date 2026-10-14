@@ -289,7 +289,7 @@ app.get('/api/agents', (req, res) => {
 app.post('/api/creatives/generate', async (req, res) => {
   const { tipo, formato } = req.body;
   const { exec } = require('child_process');
-  const pythonCmd = `python apps/api/creative_factory.py --tipo ${tipo || 'manha'} --formato ${formato || 'carrossel'} --sem-ia`;
+  const pythonCmd = `python apps/api/creative_factory.py --tipo ${tipo || 'manha'} --formato ${formato || 'carrossel'}`;
   exec(pythonCmd, { cwd: path.join(__dirname, '../..') }, (error, stdout, stderr) => {
     if (error) {
       console.error('Erro ao gerar criativo:', error, stderr);

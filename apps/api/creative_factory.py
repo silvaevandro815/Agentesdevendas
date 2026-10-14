@@ -11,7 +11,7 @@ if hasattr(sys.stdout, "reconfigure"):
 if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8")
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import httpx
 from dotenv import load_dotenv
 
@@ -380,6 +380,7 @@ PRODUTOS_CATALOGO = [
         "categoria": "FORÇA & TÔNUS MUSCULAR",
         "link": "https://ev.braip.com/ref?pl=pla1x6xn&ck=chen80rq&af=afimeno621",
         "image_fallback": "https://marcaopersonal.com/images/creatina.jpg",
+        "image_local": os.path.join(ROOT_DIR, "apps", "site", "public", "images", "creatina.jpg"),
         "prompt_ia": "Cinematic 8k photorealistic close up of a luxury black bottle of Creatina Micronizada 100% Pura Nature Prime on a sleek modern dark slate pedestal, neon cyan lighting, water droplets, commercial photography"
     },
     {
@@ -390,6 +391,7 @@ PRODUTOS_CATALOGO = [
         "categoria": "SAÚDE & VIGOR MASCULINO",
         "link": "https://ev.braip.com/ref?pl=plaljlxy&ck=che6vnvr&af=afine5z3yv",
         "image_fallback": "https://qkopgftfrfftoyndhhfj.supabase.co/storage/v1/object/public/creativos/card_azempika_feed.jpg",
+        "image_local": os.path.join(ROOT_DIR, "apps", "site", "public", "images", "azempika.jpg"),
         "prompt_ia": "Cinematic 8k commercial photography of an attractive happy Brazilian couple in their 40s, handsome athletic confident man smiling tenderly with his beautiful partner, luxury modern bedroom aesthetic, sleek dark wellness applicator pen on the wooden nightstand, romantic vitality mood"
     },
     {
@@ -400,6 +402,7 @@ PRODUTOS_CATALOGO = [
         "categoria": "ESTÉTICA FACIAL & DÉRMICA",
         "link": "https://ev.braip.com/ref?pl=plawdmnw&ck=chen80pq&af=afi659l8pg",
         "image_fallback": "https://marcaopersonal.com/images/colageno.png",
+        "image_local": os.path.join(ROOT_DIR, "apps", "site", "public", "images", "colageno.png"),
         "prompt_ia": "Cinematic 8k commercial photography of luxury white bottle of Colageno Hidrolisado with fresh pineapple and green mint leaves, bright aesthetic wellness laboratory, studio lighting"
     },
     {
@@ -410,6 +413,7 @@ PRODUTOS_CATALOGO = [
         "categoria": "TECNOLOGIA ANTIQUEDA",
         "link": "https://marcaopersonal.com#capilar",
         "image_fallback": "https://marcaopersonal.com/images/iarmonize.jpg",
+        "image_local": os.path.join(ROOT_DIR, "apps", "site", "public", "images", "iarmonize.jpg"),
         "prompt_ia": "Cinematic 8k photograph of clinical luxury trichology kit bottles with amber glass and golden accents on a dark marble surface, blue laser medical backlighting"
     },
     {
@@ -420,6 +424,7 @@ PRODUTOS_CATALOGO = [
         "categoria": "SAÚDE OCULAR & FOCO",
         "link": "https://marcaopersonal.com#visao",
         "image_fallback": "https://marcaopersonal.com/images/vision.jpg",
+        "image_local": os.path.join(ROOT_DIR, "apps", "site", "public", "images", "vision.jpg"),
         "prompt_ia": "Cinematic 8k photography of luxury supplement bottle Vision Prime with subtle optic lens reflection and golden accents, dark modern medical setting"
     },
     {
@@ -430,6 +435,7 @@ PRODUTOS_CATALOGO = [
         "categoria": "BIOHACKING & COMPOSIÇÃO",
         "link": "https://marcaopersonal.com#balanca",
         "image_fallback": "https://marcaopersonal.com/images/mascote_marcao.jpg",
+        "image_local": os.path.join(ROOT_DIR, "apps", "site", "public", "images", "mascote_marcao.jpg"),
         "prompt_ia": "Cinematic 8k photograph of athletic personal trainer Marcão holding a sleek high-tech Bluetooth smart scale in an elite gym background, crisp lighting"
     }
 ]
@@ -513,25 +519,25 @@ def montar_prompt_por_estilo(estilo: str, item: dict, eh_venda: bool = False) ->
 
         if eh_venda:
             prompt = (
-                f"{instrucao_face}presenting the official product '{nome_item}' in a modern elite biohacking wellness clinic. "
+                f"{instrucao_face}confident and visionary in a modern elite biohacking wellness clinic. "
                 f"Wearing a stylish dark fitted polo, confident natural expression, warm studio lighting, 85mm lens portrait, hyper-realistic, photorealistic."
             )
         else:
             prompt = (
-                f"{instrucao_face}speaking with authority about modern fitness science and '{nome_item}' in a high-tech gym facility. "
+                f"{instrucao_face}speaking with authority about modern fitness science in a high-tech gym facility. "
                 f"Natural engaging gesture, cinematic depth of field, 8k commercial photography standard, realistic skin texture."
             )
 
     elif estilo == "marcao":
         if eh_venda:
             prompt = (
-                f"Cinematic 8k photograph of athletic muscular personal trainer Marcão (35 years old, fit, friendly and fierce) "
-                f"holding '{nome_item}' in an elite modern gym, energetic motivative atmosphere, rim lighting, photorealistic."
+                f"Cinematic 8k photograph of athletic muscular personal trainer Marcão (35 years old, fit, fierce and charismatic) "
+                f"posing confidently with crossed arms in an elite high-tech gym, energetic motivational atmosphere, warm dramatic rim lighting, zero props, hyper-realistic photography."
             )
         else:
             prompt = (
                 f"Hyper-realistic photograph of muscular coach Marcão with a motivational smile in an authentic gym setting, "
-                f"explaining fitness mechanics about '{nome_item}', cinematic lighting, ultra-detailed 8k photography."
+                f"explaining fitness mechanics with authority, cinematic lighting, ultra-detailed 8k photography."
             )
 
     elif estilo == "pessoas_ia":
@@ -705,16 +711,253 @@ def quebrar_linhas_por_palavras(texto, font, max_largura, draw):
     return linhas
 
 
+def obter_fundo_editorial(bg_path=None):
+    """
+    Retorna uma imagem base 1080x1080. NUNCA retorna um fundo preto liso.
+    Se bg_path existir, usa-o. Caso contrário, busca backgrounds fotográficos existentes
+    do Marcão ou gera um gradiente de estúdio de alta profundidade.
+    """
+    if bg_path and os.path.exists(bg_path):
+        try:
+            return Image.open(bg_path).convert("RGBA").resize((1080, 1080), Image.Resampling.LANCZOS)
+        except Exception:
+            pass
+
+    candidatos = [
+        os.path.join(DIR_OUTPUT, "clean_bg_test.png"),
+        os.path.join(DIR_OUTPUT, "test_marcao_gen.png"),
+        os.path.join(ROOT_DIR, "apps", "api", "output", "clean_bg_test.png"),
+        os.path.join(ROOT_DIR, "apps", "site", "public", "images", "posts", "test_marcao_gen.png"),
+        MASCOTE_PATH
+    ]
+    for c in candidatos:
+        if c and os.path.exists(c):
+            try:
+                return Image.open(c).convert("RGBA").resize((1080, 1080), Image.Resampling.LANCZOS)
+            except Exception:
+                pass
+
+    # Gradiente obsidiana cinematográfico com sutil iluminação ambiente
+    base = Image.new("RGBA", (1080, 1080), COR_BG_DEEP)
+    draw_b = ImageDraw.Draw(base)
+    for y in range(1080):
+        val = int(8 + 14 * (y / 1080))
+        draw_b.line([(0, y), (1080, y)], fill=(val, val + 3, val + 10, 255))
+    return base
+
+
+def obter_angulo_fallback(prod: dict) -> dict:
+    """
+    Retorna um ângulo criativo e persuasivo a partir de um pool variado para o produto.
+    Garante que mesmo sem conexão externa haja diversidade editorial.
+    """
+    preco = prod.get("preco", "")
+    sku = prod.get("sku", "")
+
+    pool = {
+        "CREATINA-MICRONIZADA-300G": [
+            {
+                "headline": "ATP: O COMBUSTÍVEL CELULAR",
+                "subheadline": "Como a creatina micronizada transforma sua força muscular no treino:",
+                "pontos": [
+                    "Ressíntese acelerada de ATP nas séries mais pesadas.",
+                    "Zero retenção extracelular: definição e tônus real."
+                ],
+                "categoria": "CIÊNCIA & HIPERTROFIA",
+                "legenda": (
+                    f"🔥 ATP: O Combustível Secreto das Séries Pesadas!\n\n"
+                    f"Você sabia que seu músculo esgota a reserva primária de energia em menos de 8 segundos de esforço máximo?\n\n"
+                    f"É exatamente aí que entra a Creatina Micronizada 100% Pura Nature's Prime. Ela acelera a ressíntese de fosfocreatina nas células musculares, permitindo mais repetições, mais carga e uma recuperação muscular muito mais rápida.\n\n"
+                    f"💎 Pote oficial de 300g (100 doses diárias) por {preco}.\n\n"
+                    f"👉 Quer garantir o lote com laudo oficial de pureza? Toque no LINK DA BIO em marcaopersonal.com ou comente \"QUERO\" aqui embaixo! 📲"
+                )
+            },
+            {
+                "headline": "AUMENTO DE FORÇA EXPLOSIVA",
+                "subheadline": "Mais densidade e volume muscular com pureza padrão laboratorial:",
+                "pontos": [
+                    "Pureza 100% testada em laudo oficial certificado.",
+                    "Rende 100 doses diárias no pote de 300g."
+                ],
+                "categoria": "FORÇA & TÔNUS MUSCULAR",
+                "legenda": (
+                    f"💪 Mais força, mais carga e recuperação celular acelerada!\n\n"
+                    f"A Creatina Micronizada Nature's Prime entrega pureza absoluta com laudo oficial. Não se trata apenas de puxar peso, mas de fornecer ao músculo a matéria-prima biológica para superar platôs de rendimento.\n\n"
+                    f"💎 {preco} em até 12x no cartão com envio rastreado para todo o Brasil.\n\n"
+                    f"👉 Acesse o LINK DA BIO em marcaopersonal.com ou comente \"QUERO\" para receber o link direto no seu direct! 📲"
+                )
+            }
+        ],
+        "AZEMPIKA-CANETA": [
+            {
+                "headline": "VASODILATAÇÃO ATIVA & VIGOR",
+                "subheadline": "A ciência da circulação e firmeza masculina sem riscos ao coração:",
+                "pontos": [
+                    "Estímulo transdérmico de óxido nítrico localizado.",
+                    "Aplicação prática em cliques: 100% seguro para a saúde."
+                ],
+                "categoria": "SAÚDE & VIGOR MASCULINO",
+                "legenda": (
+                    f"⚡ Vigor masculino e circulação ativa com segurança clínica inegociável!\n\n"
+                    f"A Caneta Azempika Original atua através de bioestimulação transdérmica direta, promovendo vasodilatação natural sem exigir sobrecarga cardíaca ou causar taquicardia.\n\n"
+                    f"💎 Apenas {preco} no lote promocional com embalagem discreta e envio seguro.\n\n"
+                    f"👉 Toque no LINK NA BIO em marcaopersonal.com ou comente \"QUERO\" para receber no Direct! 📲"
+                )
+            }
+        ],
+        "COLAGENO-ACIDO-HIALURONICO": [
+            {
+                "headline": "RENOVAÇÃO DÉRMICA PROFUNDA",
+                "subheadline": "Biopeptídeos ativos + ácido hialurônico para firmeza de dentro para fora:",
+                "pontos": [
+                    "Biopeptídeos que reativam a produção celular dérmica.",
+                    "Sabor delicioso e refrescante de Abacaxi com Hortelã."
+                ],
+                "categoria": "ESTÉTICA FACIAL & DÉRMICA",
+                "legenda": (
+                    f"✨ Pele firme, hidratada e com viço radiante!\n\n"
+                    f"A partir dos 25 anos, o corpo reduz drasticamente a síntese natural de colágeno. O Colágeno Hidrolisado + Ácido Hialurônico Nature's Prime devolve a firmeza da pele e protege a flexibilidade articular com sabor irresistível de abacaxi com hortelã.\n\n"
+                    f"💎 Apenas {preco} com garantia de procedência.\n\n"
+                    f"👉 Link na bio em marcaopersonal.com ou comente \"QUERO\" aqui embaixo! 📲"
+                )
+            }
+        ],
+        "IARMONIZE-CAPILAR-KIT": [
+            {
+                "headline": "TERAPIA CAPILAR EM 4 FASES",
+                "subheadline": "Protocolo clínico para interrupção de queda e oxigenação folicular:",
+                "pontos": [
+                    "Silício inteligente e complexo de biotina ativa.",
+                    "Reativação direta da matriz biológica na raiz capilar."
+                ],
+                "categoria": "TECNOLOGIA ANTIQUEDA",
+                "legenda": (
+                    f"🌿 Chega de xampus milagrosos que vão embora pelo ralo!\n\n"
+                    f"O Kit IArmonize Capilar Clínico atua em 4 fases integradas: nutrição interna profunda, bioestimulação folicular e revitalização do couro cabeludo.\n\n"
+                    f"💎 Condição oficial em até 12x sem juros no site.\n\n"
+                    f"👉 Link na bio em marcaopersonal.com ou comente \"QUERO\"! 📲"
+                )
+            }
+        ],
+        "VISION-PRIME-60CAPS": [
+            {
+                "headline": "PROTEÇÃO & ACUIDADE VISUAL",
+                "subheadline": "Luteína e zeaxantina para combater o cansaço ocular das telas:",
+                "pontos": [
+                    "Filtragem ativa da luz azul artificial e raios UV.",
+                    "Aumenta a nitidez, o contraste e o descanso ocular."
+                ],
+                "categoria": "SAÚDE OCULAR & FOCO",
+                "legenda": (
+                    f"👁️ Seus olhos passam mais de 8 horas por dia expostos a telas e luz azul?\n\n"
+                    f"O Vision Prime fornece carotenoides nobres de alta pureza (luteína e zeaxantina) que formam um escudo protetor para a sua retina, combatendo ressecamento, fadiga e perda de foco.\n\n"
+                    f"💎 Apenas {preco} por pote com 60 cápsulas.\n\n"
+                    f"👉 Acesse marcaopersonal.com ou comente \"QUERO\"! 📲"
+                )
+            }
+        ],
+        "BALANCA-BIOIMPEDANCIA-BT": [
+            {
+                "headline": "O PESO NA BALANÇA MENTE",
+                "subheadline": "Monitore percentual de gordura e massa magra em tempo real no app:",
+                "pontos": [
+                    "Mede bioimpedância completa via Bluetooth.",
+                    "1 kg de gordura ocupa o triplo do volume muscular."
+                ],
+                "categoria": "BIOHACKING & COMPOSIÇÃO",
+                "legenda": (
+                    f"⚖️ Pare de se enganar com o peso bruto na balança comum!\n\n"
+                    f"A Balança de Bioimpedância Bluetooth sincroniza com o celular e revela exatamente sua composição corporal: gordura visceral, massa muscular magra, hidratação e taxa metabólica.\n\n"
+                    f"💎 Apenas {preco} com envio rápido para todo o país.\n\n"
+                    f"👉 Garanta a sua no link da bio em marcaopersonal.com ou comente \"QUERO\"! 📲"
+                )
+            }
+        ]
+    }
+
+    lista = pool.get(sku)
+    if lista:
+        escolhido = lista[int(time.time()) % len(lista)]
+        return {
+            "headline": escolhido["headline"],
+            "subheadline": escolhido["subheadline"],
+            "pontos": escolhido["pontos"],
+            "categoria": escolhido["categoria"],
+            "legenda": escolhido["legenda"]
+        }
+
+    return {
+        "headline": prod.get("nome", "SUPLEMENTO").upper()[:35],
+        "subheadline": f"Protocolo oficial Marcão Personal por {preco}:",
+        "pontos": ["Padrão laboratorial com matéria-prima certificada.", "Envio rápido e seguro pelos Correios."],
+        "categoria": prod.get("categoria", "SAÚDE & PERFORMANCE"),
+        "legenda": f"🎯 Conheça {prod.get('nome')} no link da bio em marcaopersonal.com ou comente QUERO!"
+    }
+
+
+def gerar_angulo_criativo_com_ia(prod: dict) -> dict:
+    """
+    Gera dinamicamente um ângulo criativo, científico, persuasivo e NUNCA repetitivo
+    para o produto usando Gemini 2.5 Flash via OpenRouter.
+    """
+    if not OPENROUTER_API_KEY:
+        return obter_angulo_fallback(prod)
+
+    nome_prod = prod.get("nome", "Suplemento")
+    preco_prod = prod.get("preco", "")
+    categoria_prod = prod.get("categoria", "BIOHACKING")
+
+    prompt = (
+        f"Você é o Diretor Criativo Sênior do Marcão Personal (@marcaopersonalfitness).\n"
+        f"Crie um ângulo NOVO, CRIATIVO, INÉDITO e PERSUASIVO para um post de Instagram sobre o produto '{nome_prod}' ({preco_prod}).\n"
+        f"CRÍTICO: NÃO use clichês repetidos como 'mais força, tônus no glúteo e definição sem retenção hídrica'.\n"
+        f"Inove! Foque em ciência esportiva, biohacking, mecanismo fisiológico, energia celular ou rotina prática.\n\n"
+        f"Retorne ESTRITAMENTE um JSON no seguinte formato (sem markdown):\n"
+        f"{{\n"
+        f'  "headline": "MANCHETE EM CAIXA ALTA (máximo 4 a 5 palavras impactantes)",\n'
+        f'  "subheadline": "Gancho instigante em tom de autoridade (máximo 70 chars):",\n'
+        f'  "pontos": [\n'
+        f'    "Benefício fisiológico 1 direto (máximo 50 chars)",\n'
+        f'    "Benefício fisiológico 2 direto (máximo 50 chars)"\n'
+        f'  ],\n'
+        f'  "categoria": "{categoria_prod}",\n'
+        f'  "legenda": "Legenda completa, persuasiva, com quebras de linha naturais, emojis pontuais e chamada clara: toque no link da bio em marcaopersonal.com ou comente QUERO."\n'
+        f"}}"
+    )
+
+    try:
+        headers = {
+            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "model": "google/gemini-2.5-flash",
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.8
+        }
+        with httpx.Client(verify=False, timeout=18) as client:
+            resp = client.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload)
+            if resp.status_code == 200:
+                raw = resp.json()["choices"][0]["message"]["content"]
+                clean = re.sub(r"```json\s*", "", raw)
+                clean = re.sub(r"```\s*", "", clean).strip()
+                data = json.loads(clean)
+                if data.get("headline") and data.get("pontos"):
+                    print(f"[IA CREATIVE] Novo ângulo dinâmico gerado com sucesso para '{nome_prod}': {data['headline']}")
+                    return data
+    except Exception as e:
+        print(f"[IA CREATIVE] Falha ao gerar ângulo dinâmico ({e}). Usando pool criativo de fallback.")
+
+    return obter_angulo_fallback(prod)
+
+
 def criar_slide_carrossel(titulo, subtitulo, pontos, cta_slide, num_slide, total_slides, categoria, out_path, bg_path=None):
     """
     Gera slide de carrossel (1080x1080) no estilo editorial moderno (@caiqueness inspired).
     """
     f_hero, f_tag, f_num, f_sub, f_body, f_footer, f_cta = obter_fontes_editoriais(tamanho_hero=90, tamanho_sub=26, tamanho_body=24)
 
-    if bg_path and os.path.exists(bg_path):
-        base = Image.open(bg_path).convert("RGBA").resize((1080, 1080), Image.Resampling.LANCZOS)
-    else:
-        base = Image.new("RGBA", (1080, 1080), COR_BG_DEEP)
+    base = obter_fundo_editorial(bg_path)
 
     # Vinheta Dark Glassmorphism para leitura cristalina
     overlay = Image.new("RGBA", (1080, 1080), (0, 0, 0, 0))
@@ -777,109 +1020,170 @@ def criar_slide_carrossel(titulo, subtitulo, pontos, cta_slide, num_slide, total
     return out_path
 
 
-def criar_card_unico(headline, subheadline, pontos, categoria, cta_texto, out_path, bg_path=None):
+def criar_card_unico(headline, subheadline, pontos, categoria, cta_texto, out_path, bg_path=None, produto_img_path=None, preco=None):
     """
     Gera um Card Único de Altíssimo Impacto Visual (@caiqueness inspired)
-    com manchete proporcional, luz quente, contraste absoluto e estética editorial de luxo.
+    com composição de produto real (mockup com sombra realista), manchete proporcional,
+    luz âmbar quente, contraste absoluto e estética editorial de luxo. NUNCA fundo preto liso.
     """
-    # 1. Base
-    if bg_path and os.path.exists(bg_path):
-        base = Image.open(bg_path).convert("RGBA").resize((1080, 1080), Image.Resampling.LANCZOS)
-    else:
-        base = Image.new("RGBA", (1080, 1080), COR_BG_DEEP)
+    # 1. Base (nunca preto liso)
+    base = obter_fundo_editorial(bg_path)
 
     # 2. Iluminação Âmbar Quente + Vinheta de Fundo Gradual
     glow = Image.new("RGBA", (1080, 1080), (0, 0, 0, 0))
     draw_glow = ImageDraw.Draw(glow)
-    for r in range(500, 0, -25):
-        alpha = int(45 * (1 - r / 500))
-        draw_glow.ellipse([540 - r, 300 - r, 540 + r, 300 + r], fill=(255, 110, 0, alpha))
+    center_glow_x = 700 if produto_img_path else 540
+    center_glow_y = 380 if produto_img_path else 300
+    for r in range(480, 0, -25):
+        alpha = int(48 * (1 - r / 480))
+        draw_glow.ellipse([center_glow_x - r, center_glow_y - r, center_glow_x + r, center_glow_y + r], fill=(255, 120, 0, alpha))
 
     vignette = Image.new("RGBA", (1080, 1080), (0, 0, 0, 0))
     draw_vig = ImageDraw.Draw(vignette)
     for y in range(0, 1080):
-        if y < 190:
-            a = int(180 * (1 - y / 190))
-        elif y > 380:
-            a = int(245 * ((y - 380) / 700))
+        if y < 180:
+            a = int(170 * (1 - y / 180))
+        elif y > (440 if produto_img_path else 380):
+            lim_inf = 440 if produto_img_path else 380
+            a = int(245 * ((y - lim_inf) / (1080 - lim_inf)))
         else:
             a = 35
         draw_vig.line([(0, y), (1080, y)], fill=(6, 9, 15, a))
 
     im = Image.alpha_composite(base, glow)
     im = Image.alpha_composite(im, vignette)
+
+    # 3. Composição do Produto Real (se fornecido)
+    if produto_img_path and os.path.exists(produto_img_path):
+        try:
+            p_img = Image.open(produto_img_path)
+            # Se for imagem RGB sem transparência (banner), adiciona cantos arredondados elegantes
+            if p_img.mode != "RGBA":
+                p_img = p_img.convert("RGBA")
+                mask = Image.new("L", p_img.size, 0)
+                draw_m = ImageDraw.Draw(mask)
+                draw_m.rounded_rectangle([0, 0, p_img.width, p_img.height], radius=24, fill=255)
+                p_img.putalpha(mask)
+
+            p_img.thumbnail((420, 420), Image.Resampling.LANCZOS)
+
+            # Sombra suave com Gaussian Blur
+            sombra = Image.new("RGBA", (p_img.width + 100, 80), (0, 0, 0, 0))
+            draw_sombra = ImageDraw.Draw(sombra)
+            draw_sombra.ellipse([30, 20, p_img.width + 70, 60], fill=(0, 0, 0, 170))
+            sombra = sombra.filter(ImageFilter.GaussianBlur(radius=16))
+
+            pos_x = (1080 - p_img.width) // 2
+            pos_y = 115
+            im.paste(sombra, (pos_x - 50, pos_y + p_img.height - 40), sombra)
+            im.paste(p_img, (pos_x, pos_y), p_img)
+        except Exception as e:
+            print(f"[STUDIO] Aviso ao compor produto: {e}")
+
     draw = ImageDraw.Draw(im)
 
-    # 3. Badge Editorial Superior
+    # 4. Topo: Badge de Categoria e Lote Oficial / Preço
     f_tag = ImageFont.truetype("segoeuib.ttf", 20) if os.path.exists(r"C:\Windows\Fonts\segoeuib.ttf") else ImageFont.truetype("arialbd.ttf", 20)
     cat_str = f"BIOHACKING  •  {categoria.upper()}"
     bbox_tag = draw.textbbox((0, 0), cat_str, font=f_tag)
     tag_w = bbox_tag[2] - bbox_tag[0]
-    tag_x = (1080 - tag_w) // 2
 
-    draw.rounded_rectangle([tag_x - 24, 55, tag_x + tag_w + 24, 102], radius=23, 
-                           fill=(12, 18, 30, 220), outline=COR_AMBER, width=2)
-    draw.text((tag_x, 68), cat_str, fill=COR_AMBER_LIGHT, font=f_tag)
+    if preco:
+        # Categoria à esquerda
+        tag_x = 60
+        draw.rounded_rectangle([tag_x, 50, tag_x + tag_w + 36, 96], radius=20, 
+                               fill=(12, 18, 30, 220), outline=COR_AMBER, width=2)
+        draw.text((tag_x + 18, 63), cat_str, fill=COR_AMBER_LIGHT, font=f_tag)
 
-    # 4. Headline Gigante Auto-Ajustável (Bebas Neue)
+        # Preço à direita
+        preco_str = f"LOTE OFICIAL: {preco}"
+        bbox_p = draw.textbbox((0, 0), preco_str, font=f_tag)
+        pw = bbox_p[2] - bbox_p[0]
+        draw.rounded_rectangle([1020 - pw - 36, 50, 1020, 96], radius=20,
+                               fill=(12, 18, 30, 220), outline=COR_CYAN, width=2)
+        draw.text((1020 - pw - 18, 63), preco_str, fill=COR_CYAN, font=f_tag)
+    else:
+        # Centralizado
+        tag_x = (1080 - tag_w) // 2
+        draw.rounded_rectangle([tag_x - 24, 55, tag_x + tag_w + 24, 102], radius=23, 
+                               fill=(12, 18, 30, 220), outline=COR_AMBER, width=2)
+        draw.text((tag_x, 68), cat_str, fill=COR_AMBER_LIGHT, font=f_tag)
+
+    # 5. Headline Auto-Ajustável (Bebas Neue)
     max_w_head = 960
-    tamanho_hero = 110
+    tamanho_hero = 100 if produto_img_path else 110
     font_hero_path = FONT_BEBAS if os.path.exists(FONT_BEBAS) else "arialbd.ttf"
     f_hero = ImageFont.truetype(font_hero_path, tamanho_hero)
 
     head_limpo = sanitizar_texto_pillow(headline).upper()
     linhas_head = quebrar_linhas_por_palavras(head_limpo, f_hero, max_w_head, draw)
-    while any((draw.textbbox((0, 0), l, font=f_hero)[2] - draw.textbbox((0, 0), l, font=f_hero)[0]) > max_w_head for l in linhas_head) and tamanho_hero > 65:
+    while any((draw.textbbox((0, 0), l, font=f_hero)[2] - draw.textbbox((0, 0), l, font=f_hero)[0]) > max_w_head for l in linhas_head) and tamanho_hero > 60:
         tamanho_hero -= 5
         f_hero = ImageFont.truetype(font_hero_path, tamanho_hero)
         linhas_head = quebrar_linhas_por_palavras(head_limpo, f_hero, max_w_head, draw)
 
-    y_text = 490 if len(linhas_head) <= 2 else 440
+    if produto_img_path:
+        y_text = 545 if len(linhas_head) <= 2 else 510
+        max_linhas_head = 2
+    else:
+        y_text = 490 if len(linhas_head) <= 2 else 440
+        max_linhas_head = 3
+
     line_h = int(tamanho_hero * 0.95)
-    for linha in linhas_head[:3]:
+    for linha in linhas_head[:max_linhas_head]:
         for ox, oy in [(-2, -2), (2, -2), (-2, 2), (2, 2), (0, 4)]:
             draw.text((60 + ox, y_text + oy), linha, fill=(0, 0, 0, 240), font=f_hero)
         draw.text((60, y_text), linha, fill=COR_WHITE, font=f_hero)
         y_text += line_h
 
-    # 5. Subheadline
+    # 6. Subheadline
     f_sub = ImageFont.truetype("segoeuib.ttf", 26) if os.path.exists(r"C:\Windows\Fonts\segoeuib.ttf") else ImageFont.truetype("arialbd.ttf", 26)
     sub_limpo = sanitizar_texto_pillow(subheadline)
     if sub_limpo:
-        y_text += 10
+        y_text += 8
         draw.text((60, y_text), sub_limpo, fill=COR_AMBER_LIGHT, font=f_sub)
-        y_text += 45
+        y_text += 44
 
-    # 6. Cards de Benefícios com Bullets Neon Cyan
+    # 7. Benefícios em Cards com Bullets Neon Cyan
     f_body = ImageFont.truetype("segoeuib.ttf", 22) if os.path.exists(r"C:\Windows\Fonts\segoeuib.ttf") else ImageFont.truetype("arial.ttf", 22)
     for p in (pontos or [])[:2]:
         p_limpo = sanitizar_texto_pillow(p)
-        y_text += 12
+        y_text += 10
         linhas_p = quebrar_linhas_por_palavras(p_limpo, f_body, 870, draw)
-        card_h = 60 if len(linhas_p) == 1 else 84
+        card_h = 58 if len(linhas_p) == 1 else 82
         draw.rounded_rectangle([60, y_text, 1020, y_text + card_h], radius=14, 
                                fill=(14, 22, 36, 235), outline=COR_CYAN, width=2)
-        draw.ellipse([85, y_text + 22, 101, y_text + 38], fill=COR_CYAN)
+        draw.ellipse([85, y_text + 21, 101, y_text + 37], fill=COR_CYAN)
         
-        y_p = y_text + (18 if len(linhas_p) == 1 else 14)
+        y_p = y_text + (17 if len(linhas_p) == 1 else 13)
         for lp in linhas_p:
             draw.text((115, y_p), lp, fill=COR_CREAM, font=f_body)
             y_p += 28
         y_text += card_h
 
-    # 7. Rodapé Editorial & CTA
+    # 8. Rodapé Editorial & CTA
     f_footer = ImageFont.truetype("segoeuib.ttf", 18) if os.path.exists(r"C:\Windows\Fonts\segoeuib.ttf") else ImageFont.truetype("arialbd.ttf", 18)
     f_cta = ImageFont.truetype("segoeuib.ttf", 20) if os.path.exists(r"C:\Windows\Fonts\segoeuib.ttf") else ImageFont.truetype("arialbd.ttf", 20)
     draw.line([(60, 985), (1020, 985)], fill=(35, 48, 70, 200), width=1)
-    draw.text((60, 1012), "@MARCAOPERSONALFITNESS   |   marcaopersonal.com", fill=COR_TEXT_MUTED, font=f_footer)
+    brand_text = "@MARCAOPERSONALFITNESS   |   marcaopersonal.com"
+    draw.text((60, 1012), brand_text, fill=COR_TEXT_MUTED, font=f_footer)
+    bbox_brand = draw.textbbox((0, 0), brand_text, font=f_footer)
+    brand_right = 60 + (bbox_brand[2] - bbox_brand[0])
 
     cta_limpo = sanitizar_texto_pillow(cta_texto).replace("››", "").replace(">", "").strip()
     if not cta_limpo or "ARRASTA" in cta_limpo.upper():
         cta_limpo = "LEIA A LEGENDA"
 
+    # Prevenção de colisão de rodapé
     bbox_cta = draw.textbbox((0, 0), cta_limpo, font=f_cta)
     cta_w = bbox_cta[2] - bbox_cta[0]
     cta_x = 995 - cta_w
+    if cta_x <= brand_right + 35:
+        cta_limpo = "GARANTA O SEU"
+        bbox_cta = draw.textbbox((0, 0), cta_limpo, font=f_cta)
+        cta_w = bbox_cta[2] - bbox_cta[0]
+        cta_x = 995 - cta_w
+
     draw.text((cta_x, 1010), cta_limpo, fill=COR_AMBER, font=f_cta)
     desenhar_seta_minimalista(draw, 1005, 1022, COR_AMBER, tamanho=15)
 
@@ -1297,11 +1601,12 @@ def executar_ciclo_manha(indice=None, formato="carrossel", usar_ia=True, dry_run
 def executar_ciclo_noite(indice=None, formato="card", usar_ia=True, dry_run=False, estilo_visual="auto"):
     """
     Executa o Post da Noite (19:30): Venda de Produto & Conversão Direta.
+    Gera ângulos criativos dinâmicos com IA e compõe o mockup real do produto no card.
     Este post fica automaticamente elegível para o Rui impulsionar no Meta Ads!
     """
     produtos_ativos = [p for p in PRODUTOS_CATALOGO if not p.get("desativado")]
     if indice is None:
-        indice = datetime.now().day % len(produtos_ativos)
+        indice = (datetime.now().day + datetime.now().hour) % len(produtos_ativos)
     prod = produtos_ativos[indice % len(produtos_ativos)]
 
     if estilo_visual == "auto":
@@ -1311,44 +1616,31 @@ def executar_ciclo_noite(indice=None, formato="card", usar_ia=True, dry_run=Fals
 
     print(f"\n[FÁBRICA 19:30] Iniciando produção do Post de Venda: '{prod['nome']}' | Estilo: {estilo_escolhido.upper()}")
 
-    # Montar copy persuasiva da Lia
-    if "Creatina" in prod["nome"]:
-        headline = "CREATINA 100% PURA NATURE'S PRIME"
-        sub = "Mais força, tônus no glúteo e definição sem retenção hídrica"
-        pontos = ["Pureza micronizada com laudo oficial.", "R$ 169,90 com 100 doses diárias."]
-    elif "Azempika" in prod["nome"]:
-        headline = "CANETA AZEMPIKA ORIGINAL"
-        sub = "Biohacking da circulação e firmeza sem riscos cardíacos"
-        pontos = [
-            "Vasodilatação transdérmica rápida nos corpos cavernosos.",
-            "Aplicação prática de 1 a 2 cliques cerca de 15 min antes.",
-            "100% seguro: zero taquicardia, palpitação ou risco cardíaco."
-        ]
-    elif "Colágeno" in prod["nome"]:
-        headline = "COLÁGENO + ÁCIDO HIALURÔNICO"
-        sub = "Pele firme, viçosa e sem flacidez no sabor Abacaxi com Hortelã"
-        pontos = ["Biopeptídeos de renovação dérmica.", "Apenas R$ 164,90."]
-    elif "Capilar" in prod["nome"]:
-        headline = "KIT IARMONIZE CAPILAR CLÍNICO"
-        sub = "Protocolo clínico antiqueda e estimulação folicular profunda"
-        pontos = ["Nutrição de dentro para fora.", "Em até 12x no cartão com Frete Grátis."]
+    # Ângulo Criativo Dinâmico (Lia Copywriter & Gemini 2.5 Flash)
+    if usar_ia:
+        angulo = gerar_angulo_criativo_com_ia(prod)
     else:
-        headline = prod["nome"].upper()
-        sub = f"Protocolo oficial Marcão Personal por {prod['preco']}"
-        pontos = ["Entrega rápida e rastreada pelos Correios."]
+        angulo = obter_angulo_fallback(prod)
 
-    legenda = (
-        f"🎯 {headline} — CONDIÇÃO EXCLUSIVA DE HOJE! ⚡\n\n"
-        f"{sub}.\n\n"
-        f"Se você busca resultados corporais de alto nível sem perder tempo com promessas vazias, "
-        f"a qualidade dos protocolos recomendados pelo Marcão é inegociável.\n\n"
-        f"💎 {prod['preco']} com envio rápido e seguro pelos Correios para todo o Brasil!\n\n"
-        f"👉 Quer garantir o seu antes que o lote promocional acabe?\n"
-        f"Toque agora no LINK DA BIO em marcaopersonal.com ou COMENTE \"QUERO\" aqui embaixo que eu te envio o link direto no seu Direct! 📲\n\n"
-        f"#marcao #suplementos #saude #estetica #performance #qualidadedevida #fitness"
-    )
+    headline = angulo.get("headline", prod["nome"].upper()[:35])
+    sub = angulo.get("subheadline", f"Protocolo oficial Marcão Personal por {prod['preco']}:")
+    pontos = angulo.get("pontos", ["Matéria-prima de padrão laboratorial.", f"Lote oficial por {prod['preco']}."])
+    categoria = angulo.get("categoria", prod["categoria"])
+    legenda = angulo.get("legenda")
 
-    # 1. Imagem Ultra-Realista
+    if not legenda:
+        legenda = (
+            f"🎯 {headline} — CONDIÇÃO EXCLUSIVA DE HOJE! ⚡\n\n"
+            f"{sub}\n\n"
+            f"Se você busca resultados corporais de alto nível sem perder tempo com promessas vazias, "
+            f"a qualidade dos protocolos recomendados pelo Marcão é inegociável.\n\n"
+            f"💎 {prod['preco']} com envio rápido e seguro pelos Correios para todo o Brasil!\n\n"
+            f"👉 Quer garantir o seu antes que o lote promocional acabe?\n"
+            f"Toque agora no LINK DA BIO em marcaopersonal.com ou COMENTE \"QUERO\" aqui embaixo que eu te envio o link direto no seu Direct! 📲\n\n"
+            f"#marcao #suplementos #saude #estetica #performance #qualidadedevida #fitness"
+        )
+
+    # 1. Imagem de Fundo Ultra-Realista
     bg_local = None
     if usar_ia:
         prompt_estilo, ref_img = montar_prompt_por_estilo(estilo_escolhido, prod, eh_venda=True)
@@ -1404,7 +1696,7 @@ def executar_ciclo_noite(indice=None, formato="card", usar_ia=True, dry_run=Fals
                 cta_slide=s["cta"],
                 num_slide=idx+1,
                 total_slides=3,
-                categoria=prod["categoria"],
+                categoria=categoria,
                 out_path=out_file,
                 bg_path=bg_local if idx == 0 else None
             )
@@ -1424,16 +1716,18 @@ def executar_ciclo_noite(indice=None, formato="card", usar_ia=True, dry_run=Fals
         return res_pub
 
     else:
-        # Card Único
+        # Card Único com Mockup Real do Produto e Preço Oficial
         out_file = os.path.join(DIR_OUTPUT, f"card_{prod['sku']}_{timestamp}.jpg")
         criar_card_unico(
             headline=headline,
             subheadline=sub,
             pontos=pontos,
-            categoria=prod["categoria"],
-            cta_texto=f"GARANTA POR {prod['preco']} • LINK NA BIO: marcaopersonal.com",
+            categoria=categoria,
+            cta_texto="GARANTA O SEU",
             out_path=out_file,
-            bg_path=bg_local
+            bg_path=bg_local,
+            produto_img_path=prod.get("image_local"),
+            preco=prod.get("preco")
         )
         url_storage = upload_supabase_storage(out_file)
         if dry_run:
