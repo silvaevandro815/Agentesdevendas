@@ -654,23 +654,55 @@ def carregar_logo_arredondado(tamanho=(110, 110)):
 
 
 def obter_fontes_editoriais(tamanho_hero=120, tamanho_sub=28, tamanho_body=24):
-    """Carrega as fontes editoriais oficiais do Marcão (Bebas Neue Display + Arial/Montserrat de suporte)."""
+    """Carrega as fontes editoriais oficiais do Marcão (Bebas Neue Display + Segoe UI / Arial de suporte)."""
     try:
         f_hero = ImageFont.truetype(FONT_BEBAS, tamanho_hero) if os.path.exists(FONT_BEBAS) else ImageFont.truetype("arialbd.ttf", tamanho_hero)
     except Exception:
         f_hero = ImageFont.load_default()
 
     try:
-        f_tag = ImageFont.truetype("arialbd.ttf", 20)
+        font_bold = "segoeuib.ttf" if os.path.exists(r"C:\Windows\Fonts\segoeuib.ttf") else "arialbd.ttf"
+        font_regular = "segoeui.ttf" if os.path.exists(r"C:\Windows\Fonts\segoeui.ttf") else "arial.ttf"
+        f_tag = ImageFont.truetype(font_bold, 20)
         f_num = ImageFont.truetype(FONT_BEBAS, 44) if os.path.exists(FONT_BEBAS) else ImageFont.truetype("arialbd.ttf", 44)
-        f_sub = ImageFont.truetype("arialbd.ttf", tamanho_sub)
-        f_body = ImageFont.truetype("arial.ttf", tamanho_body)
-        f_footer = ImageFont.truetype("arialbd.ttf", 18)
-        f_cta = ImageFont.truetype("arialbd.ttf", 22)
+        f_sub = ImageFont.truetype(font_bold, tamanho_sub)
+        f_body = ImageFont.truetype(font_bold, tamanho_body)
+        f_footer = ImageFont.truetype(font_bold, 18)
+        f_cta = ImageFont.truetype(font_bold, 20)
     except Exception:
         f_tag = f_num = f_sub = f_body = f_footer = f_cta = ImageFont.load_default()
 
     return f_hero, f_tag, f_num, f_sub, f_body, f_footer, f_cta
+
+
+def quebrar_linhas_por_palavras(texto, font, max_largura, draw):
+    """Quebra o texto em linhas respeitando limites de palavras sem cortar sílabas."""
+    palavras = [p for p in texto.split() if p.strip()]
+    if not palavras:
+        return []
+    
+    linhas = []
+    linha_atual = []
+    
+    for p in palavras:
+        teste = " ".join(linha_atual + [p])
+        bbox = draw.textbbox((0, 0), teste, font=font)
+        largura = bbox[2] - bbox[0]
+        
+        if largura <= max_largura:
+            linha_atual.append(p)
+        else:
+            if linha_atual:
+                linhas.append(" ".join(linha_atual))
+                linha_atual = [p]
+            else:
+                linhas.append(p)
+                linha_atual = []
+                
+    if linha_atual:
+        linhas.append(" ".join(linha_atual))
+        
+    return linhas
 
 
 def criar_slide_carrossel(titulo, subtitulo, pontos, cta_slide, num_slide, total_slides, categoria, out_path, bg_path=None):
@@ -703,7 +735,7 @@ def criar_slide_carrossel(titulo, subtitulo, pontos, cta_slide, num_slide, total
 
     # 2. Título do Slide em Bebas Neue (quebra dinâmica)
     titulo_limpo = sanitizar_texto_pillow(titulo).upper()
-    linhas_titulo = [l.strip() for l in titulo_limpo.split("\n") if l.strip()]
+    linhas_titulo = quebrar_linhas_por_palavras(titulo_limpo, f_hero, 960, draw)
     if not linhas_titulo:
         linhas_titulo = [titulo_limpo]
 
@@ -748,32 +780,30 @@ def criar_slide_carrossel(titulo, subtitulo, pontos, cta_slide, num_slide, total
 def criar_card_unico(headline, subheadline, pontos, categoria, cta_texto, out_path, bg_path=None):
     """
     Gera um Card Único de Altíssimo Impacto Visual (@caiqueness inspired)
-    com manchete gigante, luz quente e estética de revista editorial de luxo.
+    com manchete proporcional, luz quente, contraste absoluto e estética editorial de luxo.
     """
-    f_hero, f_tag, _, f_sub, f_body, f_footer, f_cta = obter_fontes_editoriais(tamanho_hero=120, tamanho_sub=28, tamanho_body=24)
-
     # 1. Base
     if bg_path and os.path.exists(bg_path):
         base = Image.open(bg_path).convert("RGBA").resize((1080, 1080), Image.Resampling.LANCZOS)
     else:
         base = Image.new("RGBA", (1080, 1080), COR_BG_DEEP)
 
-    # 2. Iluminação Âmbar Quente + Vinheta de Fundo
+    # 2. Iluminação Âmbar Quente + Vinheta de Fundo Gradual
     glow = Image.new("RGBA", (1080, 1080), (0, 0, 0, 0))
     draw_glow = ImageDraw.Draw(glow)
-    for r in range(500, 0, -20):
-        alpha = int(55 * (1 - r / 500))
-        draw_glow.ellipse([540 - r, 320 - r, 540 + r, 320 + r], fill=(255, 110, 0, alpha))
+    for r in range(500, 0, -25):
+        alpha = int(45 * (1 - r / 500))
+        draw_glow.ellipse([540 - r, 300 - r, 540 + r, 300 + r], fill=(255, 110, 0, alpha))
 
     vignette = Image.new("RGBA", (1080, 1080), (0, 0, 0, 0))
     draw_vig = ImageDraw.Draw(vignette)
     for y in range(0, 1080):
-        if y < 180:
-            a = int(160 * (1 - y / 180))
-        elif y > 420:
-            a = int(245 * ((y - 420) / 660))
+        if y < 190:
+            a = int(180 * (1 - y / 190))
+        elif y > 380:
+            a = int(245 * ((y - 380) / 700))
         else:
-            a = 30
+            a = 35
         draw_vig.line([(0, y), (1080, y)], fill=(6, 9, 15, a))
 
     im = Image.alpha_composite(base, glow)
@@ -781,53 +811,72 @@ def criar_card_unico(headline, subheadline, pontos, categoria, cta_texto, out_pa
     draw = ImageDraw.Draw(im)
 
     # 3. Badge Editorial Superior
+    f_tag = ImageFont.truetype("segoeuib.ttf", 20) if os.path.exists(r"C:\Windows\Fonts\segoeuib.ttf") else ImageFont.truetype("arialbd.ttf", 20)
     cat_str = f"BIOHACKING  •  {categoria.upper()}"
     bbox_tag = draw.textbbox((0, 0), cat_str, font=f_tag)
     tag_w = bbox_tag[2] - bbox_tag[0]
     tag_x = (1080 - tag_w) // 2
 
-    draw.rounded_rectangle([tag_x - 24, 55, tag_x + tag_w + 24, 100], radius=22, 
+    draw.rounded_rectangle([tag_x - 24, 55, tag_x + tag_w + 24, 102], radius=23, 
                            fill=(12, 18, 30, 220), outline=COR_AMBER, width=2)
-    draw.text((tag_x, 67), cat_str, fill=COR_AMBER_LIGHT, font=f_tag)
+    draw.text((tag_x, 68), cat_str, fill=COR_AMBER_LIGHT, font=f_tag)
 
-    # 4. Headline Gigante Condensada (Bebas Neue 120px)
+    # 4. Headline Gigante Auto-Ajustável (Bebas Neue)
+    max_w_head = 960
+    tamanho_hero = 110
+    font_hero_path = FONT_BEBAS if os.path.exists(FONT_BEBAS) else "arialbd.ttf"
+    f_hero = ImageFont.truetype(font_hero_path, tamanho_hero)
+
     head_limpo = sanitizar_texto_pillow(headline).upper()
-    linhas_head = [l.strip() for l in head_limpo.split("\n") if l.strip()]
-    if len(linhas_head) == 1:
-        # Se for uma linha única longa, divide em 2 ou 3 linhas harmônicas
-        palavras = linhas_head[0].split()
-        if len(palavras) >= 4:
-            meio = len(palavras) // 2
-            linhas_head = [" ".join(palavras[:meio]), " ".join(palavras[meio:])]
+    linhas_head = quebrar_linhas_por_palavras(head_limpo, f_hero, max_w_head, draw)
+    while any((draw.textbbox((0, 0), l, font=f_hero)[2] - draw.textbbox((0, 0), l, font=f_hero)[0]) > max_w_head for l in linhas_head) and tamanho_hero > 65:
+        tamanho_hero -= 5
+        f_hero = ImageFont.truetype(font_hero_path, tamanho_hero)
+        linhas_head = quebrar_linhas_por_palavras(head_limpo, f_hero, max_w_head, draw)
 
-    y_text = 520
+    y_text = 490 if len(linhas_head) <= 2 else 440
+    line_h = int(tamanho_hero * 0.95)
     for linha in linhas_head[:3]:
-        for ox, oy in [(-3, -3), (3, -3), (-3, 3), (3, 3), (0, 5), (5, 0)]:
+        for ox, oy in [(-2, -2), (2, -2), (-2, 2), (2, 2), (0, 4)]:
             draw.text((60 + ox, y_text + oy), linha, fill=(0, 0, 0, 240), font=f_hero)
         draw.text((60, y_text), linha, fill=COR_WHITE, font=f_hero)
-        y_text += 112
+        y_text += line_h
 
     # 5. Subheadline
+    f_sub = ImageFont.truetype("segoeuib.ttf", 26) if os.path.exists(r"C:\Windows\Fonts\segoeuib.ttf") else ImageFont.truetype("arialbd.ttf", 26)
     sub_limpo = sanitizar_texto_pillow(subheadline)
     if sub_limpo:
-        y_text += 12
+        y_text += 10
         draw.text((60, y_text), sub_limpo, fill=COR_AMBER_LIGHT, font=f_sub)
-        y_text += 46
+        y_text += 45
 
-    # 6. Box de Destaque com Marcador Neon Cyan
-    if pontos:
-        p_limpo = sanitizar_texto_pillow(pontos[0])
-        y_text += 14
-        draw.rounded_rectangle([60, y_text, 1020, y_text + 68], radius=14, 
+    # 6. Cards de Benefícios com Bullets Neon Cyan
+    f_body = ImageFont.truetype("segoeuib.ttf", 22) if os.path.exists(r"C:\Windows\Fonts\segoeuib.ttf") else ImageFont.truetype("arial.ttf", 22)
+    for p in (pontos or [])[:2]:
+        p_limpo = sanitizar_texto_pillow(p)
+        y_text += 12
+        linhas_p = quebrar_linhas_por_palavras(p_limpo, f_body, 870, draw)
+        card_h = 60 if len(linhas_p) == 1 else 84
+        draw.rounded_rectangle([60, y_text, 1020, y_text + card_h], radius=14, 
                                fill=(14, 22, 36, 235), outline=COR_CYAN, width=2)
-        draw.ellipse([85, y_text + 26, 101, y_text + 42], fill=COR_CYAN)
-        draw.text((115, y_text + 20), p_limpo, fill=COR_CREAM, font=f_body)
+        draw.ellipse([85, y_text + 22, 101, y_text + 38], fill=COR_CYAN)
+        
+        y_p = y_text + (18 if len(linhas_p) == 1 else 14)
+        for lp in linhas_p:
+            draw.text((115, y_p), lp, fill=COR_CREAM, font=f_body)
+            y_p += 28
+        y_text += card_h
 
     # 7. Rodapé Editorial & CTA
+    f_footer = ImageFont.truetype("segoeuib.ttf", 18) if os.path.exists(r"C:\Windows\Fonts\segoeuib.ttf") else ImageFont.truetype("arialbd.ttf", 18)
+    f_cta = ImageFont.truetype("segoeuib.ttf", 20) if os.path.exists(r"C:\Windows\Fonts\segoeuib.ttf") else ImageFont.truetype("arialbd.ttf", 20)
     draw.line([(60, 985), (1020, 985)], fill=(35, 48, 70, 200), width=1)
     draw.text((60, 1012), "@MARCAOPERSONALFITNESS   |   marcaopersonal.com", fill=COR_TEXT_MUTED, font=f_footer)
 
     cta_limpo = sanitizar_texto_pillow(cta_texto).replace("››", "").replace(">", "").strip()
+    if not cta_limpo or "ARRASTA" in cta_limpo.upper():
+        cta_limpo = "LEIA A LEGENDA"
+
     bbox_cta = draw.textbbox((0, 0), cta_limpo, font=f_cta)
     cta_w = bbox_cta[2] - bbox_cta[0]
     cta_x = 995 - cta_w

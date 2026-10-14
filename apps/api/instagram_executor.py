@@ -9,12 +9,17 @@ imediatamente no Feed, Reels ou Stories da conta oficial @marcaopersonalfitness.
 import os
 import re
 import time
+import json
 import base64
 import requests
 import urllib3
 from datetime import datetime
 
-urllib3.disable_warnings()
+from dotenv import load_dotenv
+
+load_dotenv()
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
+load_dotenv(os.path.join(os.path.dirname(__file__), "../../.env"))
 
 ACCOUNT_ID = os.getenv("INSTAGRAM_ACCOUNT_ID", "28570207812599721")
 TOKEN = os.getenv("INSTAGRAM_ACCESS_TOKEN", "")
@@ -26,64 +31,110 @@ OUTPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "output")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 
-def extrair_tema_e_destino(texto_comando: str) -> tuple:
+def interpretar_comando_com_ia(texto_comando: str) -> dict:
     """
-    Identifica o destino (FEED, STORIES, REELS) e o tema solicitado pelo Chefe.
-    """
-    txt = texto_comando.lower()
-    
-    destino = "FEED"
-    if "story" in txt or "stories" in txt:
-        destino = "STORIES"
-    elif "reels" in txt or "vídeo" in txt or "video" in txt:
-        destino = "REELS"
-    elif "feed" in txt or "post" in txt or "card" in txt or "foto" in txt:
-        destino = "FEED"
-
-    # Remove termos comuns de comando com limites de palavras (\b) para não cortar palavras como 'academia' ou 'treino'
-    palavras_remover = [
-        r'\bmarc[aã]o\b', r'\bposte?\b', r'\bpostar\b', r'\bpublic[ae]\b', r'\bpublicar\b',
-        r'\bcri[ae]\b', r'\bcriar\b', r'\bgere?\b', r'\bgerar\b', r'\bfaz(er)?\b',
-        r'\buma?\b', r'\bposts?\b', r'\bcards?\b', r'\bfotos?\b', r'\bimagens?\b',
-        r'\bnos?\b', r'\bnas?\b', r'\bnuma?\b', r'\bstor(y|ies)\b', r'\bfeed\b',
-        r'\binstagram\b', r'\binsta\b', r'\breels\b', r'\bsobre\b', r'\bde\b',
-        r'\bpra mim\b', r'\bpor favor\b', r'\bagora\b'
-    ]
-    limpo = txt
-    for p in palavras_remover:
-        limpo = re.sub(p, ' ', limpo, flags=re.IGNORECASE)
-
-    tema = " ".join(limpo.split()).strip()
-    if not tema or len(tema) < 3:
-        tema = "Foco Total na Creatina e Musculação de Alta Performance"
-
-    return tema, destino
-
-
-def gerar_imagem_com_openrouter(tema: str, nome_arquivo="post_solicitado.png") -> str:
-    """
-    Gera uma imagem cinematográfica 8k via OpenRouter com base no tema.
+    Usa o Gemini 2.5 Flash para interpretar com precisão editorial o comando do Chefe,
+    estruturando manchete, subtítulo, pontos de benefício, prompt fotográfico puro e legenda.
     """
     headers = {
         "Authorization": f"Bearer {OPENROUTER_KEY}",
         "Content-Type": "application/json"
     }
 
-    prompt = (
-        f"High-fashion editorial fitness commercial photography for elite brand 'Marcão Personal' about: '{tema}'. "
-        f"Inspired by luxury athletic editorial campaigns (Nike / GQ / Caique Ness). Dynamic low-angle shot, athletic physique, "
-        f"warm cinematic golden rim lighting, deep obsidian shadows with radiant amber backlight, ultra-realistic skin textures, "
-        f"8k commercial masterpiece, clean composition."
-    )
+    prompt_instrucao = f"""Você é o diretor de arte e copywriter oficial da marca 'Marcão Personal'.
+Analise o comando do chefe: "{texto_comando}"
+
+Retorne APENAS um objeto JSON válido (sem crases de markdown em volta, sem texto antes ou depois) no seguinte formato:
+{{
+  "destino": "FEED",
+  "headline": "MANCHETE EM CAIXA ALTA (máximo 4 a 6 palavras impactantes, ex: 'CREATINA & TREINO PESADO' ou 'HIPERTROFIA & DEFINIÇÃO')",
+  "subheadline": "Metodologia & Biohacking Marcão Personal:",
+  "pontos": [
+    "Primeiro benefício científico curto (máximo 55 caracteres)",
+    "Segundo benefício direto de resultado (máximo 55 caracteres)"
+  ],
+  "categoria": "ALTA PERFORMANCE",
+  "cta_card": "LEIA A LEGENDA",
+  "prompt_imagem": "Ultra-realistic cinematic 8k commercial fitness photography of athletic muscular male trainer Marcão working out with heavy weights in an elite luxury modern gym. Focused intense expression, high contrast lighting, warm golden rim lights, deep dark obsidian shadows, ultra-detailed skin texture, upper body composition. CRITICAL: PURE PHOTOGRAPHY ONLY. ABSOLUTELY NO TEXT, NO LETTERS, NO WORDS, NO SYMBOLS, NO WATERMARKS, NO NUMBERS. CLEAN UNMARKED BACKGROUND.",
+  "legenda": "Texto persuasivo de 3 a 4 parágrafos curtos com emojis de alta autoridade, chamada para o site oficial marcaopersonal.com ou link na bio, e hashtags fitness."
+}}
+
+Regras Críticas:
+1. Para destino "FEED" (post de card único), 'cta_card' DEVE ser OBRIGATORIAMENTE "LEIA A LEGENDA" ou "LINK NA BIO". NUNCA use "ARRASTA PRO LADO" em post único!
+2. A manchete DEVE ter palavras completas e ortografia impecável em português. NUNCA divida sílabas de forma errada.
+3. Se o comando mencionar 'story' ou 'stories', coloque "destino": "STORIES" e 'cta_card': "COMPRE COM FRETE GRÁTIS".
+"""
+
+    payload = {
+        "model": "google/gemini-2.5-flash",
+        "messages": [{"role": "user", "content": prompt_instrucao}],
+        "temperature": 0.2
+    }
+
+    try:
+        r = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload, timeout=20, verify=False)
+        if r.status_code == 200:
+            content = r.json()["choices"][0]["message"]["content"]
+            clean_json = content.replace("```json", "").replace("```", "").strip()
+            data = json.loads(clean_json)
+            if data.get("destino") != "STORIES":
+                data["cta_card"] = "LEIA A LEGENDA"
+            return data
+    except Exception as e:
+        print(f"[INSTA_EXEC] Aviso no parser de IA: {e}")
+
+    # Fallback determinístico resiliente
+    txt_l = texto_comando.lower()
+    destino = "STORIES" if ("story" in txt_l or "stories" in txt_l) else "FEED"
+    
+    tema_fallback = "CREATINA & TREINO PESADO"
+    if "creatina" in txt_l:
+        tema_fallback = "CREATINA & FORÇA MÁXIMA"
+    elif "balança" in txt_l or "bioimpedancia" in txt_l:
+        tema_fallback = "BIOIMPEDÂNCIA & RESULTADOS"
+    elif "colágeno" in txt_l:
+        tema_fallback = "COLÁGENO & FIRMEZA TOTAL"
+
+    return {
+        "destino": destino,
+        "headline": tema_fallback,
+        "subheadline": "Metodologia & Biohacking Marcão Personal:",
+        "pontos": [
+            "Acelera a ressíntese de ATP e ganho de força pura.",
+            "Recuperação celular rápida sem retenção na pele."
+        ],
+        "categoria": "ALTA PERFORMANCE",
+        "cta_card": "LEIA A LEGENDA" if destino == "FEED" else "COMPRAR COM FRETE GRÁTIS",
+        "prompt_imagem": (
+            "Ultra-realistic cinematic 8k commercial fitness photography of athletic muscular male trainer Marcão "
+            "working out with heavy barbell in an elite luxury modern gym. Focused expression, golden rim lights, "
+            "deep dark obsidian shadows. CRITICAL: PURE PHOTOGRAPHY ONLY, ZERO TEXT, NO WORDS, NO LETTERS."
+        ),
+        "legenda": f"🔥 {tema_fallback} • METODOLOGIA MARCÃO PERSONAL\n\nResultados reais com precisão metabólica e biomecânica!\n\n🔗 Conheça os protocolos oficiais: marcaopersonal.com\n\n#marcao #marcaopersonal #fitness #treino #hipertrofia"
+    }
+
+
+def gerar_imagem_com_openrouter(prompt_ia: str, nome_arquivo="post_solicitado.png") -> str:
+    """
+    Gera uma imagem cinematográfica 8k via OpenRouter, garantindo que seja fotografia pura sem letras/textos.
+    """
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    prompt_completo = prompt_ia
+    if "PURE PHOTOGRAPHY ONLY" not in prompt_completo:
+        prompt_completo += " CRITICAL: PURE PHOTOGRAPHY ONLY. ABSOLUTELY NO TEXT, NO LETTERS, NO WORDS, NO TYPOGRAPHY."
 
     payload = {
         "model": "google/gemini-2.5-flash-image",
-        "messages": [{"role": "user", "content": prompt}]
+        "messages": [{"role": "user", "content": prompt_completo}]
     }
 
     caminho_local = os.path.join(OUTPUT_DIR, nome_arquivo)
     try:
-        r = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload, timeout=50, verify=False)
+        r = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload, timeout=60, verify=False)
         if r.status_code == 200:
             data = r.json()
             choices = data.get("choices", [])
@@ -99,7 +150,6 @@ def gerar_imagem_com_openrouter(tema: str, nome_arquivo="post_solicitado.png") -
     except Exception as e:
         print(f"[INSTA_EXEC] Erro gerando imagem no OpenRouter: {e}")
 
-    # Fallback caso dê timeout: usa a foto oficial do Marcão
     fallback_img = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "site", "public", "images", "posts", "test_marcao_gen.png")
     if os.path.exists(fallback_img):
         return fallback_img
@@ -125,76 +175,45 @@ def upload_imagem_supabase(caminho_local: str, nome_remoto: str) -> str:
     return ""
 
 
-try:
-    from catalog_service import buscar_produto_por_termo
-except ImportError:
-    from apps.api.catalog_service import buscar_produto_por_termo
-import asyncio
-
-def gerar_legenda_persuasiva(tema: str, produto: dict = None) -> str:
-    """Gera legenda envolvente com chamada para o site oficial e disclosure regulatório."""
-    detalhe_produto = ""
-    if produto and produto.get("name"):
-        detalhe_produto = f"\n💡 Destaque do dia: {produto.get('name')} — {produto.get('pitch_diario')}\n"
-
-    return f"""🔥 {tema.upper()} • METODOLOGIA MARCÃO PERSONAL
-{detalhe_produto}
-Você quer resultados estéticos e de saúde reais sem enrolação e sem jogar dinheiro fora?
-O segredo não é treinar até desmaiar, é alinhar biomecânica, nutrição celular de alta pureza e acompanhamento de verdade!
-
-💪 Quer destravar seu potencial com o meu acompanhamento direto no WhatsApp?
-🔗 Toque agora no link da nossa Bio e conheça os protocolos oficiais: marcaopersonal.com
-
-ℹ️ Transparência CONAR/Meta: Alguns links são de parceiros e afiliados oficiais. A entrega e cobrança acontecem com garantia do parceiro indicado.
-
-#marcao #marcaopersonal #fitness #musculacao #treino #biohacking #saude #hipertrofia #lifestyle"""
-
-
 def executar_postagem_solicitada(texto_comando: str) -> dict:
     """
-    Fluxo completo: interpreta comando -> busca dados no catálogo unificado -> gera imagem fotográfica -> aplica compositor editorial @caiqueness -> posta no Instagram.
+    Fluxo Inteligente Completo:
+    1. Interpretação editorial via IA (manchete correta, pontos, prompt fotográfico e legenda).
+    2. Geração da foto pura via OpenRouter (zero texto gerado por IA na foto).
+    3. Composição gráfica de alta precisão via Pillow (Bebas Neue auto-ajustável + Segoe UI).
+    4. Upload para CDN Supabase.
+    5. Publicação oficial no Instagram (@marcaopersonalfitness).
     """
-    tema, destino = extrair_tema_e_destino(texto_comando)
-    print(f"[INSTA_EXEC] Executando comando do Chefe: Tema='{tema}' | Destino='{destino}'")
-
-    produto = {}
-    try:
-        produto = asyncio.run(buscar_produto_por_termo(tema))
-    except Exception as e_p:
-        print(f"[INSTA_EXEC] Erro buscando produto no catálogo: {e_p}")
+    print(f"[INSTA_EXEC] Interpretando comando do Chefe com Diretor de Arte IA...")
+    plano = interpretar_comando_com_ia(texto_comando)
+    print(f"[INSTA_EXEC] Plano Editorial: Headline='{plano.get('headline')}' | Destino='{plano.get('destino')}' | CTA='{plano.get('cta_card')}'")
 
     ts = int(time.time())
-    img_local = gerar_imagem_com_openrouter(tema, f"raw_chefe_{ts}.png")
+    img_local = gerar_imagem_com_openrouter(plano.get("prompt_imagem", ""), f"raw_chefe_{ts}.png")
     if not img_local or not os.path.exists(img_local):
         return {"sucesso": False, "motivo": "falha_geracao_imagem"}
 
-    # Aplica o compositor editorial @caiqueness
     card_editorial_local = os.path.join(OUTPUT_DIR, f"editorial_chefe_{ts}.jpg")
     try:
         from creative_factory import criar_card_unico, criar_story
-        
-        pontos_card = [
-            produto.get("beneficio_chave", "Resultados visíveis com precisão metabólica e biomecânica."),
-            produto.get("pitch_diario", "Invista na sua saúde por menos de um café ao dia.")
-        ] if produto else ["Resultados visíveis com precisão metabólica e biomecânica."]
 
-        if destino == "STORIES":
+        if plano.get("destino") == "STORIES":
             criar_story(
-                headline=tema,
-                subheadline="Metodologia Marcão Personal 360°:",
-                pontos=pontos_card + ["Mentoria direta no WhatsApp comigo por 3 meses grátis."],
-                categoria="PROTOCOLO VIP",
-                cta_texto="COMPRAR COM FRETE GRÁTIS",
+                headline=plano.get("headline"),
+                subheadline=plano.get("subheadline", "Metodologia Marcão Personal 360°:"),
+                pontos=plano.get("pontos", []),
+                categoria=plano.get("categoria", "ALTA PERFORMANCE"),
+                cta_texto=plano.get("cta_card", "COMPRAR COM FRETE GRÁTIS"),
                 out_path=card_editorial_local,
                 bg_path=img_local
             )
         else:
             criar_card_unico(
-                headline=tema,
-                subheadline="Metodologia & Biohacking Marcão Personal:",
-                pontos=pontos_card[:2],
-                categoria="ALTA PERFORMANCE",
-                cta_texto="ARRASTA PRO LADO",
+                headline=plano.get("headline"),
+                subheadline=plano.get("subheadline", "Metodologia & Biohacking Marcão Personal:"),
+                pontos=plano.get("pontos", []),
+                categoria=plano.get("categoria", "ALTA PERFORMANCE"),
+                cta_texto=plano.get("cta_card", "LEIA A LEGENDA"),
                 out_path=card_editorial_local,
                 bg_path=img_local
             )
@@ -207,12 +226,12 @@ def executar_postagem_solicitada(texto_comando: str) -> dict:
     if not url_publica:
         return {"sucesso": False, "motivo": "falha_upload_supabase"}
 
-    caption = gerar_legenda_persuasiva(tema, produto)
+    caption = plano.get("legenda", "")
 
     # 1. Cria o container no Instagram Graph API
     url_container = f"https://graph.instagram.com/v21.0/{ACCOUNT_ID}/media"
     
-    if destino == "STORIES":
+    if plano.get("destino") == "STORIES":
         payload = {
             "access_token": TOKEN,
             "media_type": "STORIES",
@@ -232,18 +251,23 @@ def executar_postagem_solicitada(texto_comando: str) -> dict:
 
     container_id = r.json().get("id")
 
-    # 2. Publica o container
+    # 2. Publica o container (com espera/retry para o Instagram processar a mídia)
     url_pub = f"https://graph.instagram.com/v21.0/{ACCOUNT_ID}/media_publish"
-    pr = requests.post(url_pub, data={"access_token": TOKEN, "creation_id": container_id}, verify=False, timeout=30)
-    if pr.status_code in [200, 201]:
-        pub_id = pr.json().get("id")
-        print(f"[INSTA_EXEC] Post publicado com sucesso! ID: {pub_id}")
-        return {
-            "sucesso": True,
-            "post_id": pub_id,
-            "tema": tema,
-            "destino": destino,
-            "media_url": url_publica
-        }
+    ultimo_erro = ""
+    for tentativa in range(1, 5):
+        time.sleep(4)
+        pr = requests.post(url_pub, data={"access_token": TOKEN, "creation_id": container_id}, verify=False, timeout=30)
+        if pr.status_code in [200, 201]:
+            pub_id = pr.json().get("id")
+            print(f"[INSTA_EXEC] Post publicado com sucesso na tentativa {tentativa}! ID: {pub_id}")
+            return {
+                "sucesso": True,
+                "post_id": pub_id,
+                "headline": plano.get("headline"),
+                "destino": plano.get("destino"),
+                "media_url": url_publica
+            }
+        ultimo_erro = pr.text
+        print(f"[INSTA_EXEC] Tentativa {tentativa} aguardando processamento do Instagram...")
 
-    return {"sucesso": False, "motivo": pr.text}
+    return {"sucesso": False, "motivo": ultimo_erro}
