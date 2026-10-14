@@ -35,7 +35,7 @@ function carregarEnv() {
 carregarEnv();
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://qkopgftfrfftoyndhhfj.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const SUPABASE_KEY = process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrb3BnZnRmcmZmdG95bmRoaGZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MTgwMTU4MywiZXhwIjoyMTA3Mzc3NTgzfQ.S_RRdnI6SZTVR1UH7jryDVHf316YmnMOVEBuoedyKv8';
 const META_ACCESS_TOKEN = process.env.META_ACCESS_TOKEN || '';
 
 function getSupabaseHeaders() {
@@ -270,7 +270,7 @@ app.get('/api/agents', (req, res) => {
       { name: "Nina", role: "Social Media", tag: "Presença Constante", badges: ["calendario-editorial", "agendamento-automatico"], active: true }
     ],
     vendas: [
-      { name: "Sofia", role: "Atendimento ao Cliente", tag: "Cliente respondido em minutos", badges: ["playbook-de-atendimento", "Buscar no Cérebro"], active: true },
+      { name: "Marcão Personal", role: "Atendimento & Consultoria VIP", tag: "Cliente respondido em segundos", badges: ["playbook-de-atendimento", "Buscar no Cérebro"], active: true },
       { name: "Davi", role: "Vendedor & Recuperador", tag: "Nenhum lead esfria", badges: ["follow-up-de-vendas", "Buscar no Cérebro"], active: true }
     ],
     financeiro: [

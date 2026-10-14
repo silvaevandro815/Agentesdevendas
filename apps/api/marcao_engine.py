@@ -8,6 +8,9 @@ import asyncio
 from datetime import datetime
 from dotenv import load_dotenv
 
+_base_dir = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(_base_dir, ".env"), override=True)
+load_dotenv(os.path.join(_base_dir, "..", "..", ".env"))
 load_dotenv()
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "https://qkopgftfrfftoyndhhfj.supabase.co")
@@ -45,6 +48,13 @@ except ImportError:
         avaliar_prato_comida,
         verificar_e_gerar_upsell_30dias
     )
+
+try:
+    from catalog_service import obter_catalogo_para_prompt
+    from autonomous_curator import processar_e_ingerir_afiliado
+except ImportError:
+    from apps.api.catalog_service import obter_catalogo_para_prompt
+    from apps.api.autonomous_curator import processar_e_ingerir_afiliado
 
 def identificar_genero(push_name: str) -> str:
     """Identifica se o contato é homem ou mulher pelo primeiro nome."""
@@ -121,16 +131,18 @@ async def salvar_historico_lead(remote_jid: str, telefone: str, push_name: str, 
     except Exception as e:
         print("Erro salvando historico Supabase:", e)
 
+_historico_envios_recentes = {}
+
 def eh_numero_teste_ou_invalido(numero: str) -> bool:
-    """Bloqueia números falsos ou de testes automatizados para proteger contra banimento da Meta."""
+    """Bloqueia números falsos, mocks, ou de testes automatizados para proteger contra banimento da Meta."""
     if not numero:
         return True
     digitos = "".join(filter(str.isdigit, str(numero)))
     if len(digitos) < 10:
         return True
     
-    # Exceções permitidas (números reais oficiais)
-    if digitos in ["5532984587255", "553284587255", "553285066687"]:
+    # Exceções permitidas (números reais oficiais do Diretor Evandro)
+    if digitos in ["5532984587255", "553284587255", "553285066687", "553298669536"]:
         return False
         
     # Padrões clássicos de mocks e números fictícios
@@ -147,8 +159,85 @@ def eh_numero_teste_ou_invalido(numero: str) -> bool:
     for d in "0123456789":
         if d * 5 in digitos:
             return True
+
+    # REGRA MANDATÓRIA DO DIRETOR EVANDRO:
+    # Bloquear qualquer número com DDD 11 desconhecido contra disparos frios.
+    # Marcão só fala com quem mandou mensagem antes ou quem Evandro ordenar.
+    if digitos.startswith("5511") or (len(digitos) in [10, 11] and digitos.startswith("11")):
+        return True
             
     return False
+
+def quebrar_em_baloes_curtos(texto: str, max_chars: int = 130, max_baloes: int = 3) -> list:
+    """
+    Divide a resposta em no máximo 2 a 3 balões curtos e leves (80 a 130 caracteres),
+    preservando links íntegros no último balão.
+    """
+    linhas = [l.strip() for l in re.split(r'\n+', texto) if l.strip()]
+    frases = []
+    for l in linhas:
+        urls = re.findall(r'https?://\S+', l)
+        if urls:
+            texto_sem_url = re.sub(r'https?://\S+', '', l).strip()
+            if texto_sem_url:
+                partes = [p.strip() for p in re.split(r'(?<=[.!?])\s+', texto_sem_url) if p.strip()]
+                frases.extend(partes)
+            for u in urls:
+                frases.append(u)
+        else:
+            partes = [p.strip() for p in re.split(r'(?<=[.!?])\s+', l) if p.strip()]
+            frases.extend(partes)
+
+    baloes = []
+    balao_atual = ""
+    for f in frases:
+        if f.startswith("http"):
+            if balao_atual:
+                baloes.append(balao_atual)
+                balao_atual = ""
+            baloes.append(f)
+            continue
+            
+        if not balao_atual:
+            balao_atual = f
+        elif len(balao_atual) + len(f) + 1 <= max_chars:
+            balao_atual += " " + f
+        else:
+            baloes.append(balao_atual)
+            balao_atual = f
+            
+    if balao_atual:
+        baloes.append(balao_atual)
+
+    # Se o último balão for um link isolado e o anterior for curto, junta os dois
+    if len(baloes) > 1 and baloes[-1].startswith("http"):
+        if len(baloes[-2]) + len(baloes[-1]) + 1 <= 140:
+            baloes[-2] = baloes[-2] + " " + baloes[-1]
+            baloes.pop()
+
+    if len(baloes) > max_baloes:
+        tem_link_no_fim = baloes[-1].startswith("http")
+        if tem_link_no_fim and max_baloes >= 2:
+            texto_baloes = baloes[:-1]
+            slots = max_baloes - 1
+            tamanho = max(1, len(texto_baloes) // slots)
+            novos = []
+            for s in range(slots):
+                inicio = s * tamanho
+                fim = (s + 1) * tamanho if s < slots - 1 else len(texto_baloes)
+                novos.append(" ".join(texto_baloes[inicio:fim]))
+            novos.append(baloes[-1])
+            baloes = novos
+        else:
+            tamanho = max(1, len(baloes) // max_baloes)
+            novos = []
+            for s in range(max_baloes):
+                inicio = s * tamanho
+                fim = (s + 1) * tamanho if s < max_baloes - 1 else len(baloes)
+                novos.append(" ".join(baloes[inicio:fim]))
+            baloes = novos
+
+    return [b for b in baloes if b.strip()]
 
 async def enviar_presenca(target_number: str, presenca: str, delay_ms: int = 4000):
     """Envia presença na Evolution API (composing ou recording)."""
@@ -204,11 +293,36 @@ async def reagir_mensagem_whatsapp(remote_jid: str, msg_id: str, emoji: str = "�
         return False
 
 async def enviar_texto_whatsapp(target_number: str, texto: str):
-
-    """Envia mensagem de texto no WhatsApp."""
-    if eh_numero_teste_ou_invalido(target_number):
-        print(f"[BLOQUEIO ANTI-SPAM] Disparo de texto bloqueado para número fictício: {target_number}")
+    """Envia mensagem de texto no WhatsApp com trava de descarte de duplicidade e proteção anti-spam."""
+    if not target_number or not texto:
         return None
+
+    if eh_numero_teste_ou_invalido(target_number):
+        print(f"[BLOQUEIO ANTI-SPAM] Disparo de texto bloqueado para número inválido/não autorizado: {target_number}")
+        return None
+
+    # MODO DRY RUN / TESTE: Se MARCAO_DRY_RUN estiver ativo, não dispara
+    if os.getenv("MARCAO_DRY_RUN", "false").lower() == "true":
+        print(f"[DRY-RUN WHATSAPP] Simulação de envio para {target_number}: {texto[:60]}...")
+        return {"dry_run": True, "target": target_number, "status": "simulado"}
+
+    # TRAVA ATÔMICA ANTI-DUPLICIDADE (Deduplicação por hash de texto + número com TTL de 300 segundos)
+    import hashlib
+    chave_dedup = f"{target_number}_{hashlib.md5(texto.strip().encode()).hexdigest()}"
+    agora = time.time()
+    
+    # Limpa entradas antigas (> 600s)
+    chaves_expiradas = [k for k, ts in _historico_envios_recentes.items() if agora - ts > 600]
+    for k in chaves_expiradas:
+        _historico_envios_recentes.pop(k, None)
+
+    if chave_dedup in _historico_envios_recentes:
+        tempo_passado = agora - _historico_envios_recentes[chave_dedup]
+        if tempo_passado < 300:  # 5 minutos
+            print(f"[BLOQUEIO ANTI-DUPLICIDADE] Mensagem idêntica enviada para {target_number} há {int(tempo_passado)}s. Bloqueado!")
+            return None
+
+    _historico_envios_recentes[chave_dedup] = agora
 
     headers = {
         "apikey": EVOLUTION_API_KEY,
@@ -545,6 +659,125 @@ async def processar_mensagem_marcao(payload_webhook: dict) -> dict:
             "resposta": msg_cliente
         }
 
+    # -------------------------------------------------------------------------
+    # SUPERPODER DO MARCÃO: EXECUÇÃO DE COMANDOS DE POSTAGEM DO CHEFE EVANDRO
+    # -------------------------------------------------------------------------
+    if is_evandro:
+        termos_postagem = [
+            "posta no instagram", "postar no instagram", "poste no instagram",
+            "posta no insta", "poste no insta", "postar no insta",
+            "posta no feed", "poste no feed", "postar no feed",
+            "posta nos stories", "poste nos stories", "posta no stories", "poste no story",
+            "publica no instagram", "publique no instagram", "publicar no instagram",
+            "cria um post", "crie um post", "gera um criativo", "faz um post", "faça um post",
+            "posta uma foto", "posta um card", "posta uma imagem"
+        ]
+        eh_comando_postagem = any(t in texto_lower for t in termos_postagem)
+        if eh_comando_postagem:
+            resposta_prontidao = (
+                f"Opa, meu chefe! Entendido e acatado imediatamente! 🚀\n\n"
+                f"Tô gerando o criativo agora mesmo e publicando na nossa conta oficial do Instagram (@marcaopersonalfitness).\n\n"
+                f"Assim que estiver no ar, te mando a confirmação aqui no nosso chat! Bora pra cima! 💪🔥"
+            )
+            await enviar_presenca(target_number, "composing", delay_ms=2000)
+            await enviar_texto_whatsapp(target_number, resposta_prontidao)
+
+            # Função assíncrona de background para executar a postagem e avisar o Chefe
+            async def tarefa_postagem_chefe():
+                try:
+                    from instagram_executor import executar_postagem_solicitada
+                    res = executar_postagem_solicitada(texto_recebido)
+                    if res.get("sucesso"):
+                        msg_sucesso = (
+                            f"🚀 *PRONTINHO, MEU CHEFE! POST PUBLICADO NO INSTAGRAM!*\n\n"
+                            f"📸 *Tema:* {res.get('tema')}\n"
+                            f"📱 *Destino:* {res.get('destino')} (@marcaopersonalfitness)\n"
+                            f"🔗 *ID:* {res.get('post_id')}\n\n"
+                            f"Já tá no ar pra galera engajar! O Marcão tá na ativa! 🔥"
+                        )
+                    else:
+                        msg_sucesso = f"Chefe, tive uma oscilação na API do Instagram ao tentar publicar: {res.get('motivo')[:120]}. Mas a imagem foi gerada com sucesso!"
+                    await enviar_texto_whatsapp(target_number, msg_sucesso)
+                except Exception as e_post:
+                    print(f"[MARCAO_SUPERPOWER] Erro na postagem do Chefe: {e_post}")
+
+            asyncio.create_task(tarefa_postagem_chefe())
+
+            historico_mensagens = await buscar_historico_lead(f"{target_number}@s.whatsapp.net", target_number, push_name)
+            historico_mensagens.append({"role": "user", "content": texto_recebido, "timestamp": datetime.now().isoformat()})
+            historico_mensagens.append({"role": "assistant", "content": resposta_prontidao, "timestamp": datetime.now().isoformat()})
+            await salvar_historico_lead(f"{target_number}@s.whatsapp.net", target_number, push_name, historico_mensagens, texto_recebido)
+
+            return {
+                "sucesso": True,
+                "tipo": "comando_postagem_chefe",
+                "target": target_number,
+                "resposta": resposta_prontidao
+            }
+
+        # -------------------------------------------------------------------------
+        # SUPERPODER DO MARCÃO: INGESTÃO E MEMORIZAÇÃO DE AFILIADOS DO CHEFE EVANDRO
+        # -------------------------------------------------------------------------
+        termos_afiliado = ["!produto", "cadastra produto", "cadastrar produto", "cadastra esse produto", "novo produto", "adiciona produto", "cadastrar afiliado", "link de afiliado"]
+        tem_url_afiliado = bool(re.search(r'https?://\S+', texto_recebido)) and any(p in texto_lower for p in ["amazon", "amzn", "magalu", "mercadolivre", "shopee", "braip", "stripe", "afiliad"])
+        eh_comando_afiliado = any(t in texto_lower for t in termos_afiliado) or (tem_url_afiliado and len(texto_recebido.split()) < 35)
+
+        if eh_comando_afiliado:
+            url_match = re.search(r'https?://\S+', texto_recebido)
+            url_afiliado = url_match.group(0) if url_match else "https://marcaopersonal.com#loja"
+            
+            programa_detectado = "afiliado"
+            if "amazon" in url_afiliado or "amzn" in url_afiliado:
+                programa_detectado = "amazon"
+            elif "magalu" in url_afiliado:
+                programa_detectado = "magalu"
+            elif "mercadolivre" in url_afiliado or "meli" in url_afiliado:
+                programa_detectado = "mercadolivre"
+            elif "shopee" in url_afiliado:
+                programa_detectado = "shopee"
+            elif "braip" in url_afiliado:
+                programa_detectado = "braip"
+            elif "stripe" in url_afiliado:
+                programa_detectado = "stripe"
+
+            res_ingestao = await processar_e_ingerir_afiliado(
+                url=url_afiliado,
+                texto_ou_html=texto_recebido,
+                programa=programa_detectado
+            )
+
+            if res_ingestao.get("sucesso"):
+                resposta_afiliado = (
+                    f"🚀 *PRODUTO MEMORIZADO COM SUCESSO, MEU CHEFE!*\n\n"
+                    f"📦 *Produto:* {res_ingestao.get('nome')}\n"
+                    f"💰 *Preço Oficial:* R$ {res_ingestao.get('preco'):.2f}\n"
+                    f"📊 *Custo por Dia:* R$ {res_ingestao.get('custo_dia'):.2f} / dia\n"
+                    f"🎯 *Score de Viabilidade:* {res_ingestao.get('score_viabilidade')}/100 ({res_ingestao.get('classificacao')})\n"
+                    f"💎 *Comissão Estimada:* R$ {res_ingestao.get('comissao_estimada'):.2f} por venda\n"
+                    f"✅ *Compliance ANVISA & Meta:* 100% Aprovado!\n\n"
+                    f"O catálogo unificado já foi atualizado em tempo real! Já está ativo na minha memória no WhatsApp e no Instagram (Directs e Feed/Stories). Bora pra cima bater o R$ 1 Milhão! 💪🔥"
+                )
+            else:
+                resposta_afiliado = (
+                    f"Chefe, analisei o produto mas encontrei um alerta de compliance/regras: {res_ingestao.get('motivo')}\n\n"
+                    f"Por segurança da conta da Meta e diretrizes da ANVISA, não inseri na vitrine pública automática."
+                )
+
+            await enviar_presenca(target_number, "composing", delay_ms=2500)
+            await enviar_texto_whatsapp(target_number, resposta_afiliado)
+
+            historico_mensagens = await buscar_historico_lead(f"{target_number}@s.whatsapp.net", target_number, push_name)
+            historico_mensagens.append({"role": "user", "content": texto_recebido, "timestamp": datetime.now().isoformat()})
+            historico_mensagens.append({"role": "assistant", "content": resposta_afiliado, "timestamp": datetime.now().isoformat()})
+            await salvar_historico_lead(f"{target_number}@s.whatsapp.net", target_number, push_name, historico_mensagens, texto_recebido)
+
+            return {
+                "sucesso": True,
+                "tipo": "ingestao_afiliado_chefe",
+                "target": target_number,
+                "resposta": resposta_afiliado
+            }
+
     genero = identificar_genero(push_name)
     tratamento_genero = "HOMEM (use termos: irmão, guerreiro, campeão, parceiro de treino)" if genero == "homem" else "MULHER (use termos: querida, guerreira, campeã, parceira de treino)"
 
@@ -660,7 +893,7 @@ async def processar_mensagem_marcao(payload_webhook: dict) -> dict:
             f"  * Estrutura de Treino Ativa: {treino_resumo}\n"
             f"  * Segurança LGPD: Foto Criptografada AES-256 no banco militar do Supabase com consentimento formal.\n"
             f"- Você tem TOTAL AUTORIZAÇÃO para analisar o shape dele por fotos (frente/costas), avaliar pratos e calibrar treinos!\n"
-            f"- REGRA DOS 3 MESES (TRANSIÇÃO PÓS-90 DIAS): Se faltarem 10 dias ou menos (dias_restantes <= 10), elogie a evolução do aluno e informe com carinho que para continuar com seus check-ins semanais e mentoria direta no WhatsApp, a taxa simbólica é de apenas R$ 19,90/mês no link https://marcaopersonal.com#renovacao-vip."
+            f"- REGRA DOS 3 MESES (TRANSIÇÃO PÓS-90 DIAS): Se faltarem 10 dias ou menos (dias_restantes <= 10), elogie a evolução do aluno e informe com carinho que para continuar com seus check-ins semanais e mentoria direta no WhatsApp, a taxa simbólica é de apenas R$ 19,90/mês no link oficial da Stripe: https://buy.stripe.com/7sYfZgbmtgaI5dncwrfMA01."
         )
     else:
         instrucao_vip = (
@@ -699,8 +932,20 @@ async def processar_mensagem_marcao(payload_webhook: dict) -> dict:
     else:
         ultimas_trocas = "Nenhum histórico anterior (primeira interação/novo contato)."
 
+    bloco_catalogo_unificado = await obter_catalogo_para_prompt()
+
     system_prompt = f"""Você é o MARCÃO PERSONAL, personal trainer maromba de 35 anos, fundador do Marcão Personal 360°.
 Você é um ser humano autêntico, animado, focado em musculação, saúde, treino pesado e estética corporal.
+
+DIRETRIZ MESTRA ABSOLUTA: VOCÊ É UM CLOSER PERSUASIVO NATO (VENDEDOR CONSULTIVO DE ALTA CONVERSÃO)!
+- Se o interlocutor for um Aluno ou Lead (exceto o Diretor Evandro): SEU DEVER É CONVERTER E NÃO DEIXAR O CLIENTE PROCRASTINAR!
+- É ESTRITAMENTE PROIBIDO:
+  * NUNCA diga "eu entendo você", "temos que equilibrar as finanças", "vale a pena aguardar", "enquanto você pensa" ou "quando decidir fazer o upgrade"!
+  * NUNCA aceite passivamente que o cliente deixe para o mês que vem ou adie a compra!
+- SEMPRE QUE O CLIENTE HESITAR POR PREÇO, ACHAR PUXADO OU FALAR EM ADIAR:
+  1. FAÇA A CONTA MATEMÁTICA DO CUSTO POR DIA: Cobre na lata: "Faz a conta comigo: o pote de 300g tem 100 doses diárias. Dá apenas R$ 1,69 por dia! Menos que meio café na padaria pra ter 20% mais força e regeneração muscular."
+  2. MOSTRE O PREJUÍZO DE ADIAR: "Deixar pro mês que vem é jogar 30 dias de evolução no lixo e continuar estagnado na frente do espelho."
+  3. INSISTA COM ENERGIA DE COACH E MANDE O LINK DIRETO NO ÚLTIMO BALÃO PARA ELE GARANTIR AGORA NO LOTE COM FRETE PROMOCIONAL!
 
 INFORMAÇÕES DO INTERLOCUTOR:
 {instrucao_nome}
@@ -726,11 +971,12 @@ CONSCIÊNCIA TEMPORAL (HORÁRIO DE BRASÍLIA):
 - Época do ano: {epoca_ano}
 Use esse contexto com naturalidade quando couber.
 
-IDENTIDADE E VIDA PESSOAL DO MARCÃO:
-- Brasileiro, mora em Muriaé-MG (sotaque e carisma mineiro com frango e whey).
-- Trabalha em uma academia aqui em Muriaé, MAS NUNCA REVELE O NOME DA ACADEMIA (não ganha para fazer propaganda dela!).
-- Vida Pessoal: Você tem total liberdade para inventar/mentir histórias engraçadas e causos malucos de maromba para cada pessoa!
-- NUNCA atende ligações telefônicas nem chamadas de vídeo/voz (sempre na sala de musculação dando aula presencial).
+IDENTIDADE, ÉTICA & GUARDRAILS REGULATÓRIOS (ITEM 14 DO SISTEMA OPERACIONAL):
+- DETECÇÃO MANDATÓRIA DE IDIOMA (MULTILÍNGUE): Responda SEMPRE no exato mesmo idioma em que o interlocutor escreveu! Se ele enviou mensagem em INGLÊS, responda 100% em INGLÊS natural, motivador e brother maromba ("Hey brother! Let's crush our goals!"). Se em ESPANHOL, em ESPANHOL! Se em PORTUGUÊS, em PORTUGUÊS!
+- Se perguntarem se você é uma Inteligência Artificial: declare a verdade com carisma e simpatia! ("Sou a IA oficial do Marcão Personal criada pra te dar suporte maromba e acompanhar seus hábitos 24h por dia!")
+- ANVISA & CONAR: Zero alegações de cura ou emagrecimento milagroso. Foque em dados científicos, ressíntese de ATP, densidade muscular, força, sustentação dérmica e leitura de parâmetros corporais.
+- CREF: Você orienta hábitos saudáveis, hidratação, sono e biomecânica. NUNCA prescreva dietas médicas nem treinos clínicos individualizados. Se pedirem isso, recomende um Educador Físico (CREF) ou Nutricionista (CRN).
+- LGPD: Fotos corporais e medidas são dados sensíveis; use apenas com o consentimento do aluno para orientar os hábitos da rotina.
 
 BALANÇA DE BIOIMPEDÂNCIA COM IA & REGRA DE 3 MESES:
 - A balança mede por microcorrente BIA: Peso, % Gordura, Gordura Visceral, Massa Magra, % Água, Massa Óssea, TMB e Idade Metabólica.
@@ -742,19 +988,22 @@ REGRAS DE FORMATAÇÃO HUMANIZADA (SEM TEXTÃO - PADRÃO WHATSAPP BRASIL):
 2. NO MÁXIMO 2 OU 3 BALÕES CURTOS POR RESPOSTA, separados estritamente por duas quebras de linha (\\n\\n).
 3. CADA BALÃO DEVE SER CONCISO: no máximo 15 a 25 palavras por balão (cerca de 100 a 140 caracteres).
 4. NUNCA repita o vocativo ('meu chefe', nome) no meio da resposta ou em balões subsequentes.
-5. SINAIS DE ENCERRAMENTO: Se a pessoa mandar mensagem curta de encerramento ('valeu', 'obrigado', 'tá bom', 'tchau', 'até mais', 'vou pensar', 'boa noite'):
-   - NÃO faça perguntas.
-   - NÃO empurre produtos.
-   - Apenas agradeça com simpatia e deseje {saudacao_correta} ({periodo} em Brasília).
 
-LINKS DIRETOS DE VENDAS:
-- Balança Bioimpedância Bluetooth IA (R$ 89,90): https://marcaopersonal.com#balanca
-- Secar barriga / Caneta Azempika (R$ 99,00): https://ev.braip.com/ref?pl=plaljlxy&ck=che6vnvr&af=afine5z3yv
-- Força / Creatina 100% Pura 300g (R$ 169,90): https://ev.braip.com/ref?pl=pla1x6xn&ck=chen80rq&af=afimeno621
-- Flacidez / Colágeno + Hialurônico (R$ 164,90): https://ev.braip.com/ref?pl=plawdmnw&ck=chen80pq&af=afi659l8pg
-- Queda de cabelo / KIT IArmonize (R$ 1.256,00): https://ev.braip.com/ref?pl=plav449r&ck=cheq89gn&af=afilx3y72p
-- Vista cansada / Vision Prime (R$ 199,00): https://ev.braip.com/ref?pl=pla2nz6n&ck=che76kmo&af=afi3vmxeod
-- Loja Geral: https://marcaopersonal.com#loja
+POSTURA DE VENDEDOR PERSUASIVO DE ALTA CONVERSÃO (CLOSER NATO):
+- Se o interlocutor for um LEAD ou ALUNO (qualquer um exceto o Diretor Evandro): VOCÊ É UM VENDEDOR PERSUASIVO, ATIVO E INCANSÁVEL!
+- Observe cada dor, dúvida ou sintoma do lead e OFEREÇA O PRODUTO CERTO COM PERSUASÃO E AUTORIDADE!
+- REGRA MANDATÓRIA: SEMPRE FAÇA A CONTA DO CUSTO POR DIA!
+- QUEBRA DE OBJEÇÕES & INSISTÊNCIA OBRIGATÓRIA: Rebata na hora calculando o custo por dia e mostrando o prejuízo de adiar.
+
+EXEMPLO DE RESPOSTA CLOSER:
+Se o cliente disser: "Achei a creatina cara / vou deixar pro mês que vem":
+"Rodrigo, faz a conta comigo na ponta do lápis, irmão!
+
+O pote vem com 100 doses diárias. Isso dá apenas R$ 1,69 por dia, menos que meio café na padaria! Por R$ 1,69 ao dia você satura a creatina, ganha até 20% mais força e acelera a regeneração muscular.
+
+Deixar pro mês que vem é jogar 30 dias de evolução no lixo e continuar estagnado no espelho. O lote oficial com frete promocional tá ativo agora, garante a sua aqui: https://ev.braip.com/ref?pl=pla1x6xn&ck=chen80rq&af=afimeno621"
+
+{bloco_catalogo_unificado}
 
 PODER DE VISÃO COMPUTACIONAL & ANÁLISE DE MÍDIAS:
 - Você tem VISÃO TOTAL para enxergar qualquer imagem, foto ou arquivo enviado (artes, pratos de comida, suplementos, prints, exames ou documentos)!
@@ -767,15 +1016,14 @@ PODER DE VISÃO COMPUTACIONAL & ANÁLISE DE MÍDIAS:
 - Se for foto de corpo/shape de um cliente: avalie postura e tônus com respeito. Se ele for aluno VIP da balança, monte a divisão de treino. Se NÃO tiver a balança e pedir avaliação física, reforce a regra da balança de bioimpedância para liberar os 3 meses de mentoria VIP gratuita!
 
 REGRAS OBRIGATÓRIAS DE CONVERSAÇÃO HUMANA:
-1. NUNCA REPITA RESPOSTAS PADRÃO OU FRASES PRONTAS! Converse de verdade, com repertório humano livre, considerando o que já foi conversado no histórico!
-2. FLUIDEZ E CADÊNCIA: Responda diretamente, sem repetição de cumprimentos formais se a conversa já estiver ocorrendo.
-3. TRATAMENTO: Trate sempre no gênero correspondente ({tratamento_genero}).
-4. SE FOR O DIRETOR EVANDRO:
+1. FLUIDEZ E CADÊNCIA: Responda diretamente, sem repetição de cumprimentos formais se a conversa já estiver ocorrendo.
+2. TRATAMENTO: Trate sempre no gênero correspondente ({tratamento_genero}).
+3. SE FOR O DIRETOR EVANDRO:
    - Trate com lealdade de braço direito ('meu chefe', 'Evandro').
    - Se ele pediu áudio, mande um recado em áudio animado de prontidão.
    - Se pedir status, relatório ou ordens, responda com prontidão executiva.
-5. FORMATO DA RESPOSTA:
-   - {'Se for ÁUDIO: crie um texto falado, direto, fluido e natural (35 a 55 palavras no máximo). No áudio, NÃO soletre URLs longas; diga algo como: "Tô te mandando o link direto aqui no nosso chat pra você conferir agora!" e coloque o link ao final.' if pediu_audio else 'Se for TEXTO: divida em 2 ou 3 parágrafos curtos separados por duas quebras de linha (\\n\\n) para leitura dinâmica com pausas. O link do produto deve vir em destaque no final.'}"""
+4. FORMATO DA RESPOSTA:
+   - {'Se for ÁUDIO: crie um texto falado, direto, fluido e persuasivo (35 a 55 palavras no máximo). No áudio, NÃO soletre URLs longas; diga algo como: "Tô te mandando o link direto aqui no nosso chat pra você conferir agora!" e coloque o link ao final.' if pediu_audio else 'Se for TEXTO: divida em 2 ou 3 parágrafos curtos separados por duas quebras de linha (\\n\\n) para leitura dinâmica com pausas. O link do produto e o chamado para fechar devem vir em destaque no final.'}"""
 
     messages_llm = [{"role": "system", "content": system_prompt}]
     for h in historico_mensagens[-10:]:
@@ -802,7 +1050,8 @@ REGRAS OBRIGATÓRIAS DE CONVERSAÇÃO HUMANA:
         user_content = f"O interlocutor enviou um documento PDF. Analise os dados extraídos abaixo e comente no seu estilo Marcão Personal:\n\n{texto_pdf_extraido.strip()}"
         messages_llm.append({"role": "user", "content": user_content})
     else:
-        messages_llm.append({"role": "user", "content": texto_recebido})
+        conteudo_usuario = f"Cliente ({primeiro_nome}): {texto_recebido}" if not is_evandro else texto_recebido
+        messages_llm.append({"role": "user", "content": conteudo_usuario})
 
     resposta_gerada = ""
     try:
@@ -815,8 +1064,10 @@ REGRAS OBRIGATÓRIAS DE CONVERSAÇÃO HUMANA:
                 "model": "openai/gpt-4o-mini",
                 "messages": messages_llm,
                 "max_tokens": 400,
-                "temperature": 0.8
+                "temperature": 0.5
             }
+            print("[DEBUG OPENROUTER PAYLOAD SYSTEM PROMPT LEN]:", len(messages_llm[0]['content']))
+            print("[DEBUG SYSTEM PROMPT HEAD]:", messages_llm[0]['content'][:300])
             res = await client.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=body)
             if res.status_code == 200:
                 resposta_gerada = res.json()["choices"][0]["message"]["content"].strip()
@@ -844,17 +1095,17 @@ REGRAS OBRIGATÓRIAS DE CONVERSAÇÃO HUMANA:
             "resposta": resposta_gerada
         }
     else:
-        paragrafos = [p.strip() for p in resposta_gerada.split("\n\n") if p.strip()]
-        for i, p in enumerate(paragrafos):
-            await enviar_presenca(target_number, "composing", delay_ms=2500)
-            await asyncio.sleep(1.5)
-            await enviar_texto_whatsapp(target_number, p)
-            if i < len(paragrafos) - 1:
-                await asyncio.sleep(1.0)
+        baloes = quebrar_em_baloes_curtos(resposta_gerada, max_chars=130, max_baloes=3)
+        for i, b in enumerate(baloes):
+            await enviar_presenca(target_number, "composing", delay_ms=2000)
+            await asyncio.sleep(1.2)
+            await enviar_texto_whatsapp(target_number, b)
+            if i < len(baloes) - 1:
+                await asyncio.sleep(1.2)
         return {
             "sucesso": True,
             "tipo": "texto",
             "target": target_number,
             "resposta": resposta_gerada,
-            "fragmentos": len(paragrafos)
+            "fragmentos": len(baloes)
         }

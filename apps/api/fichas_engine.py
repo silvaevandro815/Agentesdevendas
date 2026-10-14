@@ -7,6 +7,9 @@ from dotenv import load_dotenv
 
 from encryption_service import criptografar_foto, gerar_termo_lgpd
 
+_base_dir = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(_base_dir, ".env"), override=True)
+load_dotenv(os.path.join(_base_dir, "..", "..", ".env"))
 load_dotenv()
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "https://qkopgftfrfftoyndhhfj.supabase.co")
@@ -371,9 +374,29 @@ EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "https://evolution.marcaopers
 EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "")
 
 async def enviar_mensagem_whatsapp_fichas(target_number: str, texto: str):
-    """Dispara mensagem de texto direta no WhatsApp via Evolution API."""
-    if not EVOLUTION_API_KEY or not target_number:
+    """Dispara mensagem de texto direta no WhatsApp via Evolution API com proteção estrita anti-spam."""
+    if not EVOLUTION_API_KEY or not target_number or not texto:
         return None
+
+    # MODO DRY RUN / TESTE
+    if os.getenv("MARCAO_DRY_RUN", "false").lower() == "true":
+        print(f"[DRY-RUN FICHAS] Simulação de envio para {target_number}: {texto[:60]}...")
+        return {"dry_run": True, "target": target_number, "status": "simulado"}
+
+    digitos = "".join(filter(str.isdigit, str(target_number)))
+    if len(digitos) < 10:
+        return None
+
+    # Bloqueio estrito de DDD 11 desconhecido
+    if digitos.startswith("5511") or (len(digitos) in [10, 11] and digitos.startswith("11")):
+        print(f"[BLOQUEIO ANTI-SPAM] Fichas VIP bloqueado para DDD 11: {target_number}")
+        return None
+
+    # Padrões clássicos de mock
+    if any(m in digitos for m in ["99998888", "988887777", "988881111", "988882222", "999990001"]):
+        print(f"[BLOQUEIO ANTI-SPAM] Fichas VIP bloqueado para número teste: {target_number}")
+        return None
+
     headers = {
         "apikey": EVOLUTION_API_KEY,
         "Content-Type": "application/json"

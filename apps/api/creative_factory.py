@@ -27,22 +27,37 @@ SUPABASE_URL = os.getenv("SUPABASE_URL", "https://qkopgftfrfftoyndhhfj.supabase.
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
 STORAGE_BUCKET = "creativos"
 
-# Paleta Visual Cyber Marcão Personal
+# Paleta Visual Editorial Marcão Personal (@caiqueness inspired - Foco em Venda & Beleza)
+COR_BG_DEEP = (7, 10, 16)           # Obsidiana escuro
+COR_AMBER = (255, 122, 0)           # Sunset Amber vibrante (predominante para venda, vitalidade e apetite)
+COR_AMBER_LIGHT = (255, 175, 55)    # Dourado brilhante para destaque
+COR_CREAM = (255, 246, 235)         # Marfim de luxo
+COR_CYAN = (0, 229, 255)            # Neon Cyan biohacking cirúrgico
+COR_WHITE = (255, 255, 255)
+COR_TEXT_MUTED = (165, 185, 210)
 COR_NAVY = (10, 14, 23)
-COR_CYAN = (0, 210, 255)
 COR_GREEN = (57, 240, 140)
 COR_ORANGE = (255, 138, 0)
-COR_WHITE = (255, 255, 255)
-COR_TEXT_MUTED = (160, 180, 205)
 
-# Diretórios de Mídia
+# Diretórios de Mídia e Fontes Editoriais
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", ".."))
 DIR_OUTPUT = os.path.join(ROOT_DIR, "apps", "site", "public", "images", "posts")
+FONTS_DIR = os.path.join(BASE_DIR, "fonts")
+FONT_BEBAS = os.path.join(FONTS_DIR, "BebasNeue-Regular.ttf")
+FONT_ANTON = os.path.join(FONTS_DIR, "Anton-Regular.ttf")
+FONT_MONTSERRAT = os.path.join(FONTS_DIR, "Montserrat-Variable.ttf")
 LOGO_PATH = os.path.join(ROOT_DIR, "apps", "admin", "public", "images", "logo_marcao.jpg")
 MASCOTE_PATH = os.path.join(ROOT_DIR, "apps", "admin", "public", "images", "mascote_marcao.jpg")
 
 os.makedirs(DIR_OUTPUT, exist_ok=True)
+
+def desenhar_seta_minimalista(draw, x, y, cor, tamanho=14):
+    """Desenha seta moderna vetorial -> com alta nitidez."""
+    draw.line([(x, y), (x + tamanho, y)], fill=cor, width=3)
+    draw.line([(x + tamanho - 5, y - 5), (x + tamanho, y)], fill=cor, width=3)
+    draw.line([(x + tamanho - 5, y + 5), (x + tamanho, y)], fill=cor, width=3)
+
 
 # -------------------------------------------------------------------------
 # 1. BÚSSOLA DE TEMAS E TENDÊNCIAS FITNESS BRASIL (GOOGLE TRENDS)
@@ -638,193 +653,259 @@ def carregar_logo_arredondado(tamanho=(110, 110)):
     return None
 
 
+def obter_fontes_editoriais(tamanho_hero=120, tamanho_sub=28, tamanho_body=24):
+    """Carrega as fontes editoriais oficiais do Marcão (Bebas Neue Display + Arial/Montserrat de suporte)."""
+    try:
+        f_hero = ImageFont.truetype(FONT_BEBAS, tamanho_hero) if os.path.exists(FONT_BEBAS) else ImageFont.truetype("arialbd.ttf", tamanho_hero)
+    except Exception:
+        f_hero = ImageFont.load_default()
+
+    try:
+        f_tag = ImageFont.truetype("arialbd.ttf", 20)
+        f_num = ImageFont.truetype(FONT_BEBAS, 44) if os.path.exists(FONT_BEBAS) else ImageFont.truetype("arialbd.ttf", 44)
+        f_sub = ImageFont.truetype("arialbd.ttf", tamanho_sub)
+        f_body = ImageFont.truetype("arial.ttf", tamanho_body)
+        f_footer = ImageFont.truetype("arialbd.ttf", 18)
+        f_cta = ImageFont.truetype("arialbd.ttf", 22)
+    except Exception:
+        f_tag = f_num = f_sub = f_body = f_footer = f_cta = ImageFont.load_default()
+
+    return f_hero, f_tag, f_num, f_sub, f_body, f_footer, f_cta
+
+
 def criar_slide_carrossel(titulo, subtitulo, pontos, cta_slide, num_slide, total_slides, categoria, out_path, bg_path=None):
     """
-    Gera um slide individual de carrossel (1080x1080) com padrão visual estético de alta tecnologia.
+    Gera slide de carrossel (1080x1080) no estilo editorial moderno (@caiqueness inspired).
     """
-    # 1. Base da Imagem
-    if bg_path and os.path.exists(bg_path):
-        bg = Image.open(bg_path).convert("RGBA").resize((1080, 1080))
-    else:
-        bg = Image.new("RGBA", (1080, 1080), (10, 14, 23, 255))
-        draw_grid = ImageDraw.Draw(bg)
-        for i in range(0, 1080, 120):
-            draw_grid.line([(i, 0), (i, 1080)], fill=(20, 28, 45, 60))
-            draw_grid.line([(0, i), (1080, i)], fill=(20, 28, 45, 60))
+    f_hero, f_tag, f_num, f_sub, f_body, f_footer, f_cta = obter_fontes_editoriais(tamanho_hero=90, tamanho_sub=26, tamanho_body=24)
 
-    # 2. Gradiente Glassmorphism Dark
+    if bg_path and os.path.exists(bg_path):
+        base = Image.open(bg_path).convert("RGBA").resize((1080, 1080), Image.Resampling.LANCZOS)
+    else:
+        base = Image.new("RGBA", (1080, 1080), COR_BG_DEEP)
+
+    # Vinheta Dark Glassmorphism para leitura cristalina
     overlay = Image.new("RGBA", (1080, 1080), (0, 0, 0, 0))
     draw_ov = ImageDraw.Draw(overlay)
     for y in range(0, 1080):
-        alpha = int(185 + 70 * (y / 1080))
-        draw_ov.line([(0, y), (1080, y)], fill=(8, 12, 20, alpha))
+        alpha = int(215 + 35 * (y / 1080))
+        draw_ov.line([(0, y), (1080, y)], fill=(7, 10, 16, alpha))
 
-    im = Image.alpha_composite(bg, overlay)
+    im = Image.alpha_composite(base, overlay)
     draw = ImageDraw.Draw(im)
 
-    # 3. Logo Marcão Oficial
-    logo = carregar_logo_arredondado((100, 100))
-    if logo:
-        im.paste(logo, (50, 50), logo)
+    # 1. Topo: Tag de Categoria e Contador
+    cat_str = f"BIOHACKING  •  PASSO 0{num_slide}"
+    draw.rounded_rectangle([60, 55, 370, 100], radius=22, fill=(14, 22, 36, 220), outline=COR_AMBER, width=2)
+    draw.text((85, 67), cat_str, fill=COR_AMBER_LIGHT, font=f_tag)
 
-    # 4. Fontes
-    try:
-        font_badge = ImageFont.truetype("arialbd.ttf", 20)
-        font_counter = ImageFont.truetype("arialbd.ttf", 22)
-        font_title = ImageFont.truetype("arialbd.ttf", 44)
-        font_sub = ImageFont.truetype("arialbd.ttf", 26)
-        font_p = ImageFont.truetype("arial.ttf", 25)
-        font_cta = ImageFont.truetype("arialbd.ttf", 22)
-    except Exception:
-        font_badge = font_counter = font_title = font_sub = font_p = font_cta = ImageFont.load_default()
+    draw.text((980, 60), f"{num_slide}/{total_slides}", fill=COR_TEXT_MUTED, font=f_num)
 
-    # 5. Badge de Categoria Neon Cyan
-    cat_texto = sanitizar_texto_pillow(categoria).upper()
-    largura_badge = 200 + len(cat_texto) * 11
-    draw.rounded_rectangle([170, 75, 170 + largura_badge, 125], radius=25, fill=(10, 22, 38, 230), outline=COR_CYAN, width=2)
-    draw.text((195, 88), cat_texto, fill=COR_CYAN, font=font_badge)
+    # 2. Título do Slide em Bebas Neue (quebra dinâmica)
+    titulo_limpo = sanitizar_texto_pillow(titulo).upper()
+    linhas_titulo = [l.strip() for l in titulo_limpo.split("\n") if l.strip()]
+    if not linhas_titulo:
+        linhas_titulo = [titulo_limpo]
 
-    # 6. Contador do Slide (ex: 1/3)
-    draw.text((960, 75), f"{num_slide}/{total_slides}", fill=COR_TEXT_MUTED, font=font_counter)
+    y_text = 165
+    for linha in linhas_titulo[:2]:
+        draw.text((60, y_text), linha, fill=COR_WHITE, font=f_hero)
+        y_text += 85
 
-    # 7. Título e Subtítulo Sanitizados
-    titulo_limpo = sanitizar_texto_pillow(titulo)
+    # 3. Subtítulo em Destaque Âmbar
     sub_limpo = sanitizar_texto_pillow(subtitulo)
-    draw.text((60, 220), titulo_limpo, fill=COR_WHITE, font=font_title)
     if sub_limpo:
-        draw.text((60, 330), sub_limpo, fill=COR_GREEN, font=font_sub)
+        y_text += 8
+        draw.text((60, y_text), sub_limpo, fill=COR_AMBER_LIGHT, font=f_sub)
+        y_text += 45
 
-    # 8. Pontos / Tópicos com Bullets Geométricos Neon
-    y_pos = 420
-    for p in pontos:
+    # 4. Tópicos em Cards Individuais com Bullets Cyan
+    y_pos = y_text + 15
+    for p in pontos[:4]:
         p_limpo = sanitizar_texto_pillow(p)
-        draw.ellipse([60, y_pos + 4, 80, y_pos + 24], fill=(0, 210, 255, 60), outline=COR_CYAN, width=2)
-        draw.text((95, y_pos), p_limpo, fill=(225, 235, 245), font=font_p)
-        y_pos += 80
+        draw.rounded_rectangle([60, y_pos, 1020, y_pos + 82], radius=14, 
+                               fill=(15, 23, 38, 230), outline=(35, 50, 75), width=1)
+        draw.ellipse([85, y_pos + 32, 103, y_pos + 50], fill=COR_CYAN)
+        draw.text((120, y_pos + 26), p_limpo, fill=COR_CREAM, font=f_body)
+        y_pos += 100
 
-    # 9. Barra Inferior de Ação (CTA)
-    cta_limpo = sanitizar_texto_pillow(cta_slide)
-    draw.rounded_rectangle([50, 960, 1030, 1030], radius=14, fill=(12, 24, 42, 240), outline=COR_CYAN, width=2)
-    draw.text((80, 982), cta_limpo, fill=COR_CYAN, font=font_cta)
+    # 5. Rodapé Editorial & CTA
+    draw.line([(60, 985), (1020, 985)], fill=(35, 48, 70, 200), width=1)
+    draw.text((60, 1012), "@MARCAOPERSONALFITNESS   |   marcaopersonal.com", fill=COR_TEXT_MUTED, font=f_footer)
 
-    im.convert("RGB").save(out_path, quality=95)
-    print(f"[STUDIO] Slide {num_slide}/{total_slides} salvo: {out_path}")
+    cta_limpo = sanitizar_texto_pillow(cta_slide).replace("››", "").replace(">", "").strip()
+    bbox_cta = draw.textbbox((0, 0), cta_limpo, font=f_cta)
+    cta_w = bbox_cta[2] - bbox_cta[0]
+    cta_x = 995 - cta_w
+    draw.text((cta_x, 1010), cta_limpo, fill=COR_AMBER, font=f_cta)
+    desenhar_seta_minimalista(draw, 1005, 1022, COR_AMBER, tamanho=15)
+
+    im.convert("RGB").save(out_path, quality=96)
+    print(f"[STUDIO] Slide Editorial {num_slide}/{total_slides} salvo: {out_path}")
     return out_path
 
 
 def criar_card_unico(headline, subheadline, pontos, categoria, cta_texto, out_path, bg_path=None):
     """
-    Gera um Card Único de Alto Impacto (1080x1080) com foco em headline marcante e CTA claro.
+    Gera um Card Único de Altíssimo Impacto Visual (@caiqueness inspired)
+    com manchete gigante, luz quente e estética de revista editorial de luxo.
     """
+    f_hero, f_tag, _, f_sub, f_body, f_footer, f_cta = obter_fontes_editoriais(tamanho_hero=120, tamanho_sub=28, tamanho_body=24)
+
+    # 1. Base
     if bg_path and os.path.exists(bg_path):
-        bg = Image.open(bg_path).convert("RGBA").resize((1080, 1080))
+        base = Image.open(bg_path).convert("RGBA").resize((1080, 1080), Image.Resampling.LANCZOS)
     else:
-        bg = Image.new("RGBA", (1080, 1080), (10, 14, 23, 255))
+        base = Image.new("RGBA", (1080, 1080), COR_BG_DEEP)
 
-    overlay = Image.new("RGBA", (1080, 1080), (0, 0, 0, 0))
-    draw_ov = ImageDraw.Draw(overlay)
+    # 2. Iluminação Âmbar Quente + Vinheta de Fundo
+    glow = Image.new("RGBA", (1080, 1080), (0, 0, 0, 0))
+    draw_glow = ImageDraw.Draw(glow)
+    for r in range(500, 0, -20):
+        alpha = int(55 * (1 - r / 500))
+        draw_glow.ellipse([540 - r, 320 - r, 540 + r, 320 + r], fill=(255, 110, 0, alpha))
+
+    vignette = Image.new("RGBA", (1080, 1080), (0, 0, 0, 0))
+    draw_vig = ImageDraw.Draw(vignette)
     for y in range(0, 1080):
-        alpha = int(140 + 115 * (y / 1080))
-        draw_ov.line([(0, y), (1080, y)], fill=(8, 12, 20, alpha))
+        if y < 180:
+            a = int(160 * (1 - y / 180))
+        elif y > 420:
+            a = int(245 * ((y - 420) / 660))
+        else:
+            a = 30
+        draw_vig.line([(0, y), (1080, y)], fill=(6, 9, 15, a))
 
-    im = Image.alpha_composite(bg, overlay)
+    im = Image.alpha_composite(base, glow)
+    im = Image.alpha_composite(im, vignette)
     draw = ImageDraw.Draw(im)
 
-    # Logo
-    logo = carregar_logo_arredondado((100, 100))
-    if logo:
-        im.paste(logo, (50, 50), logo)
+    # 3. Badge Editorial Superior
+    cat_str = f"BIOHACKING  •  {categoria.upper()}"
+    bbox_tag = draw.textbbox((0, 0), cat_str, font=f_tag)
+    tag_w = bbox_tag[2] - bbox_tag[0]
+    tag_x = (1080 - tag_w) // 2
 
-    # Fontes
-    try:
-        font_badge = ImageFont.truetype("arialbd.ttf", 20)
-        font_title = ImageFont.truetype("arialbd.ttf", 46)
-        font_sub = ImageFont.truetype("arialbd.ttf", 28)
-        font_p = ImageFont.truetype("arial.ttf", 26)
-        font_cta = ImageFont.truetype("arialbd.ttf", 24)
-    except Exception:
-        font_badge = font_title = font_sub = font_p = font_cta = ImageFont.load_default()
+    draw.rounded_rectangle([tag_x - 24, 55, tag_x + tag_w + 24, 100], radius=22, 
+                           fill=(12, 18, 30, 220), outline=COR_AMBER, width=2)
+    draw.text((tag_x, 67), cat_str, fill=COR_AMBER_LIGHT, font=f_tag)
 
-    # Badge Superior
-    cat_texto = sanitizar_texto_pillow(categoria).upper()
-    largura_badge = 180 + len(cat_texto) * 11
-    draw.rounded_rectangle([170, 75, 170 + largura_badge, 125], radius=25, fill=(10, 22, 38, 230), outline=COR_CYAN, width=2)
-    draw.text((195, 88), cat_texto, fill=COR_CYAN, font=font_badge)
+    # 4. Headline Gigante Condensada (Bebas Neue 120px)
+    head_limpo = sanitizar_texto_pillow(headline).upper()
+    linhas_head = [l.strip() for l in head_limpo.split("\n") if l.strip()]
+    if len(linhas_head) == 1:
+        # Se for uma linha única longa, divide em 2 ou 3 linhas harmônicas
+        palavras = linhas_head[0].split()
+        if len(palavras) >= 4:
+            meio = len(palavras) // 2
+            linhas_head = [" ".join(palavras[:meio]), " ".join(palavras[meio:])]
 
-    # Título Principal
-    head_limpo = sanitizar_texto_pillow(headline)
-    draw.text((50, 680), head_limpo, fill=COR_WHITE, font=font_title)
+    y_text = 520
+    for linha in linhas_head[:3]:
+        for ox, oy in [(-3, -3), (3, -3), (-3, 3), (3, 3), (0, 5), (5, 0)]:
+            draw.text((60 + ox, y_text + oy), linha, fill=(0, 0, 0, 240), font=f_hero)
+        draw.text((60, y_text), linha, fill=COR_WHITE, font=f_hero)
+        y_text += 112
 
-    # Subtítulo Neon Verde
+    # 5. Subheadline
     sub_limpo = sanitizar_texto_pillow(subheadline)
-    draw.text((50, 760), sub_limpo, fill=COR_GREEN, font=font_sub)
+    if sub_limpo:
+        y_text += 12
+        draw.text((60, y_text), sub_limpo, fill=COR_AMBER_LIGHT, font=f_sub)
+        y_text += 46
 
-    # Ponto de Destaque
+    # 6. Box de Destaque com Marcador Neon Cyan
     if pontos:
         p_limpo = sanitizar_texto_pillow(pontos[0])
-        draw.text((50, 825), f"• {p_limpo}", fill=(225, 235, 245), font=font_p)
+        y_text += 14
+        draw.rounded_rectangle([60, y_text, 1020, y_text + 68], radius=14, 
+                               fill=(14, 22, 36, 235), outline=COR_CYAN, width=2)
+        draw.ellipse([85, y_text + 26, 101, y_text + 42], fill=COR_CYAN)
+        draw.text((115, y_text + 20), p_limpo, fill=COR_CREAM, font=f_body)
 
-    # Botão de Ação Inferior
-    cta_limpo = sanitizar_texto_pillow(cta_texto)
-    draw.rounded_rectangle([50, 895, 1030, 970], radius=16, fill=(10, 22, 38, 240), outline=COR_CYAN, width=2)
-    draw.text((80, 920), cta_limpo, fill=COR_CYAN, font=font_cta)
+    # 7. Rodapé Editorial & CTA
+    draw.line([(60, 985), (1020, 985)], fill=(35, 48, 70, 200), width=1)
+    draw.text((60, 1012), "@MARCAOPERSONALFITNESS   |   marcaopersonal.com", fill=COR_TEXT_MUTED, font=f_footer)
 
-    im.convert("RGB").save(out_path, quality=95)
-    print(f"[STUDIO] Card Único salvo: {out_path}")
+    cta_limpo = sanitizar_texto_pillow(cta_texto).replace("››", "").replace(">", "").strip()
+    bbox_cta = draw.textbbox((0, 0), cta_limpo, font=f_cta)
+    cta_w = bbox_cta[2] - bbox_cta[0]
+    cta_x = 995 - cta_w
+    draw.text((cta_x, 1010), cta_limpo, fill=COR_AMBER, font=f_cta)
+    desenhar_seta_minimalista(draw, 1005, 1022, COR_AMBER, tamanho=15)
+
+    im.convert("RGB").save(out_path, quality=96)
+    print(f"[STUDIO] Card Único Editorial salvo: {out_path}")
     return out_path
 
 
 def criar_story(headline, subheadline, pontos, categoria, cta_texto, out_path, bg_path=None):
     """
-    Gera imagem de Story vertical (1080x1920 - 9:16) no padrão Marcão Personal.
+    Gera imagem de Story vertical (1080x1920 - 9:16) no padrão editorial @caiqueness.
     """
-    story = Image.new("RGBA", (1080, 1920), (10, 14, 23, 255))
+    f_hero, f_tag, _, f_sub, f_body, _, f_btn = obter_fontes_editoriais(tamanho_hero=115, tamanho_sub=30, tamanho_body=26)
+
+    story = Image.new("RGBA", (1080, 1920), COR_BG_DEEP)
     if bg_path and os.path.exists(bg_path):
         bg_img = Image.open(bg_path).convert("RGBA").resize((1080, 1080), Image.Resampling.LANCZOS)
-        story.paste(bg_img, (0, 180))
+        story.paste(bg_img, (0, 200))
 
+    # Gradientes de transição
     draw_grad = ImageDraw.Draw(story)
-    for y in range(0, 320):
-        alpha = int(255 * (1 - (y / 320)))
-        draw_grad.line([(0, y), (1080, y)], fill=(10, 14, 23, alpha))
-    for y in range(1000, 1920):
-        alpha = min(255, int(160 + 95 * ((y - 1000) / 920)))
-        draw_grad.line([(0, y), (1080, y)], fill=(10, 14, 23, alpha))
-
-    logo = carregar_logo_arredondado((110, 110))
-    if logo:
-        story.paste(logo, (50, 45), logo)
+    for y in range(0, 360):
+        alpha = int(255 * (1 - (y / 360)))
+        draw_grad.line([(0, y), (1080, y)], fill=(7, 10, 16, alpha))
+    for y in range(950, 1920):
+        alpha = min(255, int(180 + 75 * ((y - 950) / 970)))
+        draw_grad.line([(0, y), (1080, y)], fill=(7, 10, 16, alpha))
 
     draw = ImageDraw.Draw(story)
-    try:
-        font_badge = ImageFont.truetype("arialbd.ttf", 22)
-        font_title = ImageFont.truetype("arialbd.ttf", 44)
-        font_sub = ImageFont.truetype("arialbd.ttf", 26)
-        font_p = ImageFont.truetype("arial.ttf", 24)
-        font_btn = ImageFont.truetype("arialbd.ttf", 26)
-    except Exception:
-        font_badge = font_title = font_sub = font_p = font_btn = ImageFont.load_default()
 
-    cat_limpa = sanitizar_texto_pillow(categoria).upper()
-    draw.rounded_rectangle([180, 70, 180 + len(cat_limpa) * 16, 125], radius=25, fill=(10, 22, 38, 230), outline=COR_CYAN, width=2)
-    draw.text((205, 84), cat_limpa, fill=COR_CYAN, font=font_badge)
+    # Tag Topo
+    draw.rounded_rectangle([330, 70, 750, 120], radius=25, fill=(14, 22, 36, 230), outline=COR_AMBER, width=2)
+    draw.text((360, 83), "MARCÃO PERSONAL  •  VIP", fill=COR_AMBER_LIGHT, font=f_tag)
 
-    draw.rounded_rectangle([40, 1100, 1040, 1850], radius=24, fill=(13, 19, 31, 245), outline=COR_CYAN, width=2)
-    draw.text((70, 1140), sanitizar_texto_pillow(headline), fill=COR_WHITE, font=font_title)
-    draw.text((70, 1210), sanitizar_texto_pillow(subheadline), fill=COR_GREEN, font=font_sub)
+    # Card Principal no Story
+    draw.rounded_rectangle([40, 1100, 1040, 1840], radius=24, fill=(12, 18, 30, 245), outline=COR_AMBER, width=2)
 
-    y_pos = 1280
-    for p in pontos:
+    head_limpo = sanitizar_texto_pillow(headline).upper()
+    linhas_head = [l.strip() for l in head_limpo.split("\n") if l.strip()]
+    if len(linhas_head) == 1:
+        palavras = linhas_head[0].split()
+        if len(palavras) >= 4:
+            meio = len(palavras) // 2
+            linhas_head = [" ".join(palavras[:meio]), " ".join(palavras[meio:])]
+
+    y_t = 1145
+    for linha in linhas_head[:2]:
+        draw.text((70, y_t), linha, fill=COR_WHITE, font=f_hero)
+        y_t += 105
+
+    sub_limpo = sanitizar_texto_pillow(subheadline)
+    if sub_limpo:
+        y_t += 10
+        draw.text((70, y_t), sub_limpo, fill=COR_AMBER_LIGHT, font=f_sub)
+        y_t += 50
+
+    y_pos = y_t + 15
+    for p in pontos[:3]:
         p_limpo = sanitizar_texto_pillow(p)
-        draw.ellipse([70, y_pos + 4, 90, y_pos + 24], fill=(0, 210, 255, 60), outline=COR_CYAN, width=2)
-        draw.text((105, y_pos), p_limpo, fill=(225, 235, 245), font=font_p)
-        y_pos += 85
+        draw.ellipse([70, y_pos + 6, 88, y_pos + 24], fill=COR_CYAN)
+        draw.text((105, y_pos), p_limpo, fill=COR_CREAM, font=f_body)
+        y_pos += 65
 
-    draw.rounded_rectangle([70, 1660, 1010, 1780], radius=20, fill=COR_CYAN, outline=COR_WHITE, width=2)
-    draw.text((115, 1700), sanitizar_texto_pillow(cta_texto), fill=COR_NAVY, font=font_btn)
+    # Botão de Ação / Link
+    btn_y = 1680
+    draw.rounded_rectangle([70, btn_y, 1010, btn_y + 110], radius=20, fill=COR_AMBER, outline=COR_WHITE, width=2)
+    cta_limpo = sanitizar_texto_pillow(cta_texto).replace("››", "").replace(">", "").strip()
+    btn_str = f"{cta_limpo}  >"
+    bbox_btn = draw.textbbox((0, 0), btn_str, font=f_btn)
+    btn_w = bbox_btn[2] - bbox_btn[0]
+    btn_x = (1080 - btn_w) // 2
+    draw.text((btn_x, btn_y + 36), btn_str, fill=COR_WHITE, font=f_btn)
 
-    story.convert("RGB").save(out_path, quality=95)
-    print(f"[STUDIO] Story salvo: {out_path}")
+    story.convert("RGB").save(out_path, quality=96)
+    print(f"[STUDIO] Story Editorial salvo: {out_path}")
     return out_path
 
 

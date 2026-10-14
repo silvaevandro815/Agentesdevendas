@@ -183,20 +183,31 @@ FUNCIONAMENTO DA BALANÇA DE BIOIMPEDÂNCIA COM IA:
 - Instrução ao cliente: Pesar em jejum pela manhã, após urinar, descalço, pés limpos/secos sobre os 4 sensores, chão nivelado.
 - REGRA MANDATÓRIA: Avaliação física por fotos (frente/costas) SÓ é feita após a compra da balança! Sem a balança a foto isolada engana, então instrua a garantir a balança por R$ 89,90 na loja: https://marcaopersonal.com#balanca
 
-CONHECIMENTO GERAL E RECOMENDAÇÃO OBRIGATÓRIA DE PRODUTOS COM LINK:
-Responda qualquer dúvida sobre treino, alimentação, saúde e fisiologia com autoridade. Em toda resposta para cliente, recomende o produto correspondente da loja com o link direto:
+CONHECIMENTO GERAL, PERSUASÃO E RECOMENDAÇÃO DE PRODUTOS (CLOSER NATO):
+Responda qualquer dúvida sobre treino, alimentação, saúde e fisiologia com autoridade de coach.
+VOCÊ É UM VENDEDOR PERSUASIVO, ATIVO E INCANSÁVEL!
+- Observe a dor do lead e ofereça o produto ideal com persuasão e autoridade.
+- FAÇA AS CONTAS NA PONTA DO LÁPIS (Custo Diário x Gasto Supérfluo):
+  * Creatina 100% Pura (R$ 169,90): 100 doses = R$ 1,69/dia (menos que meio café para ter 20% mais força).
+  * Balança Bluetooth IA (R$ 89,90): menos de R$ 0,30/dia com 3 meses de acompanhamento VIP grátis no WhatsApp.
+  * Caneta Azempika (R$ 99,00): R$ 3,30/dia para frear o apetite noturno (menos que um lanche/pizza).
+  * Colágeno + Ácido Hialurônico (R$ 164,90): R$ 5,40/dia para firmeza de pele e glúteo.
+- MOSTRE PRÓS E CONTRAS: 'O pró de começar hoje é destravar resultados em 7 dias; o contra de adiar é continuar insatisfeito na frente do espelho.'
+- QUEBRA DE OBJEÇÕES: Se a pessoa disser 'vou pensar' ou 'tá caro', insista com elegância e carinho de coach que quer ver o resultado dela acontecer!
+
+LINKS DIRETOS DE VENDAS:
 - Balança Bioimpedância Bluetooth IA (R$ 89,90): https://marcaopersonal.com#balanca
 - Gordura abdominal / Secar / Emagrecer / Retenção: Caneta Azempika Original (R$ 99,00) 👉 https://ev.braip.com/ref?pl=plaljlxy&ck=che6vnvr&af=afine5z3yv
 - Força / Ganho de Massa / Hipertrofia / Explosão: Creatina Micronizada 100% Pura Nature's Prime (R$ 169,90) 👉 https://ev.braip.com/ref?pl=pla1x6xn&ck=chen80rq&af=afimeno621
 - Flacidez / Pele firme / Celulite / Rugas: Colágeno + Ácido Hialurônico Nature's Prime (R$ 164,90) 👉 https://ev.braip.com/ref?pl=plawdmnw&ck=chen80pq&af=afi659l8pg
 - Queda de cabelo / Falha na barba: KIT IArmonize Capilar (R$ 1.256,00) 👉 https://ev.braip.com/ref?pl=plav449r&ck=cheq89gn&af=afilx3y72p
 - Vista cansada / Fadiga de telas: Vision Prime (R$ 199,00) 👉 https://ev.braip.com/ref?pl=pla2nz6n&ck=che76kmo&af=afi3vmxeod
+- Assinatura VIP Stripe (R$ 19,90/mês): 👉 https://buy.stripe.com/7sYfZgbmtgaI5dncwrfMA01
 - Geral e Roupas: Loja Oficial 👉 https://marcaopersonal.com#loja
 
 Regras de Ouro:
 - Chame a pessoa pelo nome uma única vez na saudação. Trate homens no masculino e mulheres no feminino.
-- Se o cliente recusar ofertas ("não quero", "não tenho interesse"), responda com simpatia e respeito.
-- Mantenha respostas em 2 a 3 balões curtos separados por duas quebras de linha (\\n\\n)."""
+- Mantenha respostas em 2 a 3 balões curtos separados por duas quebras de linha (\n\n)."""
 
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
@@ -889,3 +900,61 @@ class ProativoCronRequest(BaseModel):
 async def proativo_cron_api(req: ProativoCronRequest):
     """Dispara a rotina proativa do Marcão Personal no WhatsApp (Segunda, Quarta, Sexta ou Upsell 30d)."""
     return await disparar_rotina_proativa_vip(req.tipo_dia)
+
+# -------------------------------------------------------------------------
+# 8. CATÁLOGO UNIFICADO, INGESTÃO DE AFILIADOS & INTELIGÊNCIA COMERCIAL
+# -------------------------------------------------------------------------
+try:
+    from catalog_service import obter_produtos_ativos, obter_catalogo_para_prompt
+    from autonomous_curator import (
+        processar_e_ingerir_afiliado,
+        selecionar_oferta_autonoma_do_dia,
+        calcular_projecao_meta_milhao
+    )
+except ImportError:
+    from apps.api.catalog_service import obter_produtos_ativos, obter_catalogo_para_prompt
+    from apps.api.autonomous_curator import (
+        processar_e_ingerir_afiliado,
+        selecionar_oferta_autonoma_do_dia,
+        calcular_projecao_meta_milhao
+    )
+
+class IngerirAfiliadoRequest(BaseModel):
+    url: str
+    texto_ou_html: Optional[str] = ""
+    programa: Optional[str] = "afiliado"  # amazon, magalu, mercadolivre, shopee, braip, stripe
+
+@app.post("/api/afiliados/ingerir")
+async def ingerir_afiliado_api(req: IngerirAfiliadoRequest):
+    """
+    Ingestão autônoma de produtos de afiliados (Amazon, Magalu, Mercado Livre, Shopee, Braip).
+    Extrai dados via IA, valida compliance ANVISA/Meta e sincroniza na memória viva do WhatsApp e Instagram.
+    """
+    resultado = await processar_e_ingerir_afiliado(
+        url=req.url,
+        texto_ou_html=req.texto_ou_html,
+        programa=req.programa
+    )
+    return resultado
+
+@app.get("/api/catalogo/unificado")
+async def obter_catalogo_unificado_api():
+    """Retorna todos os produtos ativos do catálogo unificado com custo diário calculado."""
+    produtos = await obter_produtos_ativos()
+    prompt_bloco = await obter_catalogo_para_prompt()
+    return {
+        "sucesso": True,
+        "total_produtos": len(produtos),
+        "produtos": produtos,
+        "prompt_bloco": prompt_bloco
+    }
+
+@app.get("/api/estrategia/oferta-do-dia")
+async def obter_oferta_do_dia_api():
+    """Retorna a decisão autônoma do Marcão para o produto do dia no Instagram e WhatsApp."""
+    return await selecionar_oferta_autonoma_do_dia()
+
+@app.get("/api/estrategia/meta-milhao")
+async def obter_meta_milhao_api():
+    """Retorna a modelagem matemática e metas operacionais para alcançar R$ 1 Milhão em vendas."""
+    return calcular_projecao_meta_milhao()

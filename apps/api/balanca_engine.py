@@ -5,6 +5,9 @@ import httpx
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
+_base_dir = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(_base_dir, ".env"), override=True)
+load_dotenv(os.path.join(_base_dir, "..", "..", ".env"))
 load_dotenv()
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "https://qkopgftfrfftoyndhhfj.supabase.co")
