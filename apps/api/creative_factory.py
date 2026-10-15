@@ -1171,9 +1171,18 @@ def criar_slide_carrossel(titulo, subtitulo, pontos, cta_slide, num_slide, total
     # Vinheta Dark Glassmorphism para leitura cristalina
     overlay = Image.new("RGBA", (1080, 1080), (0, 0, 0, 0))
     draw_ov = ImageDraw.Draw(overlay)
-    for y in range(0, 1080):
-        alpha = int(215 + 35 * (y / 1080))
-        draw_ov.line([(0, y), (1080, y)], fill=(7, 10, 16, alpha))
+    if num_slide == 1 and bg_path:
+        # No Slide 1 (onde fica o rosto/personagem), preserva a área superior sem véu escuro
+        for y in range(0, 1080):
+            if y < 450:
+                alpha = 25  # Quase transparente, rosto e ação 100% visíveis e iluminados
+            else:
+                alpha = int(25 + 215 * ((y - 450) / (1080 - 450)))
+            draw_ov.line([(0, y), (1080, y)], fill=(7, 10, 16, alpha))
+    else:
+        for y in range(0, 1080):
+            alpha = int(215 + 35 * (y / 1080))
+            draw_ov.line([(0, y), (1080, y)], fill=(7, 10, 16, alpha))
 
     im = Image.alpha_composite(base, overlay)
 
@@ -1446,6 +1455,105 @@ def criar_card_unico(headline, subheadline, pontos, categoria, cta_texto, out_pa
 
     im.convert("RGB").save(out_path, quality=96)
     print(f"[STUDIO] Card Único Editorial salvo: {out_path}")
+    return out_path
+
+
+def criar_card_feed_4x5(headline, subheadline, pontos, categoria, cta_texto, out_path, bg_path=None, produto_img_path=None, preco=None, nome_autor="EVANDRO GALLINA"):
+    """
+    Gera imagem de Feed Portrait (1080x1350 - 4:5) no padrão editorial @caiqueness.
+    Garante que a foto do personagem fique 100% nítida e visível no topo (sem véu escuro),
+    e o card de explicações detalhadas fique na base, com exata paridade visual e de conteúdo com os Stories.
+    """
+    f_hero, f_tag, _, f_sub, f_body, f_footer, _ = obter_fontes_editoriais(tamanho_hero=78, tamanho_sub=25, tamanho_body=22)
+
+    W, H = 1080, 1350
+    canvas = Image.new("RGBA", (W, H), COR_BG_DEEP)
+
+    # 1. Base da Imagem com o rosto e tronco no topo
+    if bg_path and os.path.exists(bg_path):
+        try:
+            bg_img = Image.open(bg_path).convert("RGBA")
+            scale = W / bg_img.width
+            new_h = int(bg_img.height * scale)
+            bg_scaled = bg_img.resize((W, new_h), Image.Resampling.LANCZOS)
+            canvas.paste(bg_scaled, (0, 0))
+        except Exception as e:
+            print(f"[STUDIO] Aviso ao compor fundo 4:5: {e}")
+
+    # 2. Gradiente suave para o card na base (y=560 a y=860)
+    grad = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d_grad = ImageDraw.Draw(grad)
+    for y in range(560, 860):
+        alpha = int(255 * ((y - 560) / 300))
+        d_grad.line([(0, y), (W, y)], fill=(8, 12, 20, alpha))
+    for y in range(860, H):
+        d_grad.line([(0, y), (W, y)], fill=(8, 12, 20, 255))
+    canvas = Image.alpha_composite(canvas, grad)
+    draw = ImageDraw.Draw(canvas)
+
+    # 3. Top Tag
+    top_badge = f"GOOGLE TRENDS BRASIL  •  {categoria.upper()}" if categoria else f"{nome_autor.upper()}  •  MARCÃO PERSONAL"
+    bbox_t = draw.textbbox((0, 0), top_badge, font=f_tag)
+    tw = bbox_t[2] - bbox_t[0]
+    tx = (W - tw) // 2
+    draw.rounded_rectangle([tx - 24, 45, tx + tw + 24, 90], radius=20, fill=(10, 15, 26, 215), outline=COR_AMBER, width=2)
+    draw.text((tx, 56), top_badge, fill=COR_AMBER_LIGHT, font=f_tag)
+
+    # 4. Card Glassmorphic de Explicação (y=800 a y=1275)
+    draw.rounded_rectangle([45, 800, 1035, 1275], radius=24, fill=(12, 18, 30, 245), outline=COR_AMBER, width=2)
+
+    # Headline
+    head_limpo = sanitizar_texto_pillow(headline).upper()
+    linhas_head = quebrar_linhas_por_palavras(head_limpo, f_hero, 920, draw)
+    y_t = 825
+    for l in (linhas_head or [head_limpo])[:2]:
+        for ox, oy in [(-2, -2), (2, -2), (0, 3)]:
+            draw.text((75 + ox, y_t + oy), l, fill=(0, 0, 0, 235), font=f_hero)
+        draw.text((75, y_t), l, fill=COR_WHITE, font=f_hero)
+        y_t += 70
+
+    # Subheadline
+    sub_limpo = sanitizar_texto_pillow(subheadline)
+    if sub_limpo:
+        draw.text((75, y_t + 2), sub_limpo, fill=COR_AMBER_LIGHT, font=f_sub)
+        y_t += 40
+
+    # Bullets de explicação com marcadores neon cyan
+    y_pos = y_t + 10
+    for p in (pontos or [])[:3]:
+        p_limpo = sanitizar_texto_pillow(p)
+        draw.rounded_rectangle([75, y_pos, 1005, y_pos + 56], radius=12, fill=(18, 26, 42, 220), outline=(35, 48, 70), width=1)
+        draw.ellipse([95, y_pos + 19, 113, y_pos + 37], fill=COR_CYAN)
+        linhas_p = quebrar_linhas_por_palavras(p_limpo, f_body, 850, draw)
+        if linhas_p:
+            draw.text((128, y_pos + 15), linhas_p[0], fill=COR_WHITE, font=f_body)
+        y_pos += 66
+
+    # Se houver produto (mockup)
+    if produto_img_path and os.path.exists(produto_img_path):
+        try:
+            p_img = Image.open(produto_img_path)
+            if p_img.mode != "RGBA":
+                p_img = p_img.convert("RGBA")
+            p_img.thumbnail((200, 200), Image.Resampling.LANCZOS)
+            canvas.paste(p_img, (810, 680), p_img)
+        except Exception:
+            pass
+
+    # 5. Rodapé
+    draw.line([(60, 1295), (1020, 1295)], fill=(35, 48, 70, 200), width=1)
+    brand_text = "@MARCAOPERSONALFITNESS   |   marcaopersonal.com"
+    draw.text((60, 1312), brand_text, fill=COR_TEXT_MUTED, font=f_footer)
+    cta_limpo = sanitizar_texto_pillow(cta_texto).replace("››", "").replace(">", "").strip()
+    if not cta_limpo:
+        cta_limpo = "LEIA A LEGENDA COMPLETA"
+    cta_str = f"{cta_limpo} ››"
+    bbox_cta = draw.textbbox((0, 0), cta_str, font=f_footer)
+    cw = bbox_cta[2] - bbox_cta[0]
+    draw.text((1020 - cw, 1312), cta_str, fill=COR_AMBER_LIGHT, font=f_footer)
+
+    canvas.convert("RGB").save(out_path, quality=96)
+    print(f"[STUDIO] Card Feed 4:5 salvo com sucesso: {out_path}")
     return out_path
 
 
@@ -1866,16 +1974,17 @@ def executar_ciclo_manha(indice=None, formato="carrossel", usar_ia=True, dry_run
             res_final = res_pub
 
     else:
-        # Card Único
+        # Card Feed 4:5 com Paridade Total em Relação ao Story
         out_file = os.path.join(DIR_OUTPUT, f"card_{tema['id']}_{timestamp}.jpg")
-        criar_card_unico(
+        criar_card_feed_4x5(
             headline=tema["headline"],
             subheadline=tema["subheadline"],
             pontos=tema["pontos_card"],
             categoria=tema["categoria"],
-            cta_texto="LEIA A LEGENDA COMPLETA • LINK NA BIO: marcaopersonal.com",
+            cta_texto="LEIA A LEGENDA COMPLETA",
             out_path=out_file,
-            bg_path=bg_local
+            bg_path=bg_local,
+            nome_autor="EVANDRO GALLINA" if estilo_escolhido == "evandro" else "MARCÃO PERSONAL"
         )
         url_storage = upload_supabase_storage(out_file)
         if dry_run:
@@ -2026,18 +2135,19 @@ def executar_ciclo_noite(indice=None, formato="carrossel", usar_ia=True, dry_run
             res_final = res_pub
 
     else:
-        # Card Único com Mockup Real do Produto e Preço Oficial
+        # Card Feed 4:5 com Paridade Total em Relação ao Story
         out_file = os.path.join(DIR_OUTPUT, f"card_{prod['sku']}_{timestamp}.jpg")
-        criar_card_unico(
+        criar_card_feed_4x5(
             headline=headline,
             subheadline=sub,
             pontos=pontos,
             categoria=categoria,
-            cta_texto="GARANTA O SEU",
+            cta_texto=f"COMPRE POR {prod['preco']}",
             out_path=out_file,
             bg_path=bg_local,
             produto_img_path=prod.get("image_local"),
-            preco=prod.get("preco")
+            preco=prod.get("preco"),
+            nome_autor="EVANDRO GALLINA" if estilo_escolhido == "evandro" else "MARCÃO PERSONAL"
         )
         url_storage = upload_supabase_storage(out_file)
         if dry_run:
