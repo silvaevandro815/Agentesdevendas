@@ -641,10 +641,14 @@ def obter_fotos_referencia_evandro():
                         caminhos.append(full)
     return sorted(caminhos)
 
+# ============================================================================
+# MATRIZ EXPANDIDA DE CENÁRIOS, AÇÕES, LUGARES E ROSTOS (FÁBRICA VISUAL 360°)
+# ============================================================================
+
 CENARIOS_ATLETICOS_EVANDRO = [
     {
-        "id": "musculacao_pesada",
-        "keywords": ["creatina", "força", "músculo", "hipertrofia", "treino", "dor", "braço", "peito", "ombro", "carga"],
+        "id": "musculacao_academia",
+        "keywords": ["creatina", "força", "músculo", "hipertrofia", "treino", "dor", "braço", "peito", "ombro", "carga", "academia"],
         "prompt": (
             "Cinematic 8k sports action photography of athletic muscular athlete Evandro intensely training in a luxury high-tech gym. "
             "He is performing seated heavy dumbbell shoulder presses with intense focus and grit, toned vascular arms and pumped shoulders, "
@@ -653,8 +657,8 @@ CENARIOS_ATLETICOS_EVANDRO = [
         )
     },
     {
-        "id": "corrida_calcadao",
-        "keywords": ["emagrecimento", "perder barriga", "cardio", "corrida", "jejum", "pochete", "gordura", "secar", "aerobico"],
+        "id": "corrida_praia_calcadao",
+        "keywords": ["emagrecimento", "perder barriga", "cardio", "corrida", "jejum", "pochete", "gordura", "secar", "aerobico", "praia", "calçadão"],
         "prompt": (
             "Dynamic 8k sports action shot of athletic handsome runner Evandro running at full energetic pace along a coastal tropical beach boardwalk at golden hour sunrise. "
             "Athletic running attire, dark technical breathable running tank top, athletic shorts, modern smartwatch on wrist. "
@@ -662,8 +666,8 @@ CENARIOS_ATLETICOS_EVANDRO = [
         )
     },
     {
-        "id": "natacao_treino",
-        "keywords": ["fôlego", "respiração", "água", "resistência", "articulação", "colágeno", "piscina", "natação"],
+        "id": "natacao_piscina",
+        "keywords": ["fôlego", "respiração", "água", "resistência", "articulação", "colágeno", "piscina", "natação", "pele"],
         "prompt": (
             "Cinematic 8k photography of athletic swimmer Evandro emerging powerfully from crystal-clear turquoise water in an Olympic training pool. "
             "Water droplets splashing off athletic defined chest and shoulders, intense focused gaze, glistening skin, modern competition goggles resting on his forehead. "
@@ -671,12 +675,39 @@ CENARIOS_ATLETICOS_EVANDRO = [
         )
     },
     {
-        "id": "treino_funcional_natureza",
-        "keywords": ["calistenia", "mobilidade", "postura", "ar livre", "alongamento", "energia", "parque", "natureza"],
+        "id": "treino_casa_funcional",
+        "keywords": ["casa", "funcional", "vassoura", "cadeira", "polichinelo", "sem equipamento", "mobilidade", "alongamento"],
         "prompt": (
-            "Inspiring 8k photography of fit athlete Evandro performing functional bodyweight training on a scenic wooden platform overlooking lush green mountains. "
-            "Wearing modern compression tights and olive green athletic t-shirt, catching his breath with a proud satisfied expression, holding a fitness water bottle. "
-            "Crisp morning mountain mist, soft natural morning sunlight, depth of field, National Geographic / Nike aesthetic."
+            "Authentic 8k lifestyle sports photograph of fit athlete Evandro performing disciplined functional exercises at home in a bright sunlit living room with wooden floors. "
+            "Using a wooden broomstick across his shoulders for perfect thoracic mobility and posture alignment, or doing controlled bodyweight squats near a modern ergonomic chair. "
+            "Wearing athletic charcoal dry-fit shorts and fitted workout shirt, confident focused coach expression, morning sunlight streaming through large patio windows, clean interior design, photorealistic."
+        )
+    },
+    {
+        "id": "caminhada_revigorante_natureza",
+        "keywords": ["floresta", "trilha", "natureza", "caminhada", "ar livre", "energia", "parque", "montanha"],
+        "prompt": (
+            "Inspiring 8k photography of fit athlete Evandro briskly power walking and jogging along a lush green forest trail surrounded by tall majestic trees and morning mist. "
+            "Wearing technical trail running shoes, moisture-wicking dark olive athletic apparel and a sports hydration flask in hand, energetic breathing, fresh mountain air ambiance. "
+            "Golden sunbeams filtering through emerald canopy leaves, high depth of field, National Geographic / Nike trail aesthetic, photorealistic."
+        )
+    },
+    {
+        "id": "nutricao_cozinha_fitness",
+        "keywords": ["comida", "comendo", "receita", "nutrição", "shake", "dieta", "smoothie", "alimentação", "refeição"],
+        "prompt": (
+            "Warm cinematic 8k commercial photography of health founder Evandro in a luxury modern kitchen with clean marble and dark oak countertops. "
+            "He is smiling charismatically while preparing an organic protein smoothie with fresh berries, sliced pineapple, green mint leaves and clean shaker cup. "
+            "Wearing a casual fitted dark crewneck t-shirt, glowing healthy skin, natural sunlight illuminating fresh whole foods and blender, lifestyle fitness magazine editorial quality."
+        )
+    },
+    {
+        "id": "sono_anabolico_quarto",
+        "keywords": ["sono", "dormindo", "descanso", "gh", "recuperação", "noite", "relaxamento", "dormir"],
+        "prompt": (
+            "Serene 8k cinematic photography of athletic man Evandro peacefully sleeping in a luxury minimalist bedroom. "
+            "Resting on a comfortable premium mattress with crisp white Egyptian cotton sheets, peaceful calm facial expression, room bathed in soft ambient nocturnal indigo and warm bedside lighting. "
+            "Atmosphere conveying deep restorative anabolic REM sleep where GH is naturally released, high aesthetic wellness and recovery photography."
         )
     },
     {
@@ -689,18 +720,95 @@ CENARIOS_ATLETICOS_EVANDRO = [
     },
     {
         "id": "recuperacao_biohacking",
-        "keywords": ["bioimpedância", "balança", "sono", "cortisol", "recuperação", "suplemento", "metabolismo"],
+        "keywords": ["bioimpedância", "balança", "cortisol", "metabolismo", "dados", "avaliação"],
         "prompt": (
             "Modern aesthetic 8k photograph of health innovator Evandro sitting comfortably on a wooden bench in a luxury biohacking recovery lounge. "
-            "Wearing a minimalist black athletic crewneck, smiling charismatically while drinking a shaker of pure supplements, smartwatch measuring heart rate, "
-            "warm ambient wooden aesthetics, soft architectural lighting, photorealistic."
+            "Wearing a minimalist black athletic crewneck, smiling charismatically while checking health metrics on his smartwatch, warm ambient wooden aesthetics, soft architectural lighting, photorealistic."
         )
     }
 ]
 
+# Cenários adicionais para outras pessoas de IA (diversidade demográfica completa)
+CENARIOS_PESSOAS_IA_DIVERSAS = [
+    {
+        "perfil": "mulher_jovem_praia",
+        "prompt": (
+            "Hyper-realistic 8k commercial photography of an athletic 28-year-old Brazilian woman with radiant glowing skin, toned abs and athletic physique. "
+            "She is enjoying a refreshing morning walk on the golden sand of Rio de Janeiro beach, wearing a chic coral athletic sports bra and running shorts. "
+            "Holding a fresh coconut with straw, joyful natural smile, ocean surf in background, warm tropical sunlight, Vogue Fitness style, 85mm lens."
+        )
+    },
+    {
+        "perfil": "mulher_madura_cozinha",
+        "prompt": (
+            "Photorealistic 8k portrait of an elegant 38-year-old woman with radiant firm skin and vibrant energy in a sunlit architectural designer kitchen. "
+            "She is preparing a refreshing glass of collagen with mint and lemon slices, genuine warm smile, casual beige silk loungewear, soft morning light, ultra-detailed skin texture, luxury lifestyle."
+        )
+    },
+    {
+        "perfil": "mulher_senior_ativa_64",
+        "prompt": (
+            "Inspiring authentic 8k photograph of a vibrant active 64-year-old Brazilian woman full of vitality, performing light mobility exercises with a walking stick in a sunny botanical park. "
+            "Wearing tasteful lilac athletic wear, silver-highlighted hair, beaming radiant healthy smile, confident posture showing strength and functional longevity, photorealistic."
+        )
+    },
+    {
+        "perfil": "homem_jovem_academia_24",
+        "prompt": (
+            "Cinematic 8k photograph of a dedicated 24-year-old athletic male athlete resting between heavy bench press sets in an elite bodybuilding gym. "
+            "Defined vascular biceps, determined proud gaze, wearing a dark grey gym stringer, chalk on hands, moody cinematic rim lighting, photorealistic fitness cover."
+        )
+    },
+    {
+        "perfil": "homem_adulto_corrida_42",
+        "prompt": (
+            "Dynamic 8k action portrait of an active 42-year-old executive and marathon runner running along an ocean promenade at sunrise. "
+            "Athletic build, energized focused smile, wearing a navy moisture-wicking running shirt and GPS sports watch, golden sunrise reflections on the sea, commercial fitness quality."
+        )
+    }
+]
+
+# Cenários de alta atratividade para exibição de produtos (SEM FUNDO BRANCO SEM VIDA!)
+CENARIOS_PRODUTOS_LIFESTYLE = [
+    {
+        "ambiente": "cozinha_gourmet",
+        "prompt_template": (
+            "Luxury commercial product photography of {produto} displayed elegantly on a wet dark emerald marble and natural teak wood kitchen island. "
+            "Surrounded by fresh organic yellow pineapple slices, vibrant fresh green mint leaves, scattered water droplets, soft morning sunbeams through sheer curtains, "
+            "crisp 8k advertising shoot, zero artificial flat backgrounds, cinematic depth of field."
+        )
+    },
+    {
+        "ambiente": "borda_piscina_resort",
+        "prompt_template": (
+            "High-end resort commercial advertising shot of {produto} resting proudly on a polished teak wood poolside deck next to crystal-clear sparkling turquoise pool water. "
+            "Golden hour warm sunlight reflecting sparkling water caustic patterns, chilled mist droplets on the container, luxurious tropical wellness ambiance, 8k resolution."
+        )
+    },
+    {
+        "ambiente": "banco_madeira_academia",
+        "prompt_template": (
+            "Moody high-end fitness commercial photograph of {produto} placed on a rustic dark gym bench alongside a pair of heavy knurled steel dumbbells and a clean shaker bottle. "
+            "Warm amber dramatic backlighting, dark textured concrete gym walls softly blurred in the background, commercial supplement ad standard, photorealistic 8k."
+        )
+    },
+    {
+        "ambiente": "spa_zen_wellness",
+        "prompt_template": (
+            "Serene luxury spa commercial shot of {produto} surrounded by smooth volcanic black massage stones, fresh green bamboo leaves and a folded crisp white waffle towel. "
+            "Soft zen candlelight and gentle warm morning diffused lighting, high-end dermatological clinic aesthetic, pristine 8k detail."
+        )
+    }
+]
+
+
 def montar_prompt_por_estilo(estilo: str, item: dict, eh_venda: bool = False) -> tuple:
     """
-    Constrói prompt e seleciona imagem de referência com base na matriz dos 5 estilos:
+    Constrói prompt e seleciona imagem de referência com base na matriz expandida:
+    - evandro: Rosto de Evandro com foto de referência em cenários múltiplos (academia, casa, praia, piscina, trilha, cozinha, sono).
+    - marcao: Mascote Marcão hiper-realista e imponente.
+    - pessoas_ia: Diversidade completa de faixas etárias e gêneros (jovem, madura, 64 anos, atletas).
+    - produto_only / produto_lifestyle: Produtos em cenários requintados (SEM fundo branco!).
     Retorna (prompt_formatado, imagem_referencia_path).
     """
     ref_path = None
@@ -708,6 +816,7 @@ def montar_prompt_por_estilo(estilo: str, item: dict, eh_venda: bool = False) ->
 
     nome_item = item.get("nome") or item.get("tema") or "Fitness & Saúde"
     categoria = item.get("categoria", "SAÚDE")
+    texto_busca = (nome_item + " " + categoria + " " + str(item.get("pontos", "")) + " " + str(item.get("headline", ""))).lower()
 
     if estilo == "evandro":
         if fotos_evandro:
@@ -722,7 +831,6 @@ def montar_prompt_por_estilo(estilo: str, item: dict, eh_venda: bool = False) ->
             )
 
         # Seleciona o melhor cenário esportivo alinhado com o tema ou faz rotação dinâmica
-        texto_busca = (nome_item + " " + categoria + " " + str(item.get("pontos", "")) + " " + str(item.get("headline", ""))).lower()
         cenario_escolhido = None
         for c in CENARIOS_ATLETICOS_EVANDRO:
             if any(kw in texto_busca for kw in c["keywords"]):
@@ -730,43 +838,39 @@ def montar_prompt_por_estilo(estilo: str, item: dict, eh_venda: bool = False) ->
                 break
 
         if not cenario_escolhido:
-            # Rotação inteligente baseada em dia e hora para máxima variedade diária
             idx_rot = (datetime.now().day + datetime.now().hour) % len(CENARIOS_ATLETICOS_EVANDRO)
             cenario_escolhido = CENARIOS_ATLETICOS_EVANDRO[idx_rot]
 
         prompt = f"{instrucao_face}{cenario_escolhido['prompt']}"
 
     elif estilo == "marcao":
-        if eh_venda:
-            prompt = (
-                f"Cinematic 8k photograph of athletic muscular personal trainer Marcão (35 years old, fit, fierce and charismatic) "
-                f"posing confidently with crossed arms in an elite high-tech gym, energetic motivational atmosphere, warm dramatic rim lighting, zero props, hyper-realistic photography."
-            )
-        else:
-            prompt = (
-                f"Hyper-realistic photograph of muscular coach Marcão with a motivational smile in an authentic gym setting, "
-                f"explaining fitness mechanics with authority, cinematic lighting, ultra-detailed 8k photography."
-            )
+        cenarios_marcao = [
+            f"Cinematic 8k photograph of athletic muscular personal trainer Marcão (35 years old, fit, fierce and charismatic) posing confidently with crossed arms in an elite high-tech gym, energetic motivational atmosphere, warm dramatic rim lighting, hyper-realistic photography.",
+            f"Hyper-realistic photograph of muscular coach Marcão jogging along the beach shoreline at sunrise, encouraging runners, wearing modern athletic dry-fit gear, natural ocean lighting, vibrant athletic energy.",
+            f"Warm inspiring 8k photo of coach Marcão in a modern kitchen demonstrating healthy fitness nutrition, holding fresh ingredients with a friendly encouraging smile, clean lifestyle photography.",
+            f"Action shot of Marcão demonstrating home bodyweight functional training in a living room, coaching proper posture with total enthusiasm and care, cinematic daylight."
+        ]
+        idx_m = (datetime.now().day + datetime.now().hour) % len(cenarios_marcao)
+        prompt = cenarios_marcao[idx_m]
 
     elif estilo == "pessoas_ia":
-        # Alterna entre mulher e homem para diversidade de público
-        eh_mulher = any(w in nome_item.lower() for w in ["colágeno", "glúteo", "pele", "inchaço"])
-        if eh_mulher:
-            prompt = (
-                f"Hyper-realistic authentic photograph of an athletic 28-year-old Brazilian woman with radiant glowing skin and toned physique, "
-                f"experiencing wellness and vitality, sunlit modern architectural fitness kitchen, clean aesthetic, candid expression, 8k resolution."
-            )
+        # Rotação inteligente por público e faixa etária
+        if any(w in texto_busca for w in ["60", "64", "idoso", "articular", "menopausa", "caminhada"]):
+            sel_p = CENARIOS_PESSOAS_IA_DIVERSAS[2]  # Mulher 64 anos
+        elif any(w in texto_busca for w in ["colágeno", "pele", "flacidez", "estética", "rugas"]):
+            sel_p = CENARIOS_PESSOAS_IA_DIVERSAS[1]  # Mulher 38 anos
+        elif any(w in texto_busca for w in ["secar", "biquini", "gluteo", "cintura", "barriga"]):
+            sel_p = CENARIOS_PESSOAS_IA_DIVERSAS[0]  # Mulher 28 anos
+        elif any(w in texto_busca for w in ["creatina", "hipertrofia", "supino", "braço", "carga"]):
+            sel_p = CENARIOS_PESSOAS_IA_DIVERSAS[3]  # Homem 24 anos
         else:
-            prompt = (
-                f"Photorealistic 8k portrait of an active 42-year-old man full of vitality and stamina, smiling with pride after workout, "
-                f"holding healthy water bottle in a premium gym, realistic skin, natural lighting, magazine quality."
-            )
+            sel_p = CENARIOS_PESSOAS_IA_DIVERSAS[4]  # Homem 42 anos corrida
+        prompt = sel_p["prompt"]
 
-    elif estilo == "produto_only":
-        prompt = (
-            f"Luxury commercial product photography of '{nome_item}' resting on a wet dark obsidian and white marble pedestal, "
-            f"subtle neon cyan and golden reflections, micro water droplets, elegant studio lighting, zero humans in frame, clean commercial advertising standard, 8k."
-        )
+    elif estilo in ["produto_only", "produto_lifestyle"]:
+        idx_amb = (datetime.now().day + datetime.now().hour) % len(CENARIOS_PRODUTOS_LIFESTYLE)
+        amb = CENARIOS_PRODUTOS_LIFESTYLE[idx_amb]
+        prompt = amb["prompt_template"].format(produto=nome_item)
 
     else:  # infografico_trends
         prompt = (
@@ -1464,12 +1568,12 @@ def criar_card_unico(headline, subheadline, pontos, categoria, cta_texto, out_pa
     # Prevenção de colisão de rodapé
     bbox_cta = draw.textbbox((0, 0), cta_limpo, font=f_cta)
     cta_w = bbox_cta[2] - bbox_cta[0]
-    cta_x = 995 - cta_w
-    if cta_x <= brand_right + 35:
-        cta_limpo = "GARANTA O SEU"
+    cta_x = 985 - cta_w
+    if cta_x <= brand_right + 60:
+        cta_limpo = "SAIBA MAIS"
         bbox_cta = draw.textbbox((0, 0), cta_limpo, font=f_cta)
         cta_w = bbox_cta[2] - bbox_cta[0]
-        cta_x = 995 - cta_w
+        cta_x = 985 - cta_w
 
     draw.text((cta_x, 1010), cta_limpo, fill=COR_AMBER, font=f_cta)
     desenhar_seta_minimalista(draw, 1005, 1022, COR_AMBER, tamanho=15)
@@ -1561,17 +1665,30 @@ def criar_card_feed_4x5(headline, subheadline, pontos, categoria, cta_texto, out
         except Exception:
             pass
 
-    # 5. Rodapé
+    # 5. Rodapé com Blindagem Total Contra Colisão
     draw.line([(60, 1295), (1020, 1295)], fill=(35, 48, 70, 200), width=1)
     brand_text = "@MARCAOPERSONALFITNESS   |   marcaopersonal.com"
     draw.text((60, 1312), brand_text, fill=COR_TEXT_MUTED, font=f_footer)
+    bbox_brand = draw.textbbox((0, 0), brand_text, font=f_footer)
+    brand_right = 60 + (bbox_brand[2] - bbox_brand[0])
+
     cta_limpo = sanitizar_texto_pillow(cta_texto).replace("››", "").replace(">", "").strip()
-    if not cta_limpo:
-        cta_limpo = "LEIA A LEGENDA COMPLETA"
+    if len(cta_limpo) > 22 or "BIO" in cta_limpo.upper():
+        cta_limpo = "LINK NA BIO"
+    elif not cta_limpo:
+        cta_limpo = "LEIA A LEGENDA"
+
     cta_str = f"{cta_limpo} ››"
     bbox_cta = draw.textbbox((0, 0), cta_str, font=f_footer)
     cw = bbox_cta[2] - bbox_cta[0]
-    draw.text((1020 - cw, 1312), cta_str, fill=COR_AMBER_LIGHT, font=f_footer)
+    cta_x = 1020 - cw
+    if cta_x <= brand_right + 60:
+        cta_str = "LEIA A LEGENDA ››"
+        bbox_cta = draw.textbbox((0, 0), cta_str, font=f_footer)
+        cw = bbox_cta[2] - bbox_cta[0]
+        cta_x = 1020 - cw
+
+    draw.text((cta_x, 1312), cta_str, fill=COR_AMBER_LIGHT, font=f_footer)
 
     canvas.convert("RGB").save(out_path, quality=96)
     print(f"[STUDIO] Card Feed 4:5 salvo com sucesso: {out_path}")
