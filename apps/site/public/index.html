@@ -371,9 +371,9 @@
       <div class="protocol-card" id="definicao">
         <div class="protocol-grid">
           <div class="protocol-visual">
-            <div style="display: flex; gap: 10px; justify-content: center; align-items: center; margin-bottom: 12px;">
-              <img src="images/creatina.jpg" alt="Creatina Nature's Prime" class="product-real-img" style="max-width: 135px; height: 160px; margin: 0;">
-              <img src="images/azempika.jpg" alt="Caneta Azempika" class="product-real-img" style="max-width: 135px; height: 160px; margin: 0;">
+            <div class="product-combo-images">
+              <img src="images/creatina.jpg" alt="Creatina Nature's Prime" class="product-real-img combo-img">
+              <img src="images/azempika.jpg" alt="Caneta Azempika" class="product-real-img combo-img">
             </div>
             <h3>Creatina Micronizada 300g + Caneta Azempika</h3>
             <p style="color: var(--neon-orange); font-weight: 700; margin-top: 6px;">Nature's Prime & Penina • Tônus Muscular & Seca Gordura</p>
@@ -398,28 +398,28 @@
               </li>
             </ul>
 
-            <div class="price-box" style="flex-direction: column; align-items: stretch; gap: 16px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 14px; flex-wrap: wrap; gap: 10px;">
-                <div>
-                  <h4 style="color: #fff; margin-bottom: 4px;">Creatina Micronizada 100% Pura (300g)</h4>
-                  <div class="price-current" style="font-size: 1.5rem;">R$ 169,90</div>
+            <div class="price-box combo-price-box">
+              <div class="combo-item-row">
+                <div class="combo-item-info">
+                  <h4>Creatina Micronizada 100% Pura (300g)</h4>
+                  <div class="price-current">R$ 169,90</div>
                   <div class="price-sub">Nature's Prime • Absorção Rápida</div>
                 </div>
-                <a href="https://ev.braip.com/ref?pl=pla1x6xn&ck=chen80rq&af=afimeno621" target="_blank" class="btn-primary" style="padding: 12px 24px; font-size: 0.95rem; background: linear-gradient(135deg, var(--neon-orange), #ff4500);">
+                <a href="https://ev.braip.com/ref?pl=pla1x6xn&ck=chen80rq&af=afimeno621" target="_blank" class="btn-primary btn-combo-buy" style="background: linear-gradient(135deg, var(--neon-orange), #ff4500);">
                   <span>COMPRAR CREATINA</span>
                 </a>
               </div>
-              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                <div>
-                  <h4 style="color: #fff; margin-bottom: 4px;">Caneta Azempika Original (Seca & Drena)</h4>
-                  <div class="price-current" style="font-size: 1.5rem;">R$ 99,00</div>
+              <div class="combo-item-row">
+                <div class="combo-item-info">
+                  <h4>Caneta Azempika Original (Seca & Drena)</h4>
+                  <div class="price-current">R$ 99,00</div>
                   <div class="price-sub">Acelerador Metabólico Potente</div>
                 </div>
-                <a href="https://ev.braip.com/ref?pl=plaljlxy&ck=che6vnvr&af=afine5z3yv" target="_blank" class="btn-primary" style="padding: 12px 24px; font-size: 0.95rem; background: linear-gradient(135deg, #a855f7, #6366f1);">
+                <a href="https://ev.braip.com/ref?pl=plaljlxy&ck=che6vnvr&af=afine5z3yv" target="_blank" class="btn-primary btn-combo-buy" style="background: linear-gradient(135deg, #a855f7, #6366f1);">
                   <span>COMPRAR AZEMPIKA</span>
                 </a>
               </div>
-              <div style="text-align: right; margin-top: 6px;">
+              <div class="combo-whatsapp-row">
                 <a href="https://wa.me/553285066687?text=Ol%C3%A1%2C%20Marc%C3%A3o%21%20Quero%20tirar%20d%C3%BAvidas%20sobre%20o%20Combo%20de%20Defini%C3%A7%C3%A3o." target="_blank" class="btn-whatsapp-sub">
                   <span>Tirar Dúvidas sobre o Combo no WhatsApp</span>
                 </a>
@@ -662,7 +662,7 @@
     <div style="background: linear-gradient(135deg, rgba(0, 229, 255, 0.15), rgba(0, 255, 136, 0.15)); border: 2px solid var(--border-neon-cyan); border-radius: 32px; padding: 60px 24px; box-shadow: var(--glow-cyan);">
       <h2 style="font-size: 2.5rem; font-weight: 900; margin-bottom: 16px;">Pronto para transformar sua estética com o Marcão?</h2>
       <p style="color: var(--text-muted); font-size: 1.1rem; max-width: 600px; margin: 0 auto 30px;">
-        Nossa equipe de especialistas está a postos 24 horas no WhatsApp para montar seu protocolo personalizado.
+        O Marcão está a postos 24 horas no WhatsApp para montar seu protocolo personalizado.
       </p>
       <a href="https://wa.me/553285066687?text=Ol%C3%A1%2C%20Marc%C3%A3o%21%20Quero%20iniciar%20meu%20protocolo%20agora%21" target="_blank" class="btn-primary" style="font-size: 1.15rem; padding: 18px 40px;">
         <span>FALAR COM MARCÃO NO WHATSAPP AGORA</span>
@@ -689,10 +689,12 @@
   </footer>
 
   <!-- WhatsApp Float Button -->
-  <a href="https://wa.me/553285066687?text=Ol%C3%A1%2C%20Marc%C3%A3o%21%20Estou%20no%20site%20e%20quero%20uma%20orienta%C3%A7%C3%A3o%20sobre%20os%20protocolos." target="_blank" class="whatsapp-float">
+  <a href="https://wa.me/553285066687?text=Ol%C3%A1%2C%20Marc%C3%A3o%21%20Estou%20no%20site%20e%20quero%20uma%20orienta%C3%A7%C3%A3o%20sobre%20os%20protocolos." target="_blank" class="whatsapp-float" aria-label="Falar com o Marcão no WhatsApp">
     <div class="wa-pulse"></div>
-    <span style="font-size: 1.3rem;">💬</span>
-    <span>Falar com Marcão</span>
+    <svg class="wa-icon-svg" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M16 2C8.268 2 2 8.268 2 16c0 2.72.775 5.26 2.122 7.425L2.5 30l6.76-1.57A13.935 13.935 0 0016 30c7.732 0 14-6.268 14-14S23.732 2 16 2zm8.01 19.89c-.33.93-1.63 1.71-2.28 1.82-.61.1-1.39.14-4.52-1.16-3.99-1.65-6.55-5.69-6.75-5.96-.2-.27-1.61-2.14-1.61-4.08 0-1.94 1.02-2.9 1.38-3.29.36-.39.79-.49 1.05-.49.27 0 .53.01.76.02.24.01.57-.09.89.68.33.79 1.13 2.76 1.23 2.96.1.2.16.44.03.7-.13.27-.2.43-.39.66-.2.23-.42.51-.6.69-.2.2-.41.42-.18.82.23.4 1.02 1.68 2.18 2.72 1.5 1.34 2.76 1.76 3.16 1.95.4.2.63.17.86-.1.23-.26.99-1.15 1.25-1.55.26-.4.53-.33.89-.2.36.13 2.31 1.09 2.71 1.29.4.2.66.3.76.46.1.17.1.97-.23 1.9z" fill="#ffffff"/>
+    </svg>
+    <span class="wa-text">Falar com o Marcão</span>
   </a>
 
   <!-- Script FAQ -->

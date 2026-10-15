@@ -766,11 +766,24 @@ footer p {
   z-index: 1000;
   transition: all 0.3s ease;
   border: 2px solid rgba(255, 255, 255, 0.3);
+  box-sizing: border-box;
 }
 
 .whatsapp-float:hover {
   transform: translateY(-4px) scale(1.05);
   box-shadow: 0 15px 35px rgba(37, 211, 102, 0.6);
+  color: #ffffff;
+}
+
+.wa-icon-svg {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  display: block;
+}
+
+.wa-text {
+  white-space: nowrap;
 }
 
 .wa-pulse {
@@ -861,6 +874,65 @@ footer p {
   border-radius: 20px 20px 0 0;
   margin: -40px -40px 24px -40px;
   line-height: 1.4;
+}
+
+/* Combo Creatina + Azempika & Balança */
+.product-combo-images {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 12px;
+  width: 100%;
+}
+.combo-img {
+  max-width: 135px;
+  height: 160px;
+  margin: 0;
+  object-fit: contain;
+}
+.combo-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 14px;
+  gap: 12px;
+  width: 100%;
+}
+.combo-item-info {
+  min-width: 0;
+  flex: 1;
+}
+.combo-item-info h4 {
+  color: #fff;
+  margin-bottom: 4px;
+  font-size: 1.05rem;
+  word-break: break-word;
+}
+.btn-combo-buy {
+  padding: 12px 22px;
+  font-size: 0.92rem;
+  flex-shrink: 0;
+}
+.combo-whatsapp-row {
+  text-align: right;
+  margin-top: 6px;
+  width: 100%;
+}
+.featured-balanca {
+  border: 2px solid var(--neon-cyan);
+  box-shadow: 0 0 30px rgba(0, 229, 255, 0.2);
+}
+.btn-balanca-buy {
+  background: linear-gradient(135deg, var(--neon-cyan), #00b4d8);
+  color: #050b14;
+  font-weight: 800;
+}
+.btn-mentoria-buy {
+  background: linear-gradient(135deg, var(--neon-green), #059669);
+  color: #050b14;
+  font-weight: 800;
 }
 
 /* ==========================================================================
@@ -1024,18 +1096,23 @@ footer p {
 
   /* Protocolos & Cards de Produtos */
   .protocols {
-    padding: 50px 0;
+    padding: 40px 0;
   }
   .protocol-card {
-    padding: 22px 16px;
+    padding: 20px 14px;
     border-radius: 20px;
-    margin-bottom: 28px;
+    margin-bottom: 24px;
+    overflow: hidden;
+    width: 100%;
+    box-sizing: border-box;
   }
   .card-banner-promo {
-    margin: -22px -16px 18px -16px;
+    margin: -20px -14px 16px -14px;
     border-radius: 18px 18px 0 0;
-    font-size: 0.78rem;
-    padding: 8px 12px;
+    font-size: 0.74rem;
+    padding: 8px 10px;
+    word-break: break-word;
+    line-height: 1.35;
   }
   .protocol-badge {
     position: static;
@@ -1044,18 +1121,63 @@ footer p {
     font-size: 0.72rem;
     padding: 4px 12px;
   }
+  .protocol-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+    width: 100%;
+  }
   .protocol-visual {
-    padding: 20px 14px;
-    border-radius: 18px;
+    padding: 16px 12px;
+    border-radius: 16px;
+    width: 100%;
+    box-sizing: border-box;
   }
   .product-real-img {
-    max-width: 220px;
-    height: 180px;
+    max-width: 100%;
+    height: 170px;
+    object-fit: contain;
+  }
+  .product-combo-images {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+  }
+  .combo-img {
+    max-width: 110px;
+    height: 130px;
+    object-fit: contain;
+  }
+  .protocol-info {
+    width: 100%;
+    min-width: 0;
+  }
+  .protocol-info h2 {
+    font-size: 1.35rem;
+    line-height: 1.25;
+    margin-bottom: 10px;
+    word-break: break-word;
+    text-align: center;
+  }
+  .protocol-features {
+    margin: 16px 0;
+    padding: 0;
+    width: 100%;
   }
   .protocol-features li {
-    font-size: 0.9rem;
-    gap: 10px;
+    font-size: 0.86rem;
+    gap: 8px;
     margin-bottom: 12px;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    min-width: 0;
+    line-height: 1.4;
+  }
+  .protocol-features li div {
+    min-width: 0;
+    word-break: break-word;
+    overflow-wrap: break-word;
   }
 
   /* Box de Preço e Ações no Mobile */
@@ -1063,24 +1185,70 @@ footer p {
     flex-direction: column;
     align-items: stretch;
     text-align: center;
-    padding: 18px 14px;
-    gap: 16px;
-    margin-top: 20px;
+    padding: 16px 12px;
+    gap: 14px;
+    margin-top: 18px;
+    border-radius: 16px;
+    width: 100%;
+    box-sizing: border-box;
+    min-width: 0;
   }
   .price-current {
-    font-size: 1.7rem;
+    font-size: 1.6rem;
+  }
+  .price-sub {
+    font-size: 0.78rem;
+    word-break: break-word;
   }
   .price-actions {
     flex-direction: column;
     width: 100%;
     gap: 10px;
   }
+  .price-actions a,
   .price-actions .btn-primary,
   .price-actions .btn-whatsapp-sub {
-    width: 100%;
+    width: 100% !important;
+    max-width: 100% !important;
     justify-content: center;
-    padding: 13px 18px;
-    font-size: 0.92rem;
+    padding: 13px 12px !important;
+    font-size: 0.88rem !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    box-sizing: border-box;
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  /* Combo Creatina + Azempika no Mobile */
+  .combo-item-row {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+    gap: 10px;
+    padding-bottom: 14px;
+    width: 100%;
+  }
+  .combo-item-info h4 {
+    font-size: 0.98rem;
+    line-height: 1.3;
+    word-break: break-word;
+  }
+  .btn-combo-buy {
+    width: 100% !important;
+    padding: 12px !important;
+    text-align: center;
+    font-size: 0.88rem !important;
+    box-sizing: border-box;
+  }
+  .combo-whatsapp-row {
+    text-align: center;
+    width: 100%;
+  }
+  .combo-whatsapp-row .btn-whatsapp-sub {
+    width: 100% !important;
+    box-sizing: border-box;
   }
 
   /* Benefícios & Garantia */
@@ -1100,7 +1268,8 @@ footer p {
     padding: 40px 0;
   }
   .section-header h2 {
-    font-size: 1.85rem;
+    font-size: 1.75rem;
+    word-break: break-word;
   }
 
   /* WhatsApp Flutuante */
@@ -1110,6 +1279,10 @@ footer p {
     padding: 10px 16px;
     font-size: 0.85rem;
     gap: 8px;
+  }
+  .wa-icon-svg {
+    width: 22px;
+    height: 22px;
   }
 }
 
@@ -1128,13 +1301,34 @@ footer p {
     font-size: 0.65rem;
   }
   .price-current {
-    font-size: 1.5rem;
+    font-size: 1.45rem;
   }
   .btn-primary, .btn-secondary {
-    font-size: 0.88rem;
-    padding: 12px 14px;
+    font-size: 0.85rem;
+    padding: 12px 10px;
   }
-  .whatsapp-float span {
+  .product-combo-images {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .combo-img {
+    max-width: 130px;
+    height: 140px;
+  }
+  .whatsapp-float {
+    padding: 9px 12px;
+    font-size: 0.8rem;
+    gap: 6px;
+  }
+  .wa-icon-svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (max-width: 340px) {
+  .whatsapp-float .wa-text {
     display: none;
   }
   .whatsapp-float {
