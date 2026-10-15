@@ -1267,16 +1267,37 @@ def criar_slide_carrossel(titulo, subtitulo, pontos, cta_slide, num_slide, total
             y_p += 26
         y_pos += 95
 
-    # 5. Rodapé Editorial & CTA
+    # 5. Rodapé Editorial & CTA com Blindagem Total Contra Colisão
     draw.line([(60, 985), (1020, 985)], fill=(35, 48, 70, 200), width=1)
-    draw.text((60, 1012), "@MARCAOPERSONALFITNESS   |   marcaopersonal.com", fill=COR_TEXT_MUTED, font=f_footer)
+    brand_text = "@MARCAOPERSONALFITNESS   |   marcaopersonal.com"
+    draw.text((60, 1012), brand_text, fill=COR_TEXT_MUTED, font=f_footer)
+    bbox_brand = draw.textbbox((0, 0), brand_text, font=f_footer)
+    brand_right = 60 + (bbox_brand[2] - bbox_brand[0])
 
     cta_limpo = sanitizar_texto_pillow(cta_slide).replace("››", "").replace(">", "").strip()
+
+    # Padronização de alta elegância editorial para rodapé:
+    # Se for slide intermediário, usa 'ARRASTE'. Se for final, usa 'LINK NA BIO'.
+    if "ARRAST" in cta_limpo.upper():
+        cta_limpo = "ARRASTE"
+    elif "BIO" in cta_limpo.upper() or "LINK" in cta_limpo.upper():
+        cta_limpo = "LINK NA BIO"
+    elif len(cta_limpo) > 16:
+        cta_limpo = "ARRASTE" if num_slide < total_slides else "SAIBA MAIS"
+
     bbox_cta = draw.textbbox((0, 0), cta_limpo, font=f_cta)
     cta_w = bbox_cta[2] - bbox_cta[0]
-    cta_x = 995 - cta_w
+    cta_x = 985 - cta_w
+
+    # Blindagem matemática: zona de respiro mínima de 45px do endereço do site
+    if cta_x <= brand_right + 45:
+        cta_limpo = "ARRASTE" if num_slide < total_slides else "CONFIRA"
+        bbox_cta = draw.textbbox((0, 0), cta_limpo, font=f_cta)
+        cta_w = bbox_cta[2] - bbox_cta[0]
+        cta_x = 985 - cta_w
+
     draw.text((cta_x, 1010), cta_limpo, fill=COR_AMBER, font=f_cta)
-    desenhar_seta_minimalista(draw, 1005, 1022, COR_AMBER, tamanho=15)
+    desenhar_seta_minimalista(draw, 995, 1022, COR_AMBER, tamanho=15)
 
     im.convert("RGB").save(out_path, quality=96)
     print(f"[STUDIO] Slide Editorial {num_slide}/{total_slides} salvo: {out_path}")
