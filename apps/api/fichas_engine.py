@@ -753,3 +753,228 @@ async def disparar_rotina_proativa_vip(tipo_dia: str) -> dict:
         "total_disparados": len(disparados),
         "disparados": disparados
     }
+
+
+# =========================================================================
+# 8. INTELIGÊNCIA NUTRICIONAL & SUBSTITUIÇÃO DE VÍCIOS ALIMENTARES
+# =========================================================================
+RECEITAS_FITNESS_SUBSTITUICAO = {
+    "bolo": {
+        "titulo": "Bolo de Caneca Maromba de Banana, Cacau e Aveia (Sem Açúcar & Sem Farinha Branca)",
+        "tempo_preparo": "3 minutos no micro-ondas",
+        "ingredientes": [
+            "1 banana madura bem amassada (adoça naturalmente)",
+            "1 ovo inteiro",
+            "2 colheres de sopa de farelo ou farinha de aveia",
+            "1 colher de sopa de cacau 100% puro em pó (ou 1 scoop de Whey de chocolate)",
+            "1 colher de café de fermento em pó químico",
+            "Pitada de canela a gosto"
+        ],
+        "modo_preparo": "Misture tudo na própria caneca até ficar bem homogêneo. Leve ao micro-ondas por 2 a 3 minutos. Fica fofinho, mata a fissura de doce e entrega 14 a 22g de proteína com fibras saciantes!",
+        "calorias_aprox": "220 kcal (sem whey) / 290 kcal (com whey)",
+        "proteinas": "15g a 24g"
+    },
+    "pao_de_queijo": {
+        "titulo": "Pão de Queijo de Frigideira Proteico Fit (Pronto em 4 Minutos)",
+        "tempo_preparo": "4 minutos na frigideira",
+        "ingredientes": [
+            "1 ovo inteiro",
+            "2 colheres de sopa de goma de tapioca hidratada",
+            "1 colher de sopa bem cheia de queijo cottage ou queijo minas light ralado",
+            "1 colher de sopa de água ou leite desnatado",
+            "1 pitada de sal marinho e orégano"
+        ],
+        "modo_preparo": "Bata bem o ovo com garfo, misture a tapioca, o queijo e o sal. Despeje numa frigideira antiaderente untada com fio de azeite em fogo baixo. Tampe por 2 minutos, vire para dourar o outro lado. Crocante por fora e puxa-puxa por dentro!",
+        "calorias_aprox": "170 kcal",
+        "proteinas": "14g"
+    },
+    "brigadeiro_doce": {
+        "titulo": "Brigadeiro de Colher Maromba Ultra-Cremoso",
+        "tempo_preparo": "1 minuto (sem fogo)",
+        "ingredientes": [
+            "1 scoop de Whey Protein de chocolate (ou 2 colheres de leite em pó desnatado + 1 colher de cacau 100%)",
+            "1 colher de café de pasta de amendoim integral",
+            "Pouquíssima água morna (cerca de 2 a 3 colheres de sopa, pingada aos poucos)"
+        ],
+        "modo_preparo": "Coloque o pó numa xícara e vá pingando a água morna bem devagar, mexendo com uma colher pequena sem parar até virar um creme brilhante e denso de brigadeiro de panela. Zero açúcar e 25g de proteína pura!",
+        "calorias_aprox": "160 kcal",
+        "proteinas": "24g"
+    },
+    "pizza": {
+        "titulo": "Pizza Fit de Frigideira Proteica (Massa Fina Sem Glúten)",
+        "tempo_preparo": "8 minutos",
+        "ingredientes": [
+            "1 ovo + 2 claras",
+            "2 colheres de sopa de aveia em flocos finos",
+            "2 colheres de sopa de molho de tomate 100% natural",
+            "2 fatias de muçarela light ou queijo branco",
+            "Frango desfiado temperado ou atum sólido",
+            "Orégano e rodelas de tomate"
+        ],
+        "modo_preparo": "Misture o ovo, claras e aveia com uma pitada de sal. Espalhe na frigideira antiaderente como uma panqueca. Quando firmar, vire, passe o molho de tomate, o queijo, o recheio de frango/atum e orégano. Tampe até o queijo derreter completamente!",
+        "calorias_aprox": "280 kcal",
+        "proteinas": "32g"
+    },
+    "coxinha_salgado": {
+        "titulo": "Coxinha Maromba Fit de Batata Doce na Airfryer",
+        "tempo_preparo": "15 minutos na Airfryer",
+        "ingredientes": [
+            "100g de batata doce ou mandioca cozida e bem amassada",
+            "100g de peito de frango cozido e desfiado temperado",
+            "1 gema de ovo para pincelar",
+            "Farinha de linhaça dourada para empanar"
+        ],
+        "modo_preparo": "Abra a massa de batata doce na palma da mão, coloque o frango desfiado, modele em formato de coxinha. Pincele a gema, passe na linhaça e asse a 200°C na Airfryer por 12 a 15 minutos até dourar. Fica crocante e sequinha!",
+        "calorias_aprox": "240 kcal",
+        "proteinas": "30g"
+    }
+}
+
+def buscar_receita_fit_para_desejo(texto: str) -> dict:
+    """Identifica sutilmente menções a vontades de besteiras e retorna a receita fitness ideal."""
+    if not texto:
+        return {}
+    txt = texto.lower()
+    if any(w in txt for w in ["bolo", "torta doce", "confeitaria", "pão de ló"]):
+        return RECEITAS_FITNESS_SUBSTITUICAO["bolo"]
+    elif any(w in txt for w in ["pão de queijo", "pao de queijo", "chipá", "biscoito de queijo"]):
+        return RECEITAS_FITNESS_SUBSTITUICAO["pao_de_queijo"]
+    elif any(w in txt for w in ["chocolate", "brigadeiro", "doce", "fissura por doce", "nutella", "sobremesa"]):
+        return RECEITAS_FITNESS_SUBSTITUICAO["brigadeiro_doce"]
+    elif any(w in txt for w in ["pizza", "pizzaria", "calzone"]):
+        return RECEITAS_FITNESS_SUBSTITUICAO["pizza"]
+    elif any(w in txt for w in ["coxinha", "pastel", "salgadinho", "empada", "esfiha"]):
+        return RECEITAS_FITNESS_SUBSTITUICAO["coxinha_salgado"]
+    return {}
+
+
+# =========================================================================
+# 9. BIBLIOTECA DE ESTUDOS CIENTÍFICOS & PLAYLISTS DE TREINO DO MARCÃO
+# =========================================================================
+ESTUDOS_CIENTIFICOS_MARCAO = [
+    {
+        "tema": "Hipertrofia e Volume Semanal",
+        "fonte": "Schoenfeld et al. (Journal of Sports Sciences)",
+        "resumo": "Demonstrou que acumular de 10 a 20 séries semanais por grupamento muscular próximo à falha é o principal gatilho biológico para hipertrofia máxima em homens e mulheres."
+    },
+    {
+        "tema": "Creatina e Retenção Intracelular",
+        "fonte": "International Society of Sports Nutrition (ISSN)",
+        "resumo": "Comprovou que a creatina monohidratada não retém água na camada subcutânea (pele), mas sim 100% dentro do sarcoplasma muscular, aumentando a força em até 20% e preservando a hidratação celular."
+    },
+    {
+        "tema": "Sono Profundo e Liberação de GH",
+        "fonte": "Harvard Medical School (Division of Sleep Medicine)",
+        "resumo": "Identificou que mais de 70% do pulso diário de hormônio do crescimento (GH) e reparação do sistema nervoso central ocorrem nas fases 3 e 4 do sono profundo não-REM."
+    },
+    {
+        "tema": "Anti-inflamatórios e Trava Muscular",
+        "fonte": "Karolinska Institute (Suécia)",
+        "resumo": "Evidenciou que tomar ibuprofeno ou analgésicos comuns após o treino inibe a enzima COX-2 e paralisa a síntese proteica, reduzindo pela metade o ganho de massa muscular."
+    },
+    {
+        "tema": "Aporte Proteico Ideal e Saciedade",
+        "fonte": "Morton et al. (British Journal of Sports Medicine)",
+        "resumo": "Meta-análise em mais de 1.800 atletas validando que 1.6g a 2.2g de proteína por kg corporal é a dosagem exata para construir músculo limpo e blindar contra catabolismo em déficit calórico."
+    }
+]
+
+PLAYLISTS_TREINO_MARCAO = [
+    {
+        "estilo": "Gym Phonk & Cyberpunk High BPM (150-160 BPM)",
+        "vibe": "Foco cirúrgico, vascularização no talo e ritmo acelerado",
+        "artistas": "Kordhell, DVRST, Hensonn, Pharmacist",
+        "indicacao": "Treinos de perna pesados, super-séries e cardio intenso."
+    },
+    {
+        "estilo": "Hip-Hop Clássico 90s & Underground",
+        "vibe": "Pura agressividade, ritmo marcante e sangue nos olhos",
+        "artistas": "2Pac, The Notorious B.I.G., Eminem, 50 Cent, DMX",
+        "indicacao": "Treinos de força máxima, supino pesado e levantamento terra."
+    },
+    {
+        "estilo": "Hard Rock & Heavy Metal Pump",
+        "vibe": "Adrenalina pura e explosão de força",
+        "artistas": "AC/DC, Metallica, Guns N' Roses, Linkin Park, Slipknot",
+        "indicacao": "Leg day destruidor e quebra de recordes pessoais (PR)."
+    },
+    {
+        "estilo": "Trap & Funk Maromba Nacional",
+        "vibe": "Motivação brasileira e batida energética",
+        "artistas": "Toguro beats, Trap de academia, Jax, B-Dynamitze",
+        "indicacao": "Treinos diários com alta energia e ritmo constante."
+    }
+]
+
+
+# =========================================================================
+# 10. GESTÃO DE METAS COM PRAZOS (INÍCIO, MEIO E FIM) & MODO ATLETA / COMPETIÇÃO
+# =========================================================================
+def calcular_status_meta(data_inicio_str: str, prazo_dias: int = 60) -> dict:
+    """Calcula a fase atual da meta do aluno com começo, meio e fim rigorosos."""
+    if not data_inicio_str:
+        return {"fase": "inicio", "dias_passados": 0, "dias_restantes": prazo_dias, "progresso_pct": 0}
+
+    try:
+        inicio = datetime.fromisoformat(data_inicio_str.replace("Z", "+00:00"))
+        agora = datetime.utcnow().replace(tzinfo=inicio.tzinfo)
+        dias_passados = max(0, (agora - inicio).days)
+        dias_restantes = max(0, prazo_dias - dias_passados)
+        progresso_pct = min(100.0, round((dias_passados / float(prazo_dias)) * 100, 1))
+
+        if dias_restantes == 0:
+            fase = "concluida"
+        elif progresso_pct <= 30.0:
+            fase = "inicio"
+        elif progresso_pct <= 70.0:
+            fase = "meio"
+        else:
+            fase = "reta_final"
+
+        return {
+            "fase": fase,
+            "dias_passados": dias_passados,
+            "dias_restantes": dias_restantes,
+            "prazo_total_dias": prazo_dias,
+            "progresso_pct": progresso_pct,
+            "data_inicio": data_inicio_str,
+            "data_termino_prevista": (inicio + timedelta(days=prazo_dias)).strftime("%d/%m/%Y")
+        }
+    except Exception:
+        return {"fase": "inicio", "dias_passados": 0, "dias_restantes": prazo_dias, "progresso_pct": 0}
+
+
+def gerar_orientacao_modo_atleta(ficha: dict, meta_status: dict) -> dict:
+    """
+    Gera as diretrizes de cobrança diária rigorosa para alunos no Modo Atleta / Competição.
+    Cobrança disciplinar de:
+    1. Treino & Cargas
+    2. Timing de Alimentação & Macros
+    3. Sono Anabólico (dormir no horário certo)
+    4. Fotos do Espelho & Refeições
+    """
+    nome = (ficha.get("nome_aluno") or "Atleta").strip().split()[0]
+    dias_rest = meta_status.get("dias_restantes", 30)
+    progresso = meta_status.get("progresso_pct", 0.0)
+
+    cobranças = [
+        f"🎯 CONTAGEM REGRESSIVA: Faltam exatamente {dias_rest} dias para o seu objetivo/competição! Zero espaço para deslizes!",
+        "🏋️ TREINO DO DIA: Executar cada repetição com cadência perfeita (2s descida, 1s contração máxima). Carga anotada no papel!",
+        "🥩 NUTRIÇÃO MILITAR: Bater 2.0g a 2.2g de proteína/kg rigorosamente. Refeição pré-treino 1h30 antes e pós-treino imediato.",
+        "💤 SONO ANABÓLICO: Na cama impreterivelmente às 22h30/23h00! É no sono profundo que o GH faz o trabalho pesado de hipertrofia.",
+        "📸 MONITORAMENTO VISUAL: Enviar foto do prato principal e foto no espelho semanalmente para calibrarmos a retenção e densidade muscular."
+    ]
+
+    return {
+        "modo_atleta_ativo": True,
+        "aluno": nome,
+        "dias_restantes": dias_rest,
+        "progresso_pct": progresso,
+        "diretrizes_cobranca": cobranças,
+        "mensagem_coach": (
+            f"Fala, {nome}! 🦁 Modo Atleta de Elite ATIVADO! Faltam {dias_rest} dias pro nosso objetivo!\n\n"
+            f"A partir de agora é disciplina militar: treino no horário, macros batidos na balança e sono anabólico às 22h30 sem desculpas!\n\n"
+            f"Me manda a foto do seu prato de hoje e do treino cumprido mais tarde! Tamo junto até o pódio! 👊🔥"
+        )
+    }
+

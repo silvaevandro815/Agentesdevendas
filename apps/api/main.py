@@ -958,3 +958,106 @@ async def obter_oferta_do_dia_api():
 async def obter_meta_milhao_api():
     """Retorna a modelagem matemática e metas operacionais para alcançar R$ 1 Milhão em vendas."""
     return calcular_projecao_meta_milhao()
+
+# -------------------------------------------------------------------------
+# 9. FÁBRICA DE CRIATIVOS, ROTINA DE METAS COM PRAZOS & RECEITAS FITNESS
+# -------------------------------------------------------------------------
+try:
+    from creative_factory import executar_ciclo_manha, executar_ciclo_noite
+    from fichas_engine import (
+        buscar_receita_fit_para_desejo,
+        calcular_status_meta,
+        gerar_orientacao_modo_atleta,
+        RECEITAS_FITNESS_SUBSTITUICAO,
+        ESTUDOS_CIENTIFICOS_MARCAO,
+        PLAYLISTS_TREINO_MARCAO,
+        atualizar_campo_ficha
+    )
+except ImportError:
+    from apps.api.creative_factory import executar_ciclo_manha, executar_ciclo_noite
+    from apps.api.fichas_engine import (
+        buscar_receita_fit_para_desejo,
+        calcular_status_meta,
+        gerar_orientacao_modo_atleta,
+        RECEITAS_FITNESS_SUBSTITUICAO,
+        ESTUDOS_CIENTIFICOS_MARCAO,
+        PLAYLISTS_TREINO_MARCAO,
+        atualizar_campo_ficha
+    )
+
+class CreativeTriggerRequest(BaseModel):
+    indice: Optional[int] = None
+    formato: Optional[str] = "carrossel"
+    usar_ia: Optional[bool] = True
+    estilo_visual: Optional[str] = "evandro"
+    postar_story: Optional[bool] = True
+    dry_run: Optional[bool] = False
+
+@app.post("/api/creatives/ciclo-manha")
+async def ciclo_manha_api(req: CreativeTriggerRequest = CreativeTriggerRequest()):
+    """Executa o ciclo matinal (11:30) com Carrossel de 3 slides e Story (estilo Evandro ou Marcão)."""
+    return executar_ciclo_manha(
+        indice=req.indice,
+        formato=req.formato,
+        usar_ia=req.usar_ia,
+        dry_run=req.dry_run,
+        estilo_visual=req.estilo_visual,
+        postar_story=req.postar_story
+    )
+
+@app.post("/api/creatives/ciclo-noite")
+async def ciclo_noite_api(req: CreativeTriggerRequest = CreativeTriggerRequest()):
+    """Executa o ciclo noturno (19:30) focado em conversão de produto com Carrossel e Story."""
+    return executar_ciclo_noite(
+        indice=req.indice,
+        formato=req.formato,
+        usar_ia=req.usar_ia,
+        dry_run=req.dry_run,
+        estilo_visual=req.estilo_visual,
+        postar_story=req.postar_story
+    )
+
+class ReceitaRequest(BaseModel):
+    desejo: str
+
+@app.post("/api/nutricao/receita-fit")
+async def buscar_receita_fit_api(req: ReceitaRequest):
+    """Retorna receita fitness proteica correspondente a desejos/vícios de besteiras."""
+    receita = buscar_receita_fit_para_desejo(req.desejo)
+    return {
+        "encontrado": bool(receita),
+        "desejo": req.desejo,
+        "receita": receita or RECEITAS_FITNESS_SUBSTITUICAO.get("bolo")
+    }
+
+class MetaAlunoRequest(BaseModel):
+    remote_jid: str
+    meta_descricao: str
+    prazo_dias: int = 60
+    modo_atleta: bool = False
+    data_competicao: Optional[str] = None
+    tipo_competicao: Optional[str] = None
+
+@app.post("/api/aluno/meta-atleta")
+async def definir_meta_aluno_api(req: MetaAlunoRequest):
+    """Registra ou atualiza meta com prazo (início, meio e fim) e ativação do modo atleta."""
+    data_inicio = datetime.utcnow().isoformat()
+    status_meta = calcular_status_meta(data_inicio, req.prazo_dias)
+    patch_data = {
+        "meta_descricao": req.meta_descricao,
+        "data_inicio_meta": data_inicio,
+        "prazo_meta_dias": req.prazo_dias,
+        "modo_atleta": req.modo_atleta,
+        "data_competicao": req.data_competicao,
+        "tipo_competicao": req.tipo_competicao,
+        "status_meta": status_meta
+    }
+    await atualizar_campo_ficha(req.remote_jid, patch_data)
+    orientacao = gerar_orientacao_modo_atleta({"nome_aluno": "Aluno"}, status_meta) if req.modo_atleta else {}
+    return {
+        "sucesso": True,
+        "status_meta": status_meta,
+        "modo_atleta": req.modo_atleta,
+        "orientacao_atleta": orientacao
+    }
+
