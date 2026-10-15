@@ -7,13 +7,14 @@ Pipeline de Montagem Automatizada de Vídeo Reels (50s) com Marcão Personal
 - Tarjas e stickers visuais do site oficial marcaopersonal.com
 - Renderização via FFmpeg em formato H.264 / AAC padrão Instagram Reels
 - Upload no Supabase Storage para obtenção de URL pública
-"""
+# POSTAGEM DE VÍDEOS CANCELADA POR ORDEM DO DIRETOR EVANDRO GALLINA
+# (Foco total transferido para Carrosséis/Cards de Alta Conversão no Feed e Stories com rosto de Evandro)
+VIDEO_POSTING_CANCELADO = True
 
-import os
-import subprocess
-import imageio_ffmpeg
-from PIL import Image, ImageDraw, ImageFont
-import numpy as np
+if __name__ == "__main__":
+    print("[VÍDEOS CANCELADOS] A postagem e geração de vídeos foi cancelada pelo Diretor Evandro Gallina.")
+    print("Foco da operação: Feed editorial de alta conversão e Instagram Stories diários.")
+    import sys; sys.exit(0)
 
 FFMPEG_EXE = imageio_ffmpeg.get_ffmpeg_exe()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))

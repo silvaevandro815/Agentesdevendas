@@ -1192,66 +1192,107 @@ def criar_card_unico(headline, subheadline, pontos, categoria, cta_texto, out_pa
     return out_path
 
 
-def criar_story(headline, subheadline, pontos, categoria, cta_texto, out_path, bg_path=None):
+def criar_story(headline, subheadline, pontos, categoria, cta_texto, out_path, bg_path=None, produto_img_path=None, preco=None, nome_autor="EVANDRO GALLINA"):
     """
     Gera imagem de Story vertical (1080x1920 - 9:16) no padrão editorial @caiqueness.
+    Enquadra a foto de rosto de Evandro (ou cenário) no topo e o card editorial na base.
     """
-    f_hero, f_tag, _, f_sub, f_body, _, f_btn = obter_fontes_editoriais(tamanho_hero=115, tamanho_sub=30, tamanho_body=26)
+    f_hero, f_tag, _, f_sub, f_body, _, f_btn = obter_fontes_editoriais(tamanho_hero=92, tamanho_sub=26, tamanho_body=24)
 
     story = Image.new("RGBA", (1080, 1920), COR_BG_DEEP)
-    if bg_path and os.path.exists(bg_path):
-        bg_img = Image.open(bg_path).convert("RGBA").resize((1080, 1080), Image.Resampling.LANCZOS)
-        story.paste(bg_img, (0, 200))
 
-    # Gradientes de transição
+    # 1. Base da Imagem (Escala mantendo proporção de largura para cobrir topo)
+    if bg_path and os.path.exists(bg_path):
+        try:
+            bg_img = Image.open(bg_path).convert("RGBA")
+            w_new = 1200
+            h_new = int(bg_img.height * (w_new / bg_img.width))
+            bg_img = bg_img.resize((w_new, h_new), Image.Resampling.LANCZOS)
+            story.paste(bg_img, (-60, 0))
+        except Exception:
+            pass
+
+    # 2. Gradientes de transição e vinheta
     draw_grad = ImageDraw.Draw(story)
-    for y in range(0, 360):
-        alpha = int(255 * (1 - (y / 360)))
-        draw_grad.line([(0, y), (1080, y)], fill=(7, 10, 16, alpha))
-    for y in range(950, 1920):
-        alpha = min(255, int(180 + 75 * ((y - 950) / 970)))
-        draw_grad.line([(0, y), (1080, y)], fill=(7, 10, 16, alpha))
+    for y in range(0, 190):
+        a = int(170 * (1 - y / 190))
+        draw_grad.line([(0, y), (1080, y)], fill=(7, 10, 16, a))
+
+    for y in range(820, 1360):
+        a = min(255, int(255 * ((y - 820) / 540)))
+        draw_grad.line([(0, y), (1080, y)], fill=(7, 10, 16, a))
+
+    # Se houver mockup do produto, compõe pequeno selo flutuante à direita
+    if produto_img_path and os.path.exists(produto_img_path):
+        try:
+            p_img = Image.open(produto_img_path)
+            if p_img.mode != "RGBA":
+                p_img = p_img.convert("RGBA")
+                mask = Image.new("L", p_img.size, 0)
+                draw_m = ImageDraw.Draw(mask)
+                draw_m.rounded_rectangle([0, 0, p_img.width, p_img.height], radius=20, fill=255)
+                p_img.putalpha(mask)
+            p_img.thumbnail((260, 260), Image.Resampling.LANCZOS)
+
+            sombra = Image.new("RGBA", (p_img.width + 60, 50), (0, 0, 0, 0))
+            draw_sombra = ImageDraw.Draw(sombra)
+            draw_sombra.ellipse([15, 10, p_img.width + 45, 40], fill=(0, 0, 0, 160))
+            sombra = sombra.filter(ImageFilter.GaussianBlur(radius=12))
+
+            pos_x = 760
+            pos_y = 960
+            story.paste(sombra, (pos_x - 30, pos_y + p_img.height - 25), sombra)
+            story.paste(p_img, (pos_x, pos_y), p_img)
+        except Exception:
+            pass
 
     draw = ImageDraw.Draw(story)
 
-    # Tag Topo
-    draw.rounded_rectangle([330, 70, 750, 120], radius=25, fill=(14, 22, 36, 230), outline=COR_AMBER, width=2)
-    draw.text((360, 83), "MARCÃO PERSONAL  •  VIP", fill=COR_AMBER_LIGHT, font=f_tag)
+    # 3. Tag Topo (Evandro Gallina ou Marcão)
+    tag_text = f"{nome_autor.upper()}  •  MARCÃO PERSONAL"
+    bbox_t = draw.textbbox((0, 0), tag_text, font=f_tag)
+    tw = bbox_t[2] - bbox_t[0]
+    tx = (1080 - tw) // 2
+    draw.rounded_rectangle([tx - 24, 60, tx + tw + 24, 108], radius=22, fill=(12, 18, 30, 225), outline=COR_AMBER, width=2)
+    draw.text((tx, 73), tag_text, fill=COR_AMBER_LIGHT, font=f_tag)
 
-    # Card Principal no Story
-    draw.rounded_rectangle([40, 1100, 1040, 1840], radius=24, fill=(12, 18, 30, 245), outline=COR_AMBER, width=2)
+    # 4. Card Principal no Story
+    draw.rounded_rectangle([50, 1140, 1030, 1850], radius=26, fill=(10, 15, 25, 245), outline=COR_AMBER, width=2)
 
     head_limpo = sanitizar_texto_pillow(headline).upper()
-    linhas_head = [l.strip() for l in head_limpo.split("\n") if l.strip()]
-    if len(linhas_head) == 1:
-        palavras = linhas_head[0].split()
-        if len(palavras) >= 4:
-            meio = len(palavras) // 2
-            linhas_head = [" ".join(palavras[:meio]), " ".join(palavras[meio:])]
+    linhas_head = quebrar_linhas_por_palavras(head_limpo, f_hero, 920, draw)
+    if not linhas_head:
+        linhas_head = [head_limpo]
 
-    y_t = 1145
+    y_t = 1175
     for linha in linhas_head[:2]:
-        draw.text((70, y_t), linha, fill=COR_WHITE, font=f_hero)
-        y_t += 105
+        for ox, oy in [(-2, -2), (2, -2), (0, 3)]:
+            draw.text((80 + ox, y_t + oy), linha, fill=(0, 0, 0, 220), font=f_hero)
+        draw.text((80, y_t), linha, fill=COR_WHITE, font=f_hero)
+        y_t += 90
 
     sub_limpo = sanitizar_texto_pillow(subheadline)
     if sub_limpo:
-        y_t += 10
-        draw.text((70, y_t), sub_limpo, fill=COR_AMBER_LIGHT, font=f_sub)
-        y_t += 50
+        y_t += 8
+        draw.text((80, y_t), sub_limpo, fill=COR_AMBER_LIGHT, font=f_sub)
+        y_t += 48
 
-    y_pos = y_t + 15
-    for p in pontos[:3]:
+    y_pos = y_t + 12
+    for p in (pontos or [])[:3]:
         p_limpo = sanitizar_texto_pillow(p)
-        draw.ellipse([70, y_pos + 6, 88, y_pos + 24], fill=COR_CYAN)
-        draw.text((105, y_pos), p_limpo, fill=COR_CREAM, font=f_body)
-        y_pos += 65
+        draw.ellipse([85, y_pos + 8, 103, y_pos + 26], fill=COR_CYAN)
+        linhas_p = quebrar_linhas_por_palavras(p_limpo, f_body, 880, draw)
+        if linhas_p:
+            draw.text((120, y_pos), linhas_p[0], fill=COR_CREAM, font=f_body)
+        y_pos += 62
 
-    # Botão de Ação / Link
-    btn_y = 1680
-    draw.rounded_rectangle([70, btn_y, 1010, btn_y + 110], radius=20, fill=COR_AMBER, outline=COR_WHITE, width=2)
+    # Botão de Ação / Link do Story
+    btn_y = 1690
+    draw.rounded_rectangle([80, btn_y, 1000, btn_y + 110], radius=22, fill=COR_AMBER, outline=COR_WHITE, width=2)
     cta_limpo = sanitizar_texto_pillow(cta_texto).replace("››", "").replace(">", "").strip()
-    btn_str = f"{cta_limpo}  >"
+    if not cta_limpo or "ARRASTA" in cta_limpo.upper():
+        cta_limpo = "ACESSAR AGORA"
+    btn_str = f"{cta_limpo}  •  marcaopersonal.com  >"
     bbox_btn = draw.textbbox((0, 0), btn_str, font=f_btn)
     btn_w = bbox_btn[2] - bbox_btn[0]
     btn_x = (1080 - btn_w) // 2
@@ -1518,19 +1559,18 @@ def registrar_no_content_calendar(post_id, legenda, media_url, permalink, format
 # -------------------------------------------------------------------------
 # 7. CICLOS DIÁRIOS DE PRODUÇÃO (MANHÃ 11:30 & NOITE 19:30)
 # -------------------------------------------------------------------------
-def executar_ciclo_manha(indice=None, formato="carrossel", usar_ia=True, dry_run=False, estilo_visual="auto"):
+def executar_ciclo_manha(indice=None, formato="carrossel", usar_ia=True, dry_run=False, estilo_visual="evandro", postar_story=True):
     """
     Executa o Post da Manhã (11:30): Curiosidade, Ciência & Entretenimento.
+    Por padrão utiliza o rosto de Evandro Gallina em cenários de alta autoridade científica
+    e publica automaticamente nos Stories do Instagram.
     """
     temas_ativos = [t for t in TEMAS_CURIOSIDADES if not t.get("desativado")]
     if indice is None:
         indice = datetime.now().day % len(temas_ativos)
     tema = temas_ativos[indice % len(temas_ativos)]
 
-    if estilo_visual == "auto":
-        estilo_escolhido = ESTILOS_VISUAIS[((indice if indice is not None else datetime.now().day) * 2) % len(ESTILOS_VISUAIS)]
-    else:
-        estilo_escolhido = estilo_visual
+    estilo_escolhido = estilo_visual if estilo_visual != "auto" else "evandro"
 
     print(f"\n[FÁBRICA 11:30] Iniciando produção do Post de Curiosidade: '{tema['tema']}' | Estilo: {estilo_escolhido.upper()}")
 
@@ -1546,7 +1586,7 @@ def executar_ciclo_manha(indice=None, formato="carrossel", usar_ia=True, dry_run
 
     # 2. Renderizar formato escolhido
     timestamp = int(time.time())
-    urls_publicadas = []
+    res_final = {}
 
     if formato == "carrossel":
         slides_gerados = []
@@ -1565,18 +1605,17 @@ def executar_ciclo_manha(indice=None, formato="carrossel", usar_ia=True, dry_run
             )
             slides_gerados.append(out_file)
 
-        # Upload dos slides para o Supabase Storage
+        urls_publicadas = []
         for s_path in slides_gerados:
             url_storage = upload_supabase_storage(s_path)
             if url_storage:
                 urls_publicadas.append(url_storage)
 
         if dry_run:
-            return {"sucesso": True, "modo": "dry_run", "slides": urls_publicadas, "legenda": tema["legenda"]}
-
-        # Publicar Carrossel
-        res_pub = publicar_carrossel_instagram(urls_publicadas, tema["legenda"])
-        return res_pub
+            res_final = {"sucesso": True, "modo": "dry_run", "slides": urls_publicadas, "legenda": tema["legenda"]}
+        else:
+            res_pub = publicar_carrossel_instagram(urls_publicadas, tema["legenda"])
+            res_final = res_pub
 
     else:
         # Card Único
@@ -1592,16 +1631,40 @@ def executar_ciclo_manha(indice=None, formato="carrossel", usar_ia=True, dry_run
         )
         url_storage = upload_supabase_storage(out_file)
         if dry_run:
-            return {"sucesso": True, "modo": "dry_run", "imagem": url_storage, "legenda": tema["legenda"]}
+            res_final = {"sucesso": True, "modo": "dry_run", "imagem": url_storage, "legenda": tema["legenda"]}
+        else:
+            res_pub = publicar_card_instagram(url_storage, tema["legenda"])
+            res_final = res_pub
 
-        res_pub = publicar_card_instagram(url_storage, tema["legenda"])
-        return res_pub
+    # Geração e Publicação Obrigatória nos Stories
+    if postar_story:
+        story_file = os.path.join(DIR_OUTPUT, f"story_{tema['id']}_{timestamp}.jpg")
+        criar_story(
+            headline=tema["headline"],
+            subheadline=tema["subheadline"],
+            pontos=tema["pontos_card"],
+            categoria=tema["categoria"],
+            cta_texto="LEIA O POST COMPLETO",
+            out_path=story_file,
+            bg_path=bg_local,
+            nome_autor="EVANDRO GALLINA" if estilo_escolhido == "evandro" else "MARCÃO PERSONAL"
+        )
+        url_story = upload_supabase_storage(story_file)
+        if url_story:
+            if dry_run:
+                res_final["story"] = {"sucesso": True, "modo": "dry_run", "imagem": url_story}
+            else:
+                res_story = publicar_story_instagram(url_story)
+                res_final["story"] = res_story
+
+    return res_final
 
 
-def executar_ciclo_noite(indice=None, formato="card", usar_ia=True, dry_run=False, estilo_visual="auto"):
+def executar_ciclo_noite(indice=None, formato="card", usar_ia=True, dry_run=False, estilo_visual="evandro", postar_story=True):
     """
     Executa o Post da Noite (19:30): Venda de Produto & Conversão Direta.
-    Gera ângulos criativos dinâmicos com IA e compõe o mockup real do produto no card.
+    Gera ângulos criativos dinâmicos com IA, compõe o mockup real do produto no card,
+    utiliza o rosto de Evandro Gallina para máxima autoridade e publica nos Stories.
     Este post fica automaticamente elegível para o Rui impulsionar no Meta Ads!
     """
     produtos_ativos = [p for p in PRODUTOS_CATALOGO if not p.get("desativado")]
@@ -1609,10 +1672,7 @@ def executar_ciclo_noite(indice=None, formato="card", usar_ia=True, dry_run=Fals
         indice = (datetime.now().day + datetime.now().hour) % len(produtos_ativos)
     prod = produtos_ativos[indice % len(produtos_ativos)]
 
-    if estilo_visual == "auto":
-        estilo_escolhido = ESTILOS_VISUAIS[((indice if indice is not None else datetime.now().day) * 2 + 1) % len(ESTILOS_VISUAIS)]
-    else:
-        estilo_escolhido = estilo_visual
+    estilo_escolhido = estilo_visual if estilo_visual != "auto" else "evandro"
 
     print(f"\n[FÁBRICA 19:30] Iniciando produção do Post de Venda: '{prod['nome']}' | Estilo: {estilo_escolhido.upper()}")
 
@@ -1640,7 +1700,7 @@ def executar_ciclo_noite(indice=None, formato="card", usar_ia=True, dry_run=Fals
             f"#marcao #suplementos #saude #estetica #performance #qualidadedevida #fitness"
         )
 
-    # 1. Imagem de Fundo Ultra-Realista
+    # 1. Imagem de Fundo Ultra-Realista (com o rosto de Evandro)
     bg_local = None
     if usar_ia:
         prompt_estilo, ref_img = montar_prompt_por_estilo(estilo_escolhido, prod, eh_venda=True)
@@ -1648,9 +1708,9 @@ def executar_ciclo_noite(indice=None, formato="card", usar_ia=True, dry_run=Fals
         bg_local = gerar_imagem_ultra_realista(prompt_estilo, nome_ia, imagem_referencia_path=ref_img)
 
     timestamp = int(time.time())
+    res_final = {}
 
     if formato == "carrossel":
-        # Carrossel de Venda
         slides = [
             {
                 "titulo": f"O SEGREDO DO RESULTADO:\n{headline}",
@@ -1709,11 +1769,11 @@ def executar_ciclo_noite(indice=None, formato="card", usar_ia=True, dry_run=Fals
                 urls_publicadas.append(url_storage)
 
         if dry_run:
-            return {"sucesso": True, "modo": "dry_run", "slides": urls_publicadas, "legenda": legenda}
-
-        res_pub = publicar_carrossel_instagram(urls_publicadas, legenda)
-        res_pub["elegivel_para_trafego_rui"] = True
-        return res_pub
+            res_final = {"sucesso": True, "modo": "dry_run", "slides": urls_publicadas, "legenda": legenda}
+        else:
+            res_pub = publicar_carrossel_instagram(urls_publicadas, legenda)
+            res_pub["elegivel_para_trafego_rui"] = True
+            res_final = res_pub
 
     else:
         # Card Único com Mockup Real do Produto e Preço Oficial
@@ -1731,11 +1791,36 @@ def executar_ciclo_noite(indice=None, formato="card", usar_ia=True, dry_run=Fals
         )
         url_storage = upload_supabase_storage(out_file)
         if dry_run:
-            return {"sucesso": True, "modo": "dry_run", "imagem": url_storage, "legenda": legenda}
+            res_final = {"sucesso": True, "modo": "dry_run", "imagem": url_storage, "legenda": legenda}
+        else:
+            res_pub = publicar_card_instagram(url_storage, legenda)
+            res_pub["elegivel_para_trafego_rui"] = True
+            res_final = res_pub
 
-        res_pub = publicar_card_instagram(url_storage, legenda)
-        res_pub["elegivel_para_trafego_rui"] = True
-        return res_pub
+    # Geração e Publicação Obrigatória nos Stories
+    if postar_story:
+        story_file = os.path.join(DIR_OUTPUT, f"story_{prod['sku']}_{timestamp}.jpg")
+        criar_story(
+            headline=headline,
+            subheadline=sub,
+            pontos=pontos,
+            categoria=categoria,
+            cta_texto=f"COMPRE POR {prod['preco']}",
+            out_path=story_file,
+            bg_path=bg_local,
+            produto_img_path=prod.get("image_local"),
+            preco=prod.get("preco"),
+            nome_autor="EVANDRO GALLINA" if estilo_escolhido == "evandro" else "MARCÃO PERSONAL"
+        )
+        url_story = upload_supabase_storage(story_file)
+        if url_story:
+            if dry_run:
+                res_final["story"] = {"sucesso": True, "modo": "dry_run", "imagem": url_story}
+            else:
+                res_story = publicar_story_instagram(url_story)
+                res_final["story"] = res_story
+
+    return res_final
 
 
 # -------------------------------------------------------------------------
@@ -1745,8 +1830,10 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Fábrica de Criativos Ultra-Realistas Marcão Personal")
     parser.add_argument("--tipo", choices=["manha", "noite", "auto"], default="auto", help="Tipo de post (manha=curiosidade, noite=venda)")
-    parser.add_argument("--formato", choices=["card", "carrossel"], default="carrossel", help="Formato do criativo")
+    parser.add_argument("--formato", choices=["card", "carrossel"], default="card", help="Formato do criativo (card ou carrossel)")
+    parser.add_argument("--estilo", choices=ESTILOS_VISUAIS + ["auto"], default="evandro", help="Estilo visual da imagem (padrão: evandro)")
     parser.add_argument("--sem-ia", action="store_true", help="Desabilitar geração via IA e usar backgrounds padrão")
+    parser.add_argument("--sem-story", action="store_true", help="Desabilitar publicação simultânea nos Stories")
     parser.add_argument("--dry-run", action="store_true", help="Gerar imagens e fazer upload sem publicar no Instagram")
     parser.add_argument("--indice", type=int, default=None, help="Índice específico do tema ou produto")
 
@@ -1758,16 +1845,32 @@ if __name__ == "__main__":
         tipo = "manha" if hora < 15 else "noite"
 
     usar_ia = not args.sem_ia
+    postar_story = not args.sem_story
+    estilo_visual = args.estilo
 
     print("=" * 60)
     print(f"🎬 FÁBRICA DE CRIATIVOS MARCÃO PERSONAL 360°")
     print(f"Horário: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
-    print(f"Ciclo: {tipo.upper()} | Formato: {args.formato.upper()} | IA: {'ATIVADA' if usar_ia else 'DESATIVADA'}")
+    print(f"Ciclo: {tipo.upper()} | Formato: {args.formato.upper()} | Estilo: {estilo_visual.upper()} | Stories: {'ATIVADO' if postar_story else 'DESATIVADO'}")
     print("=" * 60)
 
     if tipo == "manha":
-        res = executar_ciclo_manha(indice=args.indice, formato=args.formato, usar_ia=usar_ia, dry_run=args.dry_run)
+        res = executar_ciclo_manha(
+            indice=args.indice,
+            formato=args.formato,
+            usar_ia=usar_ia,
+            dry_run=args.dry_run,
+            estilo_visual=estilo_visual,
+            postar_story=postar_story
+        )
     else:
-        res = executar_ciclo_noite(indice=args.indice, formato=args.formato, usar_ia=usar_ia, dry_run=args.dry_run)
+        res = executar_ciclo_noite(
+            indice=args.indice,
+            formato=args.formato,
+            usar_ia=usar_ia,
+            dry_run=args.dry_run,
+            estilo_visual=estilo_visual,
+            postar_story=postar_story
+        )
 
     print("\n[RESULTADO]:", json.dumps(res, indent=2, ensure_ascii=False))

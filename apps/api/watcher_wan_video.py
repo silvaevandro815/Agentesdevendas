@@ -56,13 +56,8 @@ def upload_supabase_video(video_path: str, remote_name: str) -> str:
     return ""
 
 def monitorar():
-    import asyncio
-    from gradio_client import Client
-    
-    print("[WATCHER] Conectando ao Wan-AI/Wan2.1...")
-    client = Client("Wan-AI/Wan2.1", ssl_verify=False)
-    
-    max_loops = 150  # ~30 minutos
+    print("[WATCHER] Postagem de vídeos cancelada pelo Diretor Evandro Gallina. Foco transferido para Stories e Feed.")
+    return
     for i in range(max_loops):
         try:
             res = client.predict(api_name="/status_refresh")
