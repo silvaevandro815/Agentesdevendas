@@ -52,19 +52,18 @@ def descriptografar_foto(payload_encriptado: str, mime_type: str = "image/jpeg",
     return raw_b64
 
 def gerar_termo_lgpd(nome_aluno: str) -> str:
-    """Retorna a mensagem formal e amigável de consentimento da LGPD para envio ao aluno."""
+    """Retorna a mensagem formal e amigável de isenção de responsabilidade médica e consentimento LGPD."""
     primeiro_nome = nome_aluno.strip().split()[0] if nome_aluno else "Guerreiro(a)"
-    return f"""🔒 *COMPROMISSO DE PRIVACIDADE E SEGURANÇA (LGPD) — MARCÃO PERSONAL*
+    return f"""🔒 *TERMO DE CIÊNCIA, ISENÇÃO DE RESPONSABILIDADE & LGPD — MARCÃO PERSONAL*
 
-Fala, {primeiro_nome}! Pela Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018) e pelo meu compromisso ético e profissional com a sua saúde:
+Fala, {primeiro_nome}! Para garantirmos sua segurança e a conformidade legal do nosso projeto (LGPD - Lei nº 13.709/2018):
 
-1. Todas as suas fotos corporais (frente e costas), exames e biometrias são mantidas sob *sigilo absoluto*.
-2. Seus dados são protegidos por *criptografia militar de ponta a ponta* no nosso banco de dados seguro, sem acesso público.
-3. Essas imagens serão usadas *exclusivamente* para eu acompanhar sua evolução, avaliar sua postura e comparar seu 'antes e depois'.
+1️⃣ *NATUREZA DO SERVIÇO:* O Marcão é uma Inteligência Artificial assistente de bem-estar. Todas as recomendações de treinos, exercícios e dicas nutricionais são de caráter educativo e NÃO substituem consulta médica ou profissional de saúde presencial.
+2️⃣ *ASSUNÇÃO DE RESPONSABILIDADE:* Você declara estar apto(a) à prática de atividades físicas e assume integral responsabilidade por cada exercício que optar por realizar, adaptando ao seu próprio limite e sem exageros.
+3️⃣ *PRIVACIDADE TOTAL (LGPD):* Seus dados (peso, altura, idade e fotos) são protegidos com criptografia militar e mantidos sob sigilo absoluto, servindo apenas para sua evolução.
 
-Você autoriza o uso estritamente técnico e confidencial das suas fotos para o seu acompanhamento de personal trainer?
-
-👉 Responda com *"Autorizo"* ou *"Sim"* para ativarmos sua ficha oficial! 👊"""
+👉 *OBRIGATÓRIO:* Para ativar sua ficha e receber seus treinos sob medida com total segurança jurídica, basta me responder aqui escrevendo:
+*CONCORDO*"""
 
 async def salvar_consentimento_lgpd(remote_jid: str, telefone: str, nome: str) -> bool:
     """Grava o consentimento formal na tabela fichas_alunos do Supabase."""

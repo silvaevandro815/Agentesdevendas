@@ -16,6 +16,11 @@ APYKEYs/
 *.jpeg
 *.jpg
 *.png
+!apps/site/public/images/**
+apps/site/public/images/posts/
+!apps/admin/public/images/**
+scratch_*.json
+scratch_*.js
 avaliacao_real_marcao.txt
 scratch/
 Exemplos de workflows/

@@ -1159,9 +1159,10 @@ def gerar_angulo_criativo_com_ia(prod: dict) -> dict:
     return obter_angulo_fallback(prod)
 
 
-def criar_slide_carrossel(titulo, subtitulo, pontos, cta_slide, num_slide, total_slides, categoria, out_path, bg_path=None):
+def criar_slide_carrossel(titulo, subtitulo, pontos, cta_slide, num_slide, total_slides, categoria, out_path, bg_path=None, produto_img_path=None, preco=None):
     """
     Gera slide de carrossel (1080x1080) no estilo editorial moderno (@caiqueness inspired).
+    Se for o slide final com produto, compõe o mockup no pedestal à direita mantendo o design limpo.
     """
     f_hero, f_tag, f_num, f_sub, f_body, f_footer, f_cta = obter_fontes_editoriais(tamanho_hero=90, tamanho_sub=26, tamanho_body=24)
 
@@ -1175,22 +1176,61 @@ def criar_slide_carrossel(titulo, subtitulo, pontos, cta_slide, num_slide, total
         draw_ov.line([(0, y), (1080, y)], fill=(7, 10, 16, alpha))
 
     im = Image.alpha_composite(base, overlay)
+
+    # Se for o slide de oferta com produto, adiciona brilho âmbar no lado direito
+    tem_produto = produto_img_path and os.path.exists(produto_img_path) and (num_slide == total_slides)
+    if tem_produto:
+        try:
+            glow_p = Image.new("RGBA", (1080, 1080), (0, 0, 0, 0))
+            draw_gp = ImageDraw.Draw(glow_p)
+            for r in range(350, 0, -25):
+                alpha_g = int(45 * (1 - r / 350))
+                draw_gp.ellipse([820 - r, 540 - r, 820 + r, 540 + r], fill=(255, 120, 0, alpha_g))
+            im = Image.alpha_composite(im, glow_p)
+
+            p_img = Image.open(produto_img_path)
+            if p_img.mode != "RGBA":
+                p_img = p_img.convert("RGBA")
+                mask = Image.new("L", p_img.size, 0)
+                ImageDraw.Draw(mask).rounded_rectangle([0, 0, p_img.width, p_img.height], radius=24, fill=255)
+                p_img.putalpha(mask)
+
+            p_img.thumbnail((360, 360), Image.Resampling.LANCZOS)
+            sombra = Image.new("RGBA", (p_img.width + 60, 60), (0, 0, 0, 0))
+            draw_sombra = ImageDraw.Draw(sombra)
+            draw_sombra.ellipse([15, 15, p_img.width + 45, 50], fill=(0, 0, 0, 190))
+            sombra = sombra.filter(ImageFilter.GaussianBlur(radius=14))
+
+            pos_x = 1080 - p_img.width - 60
+            pos_y = 420
+            im.paste(sombra, (pos_x - 30, pos_y + p_img.height - 25), sombra)
+            im.paste(p_img, (pos_x, pos_y), p_img)
+        except Exception as e:
+            print(f"[STUDIO] Aviso ao compor produto no slide: {e}")
+
     draw = ImageDraw.Draw(im)
 
     # 1. Topo: Tag de Categoria e Contador
-    cat_str = f"BIOHACKING  •  PASSO 0{num_slide}"
-    draw.rounded_rectangle([60, 55, 370, 100], radius=22, fill=(14, 22, 36, 220), outline=COR_AMBER, width=2)
+    cat_str = f"BIOHACKING  •  PASSO 0{num_slide}" if num_slide < total_slides else f"BIOHACKING  •  OFERTA OFICIAL"
+    draw.rounded_rectangle([60, 55, 410, 100], radius=22, fill=(14, 22, 36, 220), outline=COR_AMBER, width=2)
     draw.text((85, 67), cat_str, fill=COR_AMBER_LIGHT, font=f_tag)
 
-    draw.text((980, 60), f"{num_slide}/{total_slides}", fill=COR_TEXT_MUTED, font=f_num)
+    if preco and num_slide == total_slides:
+        bbox_pr = draw.textbbox((0, 0), f"LOTE: {preco}", font=f_tag)
+        pr_w = bbox_pr[2] - bbox_pr[0]
+        draw.rounded_rectangle([980 - pr_w - 30, 55, 1020, 100], radius=22, fill=(14, 22, 36, 220), outline=COR_CYAN, width=2)
+        draw.text((980 - pr_w - 15, 67), f"LOTE: {preco}", fill=COR_CYAN, font=f_tag)
+    else:
+        draw.text((980, 60), f"{num_slide}/{total_slides}", fill=COR_TEXT_MUTED, font=f_num)
 
     # 2. Título do Slide em Bebas Neue (quebra dinâmica)
+    max_w_tit = 620 if tem_produto else 960
     titulo_limpo = sanitizar_texto_pillow(titulo).upper()
-    linhas_titulo = quebrar_linhas_por_palavras(titulo_limpo, f_hero, 960, draw)
+    linhas_titulo = quebrar_linhas_por_palavras(titulo_limpo, f_hero, max_w_tit, draw)
     if not linhas_titulo:
         linhas_titulo = [titulo_limpo]
 
-    y_text = 165
+    y_text = 150
     for linha in linhas_titulo[:2]:
         draw.text((60, y_text), linha, fill=COR_WHITE, font=f_hero)
         y_text += 85
@@ -1203,14 +1243,20 @@ def criar_slide_carrossel(titulo, subtitulo, pontos, cta_slide, num_slide, total
         y_text += 45
 
     # 4. Tópicos em Cards Individuais com Bullets Cyan
+    card_w = 620 if tem_produto else 1020
+    text_w = 520 if tem_produto else 870
     y_pos = y_text + 15
     for p in pontos[:4]:
         p_limpo = sanitizar_texto_pillow(p)
-        draw.rounded_rectangle([60, y_pos, 1020, y_pos + 82], radius=14, 
+        draw.rounded_rectangle([60, y_pos, card_w, y_pos + 82], radius=14, 
                                fill=(15, 23, 38, 230), outline=(35, 50, 75), width=1)
         draw.ellipse([85, y_pos + 32, 103, y_pos + 50], fill=COR_CYAN)
-        draw.text((120, y_pos + 26), p_limpo, fill=COR_CREAM, font=f_body)
-        y_pos += 100
+        linhas_p = quebrar_linhas_por_palavras(p_limpo, f_body, text_w, draw)
+        y_p = y_pos + 18 if len(linhas_p) > 1 else y_pos + 26
+        for lp in linhas_p[:2]:
+            draw.text((120, y_p), lp, fill=COR_CREAM, font=f_body)
+            y_p += 26
+        y_pos += 95
 
     # 5. Rodapé Editorial & CTA
     draw.line([(60, 985), (1020, 985)], fill=(35, 48, 70, 200), width=1)
@@ -1273,17 +1319,20 @@ def criar_card_unico(headline, subheadline, pontos, categoria, cta_texto, out_pa
                 draw_m.rounded_rectangle([0, 0, p_img.width, p_img.height], radius=24, fill=255)
                 p_img.putalpha(mask)
 
-            p_img.thumbnail((420, 420), Image.Resampling.LANCZOS)
+            # REGRA MANDATÓRIA DE ARTE: ZONA DE EXCLUSÃO FACIAL
+            # NUNCA posicionar produtos no terço superior (y: 50 a 550), onde ficam o rosto e os olhos do personagem!
+            # O produto é posicionado no canto inferior direito com pedestal e iluminação própria.
+            p_img.thumbnail((320, 320), Image.Resampling.LANCZOS)
 
             # Sombra suave com Gaussian Blur
-            sombra = Image.new("RGBA", (p_img.width + 100, 80), (0, 0, 0, 0))
+            sombra = Image.new("RGBA", (p_img.width + 60, 60), (0, 0, 0, 0))
             draw_sombra = ImageDraw.Draw(sombra)
-            draw_sombra.ellipse([30, 20, p_img.width + 70, 60], fill=(0, 0, 0, 170))
-            sombra = sombra.filter(ImageFilter.GaussianBlur(radius=16))
+            draw_sombra.ellipse([15, 15, p_img.width + 45, 50], fill=(0, 0, 0, 180))
+            sombra = sombra.filter(ImageFilter.GaussianBlur(radius=12))
 
-            pos_x = (1080 - p_img.width) // 2
-            pos_y = 115
-            im.paste(sombra, (pos_x - 50, pos_y + p_img.height - 40), sombra)
+            pos_x = 1080 - p_img.width - 50
+            pos_y = 1080 - p_img.height - 120
+            im.paste(sombra, (pos_x - 30, pos_y + p_img.height - 30), sombra)
             im.paste(p_img, (pos_x, pos_y), p_img)
         except Exception as e:
             print(f"[STUDIO] Aviso ao compor produto: {e}")
@@ -1859,7 +1908,7 @@ def executar_ciclo_manha(indice=None, formato="carrossel", usar_ia=True, dry_run
     return res_final
 
 
-def executar_ciclo_noite(indice=None, formato="card", usar_ia=True, dry_run=False, estilo_visual="evandro", postar_story=True):
+def executar_ciclo_noite(indice=None, formato="carrossel", usar_ia=True, dry_run=False, estilo_visual="evandro", postar_story=True):
     """
     Executa o Post da Noite (19:30): Venda de Produto & Conversão Direta.
     Gera ângulos criativos dinâmicos com IA, compõe o mockup real do produto no card,
@@ -1957,7 +2006,9 @@ def executar_ciclo_noite(indice=None, formato="card", usar_ia=True, dry_run=Fals
                 total_slides=3,
                 categoria=categoria,
                 out_path=out_file,
-                bg_path=bg_local if idx == 0 else None
+                bg_path=bg_local if idx == 0 else None,
+                produto_img_path=prod.get("image_local") if idx == 2 else None,
+                preco=prod.get("preco") if idx == 2 else None
             )
             slides_gerados.append(out_file)
 
@@ -2029,7 +2080,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Fábrica de Criativos Ultra-Realistas Marcão Personal")
     parser.add_argument("--tipo", choices=["manha", "noite", "auto"], default="auto", help="Tipo de post (manha=curiosidade, noite=venda)")
-    parser.add_argument("--formato", choices=["card", "carrossel"], default="card", help="Formato do criativo (card ou carrossel)")
+    parser.add_argument("--formato", choices=["card", "carrossel"], default="carrossel", help="Formato do criativo (card ou carrossel)")
     parser.add_argument("--estilo", choices=ESTILOS_VISUAIS + ["auto"], default="evandro", help="Estilo visual da imagem (padrão: evandro)")
     parser.add_argument("--sem-ia", action="store_true", help="Desabilitar geração via IA e usar backgrounds padrão")
     parser.add_argument("--sem-story", action="store_true", help="Desabilitar publicação simultânea nos Stories")
