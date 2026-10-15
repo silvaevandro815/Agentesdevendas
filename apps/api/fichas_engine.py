@@ -1049,3 +1049,75 @@ def gerar_orientacao_modo_atleta(ficha: dict, meta_status: dict) -> dict:
         )
     }
 
+
+async def cobrar_dados_pendentes_aluno(remote_jid: str, nome: str = "Aluno(a)") -> dict:
+    """
+    Dispara cobrança conversacional, amigável e próxima do Marcão para o aluno preencher
+    seus dados reais (peso, altura, idade, objetivo, dores). Zero dados fictícios.
+    """
+    primeiro_nome = nome.strip().split()[0] if nome else "Guerreira"
+    tel = "".join(filter(str.isdigit, remote_jid.split("@")[0]))
+    if not tel:
+        return {"sucesso": False, "erro": "Telefone inválido"}
+
+    mensagem = (
+        f"Fala, {primeiro_nome}! Tudo na paz por aí? 🦁 Marcão passando pra dar um toque rápido e super amigo!\n\n"
+        f"Pra eu deixar seu treino e seus macros 100% afinados sem inventar nenhum número, preciso dos seus dados reais:\n"
+        f"1️⃣ Seu peso atual aproximado (ou foto do visor da balança);\n"
+        f"2️⃣ Sua altura e idade aproximadas;\n"
+        f"3️⃣ Se você tem alguma dorzinha no joelho, coluna ou ombro.\n\n"
+        f"Me manda aqui no seu tempo que assim que você me responder eu monto sua ficha real com o maior carinho! Tamo junto! 💪👊"
+    )
+
+    evo_url = os.getenv("EVOLUTION_API_URL", "https://evolution.marcaopersonal.com")
+    evo_key = os.getenv("EVOLUTION_API_KEY", "")
+    evo_inst = os.getenv("EVOLUTION_INSTANCE", "sofia")
+
+    try:
+        async with httpx.AsyncClient(verify=False, timeout=15.0) as client:
+            resp = await client.post(
+                f"{evo_url}/message/sendText/{evo_inst}",
+                headers={"apikey": evo_key, "Content-Type": "application/json"},
+                json={"number": tel, "text": mensagem}
+            )
+            return {
+                "sucesso": resp.status_code in (200, 201),
+                "remote_jid": remote_jid,
+                "mensagem": mensagem,
+                "status_code": resp.status_code
+            }
+    except Exception as e:
+        return {"sucesso": False, "erro": str(e)}
+
+
+async def verificar_e_cobrar_alunos_com_dados_pendentes() -> list:
+    """
+    Verifica todas as fichas de alunos VIP ativas no Supabase.
+    Se a ficha não possuir peso real ou estiver com onboarding incompleto,
+    dispara a cobrança conversacional do Marcão de forma totalmente amigável.
+    """
+    headers = get_supabase_headers()
+    resultados = []
+    try:
+        async with httpx.AsyncClient(verify=False, timeout=20.0) as client:
+            res = await client.get(
+                f"{SUPABASE_URL}/rest/v1/fichas_alunos?select=id,remote_jid,nome,nome_aluno,telefone,etapa_onboarding,metas_nutricionais,objetivo,consentimento_lgpd",
+                headers=headers
+            )
+            if res.status_code == 200:
+                fichas = res.json()
+                for f in fichas:
+                    etapa = f.get("etapa_onboarding", 0)
+                    tem_peso = bool(f.get("metas_nutricionais", {}).get("peso"))
+                    tem_obj = bool(f.get("objetivo"))
+                    # Se faltar dados fundamentais
+                    if etapa < 4 or not tem_peso or not tem_obj:
+                        r_jid = f.get("remote_jid")
+                        nome = f.get("nome") or f.get("nome_aluno") or "Aluno"
+                        if r_jid:
+                            cob = await cobrar_dados_pendentes_aluno(r_jid, nome)
+                            resultados.append(cob)
+    except Exception as e:
+        print(f"[FICHAS_ENGINE] Erro na checagem de dados pendentes: {e}")
+    return resultados
+

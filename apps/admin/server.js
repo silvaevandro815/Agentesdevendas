@@ -393,15 +393,17 @@ app.get('/api/vip/clientes', async (req, res) => {
         data_compra: c.data_compra ? new Date(c.data_compra).toLocaleDateString('pt-BR') : 'Recente',
         dias_restantes: diasRestantes,
         status_vip: c.status_vip || 'ativo_gratis',
-        streak_dias: c.streak_dias || 1,
-        ultimo_peso: c.ultimo_peso ? `${c.ultimo_peso}kg` : '--',
-        ultima_gordura: c.ultima_gordura_pct ? `${c.ultima_gordura_pct}%` : '--',
+        streak_dias: c.streak_dias || 0,
+        ultimo_peso: c.ultimo_peso ? `${c.ultimo_peso}kg` : 'Pendente',
+        ultima_gordura: c.ultima_gordura_pct ? `${c.ultima_gordura_pct}%` : 'Pendente',
         link_renovacao: c.link_renovacao || 'https://marcaopersonal.com#renovacao-vip',
-        objetivo: 'Balança de Bioimpedância & Definição',
-        local_treino: 'Academia',
-        treino_resumo: '',
-        restricoes: 'Nenhuma',
-        consentimento_lgpd: 'Pendente'
+        objetivo: 'Pendente (Aguardando Anamnese)',
+        local_treino: 'Pendente',
+        treino_resumo: 'Aguardando Anamnese',
+        restricoes: 'Pendente',
+        consentimento_lgpd: 'Pendente (Falta "CONCORDO")',
+        etapa_onboarding: 0,
+        dados_completos: false
       });
     });
 
@@ -414,17 +416,31 @@ app.get('/api/vip/clientes', async (req, res) => {
       const t = f.treino_divisao || f.treino_atual || {};
       if (t.treino_a) tResumo = `A: ${t.treino_a} | B: ${t.treino_b || ''}`;
 
+      const pesoFicha = f.metas_nutricionais?.peso ? `${f.metas_nutricionais.peso}kg` : null;
+
       if (alunosMap.has(key)) {
-        // Enriquecer registro existente da balança
+        // Enriquecer registro existente da balança com dados estritamente reais
         const item = alunosMap.get(key);
         if (f.nome || f.nome_aluno) item.nome = f.nome || f.nome_aluno;
         if (f.objetivo) item.objetivo = f.objetivo;
         if (f.local_treino) item.local_treino = f.local_treino;
         if (tResumo) item.treino_resumo = tResumo;
         if (f.restricoes_saude) item.restricoes = f.restricoes_saude;
+        if (pesoFicha && item.ultimo_peso === 'Pendente') item.ultimo_peso = pesoFicha;
         if (f.consentimento_lgpd) item.consentimento_lgpd = 'Autorizado (LGPD)';
+        item.etapa_onboarding = f.etapa_onboarding ?? 0;
+        item.dados_completos = Boolean(
+          item.ultimo_peso !== 'Pendente' &&
+          item.objetivo !== 'Pendente (Aguardando Anamnese)' &&
+          item.local_treino !== 'Pendente' &&
+          f.consentimento_lgpd
+        );
       } else {
         // Aluno cadastrado via WhatsApp que estava apenas em fichas_alunos
+        const temPeso = Boolean(pesoFicha);
+        const temObj = Boolean(f.objetivo);
+        const temLocal = Boolean(f.local_treino);
+
         alunosMap.set(key, {
           id: f.id,
           origem: 'ficha',
@@ -434,15 +450,17 @@ app.get('/api/vip/clientes', async (req, res) => {
           data_compra: f.created_at ? new Date(f.created_at).toLocaleDateString('pt-BR') : 'Recente',
           dias_restantes: 90,
           status_vip: f.status_acompanhamento === 'ativo' ? 'ativo_gratis' : 'em_onboarding',
-          streak_dias: f.streak_dias || 1,
-          ultimo_peso: f.metas_nutricionais?.peso ? `${f.metas_nutricionais.peso}kg` : '--',
-          ultima_gordura: '--',
+          streak_dias: f.streak_dias || 0,
+          ultimo_peso: pesoFicha || 'Pendente',
+          ultima_gordura: 'Pendente',
           link_renovacao: 'https://marcaopersonal.com#renovacao-vip',
-          objetivo: f.objetivo || 'Acompanhamento VIP Marcão',
-          local_treino: f.local_treino || 'Academia',
-          treino_resumo: tResumo,
-          restricoes: f.restricoes_saude || 'Nenhuma',
-          consentimento_lgpd: f.consentimento_lgpd ? 'Autorizado (LGPD)' : 'Pendente'
+          objetivo: f.objetivo || 'Pendente (Aguardando Anamnese)',
+          local_treino: f.local_treino || 'Pendente',
+          treino_resumo: tResumo || 'Aguardando Anamnese',
+          restricoes: f.restricoes_saude || 'Pendente',
+          consentimento_lgpd: f.consentimento_lgpd ? 'Autorizado (LGPD)' : 'Pendente (Falta "CONCORDO")',
+          etapa_onboarding: f.etapa_onboarding ?? 0,
+          dados_completos: Boolean(temPeso && temObj && temLocal && f.consentimento_lgpd)
         });
       }
     });
@@ -473,6 +491,56 @@ app.post('/api/vip/:id/renovar', async (req, res) => {
     });
     res.json({ success: true, message: 'Assinatura VIP renovada por 30 dias!' });
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 8.1 Endpoint Disparar Cobrança Amigável de Dados pelo Marcão
+app.post('/api/vip/:id/cobrar-dados', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const headers = getSupabaseHeaders();
+    // Busca cliente por id
+    const rC = await fetch(`${SUPABASE_URL}/rest/v1/clientes_balanca?id=eq.${id}`, { headers });
+    const clients = rC.ok ? await rC.json() : [];
+    let tel = clients[0]?.telefone;
+    let nome = clients[0]?.nome_cliente || 'Guerreira';
+
+    if (!tel) {
+      const rF = await fetch(`${SUPABASE_URL}/rest/v1/fichas_alunos?id=eq.${id}`, { headers });
+      const fichas = rF.ok ? await rF.json() : [];
+      tel = fichas[0]?.telefone;
+      if (fichas[0]?.nome) nome = fichas[0].nome;
+    }
+
+    if (!tel) {
+      return res.status(404).json({ error: 'Telefone do aluno não encontrado' });
+    }
+
+    const numLimpo = tel.replace(/\D/g, '');
+    const primeiroNome = nome.trim().split(' ')[0];
+    const msg = `Fala, ${primeiroNome}! Tudo na paz? 🦁 Marcão passando aqui só pra saber se você conseguiu ver minha mensagem de antes.\n\nPra eu montar seu treino personalizado e seus macros sem inventar nada, tudo sob medida pra você, preciso que você me passe quando puder:\n1️⃣ Seu peso atual aproximado (ou foto do visor da balança);\n2️⃣ Sua altura e idade;\n3️⃣ Se você tem alguma dorzinha no joelho, coluna ou ombro.\n\nMe manda aqui no seu tempo! Tamo junto! 💪`;
+
+    const evoUrl = process.env.EVOLUTION_API_URL || 'https://evolution.marcaopersonal.com';
+    const evoKey = process.env.EVOLUTION_API_KEY || '';
+    const evoInst = process.env.EVOLUTION_INSTANCE || 'sofia';
+
+    const respEvo = await fetch(`${evoUrl}/message/sendText/${evoInst}`, {
+      method: 'POST',
+      headers: {
+        'apikey': evoKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        number: numLimpo,
+        text: msg
+      })
+    });
+
+    const evoData = await respEvo.json();
+    res.json({ success: true, message: `Mensagem amigável de cobrança enviada para ${primeiroNome} no WhatsApp!`, evolution: evoData });
+  } catch (err) {
+    console.error('Erro /api/vip/cobrar-dados:', err);
     res.status(500).json({ error: err.message });
   }
 });
