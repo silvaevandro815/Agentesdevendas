@@ -70,6 +70,54 @@ async def buscar_ou_criar_ficha_aluno(remote_jid: str, telefone: str, nome: str)
             "consentimento_lgpd": False
         }
 
+async def sincronizar_com_clientes_balanca(remote_jid: str, dados_atualizacao: dict):
+    """Garante que qualquer aluno de fichas_alunos também esteja sincronizado na tabela clientes_balanca do admin."""
+    headers = get_supabase_headers()
+    try:
+        async with httpx.AsyncClient(verify=False) as client:
+            check_res = await client.get(
+                f"{SUPABASE_URL}/rest/v1/clientes_balanca?remote_jid=eq.{remote_jid}",
+                headers=headers
+            )
+            nome = dados_atualizacao.get("nome") or dados_atualizacao.get("nome_aluno")
+            tel = dados_atualizacao.get("telefone")
+            if not tel:
+                tel = "".join(filter(str.isdigit, remote_jid.split("@")[0]))
+            peso = dados_atualizacao.get("peso")
+
+            if check_res.status_code == 200 and check_res.json():
+                c_id = check_res.json()[0]["id"]
+                patch_data = {"updated_at": datetime.utcnow().isoformat()}
+                if nome: patch_data["nome_cliente"] = nome
+                if peso: patch_data["ultimo_peso"] = float(peso)
+                patch_data["status_vip"] = "ativo_gratis"
+                await client.patch(
+                    f"{SUPABASE_URL}/rest/v1/clientes_balanca?id=eq.{c_id}",
+                    json=patch_data,
+                    headers=headers
+                )
+            else:
+                agora = datetime.utcnow()
+                exp_90d = (agora + timedelta(days=90)).isoformat()
+                novo_balanca = {
+                    "remote_jid": remote_jid,
+                    "telefone": tel,
+                    "nome_cliente": nome or "Aluno VIP",
+                    "data_compra": agora.isoformat(),
+                    "data_expiracao_vip": exp_90d,
+                    "status_vip": "ativo_gratis",
+                    "streak_dias": 1,
+                    "ultimo_peso": float(peso) if peso else None,
+                    "link_renovacao": "https://marcaopersonal.com#renovacao-vip"
+                }
+                await client.post(
+                    f"{SUPABASE_URL}/rest/v1/clientes_balanca",
+                    json=novo_balanca,
+                    headers=headers
+                )
+    except Exception as e:
+        print(f"[FICHAS_ENGINE] Erro sincronizando com clientes_balanca: {e}")
+
 async def atualizar_campo_ficha(remote_jid: str, dados_atualizacao: dict) -> bool:
     headers = get_supabase_headers()
     dados_atualizacao["atualizado_em"] = datetime.utcnow().isoformat()
@@ -80,6 +128,8 @@ async def atualizar_campo_ficha(remote_jid: str, dados_atualizacao: dict) -> boo
                 json=dados_atualizacao,
                 headers=headers
             )
+            # Sincroniza automaticamente com o cadastro da balança para refletir no admin
+            await sincronizar_com_clientes_balanca(remote_jid, dados_atualizacao)
             return res.status_code in (200, 204)
     except Exception as e:
         print(f"[FICHAS_ENGINE] Erro ao atualizar ficha: {e}")
@@ -342,23 +392,42 @@ async def processar_etapa_onboarding(remote_jid: str, telefone: str, nome: str, 
 
     if etapa == 0:
         resposta = (
-            f"Fala, {primeiro_nome}! 🦁 Marcão Personal na área! Parabéns por garantir sua Balança de Bioimpedância oficial!\n\n"
-            f"Tô aqui pra te acompanhar de verdade nesses 3 meses gratuitos direto no seu WhatsApp! Pra eu montar sua rotina de treino personalizada e calcular seus macros na ponta do lápis, me conta:\n\n"
-            f"👉 *Qual é o seu objetivo principal hoje?* Secar a barriga, ganhar massa muscular com força ou definir o corpo todo?"
+            f"Fala, {primeiro_nome}! 🦁 Marcão Personal na área! Parabéns por garantir seu acesso VIP oficial!\n\n"
+            f"Tô aqui pra te acompanhar de verdade no seu WhatsApp! Pra eu abrir sua ficha oficial no nosso sistema e calcular seus macros e TMB com precisão cirúrgica, me conta:\n\n"
+            f"👉 *Qual é o seu objetivo número 1 hoje?* (Secar barriga, ganhar massa muscular, definição corporal ou saúde?)\n"
+            f"👉 E se souber, me passa também sua *altura e peso aproximados*! (Ou foto do visor da sua balança!)"
         )
         await atualizar_campo_ficha(remote_jid, {"etapa_onboarding": 1})
         return {"onboarding_ativo": True, "resposta": resposta}
 
     elif etapa == 1:
-        objetivo_declarado = texto_recebido.strip()
+        txt = texto_recebido.strip()
+        # Tenta extrair peso e altura
+        peso_match = re.search(r'(\d{2,3}(?:[.,]\d+)?)\s*(?:kg|quilos)?', txt.lower())
+        altura_match = re.search(r'(?:1[.,]\d{2}|1\d{2})\s*(?:m|cm)?', txt.lower())
+
+        peso_val = float(peso_match.group(1).replace(',', '.')) if peso_match else None
+        altura_val = None
+        if altura_match:
+            alt_str = altura_match.group(0).replace(',', '.').replace('m', '').replace('cm', '').strip()
+            try:
+                alt_num = float(alt_str)
+                altura_val = alt_num if alt_num > 3.0 else alt_num * 100.0
+            except Exception:
+                pass
+
+        dados_patch = {
+            "objetivo": txt,
+            "etapa_onboarding": 2
+        }
+        if peso_val: dados_patch["ultimo_peso"] = peso_val
+        if altura_val: dados_patch["altura_cm"] = altura_val
+
         resposta = (
             f"Meta traçada, {primeiro_nome}! Vamos buscar esse resultado juntos! 💪\n\n"
-            f"Agora me fala sobre a sua rotina semanal: *Quantos dias por semana você consegue treinar e onde prefere?* (Academia de musculação ou treinos em casa com objetos simples?)"
+            f"Agora me fala sobre a sua rotina semanal: *Quantos dias por semana você consegue treinar e onde prefere?* (Academia de musculação ou treinos em casa com objetos simples tipo cabo de vassoura e cadeira?)"
         )
-        await atualizar_campo_ficha(remote_jid, {
-            "objetivo": objetivo_declarado,
-            "etapa_onboarding": 2
-        })
+        await atualizar_campo_ficha(remote_jid, dados_patch)
         return {"onboarding_ativo": True, "resposta": resposta}
 
     elif etapa == 2:
@@ -367,7 +436,6 @@ async def processar_etapa_onboarding(remote_jid: str, telefone: str, nome: str, 
         dias_match = re.search(r'(\d+)', rotina_declarada)
         dias_num = int(dias_match.group(1)) if dias_match else 3
 
-        # Tenta extrair idade se mencionada (ex: tenho 64 anos)
         idade_match = re.search(r'(\d{1,2})\s*anos', rotina_declarada.lower())
         idade_val = int(idade_match.group(1)) if idade_match else ficha.get("idade")
 
@@ -380,7 +448,7 @@ async def processar_etapa_onboarding(remote_jid: str, telefone: str, nome: str, 
             dados_patch["idade"] = idade_val
 
         resposta = (
-            f"Excelente! {dias_num} dias é um ritmo perfeito pra consolidar constância!\n\n"
+            f"Excelente! {dias_num} dias por semana é um ritmo perfeito pra consolidar constância!\n\n"
             f"Agora uma pergunta fundamental de saúde e segurança: *Qual a sua idade aproximada e você tem alguma dor, lesão no joelho, coluna, ombro ou toma algum remédio contínuo?* (Pode ser 100% sincero que eu adapto tudo pra você!)"
         )
         await atualizar_campo_ficha(remote_jid, dados_patch)
@@ -406,8 +474,6 @@ async def processar_etapa_onboarding(remote_jid: str, telefone: str, nome: str, 
         txt_low = texto_recebido.lower()
         autorizou = any(w in txt_low for w in ["concordo", "ciente", "autorizo", "aceito", "sim", "com certeza", "pode", "ok", "claro", "bora"])
 
-        # REGRA JURÍDICA ESTRITA DO PROJETO:
-        # FICA PROIBIDO ATENDER O CLIENTE COM OS NOSSOS SERVIÇOS SEM ANTES ELE ENVIAR UMA MENSAGEM CIENTE DOS RISCOS E DA LGPD!
         if not autorizou:
             resposta = (
                 f"Opa, {primeiro_nome}! 🦁 Entendo você perfeitamente!\n\n"
@@ -424,14 +490,19 @@ async def processar_etapa_onboarding(remote_jid: str, telefone: str, nome: str, 
         rest = ficha.get("restricoes_saude") or "Nenhuma"
         idade = ficha.get("idade")
         genero = ficha.get("genero", "mulher")
+        peso = ficha.get("ultimo_peso") or 68.0
+        altura = ficha.get("altura_cm") or 165.0
 
         treino = gerar_treino_personalizado(obj, loc, rest, idade=idade, genero=genero)
+        diag = calcular_diagnostico_clinico_completo(peso, altura, idade or 30, genero, obj, rest)
 
         await atualizar_campo_ficha(remote_jid, {
             "consentimento_lgpd": True,
             "data_consentimento_lgpd": datetime.utcnow().isoformat(),
             "termo_lgpd_versao": "v2.0_responsabilidade_ia_lgpd",
             "treino_atual": treino,
+            "diagnostico_clinico": diag,
+            "metas_nutricionais": diag.get("macros", {}),
             "etapa_onboarding": 5,
             "status_acompanhamento": "ativo"
         })

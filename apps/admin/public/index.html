@@ -783,44 +783,71 @@
         const res = await fetch('/api/vip/clientes');
         const list = await res.json();
         if(!list || list.length === 0) {
-          container.innerHTML = '<p style="color:var(--text-muted); font-size:13px;">Nenhum cliente registrado na balança ainda.</p>';
+          container.innerHTML = '<p style="color:var(--text-muted); font-size:13px;">Nenhum aluno registrado no sistema ainda.</p>';
           return;
         }
         container.innerHTML = `
-          <table style="width:100%; border-collapse:collapse; font-size:13px; text-align:left;">
-            <thead>
-              <tr style="border-bottom:1px solid #1f2737; color:var(--text-muted);">
-                <th style="padding:10px;">Aluno</th>
-                <th style="padding:10px;">WhatsApp</th>
-                <th style="padding:10px;">Último Peso</th>
-                <th style="padding:10px;">Gordura</th>
-                <th style="padding:10px;">Streak</th>
-                <th style="padding:10px;">Dias Restantes (VIP)</th>
-                <th style="padding:10px;">Status</th>
-                <th style="padding:10px;">Ação</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${list.map(c => {
-                const badgeColor = c.dias_restantes <= 10 ? 'var(--accent-orange)' : 'var(--accent-green)';
-                const badgeBg = c.dias_restantes <= 10 ? '#3b2a08' : '#0e3818';
-                return `
-                  <tr style="border-bottom:1px solid #151c27;">
-                    <td style="padding:12px 10px; font-weight:600; color:white;">${c.nome}</td>
-                    <td style="padding:12px 10px; color:var(--text-muted);"><a href="https://wa.me/${c.telefone}" target="_blank" style="color:var(--accent-cyan); text-decoration:none;">${c.telefone}</a></td>
-                    <td style="padding:12px 10px;">${c.ultimo_peso}</td>
-                    <td style="padding:12px 10px;">${c.ultima_gordura}</td>
-                    <td style="padding:12px 10px; color:var(--accent-cyan); font-weight:700;">🔥 ${c.streak_dias}d</td>
-                    <td style="padding:12px 10px;"><span style="background:${badgeBg}; color:${badgeColor}; padding:3px 8px; border-radius:4px; font-weight:700;">${c.dias_restantes} dias</span></td>
-                    <td style="padding:12px 10px; text-transform:uppercase; font-size:11px;">${c.status_vip}</td>
-                    <td style="padding:12px 10px;">
-                      <button onclick="renewVIP(${c.id})" class="btn btn-budget" style="padding:4px 10px; font-size:11px;">Renovar R$ 19,90</button>
-                    </td>
-                  </tr>
-                `;
-              }).join('')}
-            </tbody>
-          </table>
+          <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:13px; text-align:left;">
+              <thead>
+                <tr style="border-bottom:1px solid #1f2737; color:var(--text-muted);">
+                  <th style="padding:10px;">Aluno(a)</th>
+                  <th style="padding:10px;">WhatsApp</th>
+                  <th style="padding:10px;">Objetivo & Local</th>
+                  <th style="padding:10px;">Peso / Gordura</th>
+                  <th style="padding:10px;">Streak</th>
+                  <th style="padding:10px;">Dias Restantes</th>
+                  <th style="padding:10px;">Status</th>
+                  <th style="padding:10px;">Ação</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${list.map(c => {
+                  const badgeColor = c.dias_restantes <= 10 ? 'var(--accent-orange)' : 'var(--accent-green)';
+                  const badgeBg = c.dias_restantes <= 10 ? '#3b2a08' : '#0e3818';
+                  const isEva = (c.nome && c.nome.toLowerCase().includes('eva')) || (c.telefone && c.telefone.includes('88273367'));
+                  const vipTag = isEva ? '<span style="background:linear-gradient(135deg, #f59e0b, #ef4444); color:black; font-size:10px; font-weight:800; padding:2px 6px; border-radius:4px; margin-left:6px;">⭐ VIP Nº 1</span>' : '';
+                  
+                  return `
+                    <tr style="border-bottom:1px solid #151c27;">
+                      <td style="padding:12px 10px; font-weight:600; color:white;">
+                        ${c.nome} ${vipTag}
+                        <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">${c.origem === 'balanca' ? '⚖️ Balança Bioimpedância' : '🏋️ Mentoria Marcão'}</div>
+                      </td>
+                      <td style="padding:12px 10px; color:var(--text-muted);">
+                        <a href="https://wa.me/${c.telefone}" target="_blank" style="color:var(--accent-cyan); text-decoration:none; font-weight:600;">
+                          ${c.telefone} ↗
+                        </a>
+                      </td>
+                      <td style="padding:12px 10px; max-width:220px;">
+                        <div style="font-weight:600; color:#e2e8f0; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${c.objetivo || ''}">${c.objetivo || 'Secar e Definir'}</div>
+                        <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">📍 ${c.local_treino || 'Academia'} ${c.treino_resumo ? '• ' + c.treino_resumo.substring(0, 30) + '...' : ''}</div>
+                      </td>
+                      <td style="padding:12px 10px; font-weight:600;">
+                        ${c.ultimo_peso} <span style="font-size:11px; color:var(--text-muted);">${c.ultima_gordura !== '--' ? '| ' + c.ultima_gordura : ''}</span>
+                      </td>
+                      <td style="padding:12px 10px; color:var(--accent-cyan); font-weight:700;">🔥 ${c.streak_dias}d</td>
+                      <td style="padding:12px 10px;">
+                        <span style="background:${badgeBg}; color:${badgeColor}; padding:3px 8px; border-radius:4px; font-weight:700; font-size:11px;">
+                          ${c.dias_restantes} dias
+                        </span>
+                      </td>
+                      <td style="padding:12px 10px;">
+                        <span style="background:#131c2e; border:1px solid #1e293b; color:#94a3b8; font-size:10px; text-transform:uppercase; padding:3px 6px; border-radius:4px; font-weight:600;">
+                          ${c.status_vip}
+                        </span>
+                      </td>
+                      <td style="padding:12px 10px;">
+                        <button onclick="renewVIP(${c.id})" class="btn btn-budget" style="padding:4px 10px; font-size:11px; white-space:nowrap;">
+                          Renovar R$ 19,90
+                        </button>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
         `;
       } catch(e) {
         container.innerHTML = '<p style="color:var(--danger-red);">Erro ao consultar alunos VIP.</p>';

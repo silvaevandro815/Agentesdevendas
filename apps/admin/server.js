@@ -360,36 +360,97 @@ app.get('/api/cfo/overview', async (req, res) => {
   }
 });
 
-// 7. Endpoint Lista de Clientes VIP da Balança (3 meses grátis -> R$ 19,90/mês)
+// 7. Endpoint Lista Unificada de Alunos e Clientes VIP (Balança & Mentoria)
 app.get('/api/vip/clientes', async (req, res) => {
   try {
     const headers = getSupabaseHeaders();
-    const resp = await fetch(`${SUPABASE_URL}/rest/v1/clientes_balanca?order=created_at.desc&limit=50`, { headers });
-    if (!resp.ok) return res.status(resp.status).json({ error: await resp.text() });
-    const clients = await resp.json();
+    
+    // Consulta paralela a clientes_balanca e fichas_alunos
+    const [rClients, rFichas] = await Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/clientes_balanca?order=created_at.desc&limit=100`, { headers }).then(r => r.ok ? r.json() : []),
+      fetch(`${SUPABASE_URL}/rest/v1/fichas_alunos?order=created_at.desc&limit=100`, { headers }).then(r => r.ok ? r.json() : [])
+    ]);
 
     const agora = new Date();
-    const formatted = clients.map(c => {
+    const alunosMap = new Map();
+
+    // 1. Processar clientes_balanca
+    rClients.forEach(c => {
       let diasRestantes = 90;
       if (c.data_expiracao_vip) {
         const dtFim = new Date(c.data_expiracao_vip);
         diasRestantes = Math.max(0, Math.ceil((dtFim - agora) / (1000 * 60 * 60 * 24)));
       }
-      return {
+      const telDig = (c.telefone || '').replace(/\D/g, '');
+      const key = telDig || c.remote_jid || String(c.id);
+
+      alunosMap.set(key, {
         id: c.id,
+        origem: 'balanca',
         nome: c.nome_cliente || 'Aluno(a)',
         telefone: c.telefone,
+        remote_jid: c.remote_jid,
         data_compra: c.data_compra ? new Date(c.data_compra).toLocaleDateString('pt-BR') : 'Recente',
         dias_restantes: diasRestantes,
         status_vip: c.status_vip || 'ativo_gratis',
         streak_dias: c.streak_dias || 1,
         ultimo_peso: c.ultimo_peso ? `${c.ultimo_peso}kg` : '--',
         ultima_gordura: c.ultima_gordura_pct ? `${c.ultima_gordura_pct}%` : '--',
-        link_renovacao: c.link_renovacao || 'https://marcaopersonal.com#renovacao-vip'
-      };
+        link_renovacao: c.link_renovacao || 'https://marcaopersonal.com#renovacao-vip',
+        objetivo: 'Balança de Bioimpedância & Definição',
+        local_treino: 'Academia',
+        treino_resumo: '',
+        restricoes: 'Nenhuma',
+        consentimento_lgpd: 'Pendente'
+      });
     });
+
+    // 2. Unificar com fichas_alunos
+    rFichas.forEach(f => {
+      const telDig = (f.telefone || '').replace(/\D/g, '');
+      const key = telDig || f.remote_jid || String(f.id);
+
+      let tResumo = '';
+      const t = f.treino_divisao || f.treino_atual || {};
+      if (t.treino_a) tResumo = `A: ${t.treino_a} | B: ${t.treino_b || ''}`;
+
+      if (alunosMap.has(key)) {
+        // Enriquecer registro existente da balança
+        const item = alunosMap.get(key);
+        if (f.nome || f.nome_aluno) item.nome = f.nome || f.nome_aluno;
+        if (f.objetivo) item.objetivo = f.objetivo;
+        if (f.local_treino) item.local_treino = f.local_treino;
+        if (tResumo) item.treino_resumo = tResumo;
+        if (f.restricoes_saude) item.restricoes = f.restricoes_saude;
+        if (f.consentimento_lgpd) item.consentimento_lgpd = 'Autorizado (LGPD)';
+      } else {
+        // Aluno cadastrado via WhatsApp que estava apenas em fichas_alunos
+        alunosMap.set(key, {
+          id: f.id,
+          origem: 'ficha',
+          nome: f.nome || f.nome_aluno || 'Aluno(a) VIP',
+          telefone: f.telefone,
+          remote_jid: f.remote_jid,
+          data_compra: f.created_at ? new Date(f.created_at).toLocaleDateString('pt-BR') : 'Recente',
+          dias_restantes: 90,
+          status_vip: f.status_acompanhamento === 'ativo' ? 'ativo_gratis' : 'em_onboarding',
+          streak_dias: f.streak_dias || 1,
+          ultimo_peso: f.metas_nutricionais?.peso ? `${f.metas_nutricionais.peso}kg` : '--',
+          ultima_gordura: '--',
+          link_renovacao: 'https://marcaopersonal.com#renovacao-vip',
+          objetivo: f.objetivo || 'Acompanhamento VIP Marcão',
+          local_treino: f.local_treino || 'Academia',
+          treino_resumo: tResumo,
+          restricoes: f.restricoes_saude || 'Nenhuma',
+          consentimento_lgpd: f.consentimento_lgpd ? 'Autorizado (LGPD)' : 'Pendente'
+        });
+      }
+    });
+
+    const formatted = Array.from(alunosMap.values());
     res.json(formatted);
   } catch (err) {
+    console.error('Erro /api/vip/clientes:', err);
     res.status(500).json({ error: err.message });
   }
 });
