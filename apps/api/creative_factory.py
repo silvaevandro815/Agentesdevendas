@@ -59,10 +59,152 @@ def desenhar_seta_minimalista(draw, x, y, cor, tamanho=14):
     draw.line([(x + tamanho - 5, y + 5), (x + tamanho, y)], fill=cor, width=3)
 
 
+def obter_tendencias_google_trends(termo="fitness"):
+    """Consulta sugestões em tempo real do Google Trends / Google Suggest Brasil."""
+    url = f"https://suggestqueries.google.com/complete/search?client=chrome&q={termo}&gl=br&hl=pt-BR"
+    try:
+        with httpx.Client(verify=False, timeout=8) as client:
+            resp = client.get(url)
+            if resp.status_code == 200:
+                data = json.loads(resp.content.decode("latin-1"))
+                return data[1][:6] if len(data) > 1 else []
+    except Exception:
+        pass
+    return []
+
+
 # -------------------------------------------------------------------------
 # 1. BÚSSOLA DE TEMAS E TENDÊNCIAS FITNESS BRASIL (GOOGLE TRENDS)
 # -------------------------------------------------------------------------
 TEMAS_CURIOSIDADES = [
+    {
+        "id": "dor_muscular_remedio",
+        "categoria": "CIÊNCIA & RECUPERAÇÃO",
+        "tema": "Dor Muscular Pós-Treino: Posso Tomar Anti-inflamatório?",
+        "headline": "TOMAR REMÉDIO PÓS-TREINO TRAVA A HIPERTROFIA?",
+        "subheadline": "O erro de farmácia que joga semanas de treino no ralo",
+        "pontos_card": [
+            "Anti-inflamatórios comuns bloqueiam as enzimas e matam o ganho muscular.",
+            "A inflamação do treino é exatamente o gatilho biológico para o músculo crescer.",
+            "Solução correta: hidratação profunda com creatina pura e recuperação ativa."
+        ],
+        "slides_carrossel": [
+            {
+                "titulo": "TOMOU ANTI-INFLAMATÓRIO?\nSEU TREINO FOI PARA O LIXO!",
+                "sub": "A bioquímica da dor muscular tardia explicada pelo Marcão:",
+                "pontos": [
+                    "A dor de 24h a 48h após o treino chama-se Dor Tardia (DMIT).",
+                    "Ela ocorre por microfissuras benéficas que o corpo precisa regenerar.",
+                    "Remédios comuns (ibuprofeno, diclofenaco) desligam os sinais de reparação.",
+                    "Você alivia a dor passageira, mas joga seu ganho de massa no ralo!"
+                ],
+                "cta": "ARRASTE E ENTENDA O MECANISMO BIOLÓGICO ››"
+            },
+            {
+                "titulo": "O QUE ACONTECE NA FIBRA\nQUANDO VOCÊ TOMA REMÉDIO?",
+                "sub": "Bloqueio hormonal comprovado pela fisiologia:",
+                "pontos": [
+                    "A enzima COX-2 é paralisada: zero síntese de novas fibras musculares.",
+                    "As células satélites não se fundem: seu músculo não engrossa.",
+                    "O estômago e os rins sofrem sobrecarga química desnecessária.",
+                    "A inflamação fisiológica controlada é sua MAIOR aliada para crescer."
+                ],
+                "cta": "COMO ALIVIAR SEM PREJUDICAR? VEJA A SEGUIR ››"
+            },
+            {
+                "titulo": "PADRÃO OURO MARCÃO PERSONAL\nRECUPERAÇÃO SEM REMÉDIOS",
+                "sub": "Padrão de regeneração celular com creatina pura:",
+                "pontos": [
+                    "Creatina Micronizada 100% Pura: hidratação das fibras e força renovada.",
+                    "Banho morno, sono profundo de 7-8h e hidratação com eletrólitos.",
+                    "Cardio leve regenerativo para oxigenar e acelerar a circulação.",
+                    "Apenas R$ 169,90 no pote de 300g (100 doses oficiais)."
+                ],
+                "cta": "LINK NA BIO: marcaopersonal.com • COMENTE QUERO ››"
+            }
+        ],
+        "legenda": (
+            "🔥 Sentiu aquela dor muscular insuportável no dia seguinte e correu para tomar um remédio? CUIDADO: você pode estar destruindo seus resultados!\n\n"
+            "Um dos tópicos mais buscados no Google Trends Brasil desmascarado pela ciência:\n\n"
+            "Quando você treina pesado, ocorrem micro-lesões normais nas fibras musculares. Essa inflamação fisiológica é exatamente o sinal biológico que avisa ao seu corpo: 'precisamos construir um músculo maior e mais forte'.\n\n"
+            "Ao tomar anti-inflamatórios comuns (como Ibuprofeno ou Diclofenaco), você desliga a via das prostaglandinas e paralisa a síntese proteica. Ou seja: a dor alivia na hora, mas seu ganho de massa muscular é travado!\n\n"
+            "💡 O que fazer de verdade para acelerar a recuperação sem estragar o treino:\n"
+            "1. Hidratar as fibras de dentro para fora com Creatina Micronizada pura.\n"
+            "2. Ingerir água abundante e priorizar o sono profundo (onde o GH é liberado).\n"
+            "3. Fazer cardio leve regenerativo (caminhada/bike) para circular oxigênio.\n\n"
+            "💬 Você já cometeu o erro de tomar remédio após um treino pesado? Me conta aqui nos comentários!\n\n"
+            "👉 Para garantir a Creatina Micronizada 100% Pura Nature's Prime por R$ 169,90, acesse o LINK NA BIO em marcaopersonal.com ou comente \"QUERO\" aqui embaixo que eu te envio! 📲\n\n"
+            "#marcao #dormuscular #hipertrofia #recuperacaomuscular #creatina #treinopesado #biohacking #fitness"
+        ),
+        "prompt_ia": (
+            "Inspiring 8k photography of fit athlete Evandro performing intense dumbbell curls with determination and grit, "
+            "modern gym setting with dynamic rim lighting, sweat glistens on toned arms, photorealistic"
+        )
+    },
+    {
+        "id": "perder_barriga_pochete",
+        "categoria": "EMAGRECIMENTO DEFINITIVO",
+        "tema": "Como Perder a Barriga Pochete sem Ficar Flácido",
+        "headline": "O SEGREDO PARA SECAR A POCHETE SEM FLACIDEZ",
+        "subheadline": "Por que fazer 500 abdominais por dia nunca vai secar sua barriga",
+        "pontos_card": [
+            "Não existe queima de gordura localizada: o abdômen seca no déficit calórico.",
+            "Aeróbio excessivo sem treino de força queima músculo e deixa o corpo flácido.",
+            "Manter massa magra e tônus muscular mantém seu metabolismo acelerado 24h."
+        ],
+        "slides_carrossel": [
+            {
+                "titulo": "POR QUE FAZER ABDOMINAL\nNÃO SECA A BARRIGA POCHETE?",
+                "sub": "O mito do emagrecimento localizado desvendado:",
+                "pontos": [
+                    "O abdômen é um músculo como outro qualquer, não um queimador de gordura.",
+                    "Fazer 500 abdominais só fortalece a parede interna sob a gordura.",
+                    "A gordura subcutânea só é metabolizada com balanço calórico negativo.",
+                    "Passar fome em dietas líquidas destrói o metabolismo basal."
+                ],
+                "cta": "ARRASTE E VEJA COMO ATIVAR A QUEIMA REAL ››"
+            },
+            {
+                "titulo": "A TRÍADE DE OURO PARA SECAR\nMANTENDO A PELE COLADA",
+                "sub": "Estratégia de elite para perder gordura sem flacidez:",
+                "pontos": [
+                    "Musculação focada em grandes grupos para exigir alto gasto energético.",
+                    "Cardio moderado diário (calçadão, corrida ou bike ao ar livre).",
+                    "Aporte proteico e creatina pura para blindar as fibras contra o catabolismo.",
+                    "Colágeno e hidratação profunda para colar a pele no músculo."
+                ],
+                "cta": "CONHEÇA O PROTOCOLO COMPLETO A SEGUIR ››"
+            },
+            {
+                "titulo": "PROTOCOLO DEFINIÇÃO TOTAL\nMARCÃO PERSONAL & EVANDRO",
+                "sub": "Resultados reais com suporte científico comprovado:",
+                "pontos": [
+                    "Treinos rápidos e metabólicos de 40 minutos para o seu dia a dia.",
+                    "Suplementação limpa sem açúcar, sem retenção e com laudo oficial.",
+                    "Acompanhamento personalizado para destravar seu shape.",
+                    "Acesse agora os protocolos completos no site oficial."
+                ],
+                "cta": "LINK NA BIO: marcaopersonal.com • COMENTE QUERO ››"
+            }
+        ],
+        "legenda": (
+            "🔥 Cansou de fazer 500 abdominais e ver a barriga pochete continuar lá?\n\n"
+            "A verdade sobre emagrecimento e queima de gordura no abdômen explicada pelo Marcão:\n\n"
+            "Não existe queima de gordura localizada! Fazer abdominal fortalece o músculo por baixo da camada adiposa, mas não queima a capa de gordura que fica por cima.\n\n"
+            "Pior ainda: quem faz horas de cardio em jejum e passa fome acaba perdendo massa muscular em vez de gordura, ficando com o aspecto flácido e metabolismo travado.\n\n"
+            "Para secar a pochete e ficar com a pele firme:\n"
+            "1. Treino de força para acelerar o gasto calórico até em repouso.\n"
+            "2. Cardio moderado constante (corrida no calçadão, caminhada rápida).\n"
+            "3. Suplementação inteligente com Creatina e Colágeno para preservar o tônus.\n\n"
+            "💬 Qual é a sua maior dificuldade para secar a região abdominal? Comenta aqui embaixo!\n\n"
+            "👉 Conheça nossos protocolos oficiais tocando no LINK DA BIO em marcaopersonal.com ou comente \"QUERO\" aqui embaixo! 📲\n\n"
+            "#marcao #perderbarriga #emagrecer #treinoaoarlivre #corrida #definicaomuscular #saude #pochete"
+        ),
+        "prompt_ia": (
+            "Dynamic 8k sports photography of athletic runner Evandro jogging on a vibrant beach boardwalk at sunrise, "
+            "athletic posture, energetic morning golden light, palm trees and ocean in background, photorealistic"
+        )
+    },
     {
         "id": "creatina_mito",
         "categoria": "CIÊNCIA & PERFORMANCE",
@@ -499,6 +641,63 @@ def obter_fotos_referencia_evandro():
                         caminhos.append(full)
     return sorted(caminhos)
 
+CENARIOS_ATLETICOS_EVANDRO = [
+    {
+        "id": "musculacao_pesada",
+        "keywords": ["creatina", "força", "músculo", "hipertrofia", "treino", "dor", "braço", "peito", "ombro", "carga"],
+        "prompt": (
+            "Cinematic 8k sports action photography of athletic muscular athlete Evandro intensely training in a luxury high-tech gym. "
+            "He is performing seated heavy dumbbell shoulder presses with intense focus and grit, toned vascular arms and pumped shoulders, "
+            "sweat glistening on skin, wearing a sleek black compression dry-fit shirt. "
+            "Dramatic warm rim lighting, blurred modern gym equipment and weight plates in the background, 85mm lens, f/1.8, high-end fitness magazine cover quality, photorealistic."
+        )
+    },
+    {
+        "id": "corrida_calcadao",
+        "keywords": ["emagrecimento", "perder barriga", "cardio", "corrida", "jejum", "pochete", "gordura", "secar", "aerobico"],
+        "prompt": (
+            "Dynamic 8k sports action shot of athletic handsome runner Evandro running at full energetic pace along a coastal tropical beach boardwalk at golden hour sunrise. "
+            "Athletic running attire, dark technical breathable running tank top, athletic shorts, modern smartwatch on wrist. "
+            "Golden sunlight illuminating ocean waves and palm trees in the background, motion blur in the background, sharp athletic focus on his face, determined smile, photorealistic commercial photography."
+        )
+    },
+    {
+        "id": "natacao_treino",
+        "keywords": ["fôlego", "respiração", "água", "resistência", "articulação", "colágeno", "piscina", "natação"],
+        "prompt": (
+            "Cinematic 8k photography of athletic swimmer Evandro emerging powerfully from crystal-clear turquoise water in an Olympic training pool. "
+            "Water droplets splashing off athletic defined chest and shoulders, intense focused gaze, glistening skin, modern competition goggles resting on his forehead. "
+            "Bright sun rays refracting through blue water reflections, high-end sports magazine cover quality, photorealistic."
+        )
+    },
+    {
+        "id": "treino_funcional_natureza",
+        "keywords": ["calistenia", "mobilidade", "postura", "ar livre", "alongamento", "energia", "parque", "natureza"],
+        "prompt": (
+            "Inspiring 8k photography of fit athlete Evandro performing functional bodyweight training on a scenic wooden platform overlooking lush green mountains. "
+            "Wearing modern compression tights and olive green athletic t-shirt, catching his breath with a proud satisfied expression, holding a fitness water bottle. "
+            "Crisp morning mountain mist, soft natural morning sunlight, depth of field, National Geographic / Nike aesthetic."
+        )
+    },
+    {
+        "id": "ciclismo_estrada",
+        "keywords": ["ciclismo", "pedal", "pernas", "velocidade", "endurance", "bicicleta", "bike"],
+        "prompt": (
+            "Action sports photography of handsome fit cyclist Evandro on a high-end matte black road bicycle along a scenic winding coastal road. "
+            "Aerodynamic sleek dark cycling jersey, sports sunglasses pushed up, confident athletic posture, ocean cliffs in the background, cinematic daylight, 8k resolution, crisp detail."
+        )
+    },
+    {
+        "id": "recuperacao_biohacking",
+        "keywords": ["bioimpedância", "balança", "sono", "cortisol", "recuperação", "suplemento", "metabolismo"],
+        "prompt": (
+            "Modern aesthetic 8k photograph of health innovator Evandro sitting comfortably on a wooden bench in a luxury biohacking recovery lounge. "
+            "Wearing a minimalist black athletic crewneck, smiling charismatically while drinking a shaker of pure supplements, smartwatch measuring heart rate, "
+            "warm ambient wooden aesthetics, soft architectural lighting, photorealistic."
+        )
+    }
+]
+
 def montar_prompt_por_estilo(estilo: str, item: dict, eh_venda: bool = False) -> tuple:
     """
     Constrói prompt e seleciona imagem de referência com base na matriz dos 5 estilos:
@@ -513,20 +712,29 @@ def montar_prompt_por_estilo(estilo: str, item: dict, eh_venda: bool = False) ->
     if estilo == "evandro":
         if fotos_evandro:
             ref_path = fotos_evandro[0]
-            instrucao_face = "Using the exact facial structure, hair and facial identity from the reference image, "
+            instrucao_face = (
+                "CRITICAL INSTRUCTION: Replicate the exact facial structure, facial features, hair, eyes and identity "
+                "of the person shown in this reference photo. Render this exact person in the following dynamic athletic sports scene: "
+            )
         else:
-            instrucao_face = "Cinematic 8k photograph of charismatic executive and health founder Evandro Gallina, sharp athletic look, "
+            instrucao_face = (
+                "Cinematic 8k action photography of athletic health founder Evandro Gallina in the following dynamic sports scene: "
+            )
 
-        if eh_venda:
-            prompt = (
-                f"{instrucao_face}confident and visionary in a modern elite biohacking wellness clinic. "
-                f"Wearing a stylish dark fitted polo, confident natural expression, warm studio lighting, 85mm lens portrait, hyper-realistic, photorealistic."
-            )
-        else:
-            prompt = (
-                f"{instrucao_face}speaking with authority about modern fitness science in a high-tech gym facility. "
-                f"Natural engaging gesture, cinematic depth of field, 8k commercial photography standard, realistic skin texture."
-            )
+        # Seleciona o melhor cenário esportivo alinhado com o tema ou faz rotação dinâmica
+        texto_busca = (nome_item + " " + categoria + " " + str(item.get("pontos", "")) + " " + str(item.get("headline", ""))).lower()
+        cenario_escolhido = None
+        for c in CENARIOS_ATLETICOS_EVANDRO:
+            if any(kw in texto_busca for kw in c["keywords"]):
+                cenario_escolhido = c
+                break
+
+        if not cenario_escolhido:
+            # Rotação inteligente baseada em dia e hora para máxima variedade diária
+            idx_rot = (datetime.now().day + datetime.now().hour) % len(CENARIOS_ATLETICOS_EVANDRO)
+            cenario_escolhido = CENARIOS_ATLETICOS_EVANDRO[idx_rot]
+
+        prompt = f"{instrucao_face}{cenario_escolhido['prompt']}"
 
     elif estilo == "marcao":
         if eh_venda:
@@ -1195,107 +1403,98 @@ def criar_card_unico(headline, subheadline, pontos, categoria, cta_texto, out_pa
 def criar_story(headline, subheadline, pontos, categoria, cta_texto, out_path, bg_path=None, produto_img_path=None, preco=None, nome_autor="EVANDRO GALLINA"):
     """
     Gera imagem de Story vertical (1080x1920 - 9:16) no padrão editorial @caiqueness.
-    Enquadra a foto de rosto de Evandro (ou cenário) no topo e o card editorial na base.
+    Enquadra a foto de Evandro em ação esportiva no topo (65%) e o card editorial na base.
     """
-    f_hero, f_tag, _, f_sub, f_body, _, f_btn = obter_fontes_editoriais(tamanho_hero=92, tamanho_sub=26, tamanho_body=24)
+    f_hero, f_tag, _, f_sub, f_body, _, f_btn = obter_fontes_editoriais(tamanho_hero=84, tamanho_sub=25, tamanho_body=23)
 
-    story = Image.new("RGBA", (1080, 1920), COR_BG_DEEP)
+    W, H = 1080, 1920
+    story = Image.new("RGBA", (W, H), COR_BG_DEEP)
 
-    # 1. Base da Imagem (Escala mantendo proporção de largura para cobrir topo)
+    # 1. Base da Imagem - Escala para cobrir topo com largura total sem barras pretas
     if bg_path and os.path.exists(bg_path):
         try:
             bg_img = Image.open(bg_path).convert("RGBA")
-            w_new = 1200
-            h_new = int(bg_img.height * (w_new / bg_img.width))
-            bg_img = bg_img.resize((w_new, h_new), Image.Resampling.LANCZOS)
-            story.paste(bg_img, (-60, 0))
+            target_w = 1080
+            target_h = int(bg_img.height * (target_w / bg_img.width))
+            bg_scaled = bg_img.resize((target_w, target_h), Image.Resampling.LANCZOS)
+            story.paste(bg_scaled, (0, 0))
         except Exception:
             pass
 
-    # 2. Gradientes de transição e vinheta
-    draw_grad = ImageDraw.Draw(story)
-    for y in range(0, 190):
-        a = int(170 * (1 - y / 190))
-        draw_grad.line([(0, y), (1080, y)], fill=(7, 10, 16, a))
+    # 2. Gradiente suave e contínuo de transição da foto para o card (y=700 a y=1200)
+    grad = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d_grad = ImageDraw.Draw(grad)
+    for y in range(700, 1200):
+        alpha = int(255 * ((y - 700) / 500))
+        d_grad.line([(0, y), (W, y)], fill=(8, 12, 20, alpha))
+    for y in range(1200, H):
+        d_grad.line([(0, y), (W, y)], fill=(8, 12, 20, 255))
 
-    for y in range(820, 1360):
-        a = min(255, int(255 * ((y - 820) / 540)))
-        draw_grad.line([(0, y), (1080, y)], fill=(7, 10, 16, a))
+    story = Image.alpha_composite(story, grad)
+    draw = ImageDraw.Draw(story)
 
-    # Se houver mockup do produto, compõe pequeno selo flutuante à direita
+    # 3. Top Tag Translúcida com Badge do Google Trends / Autor
+    top_badge = f"GOOGLE TRENDS BRASIL  •  {categoria.upper()}" if categoria else f"{nome_autor.upper()}  •  MARCÃO PERSONAL"
+    bbox_t = draw.textbbox((0, 0), top_badge, font=f_tag)
+    tw = bbox_t[2] - bbox_t[0]
+    tx = (W - tw) // 2
+    draw.rounded_rectangle([tx - 24, 70, tx + tw + 24, 116], radius=22, fill=(10, 15, 26, 215), outline=COR_AMBER, width=2)
+    draw.text((tx, 82), top_badge, fill=COR_AMBER_LIGHT, font=f_tag)
+
+    # 4. Container Editorial Dark Glassmorphic na Base (y=1120 a 1855)
+    draw.rounded_rectangle([45, 1120, 1035, 1855], radius=28, fill=(12, 18, 30, 240), outline=COR_AMBER, width=2)
+
+    # Headline em Bebas Neue com sombra de alto relevo
+    head_limpo = sanitizar_texto_pillow(headline).upper()
+    linhas_head = quebrar_linhas_por_palavras(head_limpo, f_hero, 910, draw)
+    if not linhas_head:
+        linhas_head = [head_limpo]
+
+    y_t = 1155
+    for linha in linhas_head[:2]:
+        for ox, oy in [(-2, -2), (2, -2), (0, 3)]:
+            draw.text((80 + ox, y_t + oy), linha, fill=(0, 0, 0, 235), font=f_hero)
+        draw.text((80, y_t), linha, fill=COR_WHITE, font=f_hero)
+        y_t += 84
+
+    sub_limpo = sanitizar_texto_pillow(subheadline)
+    if sub_limpo:
+        draw.text((80, y_t + 5), sub_limpo, fill=COR_AMBER_LIGHT, font=f_sub)
+        y_t += 48
+
+    # 5. Micro-Cards Estilizados para os Bullets (sem vazios)
+    y_pos = y_t + 10
+    for p in (pontos or [])[:3]:
+        p_limpo = sanitizar_texto_pillow(p)
+        draw.rounded_rectangle([75, y_pos, 1005, y_pos + 62], radius=14, fill=(18, 26, 42, 220), outline=(35, 48, 70), width=1)
+        draw.ellipse([95, y_pos + 22, 113, y_pos + 40], fill=COR_CYAN)
+        linhas_p = quebrar_linhas_por_palavras(p_limpo, f_body, 850, draw)
+        if linhas_p:
+            draw.text((128, y_pos + 17), linhas_p[0], fill=COR_WHITE, font=f_body)
+        y_pos += 72
+
+    # Se houver mockup de produto, adiciona com sombra realista
     if produto_img_path and os.path.exists(produto_img_path):
         try:
             p_img = Image.open(produto_img_path)
             if p_img.mode != "RGBA":
                 p_img = p_img.convert("RGBA")
-                mask = Image.new("L", p_img.size, 0)
-                draw_m = ImageDraw.Draw(mask)
-                draw_m.rounded_rectangle([0, 0, p_img.width, p_img.height], radius=20, fill=255)
-                p_img.putalpha(mask)
-            p_img.thumbnail((260, 260), Image.Resampling.LANCZOS)
-
-            sombra = Image.new("RGBA", (p_img.width + 60, 50), (0, 0, 0, 0))
-            draw_sombra = ImageDraw.Draw(sombra)
-            draw_sombra.ellipse([15, 10, p_img.width + 45, 40], fill=(0, 0, 0, 160))
-            sombra = sombra.filter(ImageFilter.GaussianBlur(radius=12))
-
-            pos_x = 760
-            pos_y = 960
-            story.paste(sombra, (pos_x - 30, pos_y + p_img.height - 25), sombra)
+            p_img.thumbnail((210, 210), Image.Resampling.LANCZOS)
+            pos_x, pos_y = 800, 940
             story.paste(p_img, (pos_x, pos_y), p_img)
         except Exception:
             pass
 
-    draw = ImageDraw.Draw(story)
-
-    # 3. Tag Topo (Evandro Gallina ou Marcão)
-    tag_text = f"{nome_autor.upper()}  •  MARCÃO PERSONAL"
-    bbox_t = draw.textbbox((0, 0), tag_text, font=f_tag)
-    tw = bbox_t[2] - bbox_t[0]
-    tx = (1080 - tw) // 2
-    draw.rounded_rectangle([tx - 24, 60, tx + tw + 24, 108], radius=22, fill=(12, 18, 30, 225), outline=COR_AMBER, width=2)
-    draw.text((tx, 73), tag_text, fill=COR_AMBER_LIGHT, font=f_tag)
-
-    # 4. Card Principal no Story
-    draw.rounded_rectangle([50, 1140, 1030, 1850], radius=26, fill=(10, 15, 25, 245), outline=COR_AMBER, width=2)
-
-    head_limpo = sanitizar_texto_pillow(headline).upper()
-    linhas_head = quebrar_linhas_por_palavras(head_limpo, f_hero, 920, draw)
-    if not linhas_head:
-        linhas_head = [head_limpo]
-
-    y_t = 1175
-    for linha in linhas_head[:2]:
-        for ox, oy in [(-2, -2), (2, -2), (0, 3)]:
-            draw.text((80 + ox, y_t + oy), linha, fill=(0, 0, 0, 220), font=f_hero)
-        draw.text((80, y_t), linha, fill=COR_WHITE, font=f_hero)
-        y_t += 90
-
-    sub_limpo = sanitizar_texto_pillow(subheadline)
-    if sub_limpo:
-        y_t += 8
-        draw.text((80, y_t), sub_limpo, fill=COR_AMBER_LIGHT, font=f_sub)
-        y_t += 48
-
-    y_pos = y_t + 12
-    for p in (pontos or [])[:3]:
-        p_limpo = sanitizar_texto_pillow(p)
-        draw.ellipse([85, y_pos + 8, 103, y_pos + 26], fill=COR_CYAN)
-        linhas_p = quebrar_linhas_por_palavras(p_limpo, f_body, 880, draw)
-        if linhas_p:
-            draw.text((120, y_pos), linhas_p[0], fill=COR_CREAM, font=f_body)
-        y_pos += 62
-
-    # Botão de Ação / Link do Story
-    btn_y = 1690
-    draw.rounded_rectangle([80, btn_y, 1000, btn_y + 110], radius=22, fill=COR_AMBER, outline=COR_WHITE, width=2)
+    # 6. Botão / Link Sticker de Alta Conversão no Instagram
+    btn_y = 1715
+    draw.rounded_rectangle([75, btn_y, 1005, btn_y + 105], radius=24, fill=(234, 88, 12), outline=COR_WHITE, width=2)
     cta_limpo = sanitizar_texto_pillow(cta_texto).replace("››", "").replace(">", "").strip()
     if not cta_limpo or "ARRASTA" in cta_limpo.upper():
-        cta_limpo = "ACESSAR AGORA"
+        cta_limpo = "TOQUE PARA ACESSAR"
     btn_str = f"{cta_limpo}  •  marcaopersonal.com  >"
     bbox_btn = draw.textbbox((0, 0), btn_str, font=f_btn)
     btn_w = bbox_btn[2] - bbox_btn[0]
-    btn_x = (1080 - btn_w) // 2
+    btn_x = (W - btn_w) // 2
     draw.text((btn_x, btn_y + 36), btn_str, fill=COR_WHITE, font=f_btn)
 
     story.convert("RGB").save(out_path, quality=96)
