@@ -545,6 +545,161 @@ app.post('/api/vip/:id/cobrar-dados', async (req, res) => {
   }
 });
 
+// 8.2 Endpoint Salvar Anamnese Real do Aluno (VIP & Balança)
+app.post('/api/vip/salvar-anamnese', async (req, res) => {
+  try {
+    const {
+      telefone,
+      remote_jid,
+      nome,
+      peso,
+      altura_cm,
+      idade,
+      local_treino,
+      objetivo,
+      restricoes,
+      consentimento_lgpd
+    } = req.body;
+
+    if (!telefone && !remote_jid) {
+      return res.status(400).json({ error: 'Telefone ou remote_jid obrigatório' });
+    }
+
+    const headers = getSupabaseHeaders();
+    const telLimpo = telefone ? String(telefone).replace(/\D/g, '') : '';
+    const rJid = remote_jid || (telLimpo ? `${telLimpo}@s.whatsapp.net` : '');
+    const agoraIso = new Date().toISOString();
+
+    // 1. Atualizar ou Criar em clientes_balanca
+    const patchBalanca = { updated_at: agoraIso };
+    if (peso && !isNaN(Number(peso))) patchBalanca.ultimo_peso = Number(peso);
+    if (nome) patchBalanca.nome_cliente = nome;
+
+    let resBalanca = await fetch(`${SUPABASE_URL}/rest/v1/clientes_balanca?remote_jid=eq.${rJid}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify(patchBalanca)
+    });
+
+    if (resBalanca.status === 404 || (await resBalanca.text()).includes('[]')) {
+      // Tenta por telefone
+      await fetch(`${SUPABASE_URL}/rest/v1/clientes_balanca?telefone=eq.${telLimpo}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify(patchBalanca)
+      });
+    }
+
+    // 2. Preparar Divisão de Treino Personalizada
+    const ehIdoso = (idade && Number(idade) >= 60);
+    const ehCasa = local_treino ? local_treino.toLowerCase().includes('casa') : true;
+
+    let estilo = '';
+    let cuidados = '';
+    let treinoA = '';
+    let treinoB = '';
+    let treinoC = '';
+
+    if (ehCasa) {
+      if (ehIdoso) {
+        estilo = `Mobilidade & Saúde Articular 60+ (${idade} anos - Casa sem Impacto)`;
+        cuidados = "Zero impacto articular. Apoio firme em cadeira ou parede. Sugestões educativas de IA.";
+        treinoA = "Pernas & Equilíbrio: Senta-e-levanta na cadeira (3x10), Panturrilha apoiada na parede (3x15), Ponte suave (3x12), Step-Jack sem salto (3x30s).";
+        treinoB = "Superiores com Cabo de Vassoura: Mobilidade torácica com vassoura (3x12), Bom-dia leve postural (3x10), Flexão no sofá/parede (3x10), Remada com garrafa d'água (3x12).";
+        treinoC = "Core & Cardio Leve: Prancha adaptada na parede (3x20s), Elevação de joelhos com apoio (3x10 cada), Caminhada 20 min suave.";
+      } else {
+        estilo = "Calistenia & Treino Funcional Domiciliar (Objetos Simples)";
+        cuidados = "Intensidade progressiva com peso corporal. Execução controlada.";
+        treinoA = "Peito, Ombros e Tríceps: Flexão de braço (4x10), Tríceps banco na cadeira (3x12), Elevação lateral com garrafas (4x15), Polichinelo (3x45s).";
+        treinoB = "Costas e Bíceps: Remada unilateral com mochila/garrafão (4x12), Mobilidade com cabo de vassoura (3x15), Rosca bíceps (4x12), Superman no chão (3x15).";
+        treinoC = "Pernas e Abdômen: Agachamento livre (4x15), Afundo alternado (3x10), Elevação pélvica no chão (4x15), Panturrilha no degrau (4x20), Prancha (3x40s).";
+      }
+    } else {
+      if (ehIdoso) {
+        estilo = `Musculação Guiada & Saúde Articular 60+ (${idade} anos - Aparelhos Seguros)`;
+        cuidados = "Aparelhos guiados para estabilidade máxima. Cargas moderadas.";
+        treinoA = "Inferiores Guiados: Leg Press 45° sem fechar <90° (3x12), Cadeira Extensora (3x12), Cadeira Flexora (3x12), Panturrilha máquina (3x15).";
+        treinoB = "Superiores Guiados: Puxada frontal polia (3x12), Remada baixa com apoio no peito (3x12), Supino máquina guiada (3x10).";
+        treinoC = "Core & Postura: Abdominal máquina leve (3x15), Mobilidade de ombros com bastão (3x15), 20 min esteira plana sem inclinação.";
+      } else {
+        estilo = "Hipertrofia & Força Muscular na Academia";
+        cuidados = restricoes || "Sobrecarga progressiva segura.";
+        treinoA = "Peitoral, Deltoides e Tríceps: Supino reto halteres (4x10), Supino inclinado (3x10), Desenvolvimento militar halteres (4x10), Elevação lateral (4x12), Tríceps corda (3x12).";
+        treinoB = "Dorsal e Bíceps: Puxada alta aberta (4x10), Remada curvada halteres (4x10), Remada baixa triângulo (3x12), Rosca direta barra W (4x10), Rosca martelo (3x12).";
+        treinoC = "Membros Inferiores & Core: Agachamento livre/Goblet (4x10), Leg Press 45° (4x12), Cadeira extensora (3x15), Mesa flexora (4x10), Panturrilha em pé (4x15), Prancha (3x45s).";
+      }
+    }
+
+    // 3. Atualizar ou Criar em fichas_alunos
+    const patchFicha = {
+      updated_at: agoraIso,
+      status_acompanhamento: 'ativo',
+      etapa_onboarding: 5,
+      treino_divisao: {
+        estilo,
+        local: ehCasa ? 'casa' : 'academia',
+        cuidados,
+        treino_a: treinoA,
+        treino_b: treinoB,
+        treino_c: treinoC
+      }
+    };
+
+    if (nome) patchFicha.nome = nome;
+    if (peso && !isNaN(Number(peso))) {
+      patchFicha.metas_nutricionais = {
+        peso: Number(peso),
+        agua_ml: Math.round(Number(peso) * 35),
+        proteina_g: Math.round(Number(peso) * 2.0),
+        distribuicao: `${Math.round(Number(peso) * 2.0)}g Proteína (2g/kg) | Hidratação ${Math.round(Number(peso) * 35)}ml/dia`
+      };
+    }
+    if (altura_cm && !isNaN(Number(altura_cm))) patchFicha.altura_cm = Number(altura_cm);
+    if (idade && !isNaN(Number(idade))) patchFicha.idade = Number(idade);
+    if (local_treino) patchFicha.local_treino = ehCasa ? 'casa' : 'academia';
+    if (objetivo) patchFicha.objetivo = objetivo;
+    if (restricoes) patchFicha.restricoes_saude = restricoes;
+    if (consentimento_lgpd === true || String(consentimento_lgpd).toLowerCase().includes('concordo') || String(consentimento_lgpd).toLowerCase().includes('sim')) {
+      patchFicha.consentimento_lgpd = true;
+      patchFicha.termo_lgpd_versao = 'v2.0_responsabilidade_ia_lgpd';
+      patchFicha.data_consentimento_lgpd = agoraIso;
+    }
+
+    // Upsert na tabela fichas_alunos
+    const rCheckFicha = await fetch(`${SUPABASE_URL}/rest/v1/fichas_alunos?remote_jid=eq.${rJid}`, { headers });
+    const fichasExistentes = rCheckFicha.ok ? await rCheckFicha.json() : [];
+
+    if (fichasExistentes && fichasExistentes.length > 0) {
+      await fetch(`${SUPABASE_URL}/rest/v1/fichas_alunos?id=eq.${fichasExistentes[0].id}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify(patchFicha)
+      });
+    } else {
+      await fetch(`${SUPABASE_URL}/rest/v1/fichas_alunos`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          remote_jid: rJid,
+          telefone: telLimpo,
+          ...patchFicha
+        })
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Anamnese real atualizada com sucesso no Supabase e no Painel Admin!',
+      treino: patchFicha.treino_divisao,
+      dados_completos: true
+    });
+  } catch (err) {
+    console.error('Erro /api/vip/salvar-anamnese:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 // 9. Endpoint Leads Scoring (Davi & Sofia)
 app.get('/api/sales/leads', async (req, res) => {
   try {
