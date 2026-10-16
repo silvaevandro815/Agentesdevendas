@@ -34,20 +34,38 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 def interpretar_comando_com_ia(texto_comando: str) -> dict:
     """
     Usa o Gemini 2.5 Flash para interpretar com precisão editorial o comando do Chefe,
-    estruturando manchete, subtítulo, pontos de benefício, prompt fotográfico puro e legenda.
+    estruturando manchete, subtítulo, pontos de benefício, prompt fotográfico puro e legenda,
+    garantindo que o criativo seja 100% INÉDITO e sem repetição de conteúdos anteriores.
     """
     headers = {
         "Authorization": f"Bearer {OPENROUTER_KEY}",
         "Content-Type": "application/json"
     }
 
+    from anti_repetition_guard import buscar_historico_posts_recentes, MATRIZ_PERSONAGENS, MATRIZ_CENARIOS
+    import random
+
+    hist = buscar_historico_posts_recentes(limite=20)
+    headlines_recentes = hist.get("headlines_usadas", [])[:12]
+
+    p_sorteado = random.choice(MATRIZ_PERSONAGENS)
+    c_sorteado = random.choice(MATRIZ_CENARIOS)
+
     prompt_instrucao = f"""Você é o diretor de arte e copywriter oficial da marca 'Marcão Personal'.
 Analise o comando do chefe: "{texto_comando}"
+
+🚨 REGRA INVIOLÁVEL: É ESTRITAMENTE PROIBIDO REPETIR O MESMO CRIATIVO!
+O tema pode ser abordado novamente, mas a headline, o gancho e o criativo DEVEM SER 100% INÉDITOS!
+Títulos que JÁ FORAM PUBLICADOS no nosso Instagram recentemente e que você NUNCA pode repetir:
+{json.dumps(headlines_recentes, ensure_ascii=False, indent=2)}
+
+Personagem Sorteado para a Imagem: {p_sorteado['descricao']}
+Cenário Sorteado para a Imagem: {c_sorteado['nome']}
 
 Retorne APENAS um objeto JSON válido (sem crases de markdown em volta, sem texto antes ou depois) no seguinte formato:
 {{
   "destino": "FEED",
-  "headline": "MANCHETE EM CAIXA ALTA (máximo 4 a 6 palavras impactantes, ex: 'CREATINA & TREINO PESADO' ou 'HIPERTROFIA & DEFINIÇÃO')",
+  "headline": "MANCHETE EM CAIXA ALTA (máximo 4 a 6 palavras impactantes e INÉDITAS)",
   "subheadline": "Metodologia & Biohacking Marcão Personal:",
   "pontos": [
     "Primeiro benefício científico curto (máximo 55 caracteres)",
@@ -55,7 +73,7 @@ Retorne APENAS um objeto JSON válido (sem crases de markdown em volta, sem text
   ],
   "categoria": "ALTA PERFORMANCE",
   "cta_card": "LEIA A LEGENDA",
-  "prompt_imagem": "Ultra-realistic cinematic 8k commercial fitness photography of athletic muscular male trainer Marcão working out with heavy weights in an elite luxury modern gym. Focused intense expression, high contrast lighting, warm golden rim lights, deep dark obsidian shadows, ultra-detailed skin texture, upper body composition. CRITICAL: PURE PHOTOGRAPHY ONLY. ABSOLUTELY NO TEXT, NO LETTERS, NO WORDS, NO SYMBOLS, NO WATERMARKS, NO NUMBERS. CLEAN UNMARKED BACKGROUND.",
+  "prompt_imagem": "{p_sorteado['prompt_char']} {c_sorteado['prompt_scene']}. Warm golden rim lighting, ultra-detailed skin textures, cinematic 85mm portrait, 8k resolution commercial photography. CRITICAL: PURE PHOTOGRAPHY ONLY. ABSOLUTELY NO TEXT, NO LETTERS, NO WORDS, NO SYMBOLS, NO WATERMARKS, NO NUMBERS. CLEAN UNMARKED BACKGROUND.",
   "legenda": "Texto persuasivo de 3 a 4 parágrafos curtos com emojis de alta autoridade, chamada para o site oficial marcaopersonal.com ou link na bio, e hashtags fitness."
 }}
 
@@ -68,7 +86,7 @@ Regras Críticas:
     payload = {
         "model": "google/gemini-2.5-flash",
         "messages": [{"role": "user", "content": prompt_instrucao}],
-        "temperature": 0.2
+        "temperature": 0.7
     }
 
     try:
@@ -260,6 +278,11 @@ def executar_postagem_solicitada(texto_comando: str) -> dict:
         if pr.status_code in [200, 201]:
             pub_id = pr.json().get("id")
             print(f"[INSTA_EXEC] Post publicado com sucesso na tentativa {tentativa}! ID: {pub_id}")
+            try:
+                from anti_repetition_guard import registrar_no_content_calendar
+                registrar_no_content_calendar(pub_id, caption, url_publica)
+            except Exception as e_reg:
+                print(f"[INSTA_EXEC] Aviso ao registrar no content_calendar: {e_reg}")
             return {
                 "sucesso": True,
                 "post_id": pub_id,

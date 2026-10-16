@@ -2068,12 +2068,24 @@ def executar_ciclo_manha(indice=None, formato="carrossel", usar_ia=True, dry_run
 
     print(f"\n[FÁBRICA 11:30] Iniciando produção do Post de Curiosidade: '{tema['tema']}' | Estilo: {estilo_escolhido.upper()}")
 
-    # 1. Obter imagem base (IA Ultra-Realista ou Fallback)
+    # 1. Obter imagem base e criativo com proteção Anti-Repetição
     bg_local = None
     if usar_ia:
-        prompt_estilo, ref_img = montar_prompt_por_estilo(estilo_escolhido, tema, eh_venda=False)
-        nome_ia = f"bg_{tema['id']}_{estilo_escolhido}_{int(time.time())}.png"
-        bg_local = gerar_imagem_ultra_realista(prompt_estilo, nome_ia, imagem_referencia_path=ref_img)
+        try:
+            from anti_repetition_guard import gerar_angulo_criativo_inedito, gerar_imagem_inedita_openrouter
+            criativo_inedito = gerar_angulo_criativo_inedito(tema_escolhido=tema.get("tema"), tipo="manha", estilo_visual=estilo_escolhido)
+            tema["headline"] = criativo_inedito.get("headline", tema["headline"])
+            tema["subheadline"] = criativo_inedito.get("subheadline", tema["subheadline"])
+            tema["pontos_card"] = criativo_inedito.get("pontos", tema["pontos_card"])
+            tema["categoria"] = criativo_inedito.get("categoria", tema["categoria"])
+            tema["legenda"] = criativo_inedito.get("legenda", tema["legenda"])
+            nome_ia = f"bg_{tema['id']}_{estilo_escolhido}_{int(time.time())}.png"
+            bg_local = gerar_imagem_inedita_openrouter(criativo_inedito.get("prompt_fotografico", ""), nome_ia)
+        except Exception as e_ia:
+            print(f"[FÁBRICA 11:30] Falha no gerador inédito IA: {e_ia}")
+            prompt_estilo, ref_img = montar_prompt_por_estilo(estilo_escolhido, tema, eh_venda=False)
+            nome_ia = f"bg_{tema['id']}_{estilo_escolhido}_{int(time.time())}.png"
+            bg_local = gerar_imagem_ultra_realista(prompt_estilo, nome_ia, imagem_referencia_path=ref_img)
 
     if not bg_local or not os.path.exists(bg_local):
         bg_local = MASCOTE_PATH if os.path.exists(MASCOTE_PATH) else None
@@ -2171,17 +2183,37 @@ def executar_ciclo_noite(indice=None, formato="carrossel", usar_ia=True, dry_run
 
     print(f"\n[FÁBRICA 19:30] Iniciando produção do Post de Venda: '{prod['nome']}' | Estilo: {estilo_escolhido.upper()}")
 
-    # Ângulo Criativo Dinâmico (Lia Copywriter & Gemini 2.5 Flash)
+    # 1. Ângulo Criativo Inédito & Nova Imagem com Proteção Anti-Repetição
+    bg_local = None
     if usar_ia:
-        angulo = gerar_angulo_criativo_com_ia(prod)
+        try:
+            from anti_repetition_guard import gerar_angulo_criativo_inedito, gerar_imagem_inedita_openrouter
+            criativo_inedito = gerar_angulo_criativo_inedito(tema_escolhido=prod.get("nome"), tipo="noite", estilo_visual=estilo_escolhido)
+            headline = criativo_inedito.get("headline", prod["nome"].upper()[:35])
+            sub = criativo_inedito.get("subheadline", f"Protocolo oficial Marcão Personal por {prod['preco']}:")
+            pontos = criativo_inedito.get("pontos", ["Matéria-prima de padrão laboratorial.", f"Lote oficial por {prod['preco']}."])
+            categoria = criativo_inedito.get("categoria", prod["categoria"])
+            legenda = criativo_inedito.get("legenda")
+            nome_ia = f"bg_{prod['sku']}_{estilo_escolhido}_{int(time.time())}.png"
+            bg_local = gerar_imagem_inedita_openrouter(criativo_inedito.get("prompt_fotografico", ""), nome_ia)
+        except Exception as e_ia:
+            print(f"[FÁBRICA 19:30] Falha no gerador inédito IA: {e_ia}")
+            angulo = gerar_angulo_criativo_com_ia(prod)
+            headline = angulo.get("headline", prod["nome"].upper()[:35])
+            sub = angulo.get("subheadline", f"Protocolo oficial Marcão Personal por {prod['preco']}:")
+            pontos = angulo.get("pontos", ["Matéria-prima de padrão laboratorial.", f"Lote oficial por {prod['preco']}."])
+            categoria = angulo.get("categoria", prod["categoria"])
+            legenda = angulo.get("legenda")
+            prompt_estilo, ref_img = montar_prompt_por_estilo(estilo_escolhido, prod, eh_venda=True)
+            nome_ia = f"bg_{prod['sku']}_{estilo_escolhido}_{int(time.time())}.png"
+            bg_local = gerar_imagem_ultra_realista(prompt_estilo, nome_ia, imagem_referencia_path=ref_img)
     else:
         angulo = obter_angulo_fallback(prod)
-
-    headline = angulo.get("headline", prod["nome"].upper()[:35])
-    sub = angulo.get("subheadline", f"Protocolo oficial Marcão Personal por {prod['preco']}:")
-    pontos = angulo.get("pontos", ["Matéria-prima de padrão laboratorial.", f"Lote oficial por {prod['preco']}."])
-    categoria = angulo.get("categoria", prod["categoria"])
-    legenda = angulo.get("legenda")
+        headline = angulo.get("headline", prod["nome"].upper()[:35])
+        sub = angulo.get("subheadline", f"Protocolo oficial Marcão Personal por {prod['preco']}:")
+        pontos = angulo.get("pontos", ["Matéria-prima de padrão laboratorial.", f"Lote oficial por {prod['preco']}."])
+        categoria = angulo.get("categoria", prod["categoria"])
+        legenda = angulo.get("legenda")
 
     if not legenda:
         legenda = (
@@ -2194,13 +2226,6 @@ def executar_ciclo_noite(indice=None, formato="carrossel", usar_ia=True, dry_run
             f"Toque agora no LINK DA BIO em marcaopersonal.com ou COMENTE \"QUERO\" aqui embaixo que eu te envio o link direto no seu Direct! 📲\n\n"
             f"#marcao #suplementos #saude #estetica #performance #qualidadedevida #fitness"
         )
-
-    # 1. Imagem de Fundo Ultra-Realista (com o rosto de Evandro)
-    bg_local = None
-    if usar_ia:
-        prompt_estilo, ref_img = montar_prompt_por_estilo(estilo_escolhido, prod, eh_venda=True)
-        nome_ia = f"bg_{prod['sku']}_{estilo_escolhido}_{int(time.time())}.png"
-        bg_local = gerar_imagem_ultra_realista(prompt_estilo, nome_ia, imagem_referencia_path=ref_img)
 
     timestamp = int(time.time())
     res_final = {}
