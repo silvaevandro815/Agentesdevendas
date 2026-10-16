@@ -4,7 +4,7 @@
 
 ## Contexto
 - Diretor/Empreendedor: Evandro da Silva Gallina (CNPJ MEI: 68.746.249/0001-84).
-- IP da VPS Hostinger: `72.61.43.154` (Coolify em porta 8000)
+- IP da VPS Hostinger: Configurado via DNS (subdomínios protegidos)
 - Domínio principal registrado: `marcaopersonal.com`
 - Subdomínio Administrativo (Painel de Controle e Aprovações): `admin.marcaopersonal.com`
 - Subdomínio Loja / Landing Page: `loja.marcaopersonal.com` ou raiz `marcaopersonal.com`
