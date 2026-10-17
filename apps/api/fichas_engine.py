@@ -516,7 +516,7 @@ async def processar_etapa_onboarding(remote_jid: str, telefone: str, nome: str, 
             f"• *Treino A:* {treino['treino_a']}\n\n"
             f"• *Treino B:* {treino['treino_b']}\n\n"
             f"• *Treino C:* {treino['treino_c']}\n\n"
-            f"📸 Pra calibrarmos sua evolução visual, quando puder tire uma foto no espelho de frente e de costas e me mande aqui! Elas já ficam criptografadas na hora. Tamo junto nessa! 🔥"
+            f"📸 Pra calibrarmos sua evolução visual: não precisa necessariamente de espelho! Você pode apoiar o celular numa estante ou mesa de frente pra luz de uma janela (sempre a favor da luz natural, nunca contra pra não escurecer), colocar o timer de 10 segundos e tirar a foto de corpo inteiro de frente e de costas. Ou pedir pra alguém em casa tirar pra você! Vou guardar essas fotos com sigilo militar no seu prontuário pra daqui a alguns dias a gente comparar lado a lado os resultados e calibrar o que precisa lapidar! Tamo junto nessa! 🔥"
         )
         return {"onboarding_ativo": False, "resposta": resposta, "treino": treino}
 

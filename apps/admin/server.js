@@ -437,6 +437,8 @@ app.get('/api/vip/clientes', async (req, res) => {
         if (f.local_treino) item.local_treino = f.local_treino;
         if (tResumo) item.treino_resumo = tResumo;
         if (f.restricoes_saude) item.restricoes = f.restricoes_saude;
+        if (f.metas_nutricionais?.competicao_alvo) item.competicao_alvo = f.metas_nutricionais.competicao_alvo;
+        if (f.metas_nutricionais?.modo_atleta || f.experiencia_nivel === 'atleta_competicao') item.modo_atleta = true;
         if (pesoFicha && item.ultimo_peso === 'Pendente') item.ultimo_peso = pesoFicha;
         if (lgpdOk) item.consentimento_lgpd = 'Autorizado (LGPD)';
         item.etapa_onboarding = f.etapa_onboarding ?? (isEvandro ? 5 : 0);
@@ -471,6 +473,8 @@ app.get('/api/vip/clientes', async (req, res) => {
           local_treino: f.local_treino || (isEvandro ? 'academia' : 'Pendente'),
           treino_resumo: tResumo || (isEvandro ? 'Divisão ABC' : 'Aguardando Anamnese'),
           restricoes: f.restricoes_saude || (isEvandro ? 'Nenhuma' : 'Pendente'),
+          competicao_alvo: f.metas_nutricionais?.competicao_alvo || null,
+          modo_atleta: Boolean(f.metas_nutricionais?.modo_atleta || f.experiencia_nivel === 'atleta_competicao'),
           consentimento_lgpd: lgpdOk ? 'Autorizado (LGPD)' : 'Pendente (Falta "CONCORDO")',
           etapa_onboarding: f.etapa_onboarding ?? (isEvandro ? 5 : 0),
           dados_completos: Boolean(isEvandro || (temPeso && temObj && temLocal && lgpdOk))
