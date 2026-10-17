@@ -78,7 +78,7 @@ Retorne APENAS um objeto JSON válido (sem crases de markdown em volta, sem text
   ],
   "categoria": "ALTA PERFORMANCE",
   "cta_card": "LEIA A LEGENDA",
-  "prompt_imagem": "{p_sorteado['prompt_char']} {c_sorteado['prompt_scene']}. Warm golden rim lighting, ultra-detailed skin textures, cinematic 85mm portrait, 8k resolution commercial photography. CRITICAL: PURE PHOTOGRAPHY ONLY. ABSOLUTELY NO TEXT, NO LETTERS, NO WORDS, NO SYMBOLS, NO WATERMARKS, NO NUMBERS. CLEAN UNMARKED BACKGROUND.",
+  "prompt_imagem": "{p_sorteado['prompt_char']} {c_sorteado['prompt_scene']}. PHOTOGRAPHIC SAFE ZONE COMPOSITION: Subject framed in UPPER 50% with face, eyes, nose, mouth and smile perfectly visible, in tack-sharp focus and beautifully lit. LOWER 50% must be dark moody negative space for clean advertising text overlay without covering the subject's face. Warm golden rim lighting, ultra-detailed skin textures, cinematic 85mm portrait, 8k resolution commercial photography. CRITICAL: PURE PHOTOGRAPHY ONLY. ABSOLUTELY NO TEXT, NO LETTERS, NO WORDS, NO SYMBOLS, NO WATERMARKS. CLEAN UNMARKED BACKGROUND.",
   "legenda": "Texto persuasivo de 3 a 4 parágrafos curtos com emojis de alta autoridade, chamada para o site oficial marcaopersonal.com ou link na bio, e hashtags fitness."
 }}
 

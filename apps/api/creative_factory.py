@@ -4,6 +4,7 @@ import sys
 import time
 import json
 import base64
+import random
 from datetime import datetime
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -2122,7 +2123,12 @@ def executar_ciclo_manha(indice=None, formato="carrossel", usar_ia=True, dry_run
         indice = datetime.now().day % len(temas_ativos)
     tema = temas_ativos[indice % len(temas_ativos)]
 
-    estilo_escolhido = estilo_visual if estilo_visual != "auto" else "evandro"
+    PERSONAS_DIVERSIDADE = [
+        "evandro", "marcao", "mascote",
+        "mulher_jovem", "mulher_adulta", "mulher_senior",
+        "homem_jovem", "homem_adulto", "homem_senior"
+    ]
+    estilo_escolhido = estilo_visual if estilo_visual != "auto" else random.choice(PERSONAS_DIVERSIDADE)
 
     print(f"\n[FÁBRICA 11:30] Iniciando produção do Post de Curiosidade: '{tema['tema']}' | Estilo: {estilo_escolhido.upper()}")
 
@@ -2237,7 +2243,12 @@ def executar_ciclo_noite(indice=None, formato="carrossel", usar_ia=True, dry_run
         indice = (datetime.now().day + datetime.now().hour) % len(produtos_ativos)
     prod = produtos_ativos[indice % len(produtos_ativos)]
 
-    estilo_escolhido = estilo_visual if estilo_visual != "auto" else "evandro"
+    PERSONAS_DIVERSIDADE = [
+        "evandro", "marcao", "mascote",
+        "mulher_jovem", "mulher_adulta", "mulher_senior",
+        "homem_jovem", "homem_adulto", "homem_senior"
+    ]
+    estilo_escolhido = estilo_visual if estilo_visual != "auto" else random.choice(PERSONAS_DIVERSIDADE)
 
     print(f"\n[FÁBRICA 19:30] Iniciando produção do Post de Venda: '{prod['nome']}' | Estilo: {estilo_escolhido.upper()}")
 

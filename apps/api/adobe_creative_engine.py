@@ -205,19 +205,27 @@ class AdobeLayeredCompositor:
         self.canvas.paste(Image.fromarray(arr), (0, 0))
 
     def _apply_cinema_vignette(self):
-        """Aplica gradiente de leitura de cinema garantindo alto contraste aos textos."""
+        """
+        LEI DA PROTEÇÃO FACIAL E DO PRODUTO (SAFE ZONES):
+        - O terço superior (rosto, olhos, nariz, boca e expressão) recebe ZERO véu escuro (alpha = 0).
+          Isso preserva 100% da nitidez, da iluminação dourada e da humanidade do personagem.
+        - A transição suave de vinheta escura ocorre na altura do peito/meio do corpo (norm_y de 0.40 a 0.52).
+        - A metade inferior (norm_y >= 0.52) recebe a base escura sólida com alta opacidade para contraste
+          cristalino de leitura de manchete, benefícios e CTA.
+        """
         mask_arr = np.zeros((self.height, self.width), dtype=np.uint8)
         for y in range(self.height):
             norm_y = y / self.height
-            if norm_y < 0.28:
-                alpha = int(185 - (norm_y / 0.28) * 85)
+            if norm_y < 0.40:
+                # ZONA DE PROTEÇÃO FACIAL TOTAL (0% escurecimento nos olhos, nariz e boca)
+                alpha = 0
             elif norm_y < 0.52:
-                alpha = int(100 - ((norm_y - 0.28) / 0.24) * 40)
-            elif norm_y < 0.72:
-                alpha = int(60 + ((norm_y - 0.52) / 0.20) * 120)
+                # Transição suave cinematográfica do peito para o card
+                alpha = int(245 * ((norm_y - 0.40) / 0.12))
             else:
-                alpha = int(180 + ((norm_y - 0.72) / 0.28) * 65)
-            mask_arr[y, :] = min(245, max(0, alpha))
+                # Base de alta legibilidade para headline, cards e CTA
+                alpha = 245
+            mask_arr[y, :] = alpha
 
         dark_layer = Image.new("RGBA", (self.width, self.height), self.theme["bg_dark"] + (255,))
         self.canvas.paste(dark_layer, (0, 0), Image.fromarray(mask_arr))
@@ -305,21 +313,21 @@ class AdobeLayeredCompositor:
         draw = ImageDraw.Draw(self.canvas)
         palavras = headline.strip().split()
 
-        # Definição de tamanho por contagem de palavras
+        # Definição de tamanho por contagem de palavras para o card inferior
         if len(palavras) <= 4:
-            font_size = 72
+            font_size = 56
         elif len(palavras) <= 7:
-            font_size = 62
+            font_size = 48
         else:
-            font_size = 52
+            font_size = 42
 
         font_extra = get_font("Montserrat-ExtraBold.ttf", font_size)
         font_black = get_font("Montserrat-Black.ttf", int(font_size * 1.05))
 
-        # Quebra equilibrada de linhas
+        # Quebra equilibrada de linhas na largura total livre
         linhas = []
         linha_atual = []
-        max_largura = self.width - 240 # margem para não colidir com o selo
+        max_largura = self.width - 120  # Margem segura de 60px de cada lado
 
         for p in palavras:
             linha_atual.append(p)
@@ -647,20 +655,24 @@ def renderizar_criativo_masterpiece(
     """
     if formato == "story":
         width, height = 1080, 1920
-        start_headline = 260
-        start_benefits = 1120
-        y_cta = 1680
-        y_footer = 1810
-        seal_x = width - 110
-        seal_y = 160
+        # LEI DA PROTEÇÃO FACIAL E DO PRODUTO:
+        # Topo livre (0 a 1050px) para o rosto, olhos, sorriso e ação atlética do personagem!
+        start_headline = 1080
+        start_benefits = 1260
+        y_cta = 1690
+        y_footer = 1815
+        seal_x = width - 95
+        seal_y = 110
     else: # feed 4:5 (1080x1350)
         width, height = 1080, 1350
-        start_headline = 160
-        start_benefits = 720
-        y_cta = 1140
-        y_footer = 1250
-        seal_x = width - 110
-        seal_y = 140
+        # LEI DA PROTEÇÃO FACIAL E DO PRODUTO:
+        # Topo livre (0 a 680px) para o rosto, olhos, nariz, boca e tronco!
+        start_headline = 690
+        start_benefits = 845
+        y_cta = 1170
+        y_footer = 1275
+        seal_x = width - 95
+        seal_y = 85
 
     if not out_path:
         out_path = os.path.join(PUBLIC_IMG_DIR, f"masterpiece_{formato}_{int(os.getpid())}.png")

@@ -1,4 +1,4 @@
-﻿"""
+"""
 Guardião Anti-Repetição & Fábrica de Criativos Inéditos — Marcão Personal 360°
 =================================================================================
 Garante que o Marcão NUNCA publique posts, fotos ou criativos repetidos no Instagram.
@@ -108,68 +108,265 @@ MATRIZ_TEMAS = [
 ]
 
 MATRIZ_PERSONAGENS = [
+    # 1. Evandro Gallina (Fundador & Atleta - Variedade Total de Poses, Roupas e Locais)
     {
-        "id": "evandro_atleta",
-        "descricao": "Evandro Gallina (Fundador & Atleta Marcão Personal, 35-40 anos, porte atlético moderno, focado, expressão confiante e simpática)",
-        "prompt_char": "Athletic fitness founder Evandro Gallina, handsome Brazilian man with short neat dark hair, fit athletic lean muscular physique, focused and determined expression"
+        "id": "evandro_musculacao",
+        "categoria_persona": "evandro",
+        "descricao": "Evandro Gallina (Fundador) treinando ombros/bíceps na academia com halteres pesados, camisa dry-fit preta de compressão, expressão focada e atlética",
+        "prompt_char": "Athletic fitness founder Evandro Gallina, handsome Brazilian man with short neat dark hair, fit athletic lean muscular physique, wearing sleek black compression dry-fit shirt, performing seated dumbbell curls with focused grit and determination"
     },
     {
-        "id": "marcao_coach",
-        "descricao": "Coach Marcão (Mascote e Personal Trainer imponente, carismático, camisa dry-fit oficial preta e dourada Marcão Personal)",
-        "prompt_char": "Imposing athletic personal trainer Coach Marcão, 35 years old, powerfully built muscular physique, intense motivating gaze, wearing sleek black fitness dry-fit gear"
+        "id": "evandro_corrida_praia",
+        "categoria_persona": "evandro",
+        "descricao": "Evandro Gallina correndo no calçadão da praia ao nascer do sol, regata técnica grafite, bermuda esportiva e smartwatch",
+        "prompt_char": "Dynamic energetic shot of fit founder Evandro Gallina briskly running along an ocean beach promenade at golden hour sunrise, dark technical running tank top, sports smartwatch on wrist, athletic determined smile"
     },
     {
-        "id": "mulher_jovem_atleta",
-        "descricao": "Mulher atleta jovem (28 anos, abdômen definido, tônus muscular elegante, roupa esportiva moderna)",
-        "prompt_char": "Fit 28-year-old athletic female fitness model, lean defined waistline, glowing radiant skin, high athletic energy, wearing premium sports attire"
+        "id": "evandro_cozinha_nutricao",
+        "categoria_persona": "evandro",
+        "descricao": "Evandro Gallina em cozinha gourmet moderna preparando smoothie proteico com frutas frescas e água de coco",
+        "prompt_char": "Warm commercial lifestyle photo of health founder Evandro Gallina in a luxury kitchen with marble countertops, holding a clean protein shaker cup, charismatic friendly smile, casual fitted dark crewneck t-shirt"
     },
     {
-        "id": "mulher_madura_estetica",
-        "descricao": "Mulher madura (38 anos, pele viçosa e firme, elegância e saúde radiante)",
-        "prompt_char": "Elegant 38-year-old fit healthy woman with smooth firm radiant skin, joyful genuine expression, athletic posture"
+        "id": "evandro_natacao_piscina",
+        "categoria_persona": "evandro",
+        "descricao": "Evandro Gallina saindo de piscina olímpica de água cristalina, ombros largos e peitoral definido, óculos de natação na testa",
+        "prompt_char": "Athletic swimmer Evandro Gallina emerging powerfully from turquoise pool water, water droplets glistening on muscular shoulders and chest, modern sports goggles on forehead, confident focused gaze"
     },
     {
-        "id": "mulher_senior_vitalidade",
-        "descricao": "Mulher sênior ativa (64 anos, sorriso vibrante, postura atlética exemplar)",
-        "prompt_char": "Inspiring fit 64-year-old healthy senior woman, vibrant joyful smile, active posture, glowing vitality and grace"
+        "id": "evandro_ciclismo_estrada",
+        "categoria_persona": "evandro",
+        "descricao": "Evandro Gallina em bicicleta speed preta fosca em estrada litorânea cênica com capacete aerodinâmico",
+        "prompt_char": "Action sports portrait of handsome fit cyclist Evandro Gallina on a matte black road bicycle along a winding coastal highway, aerodynamic dark cycling jersey, ocean cliffs in background"
     },
     {
-        "id": "homem_executivo_fit",
-        "descricao": "Homem 42 anos (focado em saúde, biohacking e produtividade corporal)",
-        "prompt_char": "Sharp athletic 42-year-old professional man in peak physical condition, confident calm expression, masculine fitness aesthetic"
+        "id": "evandro_funcional_casa",
+        "categoria_persona": "evandro",
+        "descricao": "Evandro Gallina fazendo treino de mobilidade postural com bastão de madeira na sala de estar iluminada",
+        "prompt_char": "Fit trainer Evandro Gallina performing controlled functional mobility squats holding a smooth wooden alignment dowel across shoulders in a sunlit modern living room with hardwood floors"
+    },
+    {
+        "id": "evandro_caminhada_natureza",
+        "categoria_persona": "evandro",
+        "descricao": "Evandro Gallina em trilha de serra cercada por floresta verde e névoa matinal, roupa esportiva verde oliva",
+        "prompt_char": "Inspiring photography of athletic man Evandro Gallina power walking along an alpine forest trail, morning mist, technical olive-green trail running gear, fresh mountain air vibe"
+    },
+    {
+        "id": "evandro_biohacking_lounge",
+        "categoria_persona": "evandro",
+        "descricao": "Evandro Gallina em lounge de recuperação avaliando métricas corporais no celular e balança de bioimpedância",
+        "prompt_char": "Modern aesthetic portrait of health innovator Evandro Gallina in a luxury wellness recovery lounge, checking health metrics on his smartphone, charcoal athletic apparel, relaxed confident smile"
+    },
+
+    # 2. Coach Marcão (O Treinador / Mentor Oficial)
+    {
+        "id": "marcao_coach_instruindo",
+        "categoria_persona": "marcao",
+        "descricao": "Coach Marcão (Personal Trainer imponente, 35 anos, camisa oficial preta e dourada, braços volumosos, postura de liderança)",
+        "prompt_char": "Imposing Brazilian personal trainer Coach Marcão, 35 years old, heavily built powerful physique, intense motivating gaze, wearing sleek black and gold branded dry-fit shirt, arms crossed proudly"
+    },
+    {
+        "id": "marcao_coach_supino",
+        "categoria_persona": "marcao",
+        "descricao": "Coach Marcão executando supino pesado com barra olímpica e anilhas de ferro, veias aparentes e foco brutal",
+        "prompt_char": "Powerful bodybuilder trainer Marcão performing heavy bench press in dark gym, pumped vascular arms and chest, chalk on hands, intense grit, dramatic amber rim lighting"
+    },
+    {
+        "id": "marcao_coach_parque",
+        "categoria_persona": "marcao",
+        "descricao": "Coach Marcão em treino funcional com kettlebell ao ar livre no parque com gramado verde",
+        "prompt_char": "Muscular trainer Marcão performing athletic kettlebell swings on a sunny open-air park field, energetic confident expression, dark fitted workout shorts and sports tank top"
+    },
+
+    # 3. Mascote Marcão 3D (Animação Disney/Pixar Hiper-Realista 3D)
+    {
+        "id": "mascote_marcao_haltere",
+        "categoria_persona": "mascote",
+        "descricao": "Mascote Marcão 3D (Personagem de animação 3D hiper-realista da Pixar, maromba carismático com regata Marcão Personal levantando haltere gigante)",
+        "prompt_char": "Charming ultra-detailed 3D animated character Mascote Marcão in Pixar/Disney style, handsome stylized muscular personal trainer with heroic jawline, big enthusiastic smile, wearing black and gold athletic tank top, holding a giant dumbbell with playful ease, studio 3D render quality"
+    },
+    {
+        "id": "mascote_marcao_balanca",
+        "categoria_persona": "mascote",
+        "descricao": "Mascote Marcão 3D comemorando em cima da balança inteligente com gráfico digital subindo",
+        "prompt_char": "Cute heroic 3D animated mascot Marcão celebrating happily on a high-tech smart bioimpedance scale, thumbs up, cheerful wink, Pixar style lighting and smooth character design"
+    },
+    {
+        "id": "mascote_marcao_shake",
+        "categoria_persona": "mascote",
+        "descricao": "Mascote Marcão 3D segurando shakeira com suplemento puro e piscando para a câmera",
+        "prompt_char": "Vibrant 3D animated mascot Marcão holding a sleek supplement shaker cup, charismatic facial expression, sparkling eyes, high-end 3D feature film character render"
+    },
+
+    # 4. Mulheres Jovens (20 a 28 anos - Definição, Energia & Estética)
+    {
+        "id": "mulher_jovem_agachamento",
+        "categoria_persona": "mulher_jovem",
+        "descricao": "Atleta feminina jovem (25 anos, glúteos e pernas torneadas, abdômen definido, top preto e calça legging moderna)",
+        "prompt_char": "Fit athletic 25-year-old Brazilian woman with toned sculpted physique and defined abs, performing squats with barbell in luxury gym, focused confident gaze, sleek black athletic leggings and sports bra"
+    },
+    {
+        "id": "mulher_jovem_praia_corrida",
+        "categoria_persona": "mulher_jovem",
+        "descricao": "Mulher atleta de 28 anos correndo na areia da praia ao nascer do sol, top coral, pele bronzeada e iluminada",
+        "prompt_char": "Radiant 28-year-old fit Brazilian woman jogging along the golden sand of Rio beach at sunrise, wearing chic coral sports top and running shorts, glowing sunlit skin, joyful athletic smile"
+    },
+    {
+        "id": "mulher_jovem_yoga_gramado",
+        "categoria_persona": "mulher_jovem",
+        "descricao": "Mulher jovem praticando yoga e mobilidade no gramado ao entardecer com luz dourada",
+        "prompt_char": "Graceful 26-year-old female athlete doing yoga stretches on lush green lawn at sunset, serene focused expression, terracotta seamless workout apparel, golden hour rim lighting"
+    },
+
+    # 5. Mulheres Adultas (35 a 48 anos - Firmeza, Colágeno & Elegância Ativa)
+    {
+        "id": "mulher_adulta_pilates",
+        "categoria_persona": "mulher_adulta",
+        "descricao": "Mulher elegante de 40 anos em estúdio de pilates reformer, postura ereta, pele firme e viçosa",
+        "prompt_char": "Elegant fit 40-year-old woman in peak health performing controlled reformer pilates exercise, firm radiant skin, graceful posture, tasteful lavender athletic wear, bright airy boutique studio"
+    },
+    {
+        "id": "mulher_adulta_cozinha_colageno",
+        "categoria_persona": "mulher_adulta",
+        "descricao": "Mulher madura de 42 anos preparando colágeno com abacaxi e hortelã em cozinha gourmet ensolarada",
+        "prompt_char": "Photorealistic portrait of a beautiful 42-year-old Brazilian woman with smooth firm glowing facial skin, holding a refreshing glass of collagen with mint in a modern sunlit designer kitchen, genuine warm smile"
+    },
+    {
+        "id": "mulher_adulta_funcional_casa",
+        "categoria_persona": "mulher_adulta",
+        "descricao": "Mulher de 38 anos fazendo treino funcional com elásticos de resistência na sala de casa",
+        "prompt_char": "Active 38-year-old woman doing resistance band training in a spacious minimalist living room with parquet floors, fit toned arms, energetic determined expression, stylish sportswear"
+    },
+
+    # 6. Mulheres Seniores / 3ª Idade Ativa (55 a 72 anos - Vitalidade, Articulações & Longevidade)
+    {
+        "id": "mulher_senior_caminhada_parque",
+        "categoria_persona": "mulher_senior",
+        "descricao": "Mulher sênior de 64 anos cheia de vitalidade caminhando com bastão esportivo em parque botânico ensolarado",
+        "prompt_char": "Inspiring authentic photo of a vibrant fit 64-year-old Brazilian senior woman full of vitality, briskly walking with walking poles in a sunny botanical park, silver-streaked hair, beaming radiant healthy smile, wearing tasteful lilac athletic outfit"
+    },
+    {
+        "id": "mulher_senior_piscina_hidro",
+        "categoria_persona": "mulher_senior",
+        "descricao": "Senhora ativa de 68 anos saindo feliz de piscina aquecida de clube, demonstrando mobilidade sem dores articulares",
+        "prompt_char": "Active 68-year-old senior woman emerging happily from sparkling resort swimming pool, healthy mobile posture, genuine joyful laughter, active aging longevity aesthetic"
+    },
+    {
+        "id": "mulher_senior_alongamento_jardim",
+        "categoria_persona": "mulher_senior",
+        "descricao": "Mulher de 62 anos praticando respiração e mobilidade suave em jardim botânico",
+        "prompt_char": "Serene 62-year-old fit mature woman doing morning mobility stretches outdoors in botanical garden, deep healthy breathing, peaceful confident posture, soft morning sunlight"
+    },
+
+    # 7. Homens Jovens (20 a 25 anos - Hipertrofia & Calistenia)
+    {
+        "id": "homem_jovem_braco_rosca",
+        "categoria_persona": "homem_jovem",
+        "descricao": "Jovem atleta de 24 anos com braços densos treinando rosca com halteres pesados em academia escura",
+        "prompt_char": "Dedicated 24-year-old athletic male bodybuilder doing heavy bicep curls in dark modern gym, defined vascular arms, determined proud gaze, charcoal gym stringer, chalk dust in air"
+    },
+    {
+        "id": "homem_jovem_calistenia_praia",
+        "categoria_persona": "homem_jovem",
+        "descricao": "Jovem de 25 anos fazendo barra fixa em parque de calistenia na orla marítima ao entardecer",
+        "prompt_char": "Athletic 25-year-old calisthenics athlete performing pull-ups on outdoor beach fitness bars, defined back and shoulders, ocean horizon at golden sunset"
+    },
+
+    # 8. Homens Adultos (35 a 48 anos - Alta Performance & Força Pura)
+    {
+        "id": "homem_adulto_executivo_corrida",
+        "categoria_persona": "homem_adulto",
+        "descricao": "Homem de 42 anos executivo em corrida de rua matinal na orla marítima, fones de ouvido e relógio esportivo",
+        "prompt_char": "Dynamic action portrait of an active 42-year-old executive runner jogging along ocean promenade at sunrise, athletic build, energized focused smile, navy moisture-wicking tech shirt"
+    },
+    {
+        "id": "homem_adulto_terra_pesado",
+        "categoria_persona": "homem_adulto",
+        "descricao": "Homem de 39 anos executando levantamento terra com pegada firme, anilhas olímpicas e magnésio nas mãos",
+        "prompt_char": "Powerful 39-year-old athletic man performing heavy deadlift in high-tech gym, chalk on muscular hands, focused intense gaze, masculine power and longevity"
+    },
+
+    # 9. Homens Seniores / Masters 55+ (55 a 70 anos - Longevidade, Vigor & Saúde Plena)
+    {
+        "id": "homem_senior_corrida_maratona",
+        "categoria_persona": "homem_senior",
+        "descricao": "Homem sênior de 62 anos com cabelos grisalhos e corpo atlético cruzando linha de corrida de rua, sorriso triunfante",
+        "prompt_char": "Inspiring fit 62-year-old grey-haired senior male athlete running with athletic pace in street marathon, proud energized smile, lean healthy physique, technical running attire"
+    },
+    {
+        "id": "homem_senior_ciclismo_speed",
+        "categoria_persona": "homem_senior",
+        "descricao": "Ciclista master de 65 anos em bicicleta speed de fibra de carbono em estrada de serra com capacete aerodinâmico",
+        "prompt_char": "Handsome fit 65-year-old master cyclist on a sleek carbon road bike on winding mountain road, aerodynamic cycling jersey, youthful energetic posture, sharp clear daylight"
+    },
+    {
+        "id": "homem_senior_postura_mobilidade",
+        "categoria_persona": "homem_senior",
+        "descricao": "Homem de 60 anos realizando exercícios de mobilidade de ombros e coluna com postura impecável",
+        "prompt_char": "Distinguished fit 60-year-old man performing shoulder mobility exercises in luxury gym, upright powerful posture, calm confident smile, high-end vitality aesthetic"
     }
 ]
 
 MATRIZ_CENARIOS = [
     {
-        "id": "academia_elite",
-        "nome": "Academia de Luxo Moderna",
+        "id": "academia_boutique_dark",
+        "nome": "Academia Boutique High-Tech",
         "prompt_scene": "inside a luxury ultra-modern high-tech gym, dark matte walls, warm golden rim lighting, sleek dumbbells and Olympic barbells in soft bokeh background"
     },
     {
-        "id": "praia_aurora",
-        "nome": "Praia ao Nascer do Sol",
-        "prompt_scene": "along an ocean beach shoreline during warm golden sunrise, fresh morning ocean mist, radiant cinematic sun rays, dynamic coastal fitness setting"
+        "id": "praia_aurora_copacabana",
+        "nome": "Orla da Praia ao Nascer do Sol",
+        "prompt_scene": "along a tropical ocean beach promenade during warm golden sunrise, palm trees and gentle waves in background, fresh morning mist, radiant sun rays"
     },
     {
-        "id": "cozinha_funcional",
-        "nome": "Cozinha Gourmet de Alta Performance",
-        "prompt_scene": "in a sleek minimalist modern kitchen, marble island with clean shaker bottle and fresh healthy natural ingredients, bright daylight through large windows"
+        "id": "cozinha_gourmet_contemporanea",
+        "nome": "Cozinha Gourmet Contemporânea",
+        "prompt_scene": "in a sleek minimalist modern kitchen, wet dark emerald marble and teak wood island, scattered fresh mint leaves, bright morning sunlight through sheer curtains"
     },
     {
-        "id": "deck_piscina",
+        "id": "deck_piscina_resort",
         "nome": "Deck de Piscina Sofisticado",
-        "prompt_scene": "by the edge of a luxury infinity pool, crystal clear turquoise water, soft morning sun, premium outdoor wellness and recovery atmosphere"
+        "prompt_scene": "by the edge of a luxury infinity pool with crystal clear turquoise water, polished teak deck, soft morning sun, premium outdoor wellness atmosphere"
     },
     {
-        "id": "sala_funcional",
-        "nome": "Sala de Estar Minimalista para Treino em Casa",
-        "prompt_scene": "in a spacious luxury modern living room with wooden floors, soft ambient daylight, clean architectural interior for home workout"
+        "id": "sala_funcional_madeira",
+        "nome": "Sala de Estar Espaçosa com Piso de Madeira",
+        "prompt_scene": "in a spacious luxury modern living room with natural hardwood floors, soft ambient daylight, clean architectural interior for home workout"
     },
     {
-        "id": "trilha_natureza",
-        "nome": "Trilha ao Ar Livre na Natureza",
-        "prompt_scene": "on a scenic mountain running trail surrounded by lush green pine trees, morning mountain air, crisp golden sunlight filtering through trees"
+        "id": "trilha_floresta_montanha",
+        "nome": "Trilha Ecológica em Floresta com Névoa",
+        "prompt_scene": "on a scenic alpine forest trail surrounded by lush green pine trees, morning mountain air, crisp golden sunlight filtering through emerald canopy"
+    },
+    {
+        "id": "pista_corrida_vermelha",
+        "nome": "Pista de Atletismo ao Entardecer",
+        "prompt_scene": "on an Olympic red tartan running track during dramatic golden sunset, stadium lights softly glowing in background, cinematic depth of field"
+    },
+    {
+        "id": "quarto_minimalista_luxo",
+        "nome": "Quarto Minimalista de Hotel Boutique",
+        "prompt_scene": "in a serene luxury minimalist bedroom, premium mattress with crisp white Egyptian cotton sheets, bathed in soft ambient nocturnal indigo and warm bedside lighting"
+    },
+    {
+        "id": "parque_botanico_ensolarado",
+        "nome": "Parque Botânico com Gramado Verde",
+        "prompt_scene": "in a sunlit lush botanical garden, manicured green grass, blooming tropical flora, warm diffused natural morning light"
+    },
+    {
+        "id": "lounge_zen_biohacking",
+        "nome": "Lounge Zen de Biohacking e Spa",
+        "prompt_scene": "in a luxury biohacking recovery lounge, smooth black volcanic stones, green bamboo accents, warm ambient architectural lighting, pristine wellness aesthetic"
+    },
+    {
+        "id": "estrada_litoranea_penhasco",
+        "nome": "Estrada Litorânea com Penhascos e Mar",
+        "prompt_scene": "along a scenic coastal cliffside highway overlooking deep blue ocean water, clean asphalt, panoramic sea horizon, bright crisp daylight"
+    },
+    {
+        "id": "estudio_pilates_luz_natural",
+        "nome": "Estúdio de Pilates com Luz Natural",
+        "prompt_scene": "in an airy high-ceiling boutique pilates studio, light wood apparatus, sheer white drapes filtering gentle morning daylight, serene calm atmosphere"
     }
 ]
 
@@ -284,8 +481,12 @@ def gerar_angulo_criativo_inedito(tema_escolhido=None, tipo="manha", estilo_visu
     else:
         tema_obj = tema_escolhido
 
-    # Rotação obrigatória de Personagem e Cenário
-    personagem_sorteado = random.choice(MATRIZ_PERSONAGENS)
+    # Rotação obrigatória de Personagem e Cenário com suporte total à diversidade de elenco
+    if estilo_visual and estilo_visual not in ["auto", "todos"]:
+        candidatos = [p for p in MATRIZ_PERSONAGENS if p.get("categoria_persona") == estilo_visual]
+        personagem_sorteado = random.choice(candidatos) if candidatos else random.choice(MATRIZ_PERSONAGENS)
+    else:
+        personagem_sorteado = random.choice(MATRIZ_PERSONAGENS)
     cenario_sorteado = random.choice(MATRIZ_CENARIOS)
 
     # Prompt instruindo a IA sobre ineditismo estrito
@@ -314,7 +515,7 @@ Retorne EXATAMENTE um objeto JSON válido (sem crases de markdown em volta, sem 
   ],
   "categoria": "{tema_obj['categoria']}",
   "cta_card": "LEIA A LEGENDA",
-  "prompt_fotografico": "{personagem_sorteado['prompt_char']} {cenario_sorteado['prompt_scene']}. Cinematic 8k commercial photography, crisp focus, hyper-realistic skin texture, dynamic lighting, professional editorial composition. CRITICAL: PURE PHOTOGRAPHY ONLY, ZERO TEXT, NO WORDS, NO LETTERS, NO LABELS.",
+  "prompt_fotografico": "{personagem_sorteado['prompt_char']} {cenario_sorteado['prompt_scene']}. PHOTOGRAPHIC SAFE ZONE COMPOSITION: The subject's head, face, eyes, nose, mouth and upper torso MUST BE PROMINENTLY FRAMED IN THE UPPER 50% OF THE VERTICAL FRAME with beautiful golden rim lighting and tack-sharp focus. The LOWER 50% OF THE FRAME MUST BE COMPOSED AS DARK NEGATIVE SPACE (moody dark gym floor, shadowed wooden deck, dark ambient tone) designed specifically for clean advertising text layout without covering the subject's face. CRITICAL: PURE COMMERCIAL PHOTOGRAPHY ONLY, ZERO TEXT, NO WORDS, NO LETTERS, NO LABELS.",
   "legenda": "Texto persuasivo de 3 a 4 parágrafos com emojis de autoridade, explicação envolvente, chamada para comentar ou acessar marcaopersonal.com no link da bio, e hashtags pertinentes."
 }}
 """
@@ -330,7 +531,11 @@ Retorne EXATAMENTE um objeto JSON válido (sem crases de markdown em volta, sem 
         r = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload, verify=False, timeout=25)
         if r.status_code == 200:
             content = r.json()["choices"][0]["message"]["content"]
-            clean_json = content.replace("```json", "").replace("```", "").strip()
+            match = re.search(r'\{.*\}', content, re.DOTALL)
+            if match:
+                clean_json = match.group(0).strip()
+            else:
+                clean_json = content.replace("```json", "").replace("```", "").strip()
             criativo = json.loads(clean_json)
 
             # Valida ineditismo
@@ -361,7 +566,7 @@ Retorne EXATAMENTE um objeto JSON válido (sem crases de markdown em volta, sem 
         ],
         "categoria": tema_obj["categoria"],
         "cta_card": "LEIA A LEGENDA",
-        "prompt_fotografico": f"{personagem_sorteado['prompt_char']} {cenario_sorteado['prompt_scene']}. Cinematic 8k photography, crisp focus, dynamic lighting. CRITICAL: PURE PHOTOGRAPHY ONLY, ZERO TEXT.",
+        "prompt_fotografico": f"{personagem_sorteado['prompt_char']} {cenario_sorteado['prompt_scene']}. PHOTOGRAPHIC SAFE ZONE: Subject face and torso framed in upper 50%, lower 50% dark negative space for text overlay. Cinematic 8k photography, crisp focus. CRITICAL: PURE PHOTOGRAPHY ONLY, ZERO TEXT.",
         "legenda": f"🔥 {tema_obj['nome'].upper()} • CIÊNCIA DO RESULTADO\n\nResultados duradouros exigem consistência, biomecânica e suplementação de pureza comprovada!\n\n🔗 Conheça os protocolos oficiais: marcaopersonal.com (Link na Bio)\n\n#marcao #marcaopersonal #fitness #saude #qualidadedevida",
         "cenario_usado": cenario_sorteado["nome"],
         "personagem_usado": personagem_sorteado["descricao"],
