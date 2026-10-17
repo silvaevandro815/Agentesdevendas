@@ -1266,11 +1266,32 @@ def gerar_angulo_criativo_com_ia(prod: dict) -> dict:
     return obter_angulo_fallback(prod)
 
 
-def criar_slide_carrossel(titulo, subtitulo, pontos, cta_slide, num_slide, total_slides, categoria, out_path, bg_path=None, produto_img_path=None, preco=None):
+def criar_slide_carrossel(titulo, subtitulo, pontos, cta_slide, num_slide, total_slides, categoria, out_path, bg_path=None, produto_img_path=None, preco=None, formato_slide="feed"):
     """
-    Gera slide de carrossel (1080x1080) no estilo editorial moderno (@caiqueness inspired).
-    Se for o slide final com produto, compõe o mockup no pedestal à direita mantendo o design limpo.
+    Gera slide de carrossel no padrão Adobe Creative Engine 2.0 (Início, Meio, Fim).
+    Aplica tipografia de alta autoridade (Montserrat Black), selo metálico concêntrico com estrelas,
+    cartões glassmorphism com checks vetoriais, mockup hero com aura dourada e proteção facial total.
     """
+    try:
+        from adobe_creative_engine import renderizar_slide_carrossel_masterpiece
+        return renderizar_slide_carrossel_masterpiece(
+            titulo=titulo,
+            subtitulo=subtitulo,
+            pontos=pontos,
+            cta_slide=cta_slide,
+            num_slide=num_slide,
+            total_slides=total_slides,
+            categoria=categoria,
+            out_path=out_path,
+            bg_path=bg_path,
+            produto_img_path=produto_img_path,
+            preco=preco,
+            formato_slide=formato_slide,
+            estilo_cor="gold_dark"
+        )
+    except Exception as e_master:
+        print(f"[ADOBE ENGINE] Aviso: usando fallback no slide do carrossel ({e_master})")
+
     f_hero, f_tag, f_num, f_sub, f_body, f_footer, f_cta = obter_fontes_editoriais(tamanho_hero=90, tamanho_sub=26, tamanho_body=24)
 
     base = obter_fundo_editorial(bg_path)
@@ -2159,19 +2180,42 @@ def executar_ciclo_manha(indice=None, formato="carrossel", usar_ia=True, dry_run
     res_final = {}
 
     if formato == "carrossel":
+        # Identificar produto associado ao tema da manhã para exibição no Slide 3 (Oferta Final)
+        prod_associado = None
+        tema_txt = f"{tema.get('id', '')} {tema.get('tema', '')} {tema.get('legenda', '')}".lower()
+        for p in PRODUTOS_CATALOGO:
+            sku_p = p.get("sku", "").lower()
+            if "creatina" in sku_p and ("creatina" in tema_txt or "dor_muscular" in tema_txt):
+                prod_associado = p
+                break
+            elif "azempika" in sku_p and ("azempika" in tema_txt or "barriga" in tema_txt or "pochete" in tema_txt):
+                prod_associado = p
+                break
+            elif "balanca" in sku_p and ("balan" in tema_txt or "peso" in tema_txt):
+                prod_associado = p
+                break
+            elif "colageno" in sku_p and ("colageno" in tema_txt or "pele" in tema_txt):
+                prod_associado = p
+                break
+
         slides_gerados = []
+        tot_slides = len(tema["slides_carrossel"])
         for idx, s in enumerate(tema["slides_carrossel"]):
-            out_file = os.path.join(DIR_OUTPUT, f"slide_{tema['id']}_{idx+1}_{timestamp}.jpg")
+            out_file = os.path.join(DIR_OUTPUT, f"slide_{tema['id']}_{idx+1}_{timestamp}.png")
+            is_final = (idx == tot_slides - 1)
             criar_slide_carrossel(
                 titulo=s["titulo"],
                 subtitulo=s["sub"],
                 pontos=s["pontos"],
                 cta_slide=s["cta"],
                 num_slide=idx+1,
-                total_slides=len(tema["slides_carrossel"]),
+                total_slides=tot_slides,
                 categoria=tema["categoria"],
                 out_path=out_file,
-                bg_path=bg_local if idx == 0 else None
+                bg_path=bg_local if idx == 0 else None,
+                produto_img_path=prod_associado.get("image_local") if (is_final and prod_associado) else None,
+                preco=prod_associado.get("preco") if (is_final and prod_associado) else None,
+                formato_slide="feed"
             )
             slides_gerados.append(out_file)
 
@@ -2337,7 +2381,7 @@ def executar_ciclo_noite(indice=None, formato="carrossel", usar_ia=True, dry_run
         ]
         slides_gerados = []
         for idx, s in enumerate(slides):
-            out_file = os.path.join(DIR_OUTPUT, f"slide_{prod['sku']}_{idx+1}_{timestamp}.jpg")
+            out_file = os.path.join(DIR_OUTPUT, f"slide_{prod['sku']}_{idx+1}_{timestamp}.png")
             criar_slide_carrossel(
                 titulo=s["titulo"],
                 subtitulo=s["sub"],
@@ -2349,7 +2393,8 @@ def executar_ciclo_noite(indice=None, formato="carrossel", usar_ia=True, dry_run
                 out_path=out_file,
                 bg_path=bg_local if idx == 0 else None,
                 produto_img_path=prod.get("image_local") if idx == 2 else None,
-                preco=prod.get("preco") if idx == 2 else None
+                preco=prod.get("preco") if idx == 2 else None,
+                formato_slide="feed"
             )
             slides_gerados.append(out_file)
 

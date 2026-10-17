@@ -153,7 +153,7 @@ class AdobeLayeredCompositor:
     # ----------------------------------------------------------------------------------
     # 1. TRATAMENTO FOTOGRÁFICO DE FUNDO & GRADIENTE DE LEITURA
     # ----------------------------------------------------------------------------------
-    def set_cinematic_background(self, bg_image_path: str = None):
+    def set_cinematic_background(self, bg_image_path: str = None, start_vignette: float = 0.40, end_vignette: float = 0.52):
         """Carrega e enquadra foto de estúdio, ou cria iluminação de estúdio luxuosa."""
         if bg_image_path and os.path.exists(bg_image_path):
             try:
@@ -177,7 +177,7 @@ class AdobeLayeredCompositor:
         else:
             self._render_studio_lighting()
 
-        self._apply_cinema_vignette()
+        self._apply_cinema_vignette(start_norm=start_vignette, end_norm=end_vignette)
 
     def _render_studio_lighting(self):
         """Cria um fundo de iluminação de academia/estúdio com ponto de luz sutil."""
@@ -204,24 +204,25 @@ class AdobeLayeredCompositor:
 
         self.canvas.paste(Image.fromarray(arr), (0, 0))
 
-    def _apply_cinema_vignette(self):
+    def _apply_cinema_vignette(self, start_norm: float = 0.40, end_norm: float = 0.52):
         """
         LEI DA PROTEÇÃO FACIAL E DO PRODUTO (SAFE ZONES):
         - O terço superior (rosto, olhos, nariz, boca e expressão) recebe ZERO véu escuro (alpha = 0).
           Isso preserva 100% da nitidez, da iluminação dourada e da humanidade do personagem.
-        - A transição suave de vinheta escura ocorre na altura do peito/meio do corpo (norm_y de 0.40 a 0.52).
-        - A metade inferior (norm_y >= 0.52) recebe a base escura sólida com alta opacidade para contraste
+        - A transição suave de vinheta escura ocorre na altura do peito/meio do corpo (norm_y de start_norm a end_norm).
+        - A metade inferior (norm_y >= end_norm) recebe a base escura sólida com alta opacidade para contraste
           cristalino de leitura de manchete, benefícios e CTA.
         """
         mask_arr = np.zeros((self.height, self.width), dtype=np.uint8)
+        span = max(end_norm - start_norm, 0.01)
         for y in range(self.height):
             norm_y = y / self.height
-            if norm_y < 0.40:
+            if norm_y < start_norm:
                 # ZONA DE PROTEÇÃO FACIAL TOTAL (0% escurecimento nos olhos, nariz e boca)
                 alpha = 0
-            elif norm_y < 0.52:
+            elif norm_y < end_norm:
                 # Transição suave cinematográfica do peito para o card
-                alpha = int(245 * ((norm_y - 0.40) / 0.12))
+                alpha = int(245 * ((norm_y - start_norm) / span))
             else:
                 # Base de alta legibilidade para headline, cards e CTA
                 alpha = 245
@@ -585,6 +586,113 @@ class AdobeLayeredCompositor:
         draw.text((x2, y + 28), site_text, font=font_site, fill=self.theme["text_secondary"])
 
     # ----------------------------------------------------------------------------------
+    # 8. COMPONENTES EXCLUSIVOS DE CARROSSEL EDITORIAL (INÍCIO, MEIO E FIM)
+    # ----------------------------------------------------------------------------------
+    def draw_carousel_header(self, category: str, num_slide: int, total_slides: int, preco: str = None, y: int = 50):
+        """Cabeçalho editorial de carrossel com pílula de passo e contador/preço de lote."""
+        draw = ImageDraw.Draw(self.canvas)
+        font_pill = get_font("Montserrat-Bold.ttf", 19)
+        font_counter = get_font("Montserrat-ExtraBold.ttf", 20)
+
+        # 1. Pílula esquerda de Categoria / Passo narrativo
+        if num_slide == 1:
+            step_label = "INÍCIO  •  O PROBLEMA"
+        elif num_slide == total_slides:
+            step_label = "FIM  •  SOLUÇÃO OFICIAL"
+        else:
+            step_label = f"PASSO 0{num_slide}  •  O MECANISMO"
+
+        cat_clean = f"{category.upper()}  |  {step_label}" if category else step_label
+        bbox_cat = draw.textbbox((0, 0), cat_clean, font=font_pill)
+        cw = bbox_cat[2] - bbox_cat[0]
+        ch = bbox_cat[3] - bbox_cat[1]
+
+        card_h = 44
+        card_w = cw + 46
+        card_x = 60
+
+        self._draw_box_shadow((card_x, y, card_x + card_w, y + card_h), radius=card_h // 2, blur=8, opacity=110)
+        pill_layer = Image.new("RGBA", (self.width, self.height), (0, 0, 0, 0))
+        pdraw = ImageDraw.Draw(pill_layer)
+        pdraw.rounded_rectangle([card_x, y, card_x + card_w, y + card_h], radius=card_h // 2, fill=(18, 24, 34, 230), outline=self.theme["accent"], width=2)
+        self.canvas = Image.alpha_composite(self.canvas, pill_layer)
+
+        draw = ImageDraw.Draw(self.canvas)
+        draw_vector_lightning(draw, card_x + 18, y + card_h // 2, size=14, color=self.theme["accent_bright"])
+        draw.text((card_x + 32, y + (card_h - ch) // 2 - 2), cat_clean, font=font_pill, fill=self.theme["accent_bright"])
+
+        # 2. Contador / Preço na direita
+        if preco and num_slide == total_slides:
+            tag_pr = f"LOTE: {preco.upper()}"
+            bbox_pr = draw.textbbox((0, 0), tag_pr, font=font_counter)
+            pw = bbox_pr[2] - bbox_pr[0]
+            ph = bbox_pr[3] - bbox_pr[1]
+            bx_w = pw + 36
+            bx_x = self.width - 60 - bx_w
+
+            self._draw_box_shadow((bx_x, y, bx_x + bx_w, y + card_h), radius=card_h // 2, blur=8, opacity=110)
+            pr_layer = Image.new("RGBA", (self.width, self.height), (0, 0, 0, 0))
+            prdraw = ImageDraw.Draw(pr_layer)
+            prdraw.rounded_rectangle([bx_x, y, bx_x + bx_w, y + card_h], radius=card_h // 2, fill=(18, 24, 34, 230), outline=(0, 229, 255), width=2)
+            self.canvas = Image.alpha_composite(self.canvas, pr_layer)
+
+            draw = ImageDraw.Draw(self.canvas)
+            draw.text((bx_x + 18, y + (card_h - ph) // 2 - 2), tag_pr, font=font_counter, fill=(0, 229, 255))
+        else:
+            tag_cnt = f"0{num_slide} / 0{total_slides}"
+            bbox_cnt = draw.textbbox((0, 0), tag_cnt, font=font_counter)
+            cw = bbox_cnt[2] - bbox_cnt[0]
+            ch = bbox_cnt[3] - bbox_cnt[1]
+            bx_w = cw + 36
+            bx_x = self.width - 60 - bx_w
+
+            self._draw_box_shadow((bx_x, y, bx_x + bx_w, y + card_h), radius=card_h // 2, blur=8, opacity=110)
+            cnt_layer = Image.new("RGBA", (self.width, self.height), (0, 0, 0, 0))
+            cdraw = ImageDraw.Draw(cnt_layer)
+            cdraw.rounded_rectangle([bx_x, y, bx_x + bx_w, y + card_h], radius=card_h // 2, fill=(18, 24, 34, 230), outline=self.theme["accent"], width=2)
+            self.canvas = Image.alpha_composite(self.canvas, cnt_layer)
+
+            draw = ImageDraw.Draw(self.canvas)
+            draw.text((bx_x + 18, y + (card_h - ch) // 2 - 2), tag_cnt, font=font_counter, fill=self.theme["accent_bright"])
+
+    def draw_carousel_indicator(self, cta_text: str = "ARRASTE PARA O LADO", y: int = 1240):
+        """Indicador sutil e sofisticado de arrastar carrossel com linha de respiro."""
+        draw = ImageDraw.Draw(self.canvas)
+        font_ind = get_font("Montserrat-ExtraBold.ttf", 20)
+        clean_text = cta_text.replace("››", "").replace(">", "").strip().upper()
+        if not clean_text or clean_text == "ARRASTE":
+            clean_text = "ARRASTE PARA O LADO"
+
+        # Linha divisória de respiro acima do footer
+        draw.line([(60, y - 25), (self.width - 60, y - 25)], fill=(35, 48, 70, 160), width=1)
+
+        # Assinatura à esquerda
+        font_brand = get_font("Montserrat-Bold.ttf", 18)
+        brand_str = "@MARCAOPERSONALFITNESS"
+        draw.text((60, y + 4), brand_str, font=font_brand, fill=self.theme["text_secondary"])
+
+        # Pílula de Arraste à direita com seta vetorial
+        bbox = draw.textbbox((0, 0), clean_text, font=font_ind)
+        tw = bbox[2] - bbox[0]
+        th = bbox[3] - bbox[1]
+
+        pill_w = tw + 70
+        pill_h = 44
+        pill_x = self.width - 60 - pill_w
+        pill_y = y - 6
+
+        self._draw_box_shadow((pill_x, pill_y, pill_x + pill_w, pill_y + pill_h), radius=pill_h // 2, blur=10, opacity=120)
+        p_layer = Image.new("RGBA", (self.width, self.height), (0, 0, 0, 0))
+        pdraw = ImageDraw.Draw(p_layer)
+        pdraw.rounded_rectangle([pill_x, pill_y, pill_x + pill_w, pill_y + pill_h], radius=pill_h // 2, fill=(245, 158, 11, 230), outline=(253, 224, 71), width=2)
+        self.canvas = Image.alpha_composite(self.canvas, p_layer)
+
+        draw = ImageDraw.Draw(self.canvas)
+        draw.text((pill_x + 22, pill_y + (pill_h - th) // 2 - 2), clean_text, font=font_ind, fill=(10, 12, 16))
+        draw_vector_arrow(draw, pill_x + 22 + tw + 18, pill_y + pill_h // 2, length=18, color=(10, 12, 16), width=3)
+
+
+    # ----------------------------------------------------------------------------------
     # UTILITÁRIOS INTERNOS DE SOMBRA E BLUR
     # ----------------------------------------------------------------------------------
     def _draw_box_shadow(self, box: tuple, radius: int = 16, blur: int = 14, opacity: int = 140, offset: tuple = (0, 6)):
@@ -727,6 +835,105 @@ def renderizar_criativo_masterpiece(
     return compositor.save(out_path)
 
 
+# ======================================================================================
+# MOTOR DE SLIDES DE CARROSSEL MASTERPIECE 2.0 (INÍCIO, MEIO E FIM)
+# ======================================================================================
+def renderizar_slide_carrossel_masterpiece(
+    titulo: str,
+    subtitulo: str = None,
+    pontos: list = None,
+    cta_slide: str = None,
+    num_slide: int = 1,
+    total_slides: int = 3,
+    categoria: str = "CIÊNCIA & RECUPERAÇÃO",
+    out_path: str = None,
+    bg_path: str = None,
+    produto_img_path: str = None,
+    preco: str = None,
+    nome_autor: str = "EVANDRO GALLINA",
+    formato_slide: str = "feed",
+    estilo_cor: str = "gold_dark"
+) -> str:
+    """
+    Renderiza um Slide de Carrossel de altíssimo padrão Adobe Creative Engine 2.0.
+    Aplica a Lei da Proteção Facial no Slide 1, Diagramação Científica no Slide 2
+    e Mockup Hero do Produto no Slide 3.
+    """
+    if formato_slide == "quadrado":
+        width, height = 1080, 1080
+    else:
+        width, height = 1080, 1350  # Padrão Instagram Feed Portrait 4:5
+
+    if not out_path:
+        out_path = os.path.join(PUBLIC_IMG_DIR, f"slide_{num_slide}_{int(os.getpid())}.png")
+
+    compositor = AdobeLayeredCompositor(width, height, theme=estilo_cor)
+
+    # 1. Background com Safe Zone Facial
+    if num_slide == 1 and bg_path and os.path.exists(bg_path):
+        # Slide 1 (Início): Foto de estúdio/ação com rosto e expressão 100% protegidos
+        compositor.set_cinematic_background(bg_path, start_vignette=0.48, end_vignette=0.58)
+    else:
+        # Slides 2 e 3 (Meio e Fim): Estúdio escuro premium tecnológico
+        compositor.set_cinematic_background(None)
+
+    # 2. Header do Carrossel (Pílula de Categoria / Passo e Contador / Preço)
+    compositor.draw_carousel_header(categoria, num_slide, total_slides, preco=preco if num_slide == total_slides else None, y=45)
+
+    # 3. Selo de Autoridade Metálico Concêntrico com Estrelas Vetoriais
+    if num_slide == 2:
+        compositor.draw_authority_seal((width - 95, 140), radius=50, text_top="100% CIÊNCIA", text_sub="LAUDO TÉCNICO")
+    elif num_slide == total_slides:
+        seal_top = preco if preco else "100% PURO"
+        seal_sub = "LOTE OFICIAL" if preco else "LAUDO OFICIAL"
+        compositor.draw_authority_seal((width - 95, 140), radius=55, text_top=seal_top, text_sub=seal_sub)
+
+    # 4. Posicionamento de Manchete Dinâmico (Respeito rigoroso à Zona Facial)
+    if num_slide == 1:
+        # Slide 1: Começa no terço inferior para jamais sobrepor o rosto ou tronco
+        start_y = int(height * 0.52)
+    else:
+        # Slides 2 e 3: Começa na parte superior livre
+        start_y = 120
+
+    y_after_head = compositor.draw_hero_headline(titulo, subtitulo, start_y=start_y)
+
+    # 5. Lista de Pontos / Benefícios e Mockup Hero do Produto
+    tem_produto = produto_img_path and os.path.exists(produto_img_path) and (num_slide == total_slides)
+
+    if pontos:
+        actual_pts_y = y_after_head + 25
+        if tem_produto:
+            card_w = 570
+            compositor.draw_benefit_cards(pontos[:3], start_y=actual_pts_y, card_w=card_w, card_x=60)
+
+            # Produto Hero à direita com pedestal, aura dourada/glow e sombra realista
+            prod_cx = 855
+            prod_cy = actual_pts_y + 130
+            compositor.draw_hero_product(produto_img_path, (prod_cx, prod_cy), max_size=(350, 370), glow=True, ground_shadow=True)
+        else:
+            compositor.draw_benefit_cards(pontos[:3], start_y=actual_pts_y)
+    elif tem_produto:
+        prod_cx = width // 2
+        prod_cy = y_after_head + 180
+        compositor.draw_hero_product(produto_img_path, (prod_cx, prod_cy), max_size=(420, 420), glow=True, ground_shadow=True)
+
+    # 6. Rodapé do Slide: Arraste no Início/Meio ou CTA 3D no Fim
+    if num_slide < total_slides:
+        # Slides 1 e 2: Indicador elegante com seta animada
+        indicador = cta_slide if cta_slide else "ARRASTE PARA O LADO"
+        compositor.draw_carousel_indicator(indicador, y=height - 95)
+    else:
+        # Slide 3 (Final): Botão 3D de alta conversão + Rodapé Oficial
+        final_cta = cta_slide if cta_slide else "GARANTA NO LINK DA BIO"
+        if preco and ("COMPRE" in final_cta.upper() or "GARANTA" in final_cta.upper()) and preco not in final_cta:
+            final_cta = f"{final_cta} POR {preco}"
+        compositor.draw_cta_button_3d(final_cta, y=height - 180)
+        compositor.draw_brand_footer(y=height - 85)
+
+    return compositor.save(out_path)
+
+
 if __name__ == "__main__":
     teste_feed = os.path.join(BASE_DIR, "assets", "teste_masterpiece_feed.png")
     renderizar_criativo_masterpiece(
@@ -760,3 +967,58 @@ if __name__ == "__main__":
         estilo_cor="gold_dark"
     )
     print("Testes Feed e Story 2.0 concluídos com sucesso!")
+
+    # Teste Carrossel 3 Slides (Início, Meio e Fim)
+    teste_s1 = os.path.join(BASE_DIR, "assets", "teste_carrossel_s1_inicio.png")
+    teste_s2 = os.path.join(BASE_DIR, "assets", "teste_carrossel_s2_meio.png")
+    teste_s3 = os.path.join(BASE_DIR, "assets", "teste_carrossel_s3_fim.png")
+
+    renderizar_slide_carrossel_masterpiece(
+        titulo="TOMOU ANTI-INFLAMATÓRIO?\nSEU TREINO FOI PARA O LIXO!",
+        subtitulo="A bioquímica da dor muscular explicada pelo Marcão:",
+        pontos=[
+            "A dor após o treino decorre de microfissuras benéficas.",
+            "Remédios comuns desligam o gatilho biológico de crescimento."
+        ],
+        cta_slide="ARRASTE PARA O LADO ››",
+        num_slide=1,
+        total_slides=3,
+        categoria="CIÊNCIA & RECUPERAÇÃO",
+        out_path=teste_s1,
+        bg_path=os.path.join(BASE_DIR, "assets", "foto_evandro_gym.png")
+    )
+
+    renderizar_slide_carrossel_masterpiece(
+        titulo="O QUE ACONTECE NA FIBRA\nQUANDO VOCÊ TOMA REMÉDIO?",
+        subtitulo="Bloqueio da enzima COX-2 comprovado pela fisiologia:",
+        pontos=[
+            "A síntese de novas fibras musculares é completamente paralisada.",
+            "As células satélites não se fundem para engrossar o músculo.",
+            "A inflamação fisiológica controlada é sua maior aliada."
+        ],
+        cta_slide="VEJA A SOLUÇÃO A SEGUIR ››",
+        num_slide=2,
+        total_slides=3,
+        categoria="CIÊNCIA & RECUPERAÇÃO",
+        out_path=teste_s2
+    )
+
+    prod_local = os.path.join(BASE_DIR, "apps", "site", "public", "images", "creatina.jpg")
+    renderizar_slide_carrossel_masterpiece(
+        titulo="PADRÃO OURO MARCÃO PERSONAL\nRECUPERAÇÃO SEM REMÉDIOS",
+        subtitulo="Protocolo celular com Creatina Micronizada 100% Pura:",
+        pontos=[
+            "Creatina Micronizada 100% Pura Nature's Prime.",
+            "Hidratação profunda das fibras e ressíntese acelerada de ATP.",
+            "Pote oficial de 300g (100 doses oficiais)."
+        ],
+        cta_slide="COMPRE NO LINK DA BIO",
+        num_slide=3,
+        total_slides=3,
+        categoria="OFERTA OFICIAL",
+        out_path=teste_s3,
+        produto_img_path=prod_local,
+        preco="R$ 169,90"
+    )
+    print("Testes Carrossel 3 Slides (Início, Meio, Fim) concluídos com sucesso!")
+
