@@ -41,6 +41,8 @@ COR_ORANGE = (255, 138, 0)
 
 # Diretórios de Mídia e Fontes Editoriais
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
 ROOT_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", ".."))
 DIR_OUTPUT = os.path.join(ROOT_DIR, "apps", "site", "public", "images", "posts")
 FONTS_DIR = os.path.join(BASE_DIR, "fonts")
@@ -1410,10 +1412,27 @@ def criar_slide_carrossel(titulo, subtitulo, pontos, cta_slide, num_slide, total
 
 def criar_card_unico(headline, subheadline, pontos, categoria, cta_texto, out_path, bg_path=None, produto_img_path=None, preco=None):
     """
-    Gera um Card Único de Altíssimo Impacto Visual (@caiqueness inspired)
-    com composição de produto real (mockup com sombra realista), manchete proporcional,
-    luz âmbar quente, contraste absoluto e estética editorial de luxo. NUNCA fundo preto liso.
+    Gera um Card Único de Altíssimo Impacto Visual no padrão Adobe Creative Engine 2.0 (Feed 4:5 - 1080x1350).
+    Composição profissional com tipografia de alta autoridade, selo de laudo e botão 3D.
     """
+    try:
+        from adobe_creative_engine import renderizar_criativo_masterpiece
+        return renderizar_criativo_masterpiece(
+            headline=headline,
+            subheadline=subheadline,
+            pontos_beneficio=pontos,
+            categoria=categoria,
+            cta_texto=cta_texto if cta_texto else "LEIA A LEGENDA",
+            bg_path=bg_path,
+            produto_img_path=produto_img_path,
+            preco=preco,
+            out_path=out_path,
+            formato="feed",
+            estilo_cor="gold_dark"
+        )
+    except Exception as e_master:
+        print(f"[ADOBE ENGINE] Aviso: usando fallback legado no card único ({e_master})")
+
     # 1. Base (nunca preto liso)
     base = obter_fundo_editorial(bg_path)
 
@@ -1585,10 +1604,29 @@ def criar_card_unico(headline, subheadline, pontos, categoria, cta_texto, out_pa
 
 def criar_card_feed_4x5(headline, subheadline, pontos, categoria, cta_texto, out_path, bg_path=None, produto_img_path=None, preco=None, nome_autor="EVANDRO GALLINA"):
     """
-    Gera imagem de Feed Portrait (1080x1350 - 4:5) no padrão editorial @caiqueness.
-    Garante que a foto do personagem fique 100% nítida e visível no topo (sem véu escuro),
-    e o card de explicações detalhadas fique na base, com exata paridade visual e de conteúdo com os Stories.
+    Gera imagem de Feed Portrait (1080x1350 - 4:5) no padrão Adobe Creative Engine 2.0.
+    Garante foto do personagem 100% nítida e iluminada, tipografia de alta autoridade,
+    selo circular de procedência oficial, cartões glassmorphism e botão de conversão 3D.
     """
+    try:
+        from adobe_creative_engine import renderizar_criativo_masterpiece
+        return renderizar_criativo_masterpiece(
+            headline=headline,
+            subheadline=subheadline,
+            pontos_beneficio=pontos,
+            categoria=categoria,
+            cta_texto=cta_texto if cta_texto else "LEIA A LEGENDA",
+            bg_path=bg_path,
+            produto_img_path=produto_img_path,
+            preco=preco,
+            nome_autor=nome_autor,
+            out_path=out_path,
+            formato="feed",
+            estilo_cor="gold_dark"
+        )
+    except Exception as e_master:
+        print(f"[ADOBE ENGINE] Aviso: usando fallback legado no feed 4:5 ({e_master})")
+
     f_hero, f_tag, _, f_sub, f_body, f_footer, _ = obter_fontes_editoriais(tamanho_hero=78, tamanho_sub=25, tamanho_body=22)
 
     W, H = 1080, 1350
@@ -1697,9 +1735,29 @@ def criar_card_feed_4x5(headline, subheadline, pontos, categoria, cta_texto, out
 
 def criar_story(headline, subheadline, pontos, categoria, cta_texto, out_path, bg_path=None, produto_img_path=None, preco=None, nome_autor="EVANDRO GALLINA"):
     """
-    Gera imagem de Story vertical (1080x1920 - 9:16) no padrão editorial @caiqueness.
-    Enquadra a foto de Evandro em ação esportiva no topo (65%) e o card editorial na base.
+    Gera imagem de Story vertical (1080x1920 - 9:16) no padrão Adobe Creative Engine 2.0.
+    Enquadra a foto de ação esportiva com zona de foco no topo, tipografia editorial,
+    selo circular metálico, cartões glassmorphism e sticker botão 3D de alta conversão.
     """
+    try:
+        from adobe_creative_engine import renderizar_criativo_masterpiece
+        return renderizar_criativo_masterpiece(
+            headline=headline,
+            subheadline=subheadline,
+            pontos_beneficio=pontos,
+            categoria=categoria,
+            cta_texto=cta_texto if cta_texto else "TOQUE NO LINK",
+            bg_path=bg_path,
+            produto_img_path=produto_img_path,
+            preco=preco,
+            nome_autor=nome_autor,
+            out_path=out_path,
+            formato="story",
+            estilo_cor="gold_dark"
+        )
+    except Exception as e_master:
+        print(f"[ADOBE ENGINE] Aviso: usando fallback legado no story ({e_master})")
+
     f_hero, f_tag, _, f_sub, f_body, _, f_btn = obter_fontes_editoriais(tamanho_hero=84, tamanho_sub=25, tamanho_body=23)
 
     W, H = 1080, 1920

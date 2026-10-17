@@ -7,6 +7,7 @@ imediatamente no Feed, Reels ou Stories da conta oficial @marcaopersonalfitness.
 """
 
 import os
+import sys
 import re
 import time
 import json
@@ -14,6 +15,10 @@ import base64
 import requests
 import urllib3
 from datetime import datetime
+
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+if CURRENT_DIR not in sys.path:
+    sys.path.insert(0, CURRENT_DIR)
 
 from dotenv import load_dotenv
 
@@ -215,6 +220,23 @@ def executar_postagem_solicitada(texto_comando: str) -> dict:
     try:
         from creative_factory import criar_card_unico, criar_story
 
+        prod_img = None
+        preco = None
+        cmd_lower = (texto_comando + " " + plano.get("headline", "")).lower()
+        base_img_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "site", "public", "images")
+        if "creatina" in cmd_lower:
+            prod_img = os.path.join(base_img_dir, "creatina.jpg")
+            preco = "R$ 169,90"
+        elif "colágeno" in cmd_lower or "colageno" in cmd_lower:
+            prod_img = os.path.join(base_img_dir, "colageno.png")
+            preco = "R$ 164,90"
+        elif "azempika" in cmd_lower or "caneta" in cmd_lower:
+            prod_img = os.path.join(base_img_dir, "azempika.jpg")
+            preco = "R$ 99,00"
+        elif "iarmonize" in cmd_lower or "capilar" in cmd_lower:
+            prod_img = os.path.join(base_img_dir, "iarmonize.jpg")
+            preco = "R$ 1.256,00"
+
         if plano.get("destino") == "STORIES":
             criar_story(
                 headline=plano.get("headline"),
@@ -223,7 +245,9 @@ def executar_postagem_solicitada(texto_comando: str) -> dict:
                 categoria=plano.get("categoria", "ALTA PERFORMANCE"),
                 cta_texto=plano.get("cta_card", "COMPRAR COM FRETE GRÁTIS"),
                 out_path=card_editorial_local,
-                bg_path=img_local
+                bg_path=img_local,
+                produto_img_path=prod_img,
+                preco=preco
             )
         else:
             criar_card_unico(
@@ -233,7 +257,9 @@ def executar_postagem_solicitada(texto_comando: str) -> dict:
                 categoria=plano.get("categoria", "ALTA PERFORMANCE"),
                 cta_texto=plano.get("cta_card", "LEIA A LEGENDA"),
                 out_path=card_editorial_local,
-                bg_path=img_local
+                bg_path=img_local,
+                produto_img_path=prod_img,
+                preco=preco
             )
         img_final = card_editorial_local
     except Exception as e_comp:
