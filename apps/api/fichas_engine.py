@@ -499,7 +499,7 @@ async def processar_etapa_onboarding(remote_jid: str, telefone: str, nome: str, 
         await atualizar_campo_ficha(remote_jid, {
             "consentimento_lgpd": True,
             "data_consentimento_lgpd": datetime.utcnow().isoformat(),
-            "termo_lgpd_versao": "v2.0_responsabilidade_ia_lgpd",
+            "termo_lgpd_versao": "v2.0_lgpd",
             "treino_atual": treino,
             "diagnostico_clinico": diag,
             "metas_nutricionais": diag.get("macros", {}),

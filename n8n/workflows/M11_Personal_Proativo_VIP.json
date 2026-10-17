@@ -2,15 +2,15 @@
   "id": "twaIdBJADtfS8evK",
   "name": "M11 - Personal Proativo VIP (Check-ins & Upsells 30d)",
   "description": null,
-  "active": false,
-  "activeVersionId": null,
+  "active": true,
+  "activeVersionId": "5bb51ea7-795e-4ee0-9c5f-940d8d700976",
   "createdAt": "2026-10-13T12:25:54.060Z",
-  "updatedAt": "2026-10-13T12:25:54.060Z",
+  "updatedAt": "2026-10-17T14:15:03.084Z",
   "isArchived": false,
-  "versionId": "c4fb6d21-f294-4a79-a063-620e0f5bc618",
-  "versionCounter": 1,
+  "versionId": "5bb51ea7-795e-4ee0-9c5f-940d8d700976",
+  "versionCounter": 5,
   "sourceWorkflowId": null,
-  "triggerCount": 0,
+  "triggerCount": 8,
   "nodes": [
     {
       "id": "m11-cron-segunda",
@@ -119,17 +119,13 @@
       ],
       "parameters": {
         "method": "GET",
-        "url": "https://qkopgftfrfftoyndhhfj.supabase.co/rest/v1/fichas_alunos?status_acompanhamento=eq.ativo&select=*",
+        "url": "https://admin.marcaopersonal.com/api/vip/clientes",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
-              "name": "apikey",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrb3BnZnRmcmZmdG95bmRoaGZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MTgwMTU4MywiZXhwIjoyMTA3Mzc3NTgzfQ.S_RRdnI6SZTVR1UH7jryDVHf316YmnMOVEBuoedyKv8"
-            },
-            {
-              "name": "Authorization",
-              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrb3BnZnRmcmZmdG95bmRoaGZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MTgwMTU4MywiZXhwIjoyMTA3Mzc3NTgzfQ.S_RRdnI6SZTVR1UH7jryDVHf316YmnMOVEBuoedyKv8"
+              "name": "Accept",
+              "value": "application/json"
             }
           ]
         },
@@ -151,7 +147,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "\nconst alunos = $('Buscar Alunos VIP Supabase').all().map(i => i.json);\nconst agora = new Date();\nconst diaSemana = agora.getDay(); // 0=Dom, 1=Seg, 2=Ter, 3=Qua, 4=Qui, 5=Sex, 6=Sab\nconst hora = agora.getHours();\nconst disparos = [];\n\n// Função anti-mock\nfunction ehMock(num) {\n  if (!num) return true;\n  const dig = num.replace(/\\D/g, '');\n  if (dig.length < 10) return true;\n  if (['5532984587255', '553284587255', '553285066687'].includes(dig)) return false;\n  const mocks = ['99998888', '99997777', '988881111', '123456', '000000'];\n  return mocks.some(m => dig.includes(m));\n}\n\nfor (const a of alunos) {\n  if (!a.telefone || ehMock(a.telefone)) continue;\n  const nome = a.nome || a.nome_aluno ? (a.nome || a.nome_aluno).split(' ')[0] : 'Guerreiro';\n  const treino = a.treino_divisao || a.treino_atual || {};\n  const treinoA = treino.treino_a || 'Peitoral & Ombros';\n  const obj = (a.objetivo || '').toLowerCase();\n  const restricoes = (a.restricoes_saude || '').toLowerCase();\n\n  // 1. Verificação de Upsell de 30 dias\n  let diasAtivos = 0;\n  if (a.created_at || a.criado_em) {\n    const inicio = new Date(a.created_at || a.criado_em);\n    diasAtivos = Math.floor((agora - inicio) / (1000 * 60 * 60 * 24));\n  }\n\n  let elegivelUpsell = false;\n  if (diasAtivos >= 28) {\n    if (!a.ultimo_upsell_em && !a.ultimo_upsell_data) {\n      elegivelUpsell = true;\n    } else {\n      const ultUpsell = new Date(a.ultimo_upsell_em || a.ultimo_upsell_data);\n      const diasDesdeUlt = Math.floor((agora - ultUpsell) / (1000 * 60 * 60 * 24));\n      if (diasDesdeUlt >= 28) elegivelUpsell = true;\n    }\n  }\n\n  // Determinar se é teste manual ou rotina por cron\n  const isTeste = $input.first().json.query && $input.first().json.query.teste;\n\n  if (elegivelUpsell && hora >= 9 && hora <= 11) {\n    let msgUpsell = '';\n    if (restricoes.includes('dor') || restricoes.includes('joelho') || restricoes.includes('coluna')) {\n      msgUpsell = `Fala, ${nome}! Fechando nosso ciclo de 30 dias de acompanhamento firme! 👊\\n\\nComo você me falou daquela sensibilidade nas articulações, muitos alunos meus zeram o incômodo usando o Colágeno Tipo II com Cúrcuma e Magnésio da nossa loja oficial: https://marcaopersonal.com#produtos\\n\\nSem pressão nenhuma, é recomendação técnica de treinador pra proteger sua estrutura! Bora pro treino!`;\n    } else if (obj.includes('massa') || obj.includes('hipertrofia') || obj.includes('força')) {\n      msgUpsell = `Fala, ${nome}! Completamos 30 dias de treino consistente, parabéns pela dedicação! 🔥\\n\\nPra essa fase de progressão de carga e ganho de volume muscular seco, a Creatina monohidratada 100% pura é o suplemento número 1 do mundo com comprovação total. Dá um confere lá no site oficial: https://marcaopersonal.com#produtos\\n\\nVai te dar aquela força na última repetição! Tamo junto!`;\n    } else {\n      msgUpsell = `Fala, ${nome}! 30 dias de foco e evolução na balança! Orgulho demais da sua disciplina! 🦁\\n\\nNormalmente a partir do primeiro mês o metabolismo dá uma desacelerada natural pra defender a gordura. Pra manter a queima acelerada e evitar aquele platô chato de estagnação, o ativador Azempika do nosso site ajuda demais a controlar apetite e acelerar a queima: https://marcaopersonal.com#produtos\\n\\nSe fizer sentido pra sua rotina, dá um confere lá!`;\n    }\n\n    disparos.push({\n      telefone: a.telefone,\n      remote_jid: a.remote_jid,\n      tipo: 'upsell_30dias',\n      eh_upsell: true,\n      texto: msgUpsell\n    });\n  } else if (diaSemana === 1 || isTeste === 'segunda') {\n    // Segunda-feira (07:30)\n    disparos.push({\n      telefone: a.telefone,\n      remote_jid: a.remote_jid,\n      tipo: 'checkin_segunda',\n      eh_upsell: false,\n      texto: `Fala, ${nome}! 🦁 Marcão na área! Segunda-feira é dia sagrado de recomeço com foco total!\\n\\nPrimeira missão do dia em jejum: sobe na sua Balança de Bioimpedância e me manda o print ou peso aqui! Sua meta hoje é água na garrafa (35ml por kg) e foco no Treino A (${treinoA})!\\n\\nBora começar a semana vencendo! Tamo junto!`\n    });\n  } else if (diaSemana === 3 || isTeste === 'quarta') {\n    // Quarta-feira (18:00)\n    disparos.push({\n      telefone: a.telefone,\n      remote_jid: a.remote_jid,\n      tipo: 'checkin_quarta',\n      eh_upsell: false,\n      texto: `E aí, ${nome}! 👊 Quarta-feira, metade da semana vencida! Como tá a pegada dos treinos?\\n\\nPassando pra checar se o treino de hoje já tá pago! Me manda uma foto do seu prato de almoço ou jantar aqui pra eu dar uma olhada nos seus macros e calibrar sua dieta!\\n\\nMantém o ritmo firme, guerreiro!`\n    });\n  } else if (diaSemana === 5 || isTeste === 'sexta') {\n    // Sexta-feira (18:30)\n    disparos.push({\n      telefone: a.telefone,\n      remote_jid: a.remote_jid,\n      tipo: 'checkin_sexta',\n      eh_upsell: false,\n      texto: `Fala, ${nome}! 🦁 Sextou com a sensação de dever cumprido!\\n\\nFechamos a meta semanal de treinos com chave de ouro! Agora no fim de semana, descanso com moderação e nada de jogar fora o esforço dos últimos 5 dias, combinado?\\n\\nSegura a hidratação e excelente descanso!`\n    });\n  }\n}\n\nreturn disparos.map(d => ({ json: d }));\n"
+        "jsCode": "\nconst alunos = $('Buscar Alunos VIP Supabase').all().map(i => i.json);\nconst agoraUtc = new Date();\nconst agora = new Date(agoraUtc.getTime() - (3 * 60 * 60 * 1000)); // Horário de Brasília\nconst diaSemana = agora.getDay(); // 0=Dom, 1=Seg, 2=Ter, 3=Qua, 4=Qui, 5=Sex, 6=Sab\nconst hora = agora.getHours();\nconst disparos = [];\n\n// Função anti-mock\nfunction ehMock(num) {\n  if (!num) return true;\n  const dig = num.replace(/\\D/g, '');\n  if (dig.length < 10) return true;\n  if (['5532984587255', '553284587255', '553285066687', '5532988273367', '553288273367'].includes(dig)) return false;\n  const mocks = ['99998888', '99997777', '988881111', '123456', '000000'];\n  return mocks.some(m => dig.includes(m));\n}\n\nfor (const a of alunos) {\n  if (!a.telefone || ehMock(a.telefone)) continue;\n  const rawTel = a.telefone.replace(/\\D/g, '');\n  const nome = (a.nome || a.nome_aluno || a.nome_cliente || 'Guerreiro(a)').trim().split(' ')[0];\n  const obj = (a.objetivo || '').toLowerCase();\n  const restricoes = (a.restricoes || a.restricoes_saude || '').toLowerCase();\n\n  // REGRA SUPREMA: DIRETOR E FUNDADOR EVANDRO GALLINA\n  // Evandro NUNCA recebe mensagens robóticas de onboarding/LGPD\n  const isEvandro = ['553284587255', '5532984587255'].includes(rawTel) ||\n                    rawTel.endsWith('84587255') ||\n                    (a.nome && a.nome.toLowerCase().includes('evandro'));\n  if (isEvandro) {\n    continue;\n  }\n\n  const modoAtleta = a.modo_atleta === true || obj.includes('competicao') || obj.includes('atleta');\n  const lgpdAutorizado = a.consentimento_lgpd === true || a.consentimento_lgpd === 'Autorizado (LGPD)';\n  const lgpdPendente = !lgpdAutorizado;\n  const pesoPendente = !a.ultimo_peso || String(a.ultimo_peso).includes('Pendente');\n  const localPendente = !a.local_treino || String(a.local_treino).includes('Pendente');\n  const restricoesPendente = !a.restricoes || String(a.restricoes).includes('Pendente');\n  const dadosCompletos = a.dados_completos === true || (lgpdAutorizado && !pesoPendente && !localPendente);\n\n  const isTeste = $input.first().json.query && $input.first().json.query.teste;\n\n  // =========================================================================\n  // 1. PRIORIDADE MÁXIMA: COBRANÇA DIVERTIDA DE DADOS FALTANTES (SE NÃO AUTORIZADO)\n  // =========================================================================\n  if (!dadosCompletos && isTeste !== 'atleta') {\n    if (lgpdPendente) {\n      disparos.push({\n        telefone: rawTel,\n        remote_jid: a.remote_jid,\n        tipo: 'cobranca_lgpd_divertida',\n        eh_upsell: false,\n        texto: `Fala, ${nome}! 🦁 Marcão Personal na área!\\n\\nSeu planejamento VIP tá no forno e louco pra sair do papel! Mas como personal responsável (e pra cumprirmos a lei da LGPD e a sua segurança), só preciso de uma palavrinha mágica de confirmação:\\n\\nMe manda um 'CONCORDO' aqui embaixo que libero sua rotina de treino e suas metas de nutrição na mesma hora! Bora pra cima! 💪👊`\n      });\n      continue;\n    } else if (pesoPendente) {\n      disparos.push({\n        telefone: rawTel,\n        remote_jid: a.remote_jid,\n        tipo: 'cobranca_peso_divertida',\n        eh_upsell: false,\n        texto: `Fala, ${nome}! 🦁 Marcão passando com todo o carinho e energia pra saber: já tirou a poeira da nossa Balança Inteligente hoje? Hahaha! 😄⚖️\\n\\nSobe nela rapidinho em jejum e me manda uma foto do visor ou digita seu peso aqui! A balança é o nosso mapa da mina pra calibrar seu shape e sua evolução! Tamo junto! 👊`\n      });\n      continue;\n    } else if (localPendente) {\n      disparos.push({\n        telefone: rawTel,\n        remote_jid: a.remote_jid,\n        tipo: 'cobranca_local_divertida',\n        eh_upsell: false,\n        texto: `E aí, ${nome}! 👊 Marcão passando no capricho! Tô aqui montando sua estratégia, mas o treinador precisa de 2 respostas rápidas pra deixar seu treino sob medida:\\n\\n1️⃣ Você vai treinar na academia ou no conforto de casa com coisas simples (tipo cadeira e vassoura)?\\n2️⃣ Qual sua idade e altura aproximadas?\\n\\nMe conta aqui no seu tempo pra gente deixar sua rotina 100% personalizada e elegante! Tamo junto! 🔥`\n      });\n      continue;\n    } else if (restricoesPendente) {\n      disparos.push({\n        telefone: rawTel,\n        remote_jid: a.remote_jid,\n        tipo: 'cobranca_restricoes_divertida',\n        eh_upsell: false,\n        texto: `Opa, ${nome}! 🦁 Treinador Marcão na área! Uma pergunta fundamental pra sua segurança articular:\\n\\nVocê tem alguma dorzinha ou lesão antiga no joelho, coluna ou ombro que eu precise saber pra blindar seus treinos? Me avisa aqui! Tamo junto! 💪`\n      });\n      continue;\n    }\n  }\n\n  // =========================================================================\n  // 2. MODO ATLETA DE ELITE (Para quem compete ou busca hipertrofia severa)\n  // =========================================================================\n  if (modoAtleta && (diaSemana !== 0 || isTeste === 'atleta')) {\n    disparos.push({\n      telefone: rawTel,\n      remote_jid: a.remote_jid,\n      tipo: 'modo_atleta_diario',\n      eh_upsell: false,\n      texto: `Fala, ${nome}! 🦁 Marcão na área! Passando pra nossa cobrança diária de atleta:\\n\\n1. Treino do dia cumprido com carga anotada?\\n2. Proteína (2.2g/kg) batida no grama sem deslize?\\n\\nMe manda a foto do seu prato de hoje e do espelho pra gente ajustar a densidade muscular! Tamo junto até o pódio! 👊🔥`\n    });\n    continue;\n  }\n\n  // =========================================================================\n  // 3. CHECK-INS PROGRAMADOS PARA ALUNOS COM FICHA COMPLETA\n  // =========================================================================\n  const treinoResumo = a.treino_resumo || 'Treino A';\n\n  if (diaSemana === 1 || isTeste === 'segunda') {\n    // SEGUNDA 07:30 - Check-in da Balança e Hidratação\n    disparos.push({\n      telefone: rawTel,\n      remote_jid: a.remote_jid,\n      tipo: 'checkin_segunda',\n      eh_upsell: false,\n      texto: `Fala, ${nome}! 🦁 Marcão na área! Segunda-feira é dia sagrado de recomeço com foco total!\\n\\nPrimeira missão em jejum: sobe na sua Balança de Bioimpedância e me manda o print ou peso aqui! Meta de água hoje: 35ml por kg e foco na nossa rotina (${treinoResumo})!\\n\\nBora começar a semana vencendo! Tamo junto!`\n    });\n  } else if (diaSemana === 2 || isTeste === 'terca') {\n    // TERÇA 15:30 - Playlist & Foco\n    disparos.push({\n      telefone: rawTel,\n      remote_jid: a.remote_jid,\n      tipo: 'surpresa_terca_playlist',\n      eh_upsell: false,\n      texto: `E aí, ${nome}! 👊 Marcão passando no meio da sua tarde pra garantir que o treino de hoje vai ser pesado!\\n\\nBota um Gym Phonk no fone ou aquele som dos anos 90 pra dar o pico de adrenalina! O Dr. Brad Schoenfeld comprovou que 10 a 20 séries semanais com carga alta é a chave do tônus muscular!\\n\\nBora pra cima! Depois me conta como foi o treino!`\n    });\n  } else if (diaSemana === 3 || isTeste === 'quarta') {\n    // QUARTA 18:00 - Checagem Nutricional\n    disparos.push({\n      telefone: rawTel,\n      remote_jid: a.remote_jid,\n      tipo: 'checkin_quarta',\n      eh_upsell: false,\n      texto: `Fala, ${nome}! Metade da semana vencida! Como tá a pegada dos treinos?\\n\\nPassando pra ver se o treino de hoje já tá pago! Me manda uma foto do seu prato de jantar aqui pra eu dar uma olhada nos seus macros como nutricionista esportivo!\\n\\nMantém a constância, guerreiro(a)!`\n    });\n  } else if (diaSemana === 4 || isTeste === 'quinta') {\n    // QUINTA 22:30 - Sono Anabólico\n    disparos.push({\n      telefone: rawTel,\n      remote_jid: a.remote_jid,\n      tipo: 'surpresa_quinta_sono',\n      eh_upsell: false,\n      texto: `Opa, ${nome}! 🦁 Marcão passando pra te mandar pra cama agora!\\n\\nEstudo de Harvard comprovou que mais de 70% do pico de GH e recuperação muscular acontecem no sono profundo!\\n\\nLarga o celular, bebe um copo d'água e descansa a carcaça pra amanhã acordar 100%! Boa noite!`\n    });\n  } else if (diaSemana === 5 || isTeste === 'sexta') {\n    // SEXTA 18:30 - Fechamento Semanal\n    disparos.push({\n      telefone: rawTel,\n      remote_jid: a.remote_jid,\n      tipo: 'checkin_sexta',\n      eh_upsell: false,\n      texto: `Fala, ${nome}! 🦁 Sextou com a sensação de dever cumprido!\\n\\nFechamos a meta semanal de treinos com chave de ouro! Agora no fim de semana, descanso com moderação e nada de jogar fora o esforço dos últimos 5 dias, combinado?\\n\\nSegura a hidratação e excelente descanso!`\n    });\n  } else if (diaSemana === 0 || isTeste === 'domingo') {\n    // DOMINGO 19:30 - Planejamento Semanal\n    disparos.push({\n      telefone: rawTel,\n      remote_jid: a.remote_jid,\n      tipo: 'surpresa_domingo_preparacao',\n      eh_upsell: false,\n      texto: `E aí, ${nome}! 👊 Passando pra deixar aquela mensagem de energia pro seu início de semana!\\n\\nTênis pronto e marmitas organizadas? Quem planeja no domingo não falha na segunda! Amanhã cedinho a gente recomeça com tudo!\\n\\nBom descanso e bora vencer!`\n    });\n  }\n}\n\nreturn disparos.map(d => ({ json: d }));\n"
       }
     },
     {
@@ -182,11 +178,71 @@
         "sendBody": true,
         "bodyType": "json",
         "specifyBody": "json",
-        "jsonBody": "={\n  \"number\": \"{{ $json.telefone }}\",\n  \"text\": \"{{ $json.texto }}\"\n}",
+        "jsonBody": "={{\n  JSON.stringify({\n    number: $json.telefone,\n    text: $json.texto\n  })\n}}",
         "options": {
           "response": {
             "neverError": true
           }
+        }
+      }
+    },
+    {
+      "id": "m11-cron-terca",
+      "name": "Terça 15:30 (Playlist & Foco)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        200,
+        240
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 15 * * 2"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "m11-cron-quinta",
+      "name": "Quinta 22:30 (Sono Anabólico)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        200,
+        400
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 22 * * 4"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "m11-cron-domingo",
+      "name": "Domingo 19:30 (Planejamento Semanal)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        200,
+        560
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 19 * * 0"
+            }
+          ]
         }
       }
     }
@@ -268,6 +324,39 @@
           }
         ]
       ]
+    },
+    "Terça 15:30 (Playlist & Foco)": {
+      "main": [
+        [
+          {
+            "node": "Buscar Alunos VIP Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Quinta 22:30 (Sono Anabólico)": {
+      "main": [
+        [
+          {
+            "node": "Buscar Alunos VIP Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Domingo 19:30 (Planejamento Semanal)": {
+      "main": [
+        [
+          {
+            "node": "Buscar Alunos VIP Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "nodeGroups": [],
@@ -275,7 +364,64 @@
     "timezone": "America/Sao_Paulo",
     "executionOrder": "v1"
   },
-  "staticData": null,
+  "staticData": {
+    "node:Segunda 07:30": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    },
+    "node:Quarta 18:00": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    },
+    "node:Sexta 18:30": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    },
+    "node:Diário 10:00 (Upsell 30d)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    },
+    "node:Terça 15:30 (Playlist & Foco)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    },
+    "node:Quinta 22:30 (Sono Anabólico)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    },
+    "node:Domingo 19:30 (Planejamento Semanal)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
   "pinData": null,
   "meta": null,
   "tags": [],
@@ -299,6 +445,373 @@
       "updatedAt": "2026-10-13T12:25:54.060Z"
     }
   ],
-  "activeVersion": null,
-  "parentFolder": null
+  "activeVersion": {
+    "versionId": "5bb51ea7-795e-4ee0-9c5f-940d8d700976",
+    "workflowId": "twaIdBJADtfS8evK",
+    "nodes": [
+      {
+        "id": "m11-cron-segunda",
+        "name": "Segunda 07:30",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          200,
+          160
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "30 7 * * 1"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "m11-cron-quarta",
+        "name": "Quarta 18:00",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          200,
+          320
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 18 * * 3"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "m11-cron-sexta",
+        "name": "Sexta 18:30",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          200,
+          480
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "30 18 * * 5"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "m11-cron-upsell",
+        "name": "Diário 10:00 (Upsell 30d)",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          200,
+          640
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 10 * * *"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "m11-hook",
+        "name": "Webhook Teste Proativo VIP",
+        "webhookId": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          200,
+          800
+        ],
+        "parameters": {
+          "httpMethod": "GET",
+          "path": "teste-personal-proativo-vip",
+          "responseMode": "onReceived"
+        }
+      },
+      {
+        "id": "m11-sb",
+        "name": "Buscar Alunos VIP Supabase",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          480,
+          400
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "https://admin.marcaopersonal.com/api/vip/clientes",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Accept",
+                "value": "application/json"
+              }
+            ]
+          },
+          "options": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      {
+        "id": "m11-code",
+        "name": "Gerar Mensagens Proativas Marcão",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          720,
+          400
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "\nconst alunos = $('Buscar Alunos VIP Supabase').all().map(i => i.json);\nconst agoraUtc = new Date();\nconst agora = new Date(agoraUtc.getTime() - (3 * 60 * 60 * 1000)); // Horário de Brasília\nconst diaSemana = agora.getDay(); // 0=Dom, 1=Seg, 2=Ter, 3=Qua, 4=Qui, 5=Sex, 6=Sab\nconst hora = agora.getHours();\nconst disparos = [];\n\n// Função anti-mock\nfunction ehMock(num) {\n  if (!num) return true;\n  const dig = num.replace(/\\D/g, '');\n  if (dig.length < 10) return true;\n  if (['5532984587255', '553284587255', '553285066687', '5532988273367', '553288273367'].includes(dig)) return false;\n  const mocks = ['99998888', '99997777', '988881111', '123456', '000000'];\n  return mocks.some(m => dig.includes(m));\n}\n\nfor (const a of alunos) {\n  if (!a.telefone || ehMock(a.telefone)) continue;\n  const rawTel = a.telefone.replace(/\\D/g, '');\n  const nome = (a.nome || a.nome_aluno || a.nome_cliente || 'Guerreiro(a)').trim().split(' ')[0];\n  const obj = (a.objetivo || '').toLowerCase();\n  const restricoes = (a.restricoes || a.restricoes_saude || '').toLowerCase();\n\n  // REGRA SUPREMA: DIRETOR E FUNDADOR EVANDRO GALLINA\n  // Evandro NUNCA recebe mensagens robóticas de onboarding/LGPD\n  const isEvandro = ['553284587255', '5532984587255'].includes(rawTel) ||\n                    rawTel.endsWith('84587255') ||\n                    (a.nome && a.nome.toLowerCase().includes('evandro'));\n  if (isEvandro) {\n    continue;\n  }\n\n  const modoAtleta = a.modo_atleta === true || obj.includes('competicao') || obj.includes('atleta');\n  const lgpdAutorizado = a.consentimento_lgpd === true || a.consentimento_lgpd === 'Autorizado (LGPD)';\n  const lgpdPendente = !lgpdAutorizado;\n  const pesoPendente = !a.ultimo_peso || String(a.ultimo_peso).includes('Pendente');\n  const localPendente = !a.local_treino || String(a.local_treino).includes('Pendente');\n  const restricoesPendente = !a.restricoes || String(a.restricoes).includes('Pendente');\n  const dadosCompletos = a.dados_completos === true || (lgpdAutorizado && !pesoPendente && !localPendente);\n\n  const isTeste = $input.first().json.query && $input.first().json.query.teste;\n\n  // =========================================================================\n  // 1. PRIORIDADE MÁXIMA: COBRANÇA DIVERTIDA DE DADOS FALTANTES (SE NÃO AUTORIZADO)\n  // =========================================================================\n  if (!dadosCompletos && isTeste !== 'atleta') {\n    if (lgpdPendente) {\n      disparos.push({\n        telefone: rawTel,\n        remote_jid: a.remote_jid,\n        tipo: 'cobranca_lgpd_divertida',\n        eh_upsell: false,\n        texto: `Fala, ${nome}! 🦁 Marcão Personal na área!\\n\\nSeu planejamento VIP tá no forno e louco pra sair do papel! Mas como personal responsável (e pra cumprirmos a lei da LGPD e a sua segurança), só preciso de uma palavrinha mágica de confirmação:\\n\\nMe manda um 'CONCORDO' aqui embaixo que libero sua rotina de treino e suas metas de nutrição na mesma hora! Bora pra cima! 💪👊`\n      });\n      continue;\n    } else if (pesoPendente) {\n      disparos.push({\n        telefone: rawTel,\n        remote_jid: a.remote_jid,\n        tipo: 'cobranca_peso_divertida',\n        eh_upsell: false,\n        texto: `Fala, ${nome}! 🦁 Marcão passando com todo o carinho e energia pra saber: já tirou a poeira da nossa Balança Inteligente hoje? Hahaha! 😄⚖️\\n\\nSobe nela rapidinho em jejum e me manda uma foto do visor ou digita seu peso aqui! A balança é o nosso mapa da mina pra calibrar seu shape e sua evolução! Tamo junto! 👊`\n      });\n      continue;\n    } else if (localPendente) {\n      disparos.push({\n        telefone: rawTel,\n        remote_jid: a.remote_jid,\n        tipo: 'cobranca_local_divertida',\n        eh_upsell: false,\n        texto: `E aí, ${nome}! 👊 Marcão passando no capricho! Tô aqui montando sua estratégia, mas o treinador precisa de 2 respostas rápidas pra deixar seu treino sob medida:\\n\\n1️⃣ Você vai treinar na academia ou no conforto de casa com coisas simples (tipo cadeira e vassoura)?\\n2️⃣ Qual sua idade e altura aproximadas?\\n\\nMe conta aqui no seu tempo pra gente deixar sua rotina 100% personalizada e elegante! Tamo junto! 🔥`\n      });\n      continue;\n    } else if (restricoesPendente) {\n      disparos.push({\n        telefone: rawTel,\n        remote_jid: a.remote_jid,\n        tipo: 'cobranca_restricoes_divertida',\n        eh_upsell: false,\n        texto: `Opa, ${nome}! 🦁 Treinador Marcão na área! Uma pergunta fundamental pra sua segurança articular:\\n\\nVocê tem alguma dorzinha ou lesão antiga no joelho, coluna ou ombro que eu precise saber pra blindar seus treinos? Me avisa aqui! Tamo junto! 💪`\n      });\n      continue;\n    }\n  }\n\n  // =========================================================================\n  // 2. MODO ATLETA DE ELITE (Para quem compete ou busca hipertrofia severa)\n  // =========================================================================\n  if (modoAtleta && (diaSemana !== 0 || isTeste === 'atleta')) {\n    disparos.push({\n      telefone: rawTel,\n      remote_jid: a.remote_jid,\n      tipo: 'modo_atleta_diario',\n      eh_upsell: false,\n      texto: `Fala, ${nome}! 🦁 Marcão na área! Passando pra nossa cobrança diária de atleta:\\n\\n1. Treino do dia cumprido com carga anotada?\\n2. Proteína (2.2g/kg) batida no grama sem deslize?\\n\\nMe manda a foto do seu prato de hoje e do espelho pra gente ajustar a densidade muscular! Tamo junto até o pódio! 👊🔥`\n    });\n    continue;\n  }\n\n  // =========================================================================\n  // 3. CHECK-INS PROGRAMADOS PARA ALUNOS COM FICHA COMPLETA\n  // =========================================================================\n  const treinoResumo = a.treino_resumo || 'Treino A';\n\n  if (diaSemana === 1 || isTeste === 'segunda') {\n    // SEGUNDA 07:30 - Check-in da Balança e Hidratação\n    disparos.push({\n      telefone: rawTel,\n      remote_jid: a.remote_jid,\n      tipo: 'checkin_segunda',\n      eh_upsell: false,\n      texto: `Fala, ${nome}! 🦁 Marcão na área! Segunda-feira é dia sagrado de recomeço com foco total!\\n\\nPrimeira missão em jejum: sobe na sua Balança de Bioimpedância e me manda o print ou peso aqui! Meta de água hoje: 35ml por kg e foco na nossa rotina (${treinoResumo})!\\n\\nBora começar a semana vencendo! Tamo junto!`\n    });\n  } else if (diaSemana === 2 || isTeste === 'terca') {\n    // TERÇA 15:30 - Playlist & Foco\n    disparos.push({\n      telefone: rawTel,\n      remote_jid: a.remote_jid,\n      tipo: 'surpresa_terca_playlist',\n      eh_upsell: false,\n      texto: `E aí, ${nome}! 👊 Marcão passando no meio da sua tarde pra garantir que o treino de hoje vai ser pesado!\\n\\nBota um Gym Phonk no fone ou aquele som dos anos 90 pra dar o pico de adrenalina! O Dr. Brad Schoenfeld comprovou que 10 a 20 séries semanais com carga alta é a chave do tônus muscular!\\n\\nBora pra cima! Depois me conta como foi o treino!`\n    });\n  } else if (diaSemana === 3 || isTeste === 'quarta') {\n    // QUARTA 18:00 - Checagem Nutricional\n    disparos.push({\n      telefone: rawTel,\n      remote_jid: a.remote_jid,\n      tipo: 'checkin_quarta',\n      eh_upsell: false,\n      texto: `Fala, ${nome}! Metade da semana vencida! Como tá a pegada dos treinos?\\n\\nPassando pra ver se o treino de hoje já tá pago! Me manda uma foto do seu prato de jantar aqui pra eu dar uma olhada nos seus macros como nutricionista esportivo!\\n\\nMantém a constância, guerreiro(a)!`\n    });\n  } else if (diaSemana === 4 || isTeste === 'quinta') {\n    // QUINTA 22:30 - Sono Anabólico\n    disparos.push({\n      telefone: rawTel,\n      remote_jid: a.remote_jid,\n      tipo: 'surpresa_quinta_sono',\n      eh_upsell: false,\n      texto: `Opa, ${nome}! 🦁 Marcão passando pra te mandar pra cama agora!\\n\\nEstudo de Harvard comprovou que mais de 70% do pico de GH e recuperação muscular acontecem no sono profundo!\\n\\nLarga o celular, bebe um copo d'água e descansa a carcaça pra amanhã acordar 100%! Boa noite!`\n    });\n  } else if (diaSemana === 5 || isTeste === 'sexta') {\n    // SEXTA 18:30 - Fechamento Semanal\n    disparos.push({\n      telefone: rawTel,\n      remote_jid: a.remote_jid,\n      tipo: 'checkin_sexta',\n      eh_upsell: false,\n      texto: `Fala, ${nome}! 🦁 Sextou com a sensação de dever cumprido!\\n\\nFechamos a meta semanal de treinos com chave de ouro! Agora no fim de semana, descanso com moderação e nada de jogar fora o esforço dos últimos 5 dias, combinado?\\n\\nSegura a hidratação e excelente descanso!`\n    });\n  } else if (diaSemana === 0 || isTeste === 'domingo') {\n    // DOMINGO 19:30 - Planejamento Semanal\n    disparos.push({\n      telefone: rawTel,\n      remote_jid: a.remote_jid,\n      tipo: 'surpresa_domingo_preparacao',\n      eh_upsell: false,\n      texto: `E aí, ${nome}! 👊 Passando pra deixar aquela mensagem de energia pro seu início de semana!\\n\\nTênis pronto e marmitas organizadas? Quem planeja no domingo não falha na segunda! Amanhã cedinho a gente recomeça com tudo!\\n\\nBom descanso e bora vencer!`\n    });\n  }\n}\n\nreturn disparos.map(d => ({ json: d }));\n"
+        }
+      },
+      {
+        "id": "m11-evo",
+        "name": "Disparar WhatsApp Marcão",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          960,
+          400
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://evolution.marcaopersonal.com/message/sendText/sofia",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "Marcao_Evo_Key_2026_Secure!"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyType": "json",
+          "specifyBody": "json",
+          "jsonBody": "={{\n  JSON.stringify({\n    number: $json.telefone,\n    text: $json.texto\n  })\n}}",
+          "options": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      {
+        "id": "m11-cron-terca",
+        "name": "Terça 15:30 (Playlist & Foco)",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          200,
+          240
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "30 15 * * 2"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "m11-cron-quinta",
+        "name": "Quinta 22:30 (Sono Anabólico)",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          200,
+          400
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "30 22 * * 4"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "m11-cron-domingo",
+        "name": "Domingo 19:30 (Planejamento Semanal)",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          200,
+          560
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "30 19 * * 0"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Segunda 07:30": {
+        "main": [
+          [
+            {
+              "node": "Buscar Alunos VIP Supabase",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Quarta 18:00": {
+        "main": [
+          [
+            {
+              "node": "Buscar Alunos VIP Supabase",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Sexta 18:30": {
+        "main": [
+          [
+            {
+              "node": "Buscar Alunos VIP Supabase",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Diário 10:00 (Upsell 30d)": {
+        "main": [
+          [
+            {
+              "node": "Buscar Alunos VIP Supabase",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook Teste Proativo VIP": {
+        "main": [
+          [
+            {
+              "node": "Buscar Alunos VIP Supabase",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Buscar Alunos VIP Supabase": {
+        "main": [
+          [
+            {
+              "node": "Gerar Mensagens Proativas Marcão",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gerar Mensagens Proativas Marcão": {
+        "main": [
+          [
+            {
+              "node": "Disparar WhatsApp Marcão",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Terça 15:30 (Playlist & Foco)": {
+        "main": [
+          [
+            {
+              "node": "Buscar Alunos VIP Supabase",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Quinta 22:30 (Sono Anabólico)": {
+        "main": [
+          [
+            {
+              "node": "Buscar Alunos VIP Supabase",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Domingo 19:30 (Planejamento Semanal)": {
+        "main": [
+          [
+            {
+              "node": "Buscar Alunos VIP Supabase",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Evandrosilva Silva",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-10-17T14:15:03.124Z",
+    "updatedAt": "2026-10-17T14:15:03.124Z",
+    "workflowPublishHistory": [
+      {
+        "id": 389,
+        "workflowId": "twaIdBJADtfS8evK",
+        "versionId": "5bb51ea7-795e-4ee0-9c5f-940d8d700976",
+        "event": "activated",
+        "userId": "5f37e26b-bd4f-4342-84e1-d7060e6c7c97",
+        "createdAt": "2026-10-17T14:15:03.839Z"
+      }
+    ]
+  }
 }
