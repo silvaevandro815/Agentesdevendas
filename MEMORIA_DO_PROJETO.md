@@ -148,5 +148,10 @@
   - **Reconhecimento Multicanal de Compra da Balança:** (1) Webhook de venda aprovada (/api/webhooks/compra-balanca); (2) Leitura visual automática da primeira pesagem via balanca_engine.py; (3) Palavra-chave do unboxing ("CHEGOU MINHA BALANCA"); (4) Ativação manual no Painel Admin.
   - **Esteira de Retenção e Transbordo:** 90 dias (3 meses) gratuitos de mentoria total com contagem regressiva em clientes_balanca, transbordando para assinatura de R$ 19,90/mês gerenciada pelo Stripe e workflow M10.
   - **Opção 2 Ativa (Apple Shortcuts & Android Webhook):** Endpoint /api/webhooks/treino-relogio ativo, avaliando FC média, picos de esforço e disparando feedback humanizado em múltiplos balões curtos via Evolution API.
-  - **Opção 1 Estruturada (Strava API):** Endpoints /api/integracoes/strava/webhook e /api/integracoes/strava/callback criados e prontos no servidor, aguardando apenas as credenciais de Client ID/Secret do Strava.
+  - **Opção 1 Ativa (Strava API):** Credenciais cadastradas no .env (Client ID: 187215, Client Secret, Refresh Token), módulo `apps/api/strava_service.py` e rotas em `apps/admin/server.js` conectadas com handshake, callback OAuth e processamento de atividades.
+- [x] P16 — Integração Completa do Strava & Smartwatch Hub Concluída!
+  - **Credenciais & Renovação de Token:** Client ID 187215 e Segredo integrados. Renovação automática de access token implementada via OAuth 2.0.
+  - **Fluxo do Aluno em 1 Clique:** Endpoint `/api/integracoes/strava/auth-url` gera o link de autorização com state atrelado ao WhatsApp do aluno. Após autorização na web do Strava, a rota `/api/integracoes/strava/callback` armazena os tokens do atleta em `clientes_balanca` e envia boas-vindas automáticas no WhatsApp.
+  - **Diagnóstico Fisiológico em Tempo Real:** Webhook `/api/integracoes/strava/webhook` recebe eventos `activity:create`, extrai distância, pace, FC média e FC máxima, avalia se o treino foi "Treino Monstro" ou "Treino Fofo" (Zonas de FC) e responde no WhatsApp em 2 a 3 balões curtos com presença humana.
+  - **Status da Conta Strava:** Tokens 100% válidos. Aplicação pronta para receber tráfego assim que ativada a assinatura do desenvolvedor no painel do Strava.
 

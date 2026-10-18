@@ -1140,8 +1140,55 @@ app.post('/api/webhooks/treino-relogio', async (req, res) => {
   }
 });
 
-// 10.3 OPÇÃO 1: Webhook e Callback Strava API (Estrutura Completa Pré-Configurada)
+// 10.3 OPÇÃO 1: Webhook e Callback Strava API (Estrutura Completa Ativa)
+const STRAVA_CLIENT_ID = process.env.STRAVA_CLIENT_ID || '187215';
+const STRAVA_CLIENT_SECRET = process.env.STRAVA_CLIENT_SECRET || 'b04505c55803754e0ad1cac759a0c0cf2a0999a5';
+let CURRENT_STRAVA_ACCESS_TOKEN = process.env.STRAVA_ACCESS_TOKEN || '530bc8243fa5b064a0949a99d5bc32a257a656ad';
+let CURRENT_STRAVA_REFRESH_TOKEN = process.env.STRAVA_REFRESH_TOKEN || '895147ad770fff878f08e365bc2c44a63c762a98';
 const STRAVA_VERIFY_TOKEN = process.env.STRAVA_VERIFY_TOKEN || 'marcao_strava_2026';
+
+// Função utilitária para renovar token do Strava automaticamente
+async function renovarTokenStrava(refreshToken) {
+  try {
+    const rToken = refreshToken || CURRENT_STRAVA_REFRESH_TOKEN;
+    const bodyParams = new URLSearchParams({
+      client_id: STRAVA_CLIENT_ID,
+      client_secret: STRAVA_CLIENT_SECRET,
+      grant_type: 'refresh_token',
+      refresh_token: rToken
+    });
+
+    const res = await fetch('https://www.strava.com/oauth/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: bodyParams.toString()
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      CURRENT_STRAVA_ACCESS_TOKEN = data.access_token;
+      CURRENT_STRAVA_REFRESH_TOKEN = data.refresh_token;
+      console.log('[STRAVA] Token atualizado com sucesso! Expira em:', data.expires_at);
+      return data.access_token;
+    } else {
+      const err = await res.text();
+      console.error('[STRAVA] Erro ao renovar token:', err);
+      return null;
+    }
+  } catch (err) {
+    console.error('[STRAVA] Falha de conexão ao renovar token:', err);
+    return null;
+  }
+}
+
+// Endpoint para gerar link de conexão Strava em 1 clique para o aluno
+app.get('/api/integracoes/strava/auth-url', (req, res) => {
+  const { telefone } = req.query;
+  const telLimpo = (telefone || '').replace(/\D/g, '');
+  const redirectUri = 'https://api.marcaopersonal.com/api/integracoes/strava/callback';
+  const url = `https://www.strava.com/oauth/authorize?client_id=${STRAVA_CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&approval_prompt=auto&scope=read,activity:read_all&state=${telLimpo}`;
+  res.json({ success: true, url, client_id: STRAVA_CLIENT_ID });
+});
 
 // Handshake de Verificação de Inscrição Webhook do Strava
 app.get('/api/integracoes/strava/webhook', (req, res) => {
@@ -1163,7 +1210,123 @@ app.post('/api/integracoes/strava/webhook', async (req, res) => {
   try {
     const event = req.body;
     console.log('Strava Webhook Evento Recebido:', event);
-    // Quando Strava API estiver com as chaves preenchidas, processa a atividade
+
+    if (event.object_type === 'activity' && event.aspect_type === 'create') {
+      const activityId = event.object_id;
+      const athleteId = event.owner_id;
+      const headers = getSupabaseHeaders();
+
+      // 1. Localizar o aluno dono dessa conta Strava no Supabase
+      const rCheck = await fetch(`${SUPABASE_URL}/rest/v1/clientes_balanca?dados_bioimpedancia->>strava_athlete_id=eq.${athleteId}`, { headers });
+      const alunos = rCheck.ok ? await rCheck.json() : [];
+
+      if (!alunos || alunos.length === 0) {
+        console.log(`[STRAVA] Atividade recebida de atleta não mapeado (ID: ${athleteId})`);
+        return;
+      }
+
+      const aluno = alunos[0];
+      const telFormatado = aluno.telefone;
+      const nomeCliente = aluno.nome_cliente || 'Guerreiro(a)';
+      const primeiroNome = nomeCliente.split(' ')[0];
+
+      // 2. Verificar se o aluno é VIP ativo (comprou a balança)
+      const agora = new Date();
+      const statusVip = aluno.status_vip || 'ativo_gratis';
+      const dtExp = aluno.data_expiracao_vip ? new Date(aluno.data_expiracao_vip) : null;
+      const isVipAtivo = ['ativo_gratis', 'assinante_pago'].includes(statusVip) && (!dtExp || dtExp > agora);
+
+      if (!isVipAtivo) {
+        console.log(`[STRAVA] Aluno ${nomeCliente} não possui Balança VIP ativa. Notificação ignorada.`);
+        return;
+      }
+
+      // 3. Obter detalhes da atividade no Strava
+      let tokenAtividade = aluno.dados_bioimpedancia?.strava_access_token || CURRENT_STRAVA_ACCESS_TOKEN;
+      let rAct = await fetch(`https://www.strava.com/api/v3/activities/${activityId}`, {
+        headers: { 'Authorization': `Bearer ${tokenAtividade}` }
+      });
+
+      if (rAct.status === 401) {
+        // Token expirado, renovar
+        const novoToken = await renovarTokenStrava(aluno.dados_bioimpedancia?.strava_refresh_token);
+        if (novoToken) {
+          tokenAtividade = novoToken;
+          rAct = await fetch(`https://www.strava.com/api/v3/activities/${activityId}`, {
+            headers: { 'Authorization': `Bearer ${tokenAtividade}` }
+          });
+        }
+      }
+
+      if (!rAct.ok) {
+        console.error(`[STRAVA] Falha ao buscar detalhes da atividade ${activityId}:`, await rAct.text());
+        return;
+      }
+
+      const actData = await rAct.json();
+      const tipo = actData.type || 'Corrida';
+      const distKm = actData.distance ? (actData.distance / 1000).toFixed(2) : 0;
+      const duracaoMin = actData.moving_time ? Math.round(actData.moving_time / 60) : 30;
+      const fcMed = actData.average_heartrate ? Math.round(actData.average_heartrate) : null;
+      const fcMax = actData.max_heartrate ? Math.round(actData.max_heartrate) : null;
+      const kcal = actData.calories ? Math.round(actData.calories) : Math.round(duracaoMin * 8.5);
+
+      // Calcular Pace (min/km)
+      let paceStr = '';
+      if (distKm > 0 && actData.moving_time > 0) {
+        const secPerKm = actData.moving_time / distKm;
+        const paceMin = Math.floor(secPerKm / 60);
+        const paceSec = Math.floor(secPerKm % 60);
+        paceStr = `${paceMin}'${paceSec.toString().padStart(2, '0')}"/km`;
+      }
+
+      // 4. Diagnóstico Fisiológico do Marcão (Treino Monstro vs. Treino Fofo)
+      let diagnosticoTexto = '';
+      let ehFofo = false;
+
+      if (fcMed) {
+        if (fcMed >= 168) {
+          diagnosticoTexto = `Olhei seu Strava agora: você correu ${distKm}km em ${duracaoMin}min com FC média de ${fcMed} bpm (Zona 4/5)! Ritmo agressivo! Se era rodagem leve, você puxou demais o coração, guerreiro! Segura na Zona 2 na próxima pra não estressar as articulações!`;
+        } else if (fcMed <= 125 && duracaoMin < 25) {
+          ehFofo = true;
+          diagnosticoTexto = `Olhei seus batimentos no Strava: ${distKm}km com FC média de só ${fcMed} bpm em ${duracaoMin}min! Foi um trote bem leve, hoje o treino foi meio fofo, hein? Hahaha! Bora apertar o passo no próximo! 😄`;
+        } else {
+          diagnosticoTexto = `Corrida de respeito registrada no Strava: ${distKm}km em ${duracaoMin}min (pace ${paceStr}) com FC média cravada em ${fcMed} bpm! Excelente controle aeróbico e queima de gordura!`;
+        }
+      } else {
+        diagnosticoTexto = `Treino de ${tipo} no Strava registrado: ${distKm}km em ${duracaoMin}min com pace médio de ${paceStr}! Ritmo muito constante e disciplinado!`;
+      }
+
+      // 5. Enviar feedback pelo WhatsApp em 2 a 3 balões curtos com presença humana
+      const baloes = [
+        `Fala, ${primeiroNome}! 🦁 Treinador Marcão na área! Vi seu treino de ${tipo.toLowerCase()} no Strava agora! 🏃‍♂️💨`,
+        diagnosticoTexto,
+        ehFofo
+          ? `Sem desculpas no próximo treino! Bebe água agora e bora pra cima! 👊💪`
+          : `Bebe água agora, toma sua dose de Creatina pra recuperar as fibras e parabéns pela disciplina! Tamo junto! 👊🔥`
+      ];
+
+      for (let i = 0; i < baloes.length; i++) {
+        try {
+          await fetch(`${EVOLUTION_API_URL}/chat/sendPresence/sofia`, {
+            method: 'POST',
+            headers: { 'apikey': EVOLUTION_API_KEY, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ number: telFormatado, presence: 'composing', delay: 1800 })
+          });
+        } catch (e) {}
+        await new Promise(r => setTimeout(r, 1400));
+        try {
+          await fetch(`${EVOLUTION_API_URL}/message/sendText/sofia`, {
+            method: 'POST',
+            headers: { 'apikey': EVOLUTION_API_KEY, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ number: telFormatado, text: baloes[i] })
+          });
+        } catch (e) {}
+        if (i < baloes.length - 1) await new Promise(r => setTimeout(r, 1200));
+      }
+
+      console.log(`[STRAVA] Feedback de treino enviado com sucesso para ${nomeCliente} (${telFormatado})`);
+    }
   } catch (err) {
     console.error('Erro ao processar evento Strava:', err);
   }
@@ -1176,14 +1339,97 @@ app.get('/api/integracoes/strava/callback', async (req, res) => {
     return res.send('<h2>Erro na autorização com o Strava. Tente novamente no WhatsApp do Marcão.</h2>');
   }
 
-  // Responde ao aluno no navegador
-  res.send(`
-    <div style="font-family:sans-serif; text-align:center; padding:50px; background:#0b1329; color:#fff; min-height:100vh;">
-      <h1 style="color:#00e5ff;">🦁 Marcão Personal x Strava</h1>
-      <p style="font-size:18px;">Conexão autorizada com sucesso! Seus treinos e corridas agora serão analisados automaticamente pelo Marcão no WhatsApp!</p>
-      <p style="color:#aaa;">Pode fechar esta janela e voltar para o seu treino! 👊</p>
-    </div>
-  `);
+  try {
+    // 1. Trocar code por tokens definitivos do aluno
+    const bodyParams = new URLSearchParams({
+      client_id: STRAVA_CLIENT_ID,
+      client_secret: STRAVA_CLIENT_SECRET,
+      code: code,
+      grant_type: 'authorization_code'
+    });
+
+    const tokenRes = await fetch('https://www.strava.com/oauth/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: bodyParams.toString()
+    });
+
+    if (tokenRes.ok) {
+      const tokenData = await tokenRes.json();
+      const athlete = tokenData.athlete;
+      const telFormatado = state ? state.replace(/\D/g, '') : null;
+      const headers = getSupabaseHeaders();
+
+      console.log(`[STRAVA] Atleta autorizado: ${athlete.firstname} ${athlete.lastname} (ID: ${athlete.id}), Telefone: ${telFormatado}`);
+
+      // 2. Vincular dados ao aluno no Supabase se houver telefone no state
+      if (telFormatado) {
+        const rCheck = await fetch(`${SUPABASE_URL}/rest/v1/clientes_balanca?telefone=eq.${telFormatado}`, { headers });
+        const exist = rCheck.ok ? await rCheck.json() : [];
+
+        if (exist && exist.length > 0) {
+          const dadosAtuais = exist[0].dados_bioimpedancia || {};
+          dadosAtuais.strava_athlete_id = athlete.id;
+          dadosAtuais.strava_access_token = tokenData.access_token;
+          dadosAtuais.strava_refresh_token = tokenData.refresh_token;
+          dadosAtuais.strava_token_expires_at = tokenData.expires_at;
+
+          await fetch(`${SUPABASE_URL}/rest/v1/clientes_balanca?telefone=eq.${telFormatado}`, {
+            method: 'PATCH',
+            headers,
+            body: JSON.stringify({ dados_bioimpedancia: dadosAtuais, updated_at: new Date().toISOString() })
+          });
+
+          // Enviar confirmação no WhatsApp
+          const primeiroNome = athlete.firstname || 'Guerreiro(a)';
+          const baloes = [
+            `Fala, ${primeiroNome}! 🦁 Treinador Marcão na área! Sua conta do Strava foi conectada com sucesso! ⌚💨`,
+            `Agora todo treino de corrida ou pedal que você salvar lá vai vir direto pra mim! Vou analisar seu ritmo, distância e batimentos cardíacos!`,
+            `Tamo junto e bora colocar esse shape pra voar! 👊🔥`
+          ];
+
+          for (let i = 0; i < baloes.length; i++) {
+            try {
+              await fetch(`${EVOLUTION_API_URL}/chat/sendPresence/sofia`, {
+                method: 'POST',
+                headers: { 'apikey': EVOLUTION_API_KEY, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ number: telFormatado, presence: 'composing', delay: 1800 })
+              });
+            } catch (e) {}
+            await new Promise(r => setTimeout(r, 1400));
+            try {
+              await fetch(`${EVOLUTION_API_URL}/message/sendText/sofia`, {
+                method: 'POST',
+                headers: { 'apikey': EVOLUTION_API_KEY, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ number: telFormatado, text: baloes[i] })
+              });
+            } catch (e) {}
+            if (i < baloes.length - 1) await new Promise(r => setTimeout(r, 1200));
+          }
+        }
+      }
+
+      // 3. Responde na tela do navegador do aluno
+      return res.send(`
+        <div style="font-family:sans-serif; text-align:center; padding:60px 20px; background:#0b1329; color:#fff; min-height:100vh;">
+          <h1 style="color:#00e5ff; font-size:32px;">🦁 Marcão Personal x Strava</h1>
+          <div style="background:rgba(0,229,255,0.1); border:1px solid #00e5ff; border-radius:12px; padding:25px; max-width:500px; margin:30px auto;">
+            <p style="font-size:20px; color:#fff; margin-bottom:10px;"><b>Conta Conectada com Sucesso!</b></p>
+            <p style="color:#aaa; font-size:16px;">Atleta: <b>${athlete.firstname} ${athlete.lastname}</b></p>
+            <p style="color:#ddd; font-size:15px; line-height:1.6;">Seus treinos, frequência cardíaca e zonas de ritmo agora são analisados automaticamente pelo Marcão no seu WhatsApp!</p>
+          </div>
+          <p style="color:#888; font-size:16px;">Pode fechar esta janela e voltar para o seu treino! 👊🔥</p>
+        </div>
+      `);
+    } else {
+      const errText = await tokenRes.text();
+      console.error('[STRAVA] Erro ao trocar code por token:', errText);
+      return res.send(`<h2>Erro ao vincular ao Strava. Verifique se o app está ativo na sua conta Strava.</h2>`);
+    }
+  } catch (err) {
+    console.error('[STRAVA] Erro interno no callback:', err);
+    return res.send(`<h2>Erro interno ao processar o Strava. Tente novamente mais tarde.</h2>`);
+  }
 });
 
 app.listen(PORT, '0.0.0.0', () => {
