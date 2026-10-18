@@ -1,0 +1,375 @@
+{
+  "id": "xVtDDLcOtsToMNM3",
+  "name": "F4 - Braip Vendas & Notificações (Marcão)",
+  "description": null,
+  "active": true,
+  "activeVersionId": "baa7b635-3c9a-43ad-a072-fa979cb0d8e8",
+  "createdAt": "2026-10-11T20:49:53.181Z",
+  "updatedAt": "2026-10-12T17:32:24.442Z",
+  "isArchived": false,
+  "versionId": "baa7b635-3c9a-43ad-a072-fa979cb0d8e8",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "node-braip-webhook",
+      "name": "Webhook Braip Postback",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "braip-postback",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "webhookId": "989e581c-f0fd-4e09-8f47-d8cf7f3b6a27"
+    },
+    {
+      "id": "node-check-approved",
+      "name": "Pagamento Aprovado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        500,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.body.trans_status || $json.body.status || '' }}",
+              "operation": "contains",
+              "value2": "Aprovad"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-send-whatsapp",
+      "name": "Enviar WhatsApp (Marcão)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        750,
+        200
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://evolution.marcaopersonal.com/message/sendText/sofia",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "Marcao_Evo_Key_2026_Secure!"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"number\": \"{{ ($json.body.client_cel || $json.body.telefone || $json.body.phone || '').replace(/\\D/g, '') }}\",\n  \"text\": \"Fala {{ ($json.body.client_name || $json.body.nome || 'campeão').split(' ')[0] }}! 💪🦁\\n\\nAqui é o Marcão Personal! Parabéns pela sua decisão de transformar sua estética e saúde com o {{ $json.body.product_name || $json.body.produto || 'nosso produto' }}!\\n\\nSeu pagamento foi confirmado com sucesso e nosso laboratório já está preparando o envio do seu pedido com garantia oficial.\\n\\nAssim que o código de rastreio for emitido, eu te mando aqui mesmo no WhatsApp!\\n\\nQualquer dúvida sobre como usar, pode me chamar por aqui. Tamo junto! 🔥\"\n}",
+        "options": {}
+      }
+    },
+    {
+      "id": "node-save-cliente-sb",
+      "name": "Atualizar Status Cliente no Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        1000,
+        200
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://qkopgftfrfftoyndhhfj.supabase.co/rest/v1/leads_conversas?on_conflict=telefone",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrb3BnZnRmcmZmdG95bmRoaGZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MTgwMTU4MywiZXhwIjoyMTA3Mzc3NTgzfQ.S_RRdnI6SZTVR1UH7jryDVHf316YmnMOVEBuoedyKv8"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrb3BnZnRmcmZmdG95bmRoaGZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MTgwMTU4MywiZXhwIjoyMTA3Mzc3NTgzfQ.S_RRdnI6SZTVR1UH7jryDVHf316YmnMOVEBuoedyKv8"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"telefone\": \"{{ ($json.body.client_cel || $json.body.telefone || $json.body.phone || '').replace(/\\D/g, '') }}\",\n  \"remote_jid\": \"{{ ($json.body.client_cel || $json.body.telefone || $json.body.phone || '').replace(/\\D/g, '') }}@s.whatsapp.net\",\n  \"push_name\": \"{{ $json.body.client_name || $json.body.nome || 'Cliente' }}\",\n  \"etapa_funil\": \"cliente_comprou\",\n  \"produto_interesse\": \"{{ $json.body.product_name || $json.body.produto || '' }}\",\n  \"ultima_mensagem\": \"Compra confirmada na Braip\",\n  \"updated_at\": \"{{ new Date().toISOString() }}\"\n}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Braip Postback": {
+      "main": [
+        [
+          {
+            "node": "Pagamento Aprovado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pagamento Aprovado?": {
+      "main": [
+        [
+          {
+            "node": "Enviar WhatsApp (Marcão)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar WhatsApp (Marcão)": {
+      "main": [
+        [
+          {
+            "node": "Atualizar Status Cliente no Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": true,
+    "saveDataSuccessExecution": "all"
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "xVtDDLcOtsToMNM3",
+      "projectId": "o73CYLdeW5HvCHUj",
+      "project": {
+        "id": "o73CYLdeW5HvCHUj",
+        "name": "Evandrosilva Silva <silvaev549@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "5f37e26b-bd4f-4342-84e1-d7060e6c7c97",
+        "createdAt": "2026-10-11T16:32:09.514Z",
+        "updatedAt": "2026-10-11T16:48:24.539Z"
+      },
+      "createdAt": "2026-10-11T20:49:53.181Z",
+      "updatedAt": "2026-10-11T20:49:53.181Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "baa7b635-3c9a-43ad-a072-fa979cb0d8e8",
+    "workflowId": "xVtDDLcOtsToMNM3",
+    "nodes": [
+      {
+        "id": "node-braip-webhook",
+        "name": "Webhook Braip Postback",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 1,
+        "position": [
+          250,
+          300
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "braip-postback",
+          "responseMode": "onReceived",
+          "options": {}
+        },
+        "webhookId": "989e581c-f0fd-4e09-8f47-d8cf7f3b6a27"
+      },
+      {
+        "id": "node-check-approved",
+        "name": "Pagamento Aprovado?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 1,
+        "position": [
+          500,
+          300
+        ],
+        "parameters": {
+          "conditions": {
+            "string": [
+              {
+                "value1": "={{ $json.body.trans_status || $json.body.status || '' }}",
+                "operation": "contains",
+                "value2": "Aprovad"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "node-send-whatsapp",
+        "name": "Enviar WhatsApp (Marcão)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          750,
+          200
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://evolution.marcaopersonal.com/message/sendText/sofia",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "Marcao_Evo_Key_2026_Secure!"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"number\": \"{{ ($json.body.client_cel || $json.body.telefone || $json.body.phone || '').replace(/\\D/g, '') }}\",\n  \"text\": \"Fala {{ ($json.body.client_name || $json.body.nome || 'campeão').split(' ')[0] }}! 💪🦁\\n\\nAqui é o Marcão Personal! Parabéns pela sua decisão de transformar sua estética e saúde com o {{ $json.body.product_name || $json.body.produto || 'nosso produto' }}!\\n\\nSeu pagamento foi confirmado com sucesso e nosso laboratório já está preparando o envio do seu pedido com garantia oficial.\\n\\nAssim que o código de rastreio for emitido, eu te mando aqui mesmo no WhatsApp!\\n\\nQualquer dúvida sobre como usar, pode me chamar por aqui. Tamo junto! 🔥\"\n}",
+          "options": {}
+        }
+      },
+      {
+        "id": "node-save-cliente-sb",
+        "name": "Atualizar Status Cliente no Supabase",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          1000,
+          200
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://qkopgftfrfftoyndhhfj.supabase.co/rest/v1/leads_conversas?on_conflict=telefone",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrb3BnZnRmcmZmdG95bmRoaGZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MTgwMTU4MywiZXhwIjoyMTA3Mzc3NTgzfQ.S_RRdnI6SZTVR1UH7jryDVHf316YmnMOVEBuoedyKv8"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrb3BnZnRmcmZmdG95bmRoaGZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MTgwMTU4MywiZXhwIjoyMTA3Mzc3NTgzfQ.S_RRdnI6SZTVR1UH7jryDVHf316YmnMOVEBuoedyKv8"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Prefer",
+                "value": "resolution=merge-duplicates"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"telefone\": \"{{ ($json.body.client_cel || $json.body.telefone || $json.body.phone || '').replace(/\\D/g, '') }}\",\n  \"remote_jid\": \"{{ ($json.body.client_cel || $json.body.telefone || $json.body.phone || '').replace(/\\D/g, '') }}@s.whatsapp.net\",\n  \"push_name\": \"{{ $json.body.client_name || $json.body.nome || 'Cliente' }}\",\n  \"etapa_funil\": \"cliente_comprou\",\n  \"produto_interesse\": \"{{ $json.body.product_name || $json.body.produto || '' }}\",\n  \"ultima_mensagem\": \"Compra confirmada na Braip\",\n  \"updated_at\": \"{{ new Date().toISOString() }}\"\n}",
+          "options": {}
+        }
+      }
+    ],
+    "connections": {
+      "Webhook Braip Postback": {
+        "main": [
+          [
+            {
+              "node": "Pagamento Aprovado?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Pagamento Aprovado?": {
+        "main": [
+          [
+            {
+              "node": "Enviar WhatsApp (Marcão)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Enviar WhatsApp (Marcão)": {
+        "main": [
+          [
+            {
+              "node": "Atualizar Status Cliente no Supabase",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Evandrosilva Silva",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-10-12T17:32:24.459Z",
+    "updatedAt": "2026-10-12T17:32:24.459Z",
+    "workflowPublishHistory": [
+      {
+        "id": 102,
+        "workflowId": "xVtDDLcOtsToMNM3",
+        "versionId": "baa7b635-3c9a-43ad-a072-fa979cb0d8e8",
+        "event": "activated",
+        "userId": "5f37e26b-bd4f-4342-84e1-d7060e6c7c97",
+        "createdAt": "2026-10-12T17:32:24.624Z"
+      },
+      {
+        "id": 107,
+        "workflowId": "xVtDDLcOtsToMNM3",
+        "versionId": "baa7b635-3c9a-43ad-a072-fa979cb0d8e8",
+        "event": "deactivated",
+        "userId": "5f37e26b-bd4f-4342-84e1-d7060e6c7c97",
+        "createdAt": "2026-10-12T17:32:25.474Z"
+      },
+      {
+        "id": 108,
+        "workflowId": "xVtDDLcOtsToMNM3",
+        "versionId": "baa7b635-3c9a-43ad-a072-fa979cb0d8e8",
+        "event": "activated",
+        "userId": "5f37e26b-bd4f-4342-84e1-d7060e6c7c97",
+        "createdAt": "2026-10-12T17:32:25.474Z"
+      }
+    ]
+  }
+}

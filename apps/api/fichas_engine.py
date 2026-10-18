@@ -142,18 +142,27 @@ def calcular_diagnostico_clinico_completo(
     genero: str = "mulher",
     objetivo: str = "emagrecimento",
     restricoes: str = "",
-    nivel_atividade: str = "moderado"
+    nivel_atividade: str = "moderado",
+    sono_horas: float = 7.0,
+    sono_qualidade: str = "bom",
+    agua_litros_habitual: float = 2.0,
+    estresse_nivel: str = "moderado",
+    trabalho_rotina: str = "misto",
+    remedios_continuos: str = "nenhum",
+    pressao_arterial: str = "normal",
+    tempo_treino_min: int = 45
 ) -> dict:
     """
-    Motor Clínico Integrado (Personal + Nutricionista + Clínico Geral).
+    Motor Clínico Integrado de Alta Performance (Personal Trainer + Nutricionista + Clínico Geral).
     Calcula com precisão médica/esportiva:
-    - IMC (com classificação médica da OMS)
+    - IMC (classificação oficial OMS)
     - TMB (Equação de Mifflin-St Jeor para Homens e Mulheres)
     - GET (Gasto Energético Total baseado no fator de atividade)
-    - Meta calórica ajustada por objetivo (déficit ou superávit)
-    - Meta hídrica (35ml/kg)
+    - Meta calórica ajustada por objetivo (déficit controlado ou superávit limpo)
+    - Meta hídrica ótima (35 a 40ml/kg)
     - Divisão de Macronutrientes (Proteína 2.0g/kg, Gordura 0.8g/kg, Carboidrato residual)
-    - Triagem Clínica Geral (restrições articulares, patologias e recomendações de segurança)
+    - Triagem Clínica Geral & Biomecânica (segurança cardiovascular, articular e farmacológica)
+    - Perfil Circadiano & Carga de Estresse (impacto do sono e cortisol na recuperação)
     """
     altura_m = altura_cm / 100.0 if altura_cm > 3.0 else altura_cm
     altura_cm_val = altura_cm if altura_cm > 3.0 else altura_cm * 100.0
@@ -205,7 +214,7 @@ def calcular_diagnostico_clinico_completo(
         calorias_diarias = round(get_kcal)
         estrategia_nutricional = "Normocalórica para Recomposição Corporal e Tônus"
 
-    # 5. Meta Hídrica (35ml/kg)
+    # 5. Meta Hídrica (35 a 40ml/kg)
     agua_ml = int(peso * 35)
 
     # 6. Macronutrientes
@@ -217,16 +226,40 @@ def calcular_diagnostico_clinico_completo(
     carbo_g = round(cal_restante / 4.0, 1)
 
     # 7. Triagem Clínica & Cuidados Biomecânicos
-    rest_low = restricoes.lower() if restricoes else ""
+    rest_low = (restricoes or "").lower()
+    rem_low = (remedios_continuos or "").lower()
+    press_low = (pressao_arterial or "").lower()
     cuidados = []
+    alertas_seguranca = []
+
+    # Articular
     if any(w in rest_low for w in ["joelho", "menisco", "patela", "condromalacia"]):
         cuidados.append("Evitar impacto e flexão profunda > 90° em cadeia aberta. Foco em fortalecimento de vasto medial e glúteo médio.")
     if any(w in rest_low for w in ["coluna", "lombar", "hernia", "ciatico"]):
-        cuidados.append("Zero compressão axial livre na coluna. Proibido levantamento terra pesado ou agachamento com barra nas costas. Substituir por leg press e exercícios guiados.")
+        cuidados.append("Zero compressão axial livre na coluna. Proibido agachamento livre pesado com barra nas costas. Substituir por leg press e exercícios guiados com apoio.")
     if any(w in rest_low for w in ["ombro", "manguito", "bursite"]):
         cuidados.append("Sem desenvolvimento acima da linha da cabeça. Priorizar elevações no plano escapular (30° anterior) e fortalecimento de rotadores externos.")
-    if any(w in rest_low for w in ["pressao", "hipertensao"]):
-        cuidados.append("Evitar Manobra de Valsalva (não prender a respiração no esforço máximo). Monitorar frequência cardíaca.")
+    if any(w in rest_low for w in ["quadril", "labrum", "bursite trocanterica"]):
+        cuidados.append("Evitar adução excessiva e rotações extremas de quadril sob carga.")
+
+    # Cardiovascular / Clínico
+    if any(w in press_low or w in rest_low or w in rem_low for w in ["pressao", "pressão", "hipertens", "losartana", "enalapril", "atenolol", "anlodipino"]):
+        alertas_seguranca.append("HIPERTENSÃO / CONTROLE DE PRESSÃO: Proibido prender o ar em esforço máximo (Manobra de Valsalva). Manter respiração ritmada (soltar ar na contração). Pausas ativas de 60 a 90 segundos.")
+    if any(w in rem_low for w in ["ozempic", "wegovy", "saxenda", "mounjaro", "tirzepatida", "semaglutida"]):
+        alertas_seguranca.append("AGONISTA GLP-1 / INJETÁVEL: Risco elevado de perda de massa magra. Aporte proteico rigoroso (2.0 a 2.2g/kg) e ingestão hídrica reforçada para prevenir náusea e constipação.")
+    if any(w in rem_low for w in ["puran", "levotiroxina", "tireoide", "t4"]):
+        alertas_seguranca.append("TIREOIDE: Tomar o remédio estritamente em jejum 30min antes de qualquer alimento para não interferir na absorção do hormônio.")
+
+    # 8. Fisiologia do Sono & Recuperação Circadiana
+    rec_circadiana = []
+    if sono_horas < 6.5 or "ruim" in sono_qualidade.lower() or "cansado" in sono_qualidade.lower() or "insonia" in sono_qualidade.lower():
+        rec_circadiana.append("Sono abaixo do ideal (<6.5h ou não-reparador). Cortisol basal provavelmente elevado. Recomenda-se higiene do sono: quarto a 20-22°C, escuridão total, cortar telas 40min antes e suplementar Magnésio Glicinato à noite.")
+    else:
+        rec_circadiana.append("Janela de sono anabólico preservada. Síntese proteica noturna e pico de GH favoráveis.")
+
+    # 9. Sedentarismo de Escritório
+    if "sentado" in trabalho_rotina.lower() or "escritorio" in trabalho_rotina.lower() or "computador" in trabalho_rotina.lower():
+        cuidados.append("ROTINA SEDENTÁRIA 8H+: Encurtamento de flexores de quadril (iliopsoas) e inibição de glúteo. Necessário aquecimento com mobilidade de tornozelo/quadril e pontes de glúteo antes do treino.")
 
     return {
         "peso_kg": peso,
@@ -247,9 +280,21 @@ def calcular_diagnostico_clinico_completo(
             "distribuicao": f"{proteina_g}g Proteína (2g/kg) | {carbo_g}g Carboidrato | {gordura_g}g Gordura boa"
         },
         "triagem_clinica": {
-            "restricoes_reportadas": restricoes or "Nenhuma restrição clínica severa",
-            "cuidados_biomecanicos": cuidados if cuidados else ["Nenhuma contraindicação. Aluno(a) liberado(a) para sobrecarga progressiva."]
+            "pressao_arterial": pressao_arterial,
+            "remedios_continuos": remedios_continuos,
+            "restricoes_reportadas": restricoes or "Nenhuma restrição articular reportada",
+            "cuidados_biomecanicos": cuidados if cuidados else ["Nenhuma contraindicação. Aluno(a) liberado(a) para sobrecarga progressiva."],
+            "alertas_seguranca": alertas_seguranca if alertas_seguranca else ["Sem riscos cardiovasculares agudos declarados."]
         },
+        "fisiologia_circadiana": {
+            "sono_horas": sono_horas,
+            "sono_qualidade": sono_qualidade,
+            "agua_litros_habitual": agua_litros_habitual,
+            "estresse_nivel": estresse_nivel,
+            "trabalho_rotina": trabalho_rotina,
+            "recomendacoes": rec_circadiana
+        },
+        "tempo_treino_sugerido_min": tempo_treino_min,
         "data_calculo": datetime.utcnow().isoformat()
     }
 
@@ -389,22 +434,30 @@ def gerar_treino_personalizado(objetivo: str, local: str, restricoes: str, idade
 async def processar_etapa_onboarding(remote_jid: str, telefone: str, nome: str, texto_recebido: str, ficha: dict) -> dict:
     etapa = ficha.get("etapa_onboarding", 0)
     primeiro_nome = nome.strip().split()[0] if nome else "Guerreiro(a)"
+    txt = texto_recebido.strip()
+    txt_low = txt.lower()
 
+    # =========================================================================
+    # ETAPA 0: BOAS-VINDAS & BIOMETRIA INICIAL (Objetivo, Peso, Altura, Idade)
+    # =========================================================================
     if etapa == 0:
         resposta = (
             f"Fala, {primeiro_nome}! 🦁 Marcão Personal na área! Parabéns por garantir seu acesso VIP oficial!\n\n"
-            f"Tô aqui pra te acompanhar de verdade no seu WhatsApp! Pra eu abrir sua ficha oficial no nosso sistema e calcular seus macros e TMB com precisão cirúrgica, me conta:\n\n"
-            f"👉 *Qual é o seu objetivo número 1 hoje?* (Secar barriga, ganhar massa muscular, definição corporal ou saúde?)\n"
-            f"👉 E se souber, me passa também sua *altura e peso aproximados*! (Ou foto do visor da sua balança!)"
+            f"Tô aqui pra cuidar de você de verdade no seu WhatsApp! Pra eu abrir seu Prontuário Oficial e calibrar seus treinos e macros com precisão cirúrgica, me passa primeiro o seu ponto de partida:\n\n"
+            f"1️⃣ *Qual é o seu objetivo número 1 hoje?* (Secar barriga, ganhar massa magra, definição ou saúde e disposição?)\n"
+            f"2️⃣ *Sua idade, altura e peso aproximados?* (Ou me manda a foto do visor da sua balança!)"
         )
         await atualizar_campo_ficha(remote_jid, {"etapa_onboarding": 1})
         return {"onboarding_ativo": True, "resposta": resposta}
 
+    # =========================================================================
+    # ETAPA 1: TRIAGEM CLÍNICA GERAL & SEGURANÇA ORTOPÉDICA (Médico / Fisio)
+    # =========================================================================
     elif etapa == 1:
-        txt = texto_recebido.strip()
-        # Tenta extrair peso e altura
-        peso_match = re.search(r'(\d{2,3}(?:[.,]\d+)?)\s*(?:kg|quilos)?', txt.lower())
-        altura_match = re.search(r'(?:1[.,]\d{2}|1\d{2})\s*(?:m|cm)?', txt.lower())
+        # Extrai peso, altura e idade da resposta
+        peso_match = re.search(r'(\d{2,3}(?:[.,]\d+)?)\s*(?:kg|quilos)?', txt_low)
+        altura_match = re.search(r'(?:1[.,]\d{2}|1\d{2})\s*(?:m|cm)?', txt_low)
+        idade_match = re.search(r'\b(\d{1,2})\s*(?:anos|ano)?\b', txt_low)
 
         peso_val = float(peso_match.group(1).replace(',', '.')) if peso_match else None
         altura_val = None
@@ -415,6 +468,7 @@ async def processar_etapa_onboarding(remote_jid: str, telefone: str, nome: str, 
                 altura_val = alt_num if alt_num > 3.0 else alt_num * 100.0
             except Exception:
                 pass
+        idade_val = int(idade_match.group(1)) if idade_match and int(idade_match.group(1)) in range(12, 95) else None
 
         dados_patch = {
             "objetivo": txt,
@@ -422,79 +476,142 @@ async def processar_etapa_onboarding(remote_jid: str, telefone: str, nome: str, 
         }
         if peso_val: dados_patch["ultimo_peso"] = peso_val
         if altura_val: dados_patch["altura_cm"] = altura_val
+        if idade_val: dados_patch["idade"] = idade_val
 
         resposta = (
-            f"Meta traçada, {primeiro_nome}! Vamos buscar esse resultado juntos! 💪\n\n"
-            f"Agora me fala sobre a sua rotina semanal: *Quantos dias por semana você consegue treinar e onde prefere?* (Academia de musculação ou treinos em casa com objetos simples tipo cabo de vassoura e cadeira?)"
+            f"Perfeito, {primeiro_nome}! Já guardei suas medidas no seu prontuário! 👊\n\n"
+            f"Agora uma checagem fundamental de *saúde clínica e segurança física* (pra eu blindar seu corpo e não te passar nada perigoso):\n\n"
+            f"👉 *Você tem pressão alta ou baixa? Toma algum remédio contínuo no dia a dia?*\n"
+            f"👉 *Tem alguma dor ou lesão no joelho, coluna/lombar, ombro ou cirurgia prévia?*\n\n"
+            f"Pode me mandar tudo sem vergonha que quanto mais eu souber, mais seguro e eficiente fica seu treino!"
         )
         await atualizar_campo_ficha(remote_jid, dados_patch)
         return {"onboarding_ativo": True, "resposta": resposta}
 
+    # =========================================================================
+    # ETAPA 2: FISIOLOGIA CIRCADIANA, SONO & CARGA DE ESTRESSE (Metabolismo)
+    # =========================================================================
     elif etapa == 2:
-        rotina_declarada = texto_recebido.strip()
-        local = "casa" if "casa" in rotina_declarada.lower() else "academia"
-        dias_match = re.search(r'(\d+)', rotina_declarada)
-        dias_num = int(dias_match.group(1)) if dias_match else 3
-
-        idade_match = re.search(r'(\d{1,2})\s*anos', rotina_declarada.lower())
-        idade_val = int(idade_match.group(1)) if idade_match else ficha.get("idade")
-
         dados_patch = {
-            "dias_disponiveis_semana": dias_num,
-            "local_treino": local,
+            "restricoes_saude": txt,
             "etapa_onboarding": 3
         }
-        if idade_val:
-            dados_patch["idade"] = idade_val
+        # Detecta idade se ainda não tiver
+        idade_match = re.search(r'\b(\d{1,2})\s*(?:anos|ano)?\b', txt_low)
+        if idade_match and not ficha.get("idade"):
+            id_num = int(idade_match.group(1))
+            if id_num in range(12, 95): dados_patch["idade"] = id_num
 
         resposta = (
-            f"Excelente! {dias_num} dias por semana é um ritmo perfeito pra consolidar constância!\n\n"
-            f"Agora uma pergunta fundamental de saúde e segurança: *Qual a sua idade aproximada e você tem alguma dor, lesão no joelho, coluna, ombro ou toma algum remédio contínuo?* (Pode ser 100% sincero que eu adapto tudo pra você!)"
+            f"Entendido com clareza, {primeiro_nome}! Já registrei essas informações clínicas pra blindar suas articulações e seu coração! 🛡️\n\n"
+            f"Agora duas perguntas que controlam seus hormônios anabólicos e queima de gordura:\n\n"
+            f"🌙 *Quantas horas você costuma dormir por noite e você acorda descansado(a) ou parece que foi atropelado(a)?*\n"
+            f"💧 *Quantos litros de água pura você bebe por dia na realidade?* (E me conta se você passa o dia sentado em escritório ou se trabalha em movimento)."
         )
         await atualizar_campo_ficha(remote_jid, dados_patch)
         return {"onboarding_ativo": True, "resposta": resposta}
 
+    # =========================================================================
+    # ETAPA 3: CAPACIDADE DE TREINO & NUTRIÇÃO COMPORTAMENTAL (Treinador)
+    # =========================================================================
     elif etapa == 3:
-        restricoes_declaradas = texto_recebido.strip()
-        idade_match = re.search(r'(\d{1,2})\s*anos?', restricoes_declaradas.lower())
-        idade_val = int(idade_match.group(1)) if idade_match else ficha.get("idade")
+        # Extrai horas de sono e água declaradas
+        sono_match = re.search(r'(\d+(?:[.,]\d+)?)\s*(?:horas|h)\b', txt_low)
+        agua_match = re.search(r'(\d+(?:[.,]\d+)?)\s*(?:litros|l|garrafas)\b', txt_low)
+
+        dados_fisiologicos = {
+            "declaracao_sono_estresse": txt,
+            "sono_horas": float(sono_match.group(1).replace(',', '.')) if sono_match else 7.0,
+            "agua_litros": float(agua_match.group(1).replace(',', '.')) if agua_match else 2.0
+        }
 
         dados_patch = {
-            "restricoes_saude": restricoes_declaradas,
-            "etapa_onboarding": 4
+            "etapa_onboarding": 4,
+            "metas_nutricionais": {
+                **(ficha.get("metas_nutricionais") or {}),
+                "anamnese_fisiologica": dados_fisiologicos
+            }
         }
-        if idade_val:
-            dados_patch["idade"] = idade_val
 
+        resposta = (
+            f"Show de bola! O sono e a água são 70% da sua recuperação e tônus muscular! 💧🛌\n\n"
+            f"Pra eu fechar seu protocolo sob medida com chave de ouro:\n\n"
+            f"🏋️ *Onde você vai treinar (academia completa ou em casa)?*\n"
+            f"⏱️ *Quantos dias na semana e quanto tempo por sessão você REALMENTE consegue dedicar?* (Ex: 3x de 40 min, 4x de 1 hora... Seja sincero pra ser sustentável!)\n"
+            f"🍫 *Você sente aquela fome louca por doce/carboidrato em algum horário específico (tipo final da tarde ou noite)?*"
+        )
         await atualizar_campo_ficha(remote_jid, dados_patch)
+        return {"onboarding_ativo": True, "resposta": resposta}
+
+    # =========================================================================
+    # ETAPA 4: TERMO DE CONSENTIMENTO LGPD & RESPONSABILIDADE
+    # =========================================================================
+    elif etapa == 4:
+        local = "casa" if "casa" in txt_low else "academia"
+        dias_match = re.search(r'(\d+)\s*(?:dias|x|vezes)', txt_low) or re.search(r'\b([2-6])\b', txt_low)
+        dias_num = int(dias_match.group(1)) if dias_match else 3
+
+        tempo_match = re.search(r'(\d+)\s*(?:min|minutos)', txt_low)
+        tempo_min = int(tempo_match.group(1)) if tempo_match else 45
+
+        dados_patch = {
+            "local_treino": local,
+            "dias_disponiveis_semana": dias_num,
+            "etapa_onboarding": 5,
+            "metas_nutricionais": {
+                **(ficha.get("metas_nutricionais") or {}),
+                "tempo_treino_min": tempo_min,
+                "declaracao_habitos_treino": txt
+            }
+        }
+        await atualizar_campo_ficha(remote_jid, dados_patch)
+
         termo = gerar_termo_lgpd(primeiro_nome)
         return {"onboarding_ativo": True, "resposta": termo}
 
-    elif etapa == 4:
-        txt_low = texto_recebido.lower()
-        autorizou = any(w in txt_low for w in ["concordo", "ciente", "autorizo", "aceito", "sim", "com certeza", "pode", "ok", "claro", "bora"])
+    # =========================================================================
+    # ETAPA 5: VALIDAÇÃO LGPD ("CONCORDO") & ENTREGA DA PRESCRIÇÃO HIPERPERSONALIZADA
+    # =========================================================================
+    elif etapa == 5:
+        autorizou = any(w in txt_low for w in ["concordo", "ciente", "autorizo", "aceito", "sim", "com certeza", "pode", "ok", "claro", "bora", "fechado"])
 
         if not autorizou:
             resposta = (
                 f"Opa, {primeiro_nome}! 🦁 Entendo você perfeitamente!\n\n"
-                f"Mas pela nossa segurança jurídica e respeito à Lei Geral de Proteção de Dados (LGPD), nossos treinos e acompanhamento personalizado só podem ser liberados após você confirmar ciência e responsabilidade!\n\n"
+                f"Mas pela nossa segurança jurídica e respeito à Lei Geral de Proteção de Dados (LGPD), nossos treinos e prontuário personalizado só podem ser liberados após você confirmar ciência e responsabilidade!\n\n"
                 f"Para ativarmos sua rotina e começarmos com segurança, basta me responder apenas:\n"
                 f"👉 *CONCORDO*\n\n"
-                f"Assim que você responder, sua ficha oficial é liberada na hora! Tamo junto!"
+                f"Assim que você responder, seu protocolo oficial sai do forno na hora! Tamo junto!"
             )
             return {"onboarding_ativo": True, "resposta": resposta, "bloqueado_lgpd": True}
 
         # Usuário confirmou expressamente com CONCORDO / CIENTE / SIM
-        obj = ficha.get("objetivo") or "Secar barriga e definir"
-        loc = ficha.get("local_treino") or "casa"
-        rest = ficha.get("restricoes_saude") or "Nenhuma"
-        idade = ficha.get("idade")
+        obj = ficha.get("objetivo") or "Secar barriga e definição"
+        loc = ficha.get("local_treino") or "academia"
+        rest = ficha.get("restricoes_saude") or "Nenhuma dor reportada"
+        idade = ficha.get("idade") or 32
         genero = ficha.get("genero", "mulher")
         peso = ficha.get("ultimo_peso") or 68.0
         altura = ficha.get("altura_cm") or 165.0
 
+        meta_info = ficha.get("metas_nutricionais") or {}
+        fisio = meta_info.get("anamnese_fisiologica") or {}
+        sono_h = fisio.get("sono_horas", 7.0)
+        agua_l = fisio.get("agua_litros", 2.0)
+        tempo_t = meta_info.get("tempo_treino_min", 45)
+
         treino = gerar_treino_personalizado(obj, loc, rest, idade=idade, genero=genero)
-        diag = calcular_diagnostico_clinico_completo(peso, altura, idade or 30, genero, obj, rest)
+        diag = calcular_diagnostico_clinico_completo(
+            peso=peso,
+            altura_cm=altura,
+            idade=idade,
+            genero=genero,
+            objetivo=obj,
+            restricoes=rest,
+            sono_horas=sono_h,
+            agua_litros_habitual=agua_l,
+            tempo_treino_min=tempo_t
+        )
 
         await atualizar_campo_ficha(remote_jid, {
             "consentimento_lgpd": True,
@@ -502,23 +619,32 @@ async def processar_etapa_onboarding(remote_jid: str, telefone: str, nome: str, 
             "termo_lgpd_versao": "v2.0_lgpd",
             "treino_atual": treino,
             "diagnostico_clinico": diag,
-            "metas_nutricionais": diag.get("macros", {}),
-            "etapa_onboarding": 5,
+            "metas_nutricionais": {
+                **meta_info,
+                **diag.get("macros", {}),
+                "calorias": diag.get("calorias_diarias"),
+                "agua_ml": diag.get("agua_ml"),
+                "score_completude": 100
+            },
+            "etapa_onboarding": 6,
             "status_acompanhamento": "ativo"
         })
 
         resposta = (
-            f"Show de bola, {primeiro_nome}! Termo formalizado e sua Ficha VIP de Aluno está 100% ATIVA! 🛡️🔐\n\n"
-            f"Montei seu protocolo sob medida:\n"
+            f"Show de bola, {primeiro_nome}! Termo formalizado e seu Prontuário VIP de Aluno está 100% ATIVO! 🛡️🔐\n\n"
+            f"Montei seu protocolo sob medida baseado na sua clínica e rotina:\n"
             f"🏋️ *{treino['estilo_periodizacao']}* ({treino['local']})\n"
-            f"⚠️ *Cuidados:* {treino['cuidados_especiais']}\n\n"
+            f"⏱️ *Sessões:* {tempo_t} min por treino | 💧 *Meta de Água:* {diag.get('agua_ml')}ml/dia\n"
+            f"⚠️ *Cuidados Clínicos:* {treino['cuidados_especiais']}\n\n"
             f"📋 *Sua Divisão de Treinos:*\n"
             f"• *Treino A:* {treino['treino_a']}\n\n"
             f"• *Treino B:* {treino['treino_b']}\n\n"
             f"• *Treino C:* {treino['treino_c']}\n\n"
-            f"📸 Pra calibrarmos sua evolução visual: não precisa necessariamente de espelho! Você pode apoiar o celular numa estante ou mesa de frente pra luz de uma janela (sempre a favor da luz natural, nunca contra pra não escurecer), colocar o timer de 10 segundos e tirar a foto de corpo inteiro de frente e de costas. Ou pedir pra alguém em casa tirar pra você! Vou guardar essas fotos com sigilo militar no seu prontuário pra daqui a alguns dias a gente comparar lado a lado os resultados e calibrar o que precisa lapidar! Tamo junto nessa! 🔥"
+            f"📸 Pra calibrarmos sua evolução visual: não precisa de espelho! Você pode apoiar o celular numa estante ou mesa de frente pra luz de uma janela (sempre a favor da luz natural, nunca contra), colocar o timer de 10 segundos e tirar a foto de corpo inteiro de frente e de costas. Ou pedir pra alguém em casa tirar pra você! Vou guardar essas fotos com sigilo militar no seu prontuário pra daqui a alguns dias compararmos lado a lado os resultados! Tamo junto nessa jornada! 🔥"
         )
         return {"onboarding_ativo": False, "resposta": resposta, "treino": treino}
+
+    return {"onboarding_ativo": False}
 
     return {"onboarding_ativo": False}
 

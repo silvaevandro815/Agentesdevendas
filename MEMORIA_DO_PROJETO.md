@@ -101,6 +101,45 @@
   - Emissão instantânea do "Relatório 360° do Marcão" com metas de hidratação (35ml/kg), calorias, divisão de macros e periodização de treino.
   - Regra de Exclusividade VIP: Avaliação física e mentoria direta no WhatsApp 100% exclusivas para donos da balança.
   - Esteira de Retenção: 90 dias de acompanhamento gratuito com contagem regressiva e gamificação (`streak_dias`), transacionando para a assinatura de R$ 19,90/mês através do workflow `M10` no n8n.
-
-
-
+- [x] P8 — Modo Comando Supremo (SUPER_ADMIN) do Diretor Evandro no WhatsApp Concluída!
+  - Reconhecimento automático de Evandro Gallina (`553284587255` / `5532984587255` / LID `179009992298658`) como `SUPER_ADMIN`.
+  - Blindagem total: Leads comuns no WhatsApp (F3) e Instagram (I1) permanecem 100% intactos com fluxo de vendas e quebra de objeções humanizado.
+  - Módulos Executivos no WhatsApp de Evandro:
+    1. Finanças & Vendas (CFO em tempo real).
+    2. Disparo de Criativos & Carrosséis no Instagram (I2 via Webhook).
+    3. Disparo de Follow-up de Leads Inativos (M9 via Webhook).
+    4. Consulta de Leads Recentes no Supabase.
+    5. Monitoramento de Alunos VIP (Eva Maria, etc.).
+    6. Despacho de Áudios de Voz clonados via ElevenLabs para contatos/amigos.
+    7. Prescrição esportiva e nutricional para o shape do Diretor (76.5kg).
+    8. Diagnóstico de saúde dos servidores e robôs 24h.
+- [x] P9 — Sentinela & Auditoria Diária 24h em Camada Dupla (Antigravity + n8n Cloud) Concluída!
+  - **Camada Cloud Hostinger 24/7 (Workflow M0 no n8n):** Dispara todos os dias às 08:00h da manhã (ou sob demanda via webhook). Audita 15 componentes essenciais: Sites, Painéis, Evolution API, Supabase, Meta Ads Token, OpenRouter e Workflows. Se houver qualquer falha, dispara alerta vermelho no WhatsApp de Evandro. Se tudo estiver 100%, envia o briefing matinal verde.
+  - **Camada Antigravity Local (Cron Daemon `0 8 * * *`):** Agendador autônomo ativado no Antigravity para inspeção diária com diagnóstico de engenharia e plano de ação.
+- [x] P10 — Reorientação Caneta Peniana Azempika (Saúde Vascular & Potência Masculina 40+) Concluída!
+  - Correção cirúrgica de posicionamento: O produto é 100% voltado para saúde vascular peniana, rigidez máxima, firmeza e vigor na hora H para homens maduros (40+, 50+, 60+). Não é emagrecedor.
+  - Treinamento da mente do Marcão no WhatsApp (Workflow F3) e Instagram Direct (Workflow I1): domínio completo da fisiologia dos corpos cavernosos, vasodilatação sem efeitos cardíacos, quebra de tabus com sigilo de homem pra homem.
+  - Inserção do **Modo de Aplicação Passo a Passo**: girar dosador, aplicar na haste peniana 10-15 min antes da relação, massagear por 1-2 min até absorção total.
+  - Atualização do Site Oficial (pps/site/public/index.html), tabela products no Supabase e link oficial Braip (https://ev.braip.com/ref?pl=plaljlxy&ck=che6vnvr&af=afine5z3yv).
+- [x] P11 — Adobe Creative Engine 2.5: Motor de Layout Inteligente & Tipografia Avançada Concluída!
+  - **Eliminação de Vazio Preto (Smart Flexbox Vertical):** Cálculo dinâmico da altura remanescente (vailable_height = y_bottom_limit - top_content_y) com cartões dinâmicos (74px a 135px) e gaps flexíveis (22px a 55px). Distribuição homogênea que preenche 60-70% do slide sem zonas mortas.
+  - **Safe Zone Anti-Colisão com o Selo:** Deslocamento do início dos títulos dos Slides 2 e 3 para =195$ (respiro seguro abaixo do selo a =173$) e barreira inteligente de corte (width - 250px) se a manchete iniciar acima de =190$. Zero colisão com o selo dourado.
+  - **Smart Keyword & Entity Highlighter:** Parser léxico com detecção de markdown (**termo**), métricas/números (100%, 30%, R$ 99,00, 10 a 15 min, 20ml, 90 dias), termos clínicos (COX-2, óxido nítrico, corpos cavernosos, asodilatação) e labels de ação (1. GIRE O DOSADOR:), renderizados em ouro radiante #FDE047 com soft drop-shadow.
+  - **Hero Mockup 3D Proporcional:** Mockup do produto no Slide 3 ampliado para 440x480px, centralizado na altura exata da coluna de cards, acompanhado de aura dourada radial e sombra de solo.
+- [x] P12 — Blindagem de Persona: Proibição Estrita do Rosto de Evandro para Azempika & Modelos Grisalhos de IA Concluída!
+  - **Diretriz Suprema do Diretor Evandro:** Proibição irrevogável de usar o rosto de Evandro (seja foto real ou persona de IA baseada nele) em criativos, posts ou carrosséis da Caneta Azempika ou de qualquer produto de potência/saúde sexual masculina.
+  - **Modelos de IA Homens Grisalhos 55-65 anos:** A IA gera exclusivamente homens maduros distintos, com cabelos grisalhos e barba aparada, em ambientes sofisticados (lounge/penthouse), conectando diretamente com o público masculino maduro.
+  - **Guardrails de Código:** Ativados em GEMINI.md, anti_repetition_guard.py (descarte automático da persona 'evandro' para Azempika), creative_factory.py (anulação de foto de referência e injeção de homem maduro grisalho) e seed_adobe_creatives.py.
+  - **Sincronização:** Slide 1 e Story gerados com o novo modelo grisalho de IA e sincronizados no Supabase Storage e content_calendar.
+- [x] P13 — Auditoria & Blindagem de Onboarding, Fichas Faltantes e Follow-ups (WhatsApp & Instagram Direct) Concluída!
+  - **WhatsApp Atendimento (Workflow F3):** Ativo e respondendo em tempo real via Evolution API (instância 'sofia' aberta). Regra 'PERSISTÊNCIA SUAVE PARA PREENCHER A FICHA' ativa (solicitação de peso, altura, local de treino, restrições e consentimento LGPD).
+  - **WhatsApp Proativo VIP & Cobrança de Fichas (Workflow M11):** Ativo com 7 gatilhos semanais. Checa alunos com 'dados_completos: false' e executa cobranças bem-humoradas com PRIORIDADE MÁXIMA (LGPD, peso/balança, local e restrições). Testado ao vivo com sucesso (Execução 6346: SUCCESS).
+  - **Painel Admin Marcão (admin.marcaopersonal.com):** Botão '📲 Cobrar Dados' ativo e disparando mensagens personalizadas de cobrança via endpoint '/api/vip/:id/cobrar-dados'.
+  - **CRM Follow-Up (Workflow M9):** Ativo com execução diária às 10h (100% de taxa de sucesso). Query modernizada para busca dinâmica (order=updated_at.desc). Segmentação refinada: 'secar/barriga' direciona para Balança Inteligente 360 e 'potência/40+' direciona para Caneta Peniana Azempika.
+  - **Instagram Direct (Workflow I1 & followup_instagram.py):** Ativo respondendo directs e comentários com 100% de sucesso. Injetada a regra de 'PERSISTÊNCIA SUAVE PARA PREENCHER FICHA E ONBOARDING' nos nós de áudio e texto para captação direta de métricas e conversão para WhatsApp.
+- [x] P14 — Blindagem Suprema: Múltiplos Balões Curtos (<140 chars), Presença Composing e Reações de Emojis em Todo o Ecossistema Concluída!
+  - **Diretriz Absoluta:** Proibido o envio de textões em bloco único em qualquer canal (atendimentos e follow-ups).
+  - **Fatiamento Dinâmico em 2 a 4 Balões Curtos:** Cada intervenção do Marcão é dividida em balões de 50 a 120 caracteres (máximo 140-160 chars), garantindo leitura leve e dinâmica no celular.
+  - **Simulação de Digitação & Pausas Naturais:** Envio sequencial de cada balão precedido por 'composing' de 2000ms e delays de 1.2s a 1.8s entre as mensagens no WhatsApp e no Instagram Direct.
+  - **Reações de Emojis nos Balões do Lead:** Configurada a reação imediata com emojis autênticos (👊, 💪, 🔥, 🦁, 👍) nos balões de mensagem do cliente/lead.
+  - **Guardrails Ativados:** Injetados nos prompts de F3 (WhatsApp), I1 (Instagram Direct), M9 (CRM Follow-up), M11 (Personal Proativo VIP) e no Painel Admin (/api/vip/:id/cobrar-dados).

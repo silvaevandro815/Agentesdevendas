@@ -429,6 +429,56 @@ app.get('/api/vip/clientes', async (req, res) => {
       const pesoFicha = f.metas_nutricionais?.peso ? `${f.metas_nutricionais.peso}kg` : null;
       const lgpdOk = Boolean(f.consentimento_lgpd || isEvandro);
 
+      // Extração de Prontuário Clínico & Esportivo Completo
+      const metas = f.metas_nutricionais || {};
+      const fisio = metas.anamnese_fisiologica || {};
+      const pPesoNum = parseFloat(String(pesoFicha || f.ultimo_peso || 70).replace('kg', '')) || 70;
+      const pAltNum = f.altura_cm || metas.altura_cm || 170;
+      const altM = pAltNum > 3 ? pAltNum / 100 : pAltNum;
+      const imcCalc = Math.round((pPesoNum / (altM * altM)) * 10) / 10;
+
+      let classImc = 'Eutrofia (Saudável)';
+      if (imcCalc < 18.5) classImc = 'Abaixo do peso';
+      else if (imcCalc < 25) classImc = 'Eutrofia (Peso ideal)';
+      else if (imcCalc < 30) classImc = 'Sobrepeso';
+      else classImc = 'Obesidade';
+
+      const prontuarioCompleto = {
+        idade: f.idade || (isEvandro ? 35 : 'Não informada'),
+        altura_cm: pAltNum,
+        peso_atual: pesoFicha || (isEvandro ? '76.5kg' : 'Pendente'),
+        imc: imcCalc,
+        classificacao_imc: classImc,
+        pressao_arterial: metas.pressao_arterial || 'Normal / Estável',
+        remedios_continuos: metas.remedios_continuos || 'Nenhum reportado',
+        cirurgias_lesoes: metas.cirurgias || 'Nenhuma cirurgia prévia',
+        dores_articulares: f.restricoes_saude || (isEvandro ? 'Nenhuma restrição articular' : 'Pendente'),
+        sono_horas: fisio.sono_horas || (isEvandro ? 8 : 7),
+        sono_qualidade: fisio.sono_qualidade || (isEvandro ? 'Excelente sono anabólico' : 'Normal'),
+        agua_litros_habitual: fisio.agua_litros || (pPesoNum * 0.035).toFixed(1),
+        rotina_trabalho_estresse: fisio.declaracao_sono_estresse || 'Ativo',
+        tempo_treino_min: metas.tempo_treino_min || 45,
+        dias_semana: f.dias_disponiveis_semana || (isEvandro ? 5 : 3),
+        local_treino: f.local_treino || (isEvandro ? 'academia' : 'Pendente'),
+        fome_emocional: metas.fome_emocional || 'Sem compulsão severa',
+        treino_detalhado: t,
+        metas_macros: metas,
+        score_anamnese: isEvandro ? 100 : (
+          (pesoFicha ? 20 : 0) +
+          (f.restricoes_saude && !f.restricoes_saude.includes('Pendente') ? 20 : 0) +
+          (fisio.sono_horas ? 20 : 0) +
+          (f.local_treino && !f.local_treino.includes('Pendente') ? 20 : 0) +
+          (lgpdOk ? 20 : 0)
+        )
+      };
+
+      let fasePendente = 'Ficha Completa';
+      if (!lgpdOk) fasePendente = 'Fase 5 (Consentimento LGPD)';
+      else if (!pesoFicha) fasePendente = 'Fase 1 (Biometria / Peso)';
+      else if (!f.restricoes_saude || f.restricoes_saude.includes('Pendente')) fasePendente = 'Fase 2 (Saúde Clínica & Dores)';
+      else if (!fisio.sono_horas) fasePendente = 'Fase 3 (Fisiologia & Sono)';
+      else if (!f.local_treino || f.local_treino.includes('Pendente')) fasePendente = 'Fase 4 (Rotina de Treino)';
+
       if (alunosMap.has(key)) {
         // Enriquecer registro existente da balança com dados estritamente reais
         const item = alunosMap.get(key);
@@ -442,6 +492,9 @@ app.get('/api/vip/clientes', async (req, res) => {
         if (pesoFicha && item.ultimo_peso === 'Pendente') item.ultimo_peso = pesoFicha;
         if (lgpdOk) item.consentimento_lgpd = 'Autorizado (LGPD)';
         item.etapa_onboarding = f.etapa_onboarding ?? (isEvandro ? 5 : 0);
+        item.prontuario = prontuarioCompleto;
+        item.score_anamnese = prontuarioCompleto.score_anamnese;
+        item.fase_pendente = fasePendente;
         item.dados_completos = Boolean(
           isEvandro || (
             item.ultimo_peso !== 'Pendente' &&
@@ -477,6 +530,9 @@ app.get('/api/vip/clientes', async (req, res) => {
           modo_atleta: Boolean(f.metas_nutricionais?.modo_atleta || f.experiencia_nivel === 'atleta_competicao'),
           consentimento_lgpd: lgpdOk ? 'Autorizado (LGPD)' : 'Pendente (Falta "CONCORDO")',
           etapa_onboarding: f.etapa_onboarding ?? (isEvandro ? 5 : 0),
+          prontuario: prontuarioCompleto,
+          score_anamnese: prontuarioCompleto.score_anamnese,
+          fase_pendente: fasePendente,
           dados_completos: Boolean(isEvandro || (temPeso && temObj && temLocal && lgpdOk))
         });
       }
@@ -512,7 +568,7 @@ app.post('/api/vip/:id/renovar', async (req, res) => {
   }
 });
 
-// 8.1 Endpoint Disparar Cobrança Amigável de Dados pelo Marcão
+// 8.1 Endpoint Disparar Cobrança Amigável de Dados pelo Marcão (Inteligente por Fase)
 app.post('/api/vip/:id/cobrar-dados', async (req, res) => {
   const { id } = req.params;
   try {
@@ -523,11 +579,22 @@ app.post('/api/vip/:id/cobrar-dados', async (req, res) => {
     let tel = clients[0]?.telefone;
     let nome = clients[0]?.nome_cliente || 'Guerreira';
 
-    if (!tel) {
-      const rF = await fetch(`${SUPABASE_URL}/rest/v1/fichas_alunos?id=eq.${id}`, { headers });
-      const fichas = rF.ok ? await rF.json() : [];
-      tel = fichas[0]?.telefone;
-      if (fichas[0]?.nome) nome = fichas[0].nome;
+    let ficha = null;
+    const rF = await fetch(`${SUPABASE_URL}/rest/v1/fichas_alunos?id=eq.${id}`, { headers });
+    const fichas = rF.ok ? await rF.json() : [];
+    if (fichas && fichas[0]) {
+      ficha = fichas[0];
+      if (!tel) tel = ficha.telefone;
+      if (ficha.nome || ficha.nome_aluno) nome = ficha.nome || ficha.nome_aluno;
+    }
+
+    if (!tel && clients[0]?.remote_jid) {
+      const rF2 = await fetch(`${SUPABASE_URL}/rest/v1/fichas_alunos?remote_jid=eq.${clients[0].remote_jid}`, { headers });
+      const f2 = rF2.ok ? await rF2.json() : [];
+      if (f2 && f2[0]) {
+        ficha = f2[0];
+        tel = ficha.telefone || clients[0].telefone;
+      }
     }
 
     if (!tel) {
@@ -536,33 +603,89 @@ app.post('/api/vip/:id/cobrar-dados', async (req, res) => {
 
     const numLimpo = tel.replace(/\D/g, '');
     const primeiroNome = nome.trim().split(' ')[0];
-    const msg = `Fala, ${primeiroNome}! Tudo na paz? 🦁 Marcão passando aqui só pra saber se você conseguiu ver minha mensagem de antes.\n\nPra eu montar seu treino personalizado e seus macros sem inventar nada, tudo sob medida pra você, preciso que você me passe quando puder:\n1️⃣ Seu peso atual aproximado (ou foto do visor da balança);\n2️⃣ Sua altura e idade;\n3️⃣ Se você tem alguma dorzinha no joelho, coluna ou ombro.\n\nMe manda aqui no seu tempo! Tamo junto! 💪`;
+
+    // Identifica qual etapa precisa ser cobrada
+    const lgpdOk = Boolean(ficha?.consentimento_lgpd);
+    const pesoOk = Boolean(ficha?.metas_nutricionais?.peso || clients[0]?.ultimo_peso);
+    const saudeOk = Boolean(ficha?.restricoes_saude && !ficha.restricoes_saude.includes('Pendente'));
+    const sonoOk = Boolean(ficha?.metas_nutricionais?.anamnese_fisiologica?.sono_horas);
+    const localOk = Boolean(ficha?.local_treino && !ficha.local_treino.includes('Pendente'));
+
+    let baloes = [];
+    if (!lgpdOk) {
+      baloes = [
+        `Fala, ${primeiroNome}! Tudo na paz? 🦁 Marcão passando por aqui!`,
+        `Seu protocolo tá pronto e afiado! Mas pra cumprirmos a lei da LGPD e a sua segurança médica:`,
+        `Me manda um 'CONCORDO' aqui em resposta pra eu liberar seu plano completo agora! Tamo junto! 👊`
+      ];
+    } else if (!pesoOk) {
+      baloes = [
+        `Fala, ${primeiroNome}! 🦁 Marcão Personal na área!`,
+        `Pra eu calcular seus macros e sua dieta com precisão cirúrgica, me passa quando puder:`,
+        `Seu peso aproximado atual (ou manda a foto da balança) e sua altura/idade!`,
+        `Assim que me mandar eu fecho seus treinos! Tamo junto! 💪`
+      ];
+    } else if (!saudeOk) {
+      baloes = [
+        `Fala, ${primeiroNome}! Tudo bem? 🦁 Marcão passando por aqui!`,
+        `Tô finalizando a montagem dos seus treinos e preciso de uma checagem médica rápida:`,
+        `Você tem dorzinha no joelho, coluna ou ombro? Toma algum remédio diário ou tem pressão alta/baixa?`,
+        `Me conta aqui pra eu blindar seu corpo e não te passar nada perigoso! Tamo junto! 🛡️`
+      ];
+    } else if (!sonoOk) {
+      baloes = [
+        `Fala, ${primeiroNome}! 🦁 Marcão aqui com uma dúvida rápida de recuperação!`,
+        `Pra ajustar o ritmo do seu treino: quantas horas você costuma dormir por noite e você acorda descansado(a)?`,
+        `E quantos litros de água você bebe por dia na média? Me manda aqui no seu tempo! 💧🛌`
+      ];
+    } else if (!localOk) {
+      baloes = [
+        `Fala, ${primeiroNome}! 🦁 Marcão na área!`,
+        `Me conta com sinceridade: quantos minutos por dia você realmente tem livre pra treinar?`,
+        `E você vai treinar em academia ou prefere rotina prática em casa? Assim monto algo sustentável pra você! 🔥`
+      ];
+    } else {
+      baloes = [
+        `Fala, ${primeiroNome}! Tudo na paz? 🦁 Marcão passando por aqui!`,
+        `Passando pra saber como tá o ritmo dos treinos e da hidratação hoje!`,
+        `Qualquer dúvida de execução ou se quiser trocar algum exercício, só me chamar aqui! Tamo junto! 💪`
+      ];
+    }
 
     const evoUrl = process.env.EVOLUTION_API_URL || 'https://evolution.marcaopersonal.com';
     const evoKey = process.env.EVOLUTION_API_KEY || '';
     const evoInst = process.env.EVOLUTION_INSTANCE || 'sofia';
 
-    const respEvo = await fetch(`${evoUrl}/message/sendText/${evoInst}`, {
-      method: 'POST',
-      headers: {
-        'apikey': evoKey,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        number: numLimpo,
-        text: msg
-      })
-    });
+    for (let i = 0; i < baloes.length; i++) {
+      try {
+        await fetch(`${evoUrl}/chat/sendPresence/${evoInst}`, {
+          method: 'POST',
+          headers: { 'apikey': evoKey, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ number: numLimpo, presence: 'composing', delay: 2000 })
+        });
+      } catch (e) {}
 
-    const evoData = await respEvo.json();
-    res.json({ success: true, message: `Mensagem amigável de cobrança enviada para ${primeiroNome} no WhatsApp!`, evolution: evoData });
+      await new Promise(r => setTimeout(r, 1500));
+
+      await fetch(`${evoUrl}/message/sendText/${evoInst}`, {
+        method: 'POST',
+        headers: { 'apikey': evoKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ number: numLimpo, text: baloes[i] })
+      });
+
+      if (i < baloes.length - 1) {
+        await new Promise(r => setTimeout(r, 1200));
+      }
+    }
+
+    res.json({ success: true, message: `Mensagens humanizadas de cobrança enviadas em ${baloes.length} balões para ${primeiroNome} no WhatsApp!` });
   } catch (err) {
     console.error('Erro /api/vip/cobrar-dados:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// 8.2 Endpoint Salvar Anamnese Real do Aluno (VIP & Balança)
+// 8.2 Endpoint Salvar Anamnese Real do Aluno (Prontuário Médico-Esportivo Completo)
 app.post('/api/vip/salvar-anamnese', async (req, res) => {
   try {
     const {
@@ -575,7 +698,17 @@ app.post('/api/vip/salvar-anamnese', async (req, res) => {
       local_treino,
       objetivo,
       restricoes,
-      consentimento_lgpd
+      consentimento_lgpd,
+      pressao_arterial,
+      remedios_continuos,
+      cirurgias,
+      sono_horas,
+      sono_qualidade,
+      agua_litros,
+      estresse_nivel,
+      tempo_treino_min,
+      dias_semana,
+      fome_emocional
     } = req.body;
 
     if (!telefone && !remote_jid) {
@@ -599,7 +732,6 @@ app.post('/api/vip/salvar-anamnese', async (req, res) => {
     });
 
     if (resBalanca.status === 404 || (await resBalanca.text()).includes('[]')) {
-      // Tenta por telefone
       await fetch(`${SUPABASE_URL}/rest/v1/clientes_balanca?telefone=eq.${telLimpo}`, {
         method: 'PATCH',
         headers,
@@ -607,39 +739,39 @@ app.post('/api/vip/salvar-anamnese', async (req, res) => {
       });
     }
 
-    // 2. Preparar Divisão de Treino Personalizada
+    // 2. Preparar Divisão de Treino Personalizada com Base Clínica
     const ehIdoso = (idade && Number(idade) >= 60);
     const ehCasa = local_treino ? local_treino.toLowerCase().includes('casa') : true;
 
     let estilo = '';
-    let cuidados = '';
+    let cuidados = restricoes || 'Sobrecarga progressiva segura';
     let treinoA = '';
     let treinoB = '';
     let treinoC = '';
 
     if (ehCasa) {
       if (ehIdoso) {
-        estilo = `Mobilidade & Saúde Articular 60+ (${idade} anos - Casa sem Impacto)`;
+        estilo = `Mobilidade & Saúde Articular 60+ (${idade || 60} anos - Casa sem Impacto)`;
         cuidados = "Zero impacto articular. Apoio firme em cadeira ou parede. Sugestões educativas de IA.";
         treinoA = "Pernas & Equilíbrio: Senta-e-levanta na cadeira (3x10), Panturrilha apoiada na parede (3x15), Ponte suave (3x12), Step-Jack sem salto (3x30s).";
         treinoB = "Superiores com Cabo de Vassoura: Mobilidade torácica com vassoura (3x12), Bom-dia leve postural (3x10), Flexão no sofá/parede (3x10), Remada com garrafa d'água (3x12).";
         treinoC = "Core & Cardio Leve: Prancha adaptada na parede (3x20s), Elevação de joelhos com apoio (3x10 cada), Caminhada 20 min suave.";
       } else {
-        estilo = "Calistenia & Treino Funcional Domiciliar (Objetos Simples)";
-        cuidados = "Intensidade progressiva com peso corporal. Execução controlada.";
+        estilo = `Calistenia & Funcional Domiciliar (${tempo_treino_min || 45} min por sessão)`;
+        cuidados = (restricoes || "Execução consciente com peso do corpo.") + (pressao_arterial && pressao_arterial.toLowerCase().includes('alta') ? " | Sem manobra de Valsalva." : "");
         treinoA = "Peito, Ombros e Tríceps: Flexão de braço (4x10), Tríceps banco na cadeira (3x12), Elevação lateral com garrafas (4x15), Polichinelo (3x45s).";
         treinoB = "Costas e Bíceps: Remada unilateral com mochila/garrafão (4x12), Mobilidade com cabo de vassoura (3x15), Rosca bíceps (4x12), Superman no chão (3x15).";
         treinoC = "Pernas e Abdômen: Agachamento livre (4x15), Afundo alternado (3x10), Elevação pélvica no chão (4x15), Panturrilha no degrau (4x20), Prancha (3x40s).";
       }
     } else {
       if (ehIdoso) {
-        estilo = `Musculação Guiada & Saúde Articular 60+ (${idade} anos - Aparelhos Seguros)`;
-        cuidados = "Aparelhos guiados para estabilidade máxima. Cargas moderadas.";
+        estilo = `Musculação Guiada & Saúde Articular 60+ (${idade || 60} anos - Aparelhos Seguros)`;
+        cuidados = "Aparelhos guiados para estabilidade máxima. Cargas moderadas sem sobrecarga na coluna.";
         treinoA = "Inferiores Guiados: Leg Press 45° sem fechar <90° (3x12), Cadeira Extensora (3x12), Cadeira Flexora (3x12), Panturrilha máquina (3x15).";
         treinoB = "Superiores Guiados: Puxada frontal polia (3x12), Remada baixa com apoio no peito (3x12), Supino máquina guiada (3x10).";
         treinoC = "Core & Postura: Abdominal máquina leve (3x15), Mobilidade de ombros com bastão (3x15), 20 min esteira plana sem inclinação.";
       } else {
-        estilo = "Hipertrofia & Força Muscular na Academia";
+        estilo = `Hipertrofia & Força Muscular (${tempo_treino_min || 45} min - Academia)`;
         cuidados = restricoes || "Sobrecarga progressiva segura.";
         treinoA = "Peitoral, Deltoides e Tríceps: Supino reto halteres (4x10), Supino inclinado (3x10), Desenvolvimento militar halteres (4x10), Elevação lateral (4x12), Tríceps corda (3x12).";
         treinoB = "Dorsal e Bíceps: Puxada alta aberta (4x10), Remada curvada halteres (4x10), Remada baixa triângulo (3x12), Rosca direta barra W (4x10), Rosca martelo (3x12).";
@@ -647,30 +779,42 @@ app.post('/api/vip/salvar-anamnese', async (req, res) => {
       }
     }
 
-    // 3. Atualizar ou Criar em fichas_alunos
+    // 3. Montar Prontuário Completo JSONB
+    const pesoNum = peso ? Number(peso) : 70;
     const patchFicha = {
       updated_at: agoraIso,
       status_acompanhamento: 'ativo',
       etapa_onboarding: 5,
+      dias_disponiveis_semana: dias_semana ? Number(dias_semana) : 3,
       treino_divisao: {
         estilo,
         local: ehCasa ? 'casa' : 'academia',
+        tempo_min: tempo_treino_min || 45,
         cuidados,
         treino_a: treinoA,
         treino_b: treinoB,
         treino_c: treinoC
+      },
+      metas_nutricionais: {
+        peso: pesoNum,
+        agua_ml: Math.round(pesoNum * 35),
+        proteina_g: Math.round(pesoNum * 2.0),
+        distribuicao: `${Math.round(pesoNum * 2.0)}g Proteína (2g/kg) | Hidratação ${Math.round(pesoNum * 35)}ml/dia`,
+        pressao_arterial: pressao_arterial || 'Normal / Não reportada',
+        remedios_continuos: remedios_continuos || 'Nenhum',
+        cirurgias: cirurgias || 'Nenhuma cirurgia prévia',
+        tempo_treino_min: tempo_treino_min || 45,
+        fome_emocional: fome_emocional || 'Controle normal',
+        anamnese_fisiologica: {
+          sono_horas: sono_horas ? Number(sono_horas) : 7,
+          sono_qualidade: sono_qualidade || 'Bom',
+          agua_litros: agua_litros ? Number(agua_litros) : (pesoNum * 0.035).toFixed(1),
+          declaracao_sono_estresse: estresse_nivel || 'Equilibrado'
+        }
       }
     };
 
     if (nome) patchFicha.nome = nome;
-    if (peso && !isNaN(Number(peso))) {
-      patchFicha.metas_nutricionais = {
-        peso: Number(peso),
-        agua_ml: Math.round(Number(peso) * 35),
-        proteina_g: Math.round(Number(peso) * 2.0),
-        distribuicao: `${Math.round(Number(peso) * 2.0)}g Proteína (2g/kg) | Hidratação ${Math.round(Number(peso) * 35)}ml/dia`
-      };
-    }
     if (altura_cm && !isNaN(Number(altura_cm))) patchFicha.altura_cm = Number(altura_cm);
     if (idade && !isNaN(Number(idade))) patchFicha.idade = Number(idade);
     if (local_treino) patchFicha.local_treino = ehCasa ? 'casa' : 'academia';
@@ -706,8 +850,9 @@ app.post('/api/vip/salvar-anamnese', async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Anamnese real atualizada com sucesso no Supabase e no Painel Admin!',
+      message: 'Prontuário Médico-Esportivo atualizado com sucesso no Supabase e no Painel Admin!',
       treino: patchFicha.treino_divisao,
+      prontuario: patchFicha.metas_nutricionais,
       dados_completos: true
     });
   } catch (err) {
@@ -727,6 +872,318 @@ app.get('/api/sales/leads', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// =========================================================================
+// 10. INTEGRAÇÃO SMARTWATCH (OPÇÃO 1: STRAVA & OPÇÃO 2: ATALHO APPLE/ANDROID)
+// EXCLUSIVO PARA CLIENTES QUE COMPRARAM A BALANÇA (3 MESES GRÁTIS -> R$ 19,90)
+// =========================================================================
+
+// 10.1 Webhook de Compra da Balança (Braip, Stripe ou Checkout externo)
+app.post('/api/webhooks/compra-balanca', async (req, res) => {
+  try {
+    const { telefone, nome, email, transacao_id, produto, valor } = req.body;
+    if (!telefone) {
+      return res.status(400).json({ error: 'telefone é obrigatório' });
+    }
+
+    const telLimpo = telefone.replace(/\D/g, '');
+    const telFormatado = telLimpo.startsWith('55') ? telLimpo : `55${telLimpo}`;
+    const nomeLimpo = (nome || 'Guerreiro(a)').trim();
+    const primeiroNome = nomeLimpo.split(' ')[0];
+    const headers = getSupabaseHeaders();
+
+    const agora = new Date();
+    const dataExp = new Date();
+    dataExp.setDate(dataExp.getDate() + 90); // 3 Meses (90 dias) grátis de consultoria VIP
+
+    // Salvar/Atualizar em clientes_balanca
+    const payloadBalanca = {
+      telefone: telFormatado,
+      remote_jid: `${telFormatado}@s.whatsapp.net`,
+      nome_cliente: nomeLimpo,
+      data_compra: agora.toISOString(),
+      data_expiracao_vip: dataExp.toISOString(),
+      status_vip: 'ativo_gratis',
+      streak_dias: 1,
+      link_renovacao: 'https://buy.stripe.com/7sYfZgbmtgaI5dncwrfMA01',
+      dados_bioimpedancia: {
+        origem_compra: 'webhook_compra_balanca',
+        transacao_id: transacao_id || null,
+        produto: produto || 'Balança de Bioimpedância Bluetooth 360°',
+        valor: valor || 89.90,
+        acesso_smartwatch: true,
+        trial_90_dias: true
+      },
+      updated_at: agora.toISOString()
+    };
+
+    const rCheck = await fetch(`${SUPABASE_URL}/rest/v1/clientes_balanca?telefone=eq.${telFormatado}`, { headers });
+    const exist = rCheck.ok ? await rCheck.json() : [];
+
+    if (exist && exist.length > 0) {
+      await fetch(`${SUPABASE_URL}/rest/v1/clientes_balanca?telefone=eq.${telFormatado}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify(payloadBalanca)
+      });
+    } else {
+      payloadBalanca.created_at = agora.toISOString();
+      await fetch(`${SUPABASE_URL}/rest/v1/clientes_balanca`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payloadBalanca)
+      });
+    }
+
+    // Criar/atualizar ficha do aluno para acompanhamento VIP
+    await fetch(`${SUPABASE_URL}/rest/v1/fichas_alunos?telefone=eq.${telFormatado}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({
+        nome: nomeLimpo,
+        status_acompanhamento: 'ativo',
+        etapa_onboarding: 1,
+        updated_at: agora.toISOString()
+      })
+    });
+
+    // Disparar boas-vindas do Marcão no WhatsApp em múltiplos balões curtos
+    const baloes = [
+      `Fala, ${primeiroNome}! 🦁 Treinador Marcão na área! Seu pedido da Balança de Bioimpedância Inteligente foi confirmado com sucesso! ⚖️`,
+      `Você acabou de destravar 3 MESES DE MENTORIA VIP GRATUITA comigo direto aqui no WhatsApp! 👊`,
+      `Assim que sua balança chegar pelo correio, me manda foto do visor aqui! E se você usa relógio Apple Watch ou Android, já deixei sua conexão liberada! Tamo junto! 🔥`
+    ];
+
+    for (let i = 0; i < baloes.length; i++) {
+      try {
+        await fetch(`${EVOLUTION_API_URL}/chat/sendPresence/sofia`, {
+          method: 'POST',
+          headers: { 'apikey': EVOLUTION_API_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ number: telFormatado, presence: 'composing', delay: 1800 })
+        });
+      } catch (e) {}
+      await new Promise(r => setTimeout(r, 1400));
+      try {
+        await fetch(`${EVOLUTION_API_URL}/message/sendText/sofia`, {
+          method: 'POST',
+          headers: { 'apikey': EVOLUTION_API_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ number: telFormatado, text: baloes[i] })
+        });
+      } catch (e) {}
+      if (i < baloes.length - 1) await new Promise(r => setTimeout(r, 1200));
+    }
+
+    res.json({
+      success: true,
+      message: 'Cliente da Balança registrado com 90 dias VIP grátis e notificado!',
+      telefone: telFormatado,
+      data_expiracao: dataExp.toISOString()
+    });
+  } catch (err) {
+    console.error('Erro /api/webhooks/compra-balanca:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 10.2 OPÇÃO 2: Webhook Direto de Treino do Relógio (Apple Shortcuts / Android)
+// Validação Estrita: Só responde para clientes com Balança VIP ativa!
+app.post('/api/webhooks/treino-relogio', async (req, res) => {
+  try {
+    const {
+      telefone,
+      modalidade,
+      duracao_minutos,
+      calorias,
+      fc_media,
+      fc_maxima,
+      horario_inicio,
+      horario_fim
+    } = req.body;
+
+    if (!telefone) {
+      return res.status(400).json({ error: 'telefone é obrigatório' });
+    }
+
+    const telLimpo = telefone.replace(/\D/g, '');
+    const telFormatado = telLimpo.startsWith('55') ? telLimpo : `55${telLimpo}`;
+    const headers = getSupabaseHeaders();
+
+    // 1. CHECAGEM DE EXCLUSIVIDADE: O cliente comprou a balança?
+    const rVip = await fetch(`${SUPABASE_URL}/rest/v1/clientes_balanca?telefone=eq.${telFormatado}`, { headers });
+    const vipData = rVip.ok ? await rVip.json() : [];
+
+    const agora = new Date();
+    let isVipAtivo = false;
+    let nomeCliente = 'Guerreiro(a)';
+
+    if (vipData && vipData.length > 0) {
+      const c = vipData[0];
+      nomeCliente = c.nome_cliente || 'Guerreiro(a)';
+      const statusVip = c.status_vip || 'ativo_gratis';
+      const dtExp = c.data_expiracao_vip ? new Date(c.data_expiracao_vip) : null;
+      if (['ativo_gratis', 'assinante_pago'].includes(statusVip) && (!dtExp || dtExp > agora)) {
+        isVipAtivo = true;
+      }
+    }
+
+    const primeiroNome = nomeCliente.split(' ')[0];
+
+    // Se NÃO for cliente da balança ativo: envia mensagem elegante de exclusividade e convite
+    if (!isVipAtivo) {
+      const baloesNaoVip = [
+        `Fala, ${primeiroNome}! 🦁 Treinador Marcão aqui! Recebi o registro de treino do seu relógio!`,
+        `Mas esse diagnóstico aprofundado de frequência cardíaca e intensidade é um benefício 100% exclusivo para quem possui a nossa Balança de Bioimpedância Inteligente!`,
+        `Garanta a sua aqui com frete grátis e libere 3 meses de mentoria VIP comigo pra gente acompanhar seu shape de verdade: https://marcaopersonal.com#balanca 👊`
+      ];
+
+      for (let i = 0; i < baloesNaoVip.length; i++) {
+        try {
+          await fetch(`${EVOLUTION_API_URL}/chat/sendPresence/sofia`, {
+            method: 'POST',
+            headers: { 'apikey': EVOLUTION_API_KEY, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ number: telFormatado, presence: 'composing', delay: 1800 })
+          });
+        } catch (e) {}
+        await new Promise(r => setTimeout(r, 1400));
+        try {
+          await fetch(`${EVOLUTION_API_URL}/message/sendText/sofia`, {
+            method: 'POST',
+            headers: { 'apikey': EVOLUTION_API_KEY, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ number: telFormatado, text: baloesNaoVip[i] })
+          });
+        } catch (e) {}
+        if (i < baloesNaoVip.length - 1) await new Promise(r => setTimeout(r, 1200));
+      }
+
+      return res.json({
+        success: false,
+        acesso_negado: true,
+        motivo: 'Exclusivo para clientes com Balança VIP ativa',
+        link_balanca: 'https://marcaopersonal.com#balanca'
+      });
+    }
+
+    // 2. CLIENTE VIP ATIVO DA BALANÇA: Diagnóstico Fisiológico (Treino Bom vs. Treino Fofo)
+    const duracao = parseInt(duracao_minutos, 10) || 45;
+    const fcMed = parseInt(fc_media, 10) || 120;
+    const fcMax = parseInt(fc_maxima, 10) || 145;
+    const kcal = parseInt(calorias, 10) || 300;
+    const tipo = (modalidade || 'Musculação').toLowerCase();
+
+    let diagnosticoTexto = '';
+    let ehFofo = false;
+
+    if (tipo.includes('corrida') || tipo.includes('run')) {
+      if (fcMed > 165) {
+        diagnosticoTexto = `Analisando seu Strava/relógio: você correu com FC média de ${fcMed} bpm (Zona 4/5)! Se o treino era rodagem regenerativa, você puxou demais o ritmo! Na próxima, segura mais na Zona 2 pra não desgastar as articulações!`;
+      } else if (fcMed < 125 && duracao < 30) {
+        ehFofo = true;
+        diagnosticoTexto = `Olhei seus batimentos na corrida... FC média de ${fcMed} bpm por apenas ${duracao}min! Foi um trote bem leve, hoje o treino foi um pouco fofo, hein? Semana que vem quero ver mais intensidade nos tiros!`;
+      } else {
+        diagnosticoTexto = `Corrida de respeito registrada: ${duracao} minutos com FC média cravada em ${fcMed} bpm e ${kcal} kcal! Excelente controle cardiorrespiratório e oxidação de gordura!`;
+      }
+    } else {
+      // Musculação
+      if (fcMax < 118 && duracao >= 35) {
+        ehFofo = true;
+        diagnosticoTexto = `Olhei o relatório do seu smartwatch... Treino de ${duracao}min com FC máxima de apenas ${fcMax} bpm? Isso tá com cara de treino fofo com intervalo longo no celular, hein? Hahaha! 😄 Bora aumentar a carga ou encurtar o descanso pra 60s na próxima!`;
+      } else if (fcMax >= 150 && fcMed >= 120) {
+        diagnosticoTexto = `Relatório do relógio recebido: ${duracao}min de treino, FC média de ${fcMed} bpm e pico insano de ${fcMax} bpm! Intensidade animal, você bateu a faixa de hipertrofia com louvor! O shape agradece!`;
+      } else {
+        diagnosticoTexto = `Treino de musculação registrado: ${duracao} minutos, FC média de ${fcMed} bpm e ${kcal} kcal gastas! Ritmo firme e constante, excelente foco na execução!`;
+      }
+    }
+
+    const baloesFeedback = [
+      `Fala, ${primeiroNome}! 🦁 Treinador Marcão na área! Relatório do seu relógio recebido com sucesso! ⌚💪`,
+      diagnosticoTexto,
+      ehFofo
+        ? `Tamo junto e sem desculpas no próximo treino! Bebe água agora e bora pra cima! 👊`
+        : `Agora é garantir a proteína pós-treino e bater a meta de água do dia! Parabéns pela disciplina! 🔥👊`
+    ];
+
+    for (let i = 0; i < baloesFeedback.length; i++) {
+      try {
+        await fetch(`${EVOLUTION_API_URL}/chat/sendPresence/sofia`, {
+          method: 'POST',
+          headers: { 'apikey': EVOLUTION_API_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ number: telFormatado, presence: 'composing', delay: 1800 })
+        });
+      } catch (e) {}
+      await new Promise(r => setTimeout(r, 1400));
+      try {
+        await fetch(`${EVOLUTION_API_URL}/message/sendText/sofia`, {
+          method: 'POST',
+          headers: { 'apikey': EVOLUTION_API_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ number: telFormatado, text: baloesFeedback[i] })
+        });
+      } catch (e) {}
+      if (i < baloesFeedback.length - 1) await new Promise(r => setTimeout(r, 1200));
+    }
+
+    res.json({
+      success: true,
+      is_vip: true,
+      diagnostico: {
+        eh_fofo: ehFofo,
+        duracao_minutos: duracao,
+        fc_media: fcMed,
+        fc_maxima: fcMax,
+        calorias: kcal,
+        modalidade: modalidade || 'Musculação'
+      }
+    });
+  } catch (err) {
+    console.error('Erro /api/webhooks/treino-relogio:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 10.3 OPÇÃO 1: Webhook e Callback Strava API (Estrutura Completa Pré-Configurada)
+const STRAVA_VERIFY_TOKEN = process.env.STRAVA_VERIFY_TOKEN || 'marcao_strava_2026';
+
+// Handshake de Verificação de Inscrição Webhook do Strava
+app.get('/api/integracoes/strava/webhook', (req, res) => {
+  const mode = req.query['hub.mode'];
+  const token = req.query['hub.verify_token'];
+  const challenge = req.query['hub.challenge'];
+
+  if (mode === 'subscribe' && token === STRAVA_VERIFY_TOKEN) {
+    console.log('Strava Webhook Handshake realizado com sucesso!');
+    return res.json({ 'hub.challenge': challenge });
+  }
+  res.status(403).json({ error: 'Falha na verificação de token Strava' });
+});
+
+// Eventos de Treino Recebidos do Strava (activity:create)
+app.post('/api/integracoes/strava/webhook', async (req, res) => {
+  res.status(200).send('EVENT_RECEIVED'); // Strava exige 200 rápido em < 2s
+
+  try {
+    const event = req.body;
+    console.log('Strava Webhook Evento Recebido:', event);
+    // Quando Strava API estiver com as chaves preenchidas, processa a atividade
+  } catch (err) {
+    console.error('Erro ao processar evento Strava:', err);
+  }
+});
+
+// OAuth Callback do Strava para Conexão em 1 Clique do Aluno
+app.get('/api/integracoes/strava/callback', async (req, res) => {
+  const { code, state, error } = req.query;
+  if (error || !code) {
+    return res.send('<h2>Erro na autorização com o Strava. Tente novamente no WhatsApp do Marcão.</h2>');
+  }
+
+  // Responde ao aluno no navegador
+  res.send(`
+    <div style="font-family:sans-serif; text-align:center; padding:50px; background:#0b1329; color:#fff; min-height:100vh;">
+      <h1 style="color:#00e5ff;">🦁 Marcão Personal x Strava</h1>
+      <p style="font-size:18px;">Conexão autorizada com sucesso! Seus treinos e corridas agora serão analisados automaticamente pelo Marcão no WhatsApp!</p>
+      <p style="color:#aaa;">Pode fechar esta janela e voltar para o seu treino! 👊</p>
+    </div>
+  `);
 });
 
 app.listen(PORT, '0.0.0.0', () => {

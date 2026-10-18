@@ -619,15 +619,64 @@
 
     <!-- TAB: Balança VIP & Assinaturas R$ 19,90 -->
     <div id="tab-vip" style="display:none;">
-      <div style="background:var(--card-bg); border:1px solid #232b3c; border-radius:12px; padding:20px; margin-bottom:20px;">
+      <div style="background:var(--card-bg); border:1px solid #232b3c; border-radius:12px; padding:20px; margin-bottom:16px;">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
           <div>
             <h2 style="font-size:18px; color:white; margin-bottom:4px;">Acompanhamento VIP da Balança de Bioimpedância</h2>
             <p style="font-size:13px; color:var(--text-muted);">Clientes da balança ganham <strong>3 meses (90 dias) de mentoria gratuita</strong> no WhatsApp. Após os 90 dias, o sistema faz o transbordo para a mensalidade de <strong>R$ 19,90/mês</strong>.</p>
           </div>
-          <button class="btn btn-approve" onclick="loadVIPClients()">🔄 Atualizar Lista</button>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-budget" onclick="cadastrarCompraBalancaManual()">➕ Ativar Balança VIP</button>
+            <button class="btn btn-approve" onclick="loadVIPClients()">🔄 Atualizar Lista</button>
+          </div>
         </div>
       </div>
+
+      <!-- BANNER SMARTWATCH HUB: OPÇÃO 1 (STRAVA) & OPÇÃO 2 (APPLE WATCH / ANDROID) -->
+      <div style="background:linear-gradient(135deg, #0d1a30, #0a2540); border:1px solid #1e3a8a; border-radius:12px; padding:18px 20px; margin-bottom:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="font-size:28px;">⌚</div>
+            <div>
+              <h3 style="font-size:15px; color:#38bdf8; margin:0; font-weight:800;">Smartwatch Hub & Diagnóstico de Treino (Exclusivo Alunos Balança)</h3>
+              <p style="font-size:12px; color:#94a3b8; margin:2px 0 0 0;">Análise de Frequência Cardíaca, Pontualidade de Horário e Classificação de <strong>Treino Bom vs. Treino Fofo</strong>.</p>
+            </div>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-budget" style="background:#0284c7; border-color:#38bdf8; color:white; font-size:11px; padding:6px 12px;" onclick="mostrarModalAppleWatch()">
+              🍏 Configurar Apple Watch
+            </button>
+            <button class="btn btn-budget" style="background:#ea580c; border-color:#fb923c; color:white; font-size:11px; padding:6px 12px;" onclick="mostrarModalStrava()">
+              🏃 Configurar Strava API
+            </button>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:12px; font-size:12px;">
+          <div style="background:rgba(15,23,42,0.6); border:1px solid #334155; border-radius:8px; padding:10px 14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <strong style="color:#f8fafc;">Opção 2: Apple Shortcuts & Android</strong>
+              <span style="background:#064e3b; color:#34d399; font-size:10px; font-weight:800; padding:2px 6px; border-radius:4px;">🟢 ATIVO</span>
+            </div>
+            <div style="color:#94a3b8; font-size:11px;">Webhook nativo pronto para receber batimentos cardíacos direto do relógio. Zero custo.</div>
+            <div style="margin-top:6px; font-family:monospace; font-size:10px; color:#38bdf8; background:#0f172a; padding:4px 6px; border-radius:4px; overflow-x:auto;">
+              POST /api/webhooks/treino-relogio
+            </div>
+          </div>
+
+          <div style="background:rgba(15,23,42,0.6); border:1px solid #334155; border-radius:8px; padding:10px 14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <strong style="color:#f8fafc;">Opção 1: Strava API (OAuth2)</strong>
+              <span style="background:#3b2a08; color:#f59e0b; font-size:10px; font-weight:800; padding:2px 6px; border-radius:4px;">🟡 AGUARDANDO CHAVES</span>
+            </div>
+            <div style="color:#94a3b8; font-size:11px;">Endpoints de webhook e callback criados no servidor. Aguardando Client ID e Secret do Strava.</div>
+            <div style="margin-top:6px; font-family:monospace; font-size:10px; color:#f59e0b; background:#0f172a; padding:4px 6px; border-radius:4px; overflow-x:auto;">
+              GET/POST /api/integracoes/strava/webhook
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div id="vip-clients-container">
         <p style="color:var(--text-muted); font-size:13px;">Carregando alunos VIP...</p>
       </div>
@@ -700,6 +749,37 @@
       <div class="agent-grid" id="agents-grid">
         <!-- Renderizado dinamicamente -->
       </div>
+  <!-- MODAL DE PRONTUÁRIO MÉDICO-ESPORTIVO COMPLETO -->
+  <div id="modal-prontuario" style="display:none; position:fixed; inset:0; background:rgba(4,7,13,0.88); backdrop-filter:blur(6px); z-index:9999; align-items:center; justify-content:center; padding:16px;">
+    <div style="background:#0e1524; border:1px solid #23304a; border-radius:16px; width:100%; max-width:860px; max-height:92vh; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.9);">
+      <!-- Header do Modal -->
+      <div style="padding:18px 24px; border-bottom:1px solid #1c273c; display:flex; justify-content:space-between; align-items:flex-start; background:#121a2d;">
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:22px;">🩺</span>
+            <h2 id="modal-p-nome" style="font-size:18px; color:#ffffff; font-weight:700; margin:0;">Prontuário Médico-Esportivo do Aluno</h2>
+            <span id="modal-p-score" style="background:#064e3b; color:#34d399; border:1px solid #059669; font-size:11px; font-weight:700; padding:2px 8px; border-radius:12px;">100% Completo</span>
+          </div>
+          <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">
+            <span id="modal-p-tel">WhatsApp: --</span> &bull; <span id="modal-p-fase" style="color:var(--accent-orange);">Fase: --</span>
+          </div>
+        </div>
+        <button onclick="fecharProntuarioClinico()" style="background:transparent; border:none; color:#94a3b8; font-size:24px; cursor:pointer; line-height:1; padding:4px 8px; border-radius:6px;">&times;</button>
+      </div>
+
+      <!-- Abas de Navegação do Prontuário -->
+      <div style="display:flex; background:#0b101c; border-bottom:1px solid #1c273c; overflow-x:auto; padding:0 16px;">
+        <button class="p-tab-btn active" onclick="mudarAbaProntuario('biometria')" id="ptab-biometria" style="padding:12px 14px; background:none; border:none; border-bottom:2px solid var(--accent-cyan); color:var(--accent-cyan); font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap;">📊 Biometria & Metabolismo</button>
+        <button class="p-tab-btn" onclick="mudarAbaProntuario('clinica')" id="ptab-clinica" style="padding:12px 14px; background:none; border:none; border-bottom:2px solid transparent; color:var(--text-muted); font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap;">🩺 Saúde Clínica & Articular</button>
+        <button class="p-tab-btn" onclick="mudarAbaProntuario('sono')" id="ptab-sono" style="padding:12px 14px; background:none; border:none; border-bottom:2px solid transparent; color:var(--text-muted); font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap;">🌙 Sono & Estresse</button>
+        <button class="p-tab-btn" onclick="mudarAbaProntuario('treino')" id="ptab-treino" style="padding:12px 14px; background:none; border:none; border-bottom:2px solid transparent; color:var(--text-muted); font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap;">🏋️ Treino & Nutrição</button>
+        <button class="p-tab-btn" onclick="mudarAbaProntuario('editar')" id="ptab-editar" style="padding:12px 14px; background:none; border:none; border-bottom:2px solid transparent; color:var(--text-muted); font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap;">✏️ Editar Dados</button>
+      </div>
+
+      <!-- Conteúdo das Abas -->
+      <div style="padding:22px; overflow-y:auto; flex:1;" id="modal-p-content">
+        <!-- Renderizado dinamicamente via JS -->
+      </div>
     </div>
   </div>
 
@@ -708,6 +788,7 @@
   <script>
     let allApprovals = [];
     let currentFilter = 'all';
+    let vipAlunosCache = {};
 
     function showToast(text) {
       const t = document.getElementById('toast');
@@ -786,6 +867,12 @@
           container.innerHTML = '<p style="color:var(--text-muted); font-size:13px;">Nenhum aluno registrado no sistema ainda.</p>';
           return;
         }
+
+        // Cache dos alunos para consulta e edição instantânea no prontuário
+        vipAlunosCache = {};
+        list.forEach(c => {
+          vipAlunosCache[String(c.id)] = c;
+        });
         container.innerHTML = `
           <div style="background:#131c2e; border-left:4px solid var(--accent-orange); padding:10px 14px; border-radius:6px; margin-bottom:14px; font-size:12px; color:#cbd5e1;">
             <strong>🔒 Integridade dos Dados Reais:</strong> O painel exibe exclusivamente informações verídicas preenchidas pelos alunos. Registros sem dados corporais aparecem como <em>Pendente</em> e podem ser cobrados pelo Marcão de forma amigável com 1 clique.
@@ -814,12 +901,20 @@
 
                   const isObjPending = c.objetivo && c.objetivo.includes('Pendente');
                   const isPesoPending = c.ultimo_peso === 'Pendente' || c.ultimo_peso === '--';
+                  const scoreBadgeColor = (c.score_anamnese || 0) >= 80 ? '#059669' : ((c.score_anamnese || 0) >= 40 ? '#d97706' : '#dc2626');
+                  const scoreBadgeBg = (c.score_anamnese || 0) >= 80 ? '#064e3b' : ((c.score_anamnese || 0) >= 40 ? '#451a03' : '#450a0a');
 
                   return `
                     <tr style="border-bottom:1px solid #151c27;">
                       <td style="padding:12px 10px; font-weight:600; color:white;">
                         ${c.nome} ${vipTag} ${incompleteTag}
                         <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">${c.origem === 'balanca' ? '⚖️ Balança Bioimpedância' : '🏋️ Mentoria Marcão'}</div>
+                        <div style="margin-top:5px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                          <span style="background:${scoreBadgeBg}; color:#f8fafc; border:1px solid ${scoreBadgeColor}; font-size:10px; font-weight:700; padding:2px 6px; border-radius:4px;">
+                            🩺 Prontuário ${c.score_anamnese || 0}%
+                          </span>
+                          <span style="font-size:10px; color:#94a3b8;">${c.fase_pendente || ''}</span>
+                        </div>
                       </td>
                       <td style="padding:12px 10px; color:var(--text-muted);">
                         <a href="https://wa.me/${c.telefone}" target="_blank" style="color:var(--accent-cyan); text-decoration:none; font-weight:600;">
@@ -855,6 +950,9 @@
                       </td>
                       <td style="padding:12px 10px;">
                         <div style="display:flex; flex-direction:column; gap:4px;">
+                          <button onclick="abrirProntuarioClinico('${c.id}')" class="btn btn-budget" style="padding:4px 8px; font-size:11px; background:#0f766e; border-color:#14b8a6; color:#ccfbf1; white-space:nowrap;">
+                            🩺 Ver Prontuário
+                          </button>
                           ${!c.dados_completos ? `
                             <button onclick="cobrarDadosAluno(${c.id}, '${c.nome}')" class="btn btn-budget" style="padding:4px 8px; font-size:11px; background:#1e3a8a; border-color:#3b82f6; color:#93c5fd; white-space:nowrap;">
                               📲 Cobrar Dados
@@ -902,6 +1000,317 @@
       } catch(e) {
         showToast('Erro ao renovar assinatura.');
       }
+    }
+
+    // =========================================================================
+    // CONTROLADORES DO PRONTUÁRIO MÉDICO-ESPORTIVO
+    // =========================================================================
+    let alunoAtivoProntuario = null;
+    let abaAtivaProntuario = 'biometria';
+
+    function abrirProntuarioClinico(id) {
+      const aluno = vipAlunosCache[String(id)];
+      if (!aluno) {
+        showToast('Aluno não encontrado no cache.');
+        return;
+      }
+      alunoAtivoProntuario = aluno;
+      abaAtivaProntuario = 'biometria';
+
+      document.getElementById('modal-p-nome').innerText = aluno.nome || 'Aluno VIP';
+      document.getElementById('modal-p-tel').innerText = `WhatsApp: ${aluno.telefone}`;
+      document.getElementById('modal-p-fase').innerText = `Fase Atual: ${aluno.fase_pendente || 'Ficha Completa'}`;
+      
+      const scoreBadge = document.getElementById('modal-p-score');
+      const sc = aluno.score_anamnese || 0;
+      scoreBadge.innerText = `${sc}% Completo`;
+      scoreBadge.style.background = sc >= 80 ? '#064e3b' : (sc >= 40 ? '#451a03' : '#450a0a');
+      scoreBadge.style.color = sc >= 80 ? '#34d399' : (sc >= 40 ? '#f59e0b' : '#f87171');
+      scoreBadge.style.borderColor = sc >= 80 ? '#059669' : (sc >= 40 ? '#78350f' : '#b91c1c');
+
+      mudarAbaProntuario('biometria');
+      const modal = document.getElementById('modal-prontuario');
+      modal.style.display = 'flex';
+    }
+
+    function fecharProntuarioClinico() {
+      const modal = document.getElementById('modal-prontuario');
+      modal.style.display = 'none';
+      alunoAtivoProntuario = null;
+    }
+
+    function mudarAbaProntuario(aba) {
+      abaAtivaProntuario = aba;
+      document.querySelectorAll('.p-tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        btn.style.color = 'var(--text-muted)';
+        btn.style.borderBottomColor = 'transparent';
+      });
+      const activeBtn = document.getElementById('ptab-' + aba);
+      if (activeBtn) {
+        activeBtn.classList.add('active');
+        activeBtn.style.color = 'var(--accent-cyan)';
+        activeBtn.style.borderBottomColor = 'var(--accent-cyan)';
+      }
+      if (alunoAtivoProntuario) {
+        renderConteudoProntuario(aba, alunoAtivoProntuario);
+      }
+    }
+
+    function renderConteudoProntuario(aba, a) {
+      const p = a.prontuario || {};
+      const t = p.treino_detalhado || {};
+      const container = document.getElementById('modal-p-content');
+
+      if (aba === 'biometria') {
+        container.innerHTML = `
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:14px; margin-bottom:20px;">
+            <div style="background:#131a28; border:1px solid #1f2a3f; border-radius:10px; padding:14px;">
+              <div style="font-size:11px; color:#94a3b8; text-transform:uppercase;">⚖️ Peso Atual</div>
+              <div style="font-size:20px; font-weight:700; color:#fff; margin-top:4px;">${p.peso_atual || a.ultimo_peso || 'Pendente'}</div>
+            </div>
+            <div style="background:#131a28; border:1px solid #1f2a3f; border-radius:10px; padding:14px;">
+              <div style="font-size:11px; color:#94a3b8; text-transform:uppercase;">📏 Altura & Idade</div>
+              <div style="font-size:18px; font-weight:700; color:#fff; margin-top:4px;">${p.altura_cm ? p.altura_cm + 'cm' : '--'} • ${p.idade ? p.idade + ' anos' : '--'}</div>
+            </div>
+            <div style="background:#131a28; border:1px solid #1f2a3f; border-radius:10px; padding:14px;">
+              <div style="font-size:11px; color:#94a3b8; text-transform:uppercase;">🩺 IMC (OMS)</div>
+              <div style="font-size:18px; font-weight:700; color:var(--accent-cyan); margin-top:4px;">${p.imc || '--'} <span style="font-size:11px; color:#94a3b8;">(${p.classificacao_imc || '--'})</span></div>
+            </div>
+            <div style="background:#131a28; border:1px solid #1f2a3f; border-radius:10px; padding:14px;">
+              <div style="font-size:11px; color:#94a3b8; text-transform:uppercase;">💧 Meta Hídrica (35ml/kg)</div>
+              <div style="font-size:18px; font-weight:700; color:#38bdf8; margin-top:4px;">${p.metas_macros?.agua_ml ? p.metas_macros.agua_ml + ' ml/dia' : (p.agua_litros_habitual ? p.agua_litros_habitual + ' L/dia' : '2.500 ml')}</div>
+            </div>
+          </div>
+
+          <div style="background:#131a28; border:1px solid #1f2a3f; border-radius:10px; padding:16px; margin-bottom:16px;">
+            <h4 style="font-size:14px; color:#f8fafc; margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+              <span>🍽️ Prescrição de Macronutrientes & Energia</span>
+            </h4>
+            <div style="font-size:13px; color:#cbd5e1; line-height:1.6;">
+              <strong>Divisão Estimada:</strong> ${p.metas_macros?.distribuicao || '2.0g/kg Proteína | 35ml/kg Água'}<br>
+              <strong>Objetivo Declarado:</strong> ${a.objetivo || 'Pendente'}
+            </div>
+          </div>
+        `;
+      } else if (aba === 'clinica') {
+        container.innerHTML = `
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:16px; margin-bottom:16px;">
+            <div style="background:#131a28; border:1px solid #1f2a3f; border-radius:10px; padding:16px;">
+              <h4 style="font-size:13px; color:var(--accent-cyan); margin-bottom:10px; text-transform:uppercase;">❤️ Segurança Cardiovascular</h4>
+              <div style="font-size:13px; color:#cbd5e1; line-height:1.6;">
+                <strong>Pressão Arterial:</strong> ${p.pressao_arterial || 'Normal / Estável'}<br>
+                <strong>Medicamentos Diários:</strong> ${p.remedios_continuos || 'Nenhum reportado'}<br>
+                <strong>Cirurgias / Pinos:</strong> ${p.cirurgias_lesoes || 'Nenhuma cirurgia'}
+              </div>
+            </div>
+            <div style="background:#131a28; border:1px solid #1f2a3f; border-radius:10px; padding:16px;">
+              <h4 style="font-size:13px; color:var(--accent-orange); margin-bottom:10px; text-transform:uppercase;">🦴 Saúde Articular & Limitações</h4>
+              <div style="font-size:13px; color:#cbd5e1; line-height:1.6;">
+                <strong>Dores Reportadas:</strong> ${p.dores_articulares || a.restricoes || 'Nenhuma restrição articular'}<br>
+                <strong>Cuidados Marcão:</strong> ${t.cuidados || 'Sobrecarga progressiva com execução controlada.'}
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#172033; border-left:4px solid var(--accent-green); border-radius:8px; padding:14px; font-size:12px; color:#cbd5e1;">
+            <strong>🛡️ Diretriz Clínica do Marcão:</strong> O Marcão adapta amplitudes de movimento e contraindica agachamentos profundos, flexões de joelho &lt;90° ou compressão axial pesada sempre que há dor reportada. Em casos de pressão alta, elimina manobras de Valsalva.
+          </div>
+        `;
+      } else if (aba === 'sono') {
+        container.innerHTML = `
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:14px; margin-bottom:16px;">
+            <div style="background:#131a28; border:1px solid #1f2a3f; border-radius:10px; padding:16px;">
+              <div style="font-size:11px; color:#94a3b8; text-transform:uppercase;">🌙 Horas de Sono</div>
+              <div style="font-size:22px; font-weight:700; color:#a78bfa; margin-top:4px;">${p.sono_horas || 7} horas / noite</div>
+              <div style="font-size:12px; color:#94a3b8; margin-top:4px;">Qualidade: <strong>${p.sono_qualidade || 'Normal'}</strong></div>
+            </div>
+            <div style="background:#131a28; border:1px solid #1f2a3f; border-radius:10px; padding:16px;">
+              <div style="font-size:11px; color:#94a3b8; text-transform:uppercase;">💼 Carga de Estresse & Rotina</div>
+              <div style="font-size:15px; font-weight:700; color:#fff; margin-top:4px;">${p.rotina_trabalho_estresse || 'Rotina mista'}</div>
+            </div>
+            <div style="background:#131a28; border:1px solid #1f2a3f; border-radius:10px; padding:16px;">
+              <div style="font-size:11px; color:#94a3b8; text-transform:uppercase;">💧 Ingestão de Água Habitual</div>
+              <div style="font-size:22px; font-weight:700; color:#38bdf8; margin-top:4px;">${p.agua_litros_habitual || 2} L / dia</div>
+            </div>
+          </div>
+
+          <div style="background:#131a28; border:1px solid #1f2a3f; border-radius:10px; padding:16px;">
+            <h4 style="font-size:13px; color:#f8fafc; margin-bottom:8px;">🛌 Fisiologia do Sono Anabólico</h4>
+            <p style="font-size:12px; color:#cbd5e1; line-height:1.6; margin:0;">
+              O pico de GH e a reconstrução muscular ocorrem nas fases 3 e 4 do sono profundo. Alunos com sono &lt; 6.5h têm cortisol basal elevado e maior tendência a acumular gordura visceral. O Marcão envia dicas ativas de higiene do sono às quintas-feiras no WhatsApp.
+            </p>
+          </div>
+        `;
+      } else if (aba === 'treino') {
+        container.innerHTML = `
+          <div style="background:#131a28; border:1px solid #1f2a3f; border-radius:10px; padding:16px; margin-bottom:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+              <h4 style="font-size:15px; color:#fff; margin:0;">🏋️ Divisão de Treino Personalizada</h4>
+              <span style="background:#1e293b; color:var(--accent-cyan); font-size:11px; font-weight:700; padding:3px 8px; border-radius:6px;">${p.local_treino || a.local_treino || 'Academia'} &bull; ${p.tempo_treino_min || 45} min &bull; ${p.dias_semana || 3}x/sem</span>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:10px; font-size:13px; color:#cbd5e1;">
+              <div style="background:#0b101c; border-left:3px solid var(--accent-cyan); padding:10px; border-radius:4px;">
+                <strong style="color:#fff;">Treino A:</strong> ${t.treino_a || 'Aguardando montagem de ficha'}
+              </div>
+              <div style="background:#0b101c; border-left:3px solid var(--accent-orange); padding:10px; border-radius:4px;">
+                <strong style="color:#fff;">Treino B:</strong> ${t.treino_b || 'Aguardando montagem de ficha'}
+              </div>
+              <div style="background:#0b101c; border-left:3px solid var(--accent-green); padding:10px; border-radius:4px;">
+                <strong style="color:#fff;">Treino C:</strong> ${t.treino_c || 'Aguardando montagem de ficha'}
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#131a28; border:1px solid #1f2a3f; border-radius:10px; padding:14px; font-size:12px; color:#cbd5e1;">
+            <strong>🍫 Padrão Alimentar / Fome Emocional:</strong> ${p.fome_emocional || 'Sem picos severos de ansiedade reportados.'}
+          </div>
+        `;
+      } else if (aba === 'editar') {
+        container.innerHTML = `
+          <form id="form-edit-prontuario" onsubmit="salvarProntuarioModal(event, '${a.id}')" style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+            <div>
+              <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:4px;">Peso Atual (kg):</label>
+              <input type="number" step="0.1" id="edt-peso" value="${parseFloat(String(p.peso_atual || a.ultimo_peso || 70).replace('kg','')) || 70}" style="width:100%; padding:8px 10px; background:#0b101c; border:1px solid #1f2a3f; border-radius:6px; color:#fff; font-size:13px;">
+            </div>
+            <div>
+              <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:4px;">Altura (cm):</label>
+              <input type="number" id="edt-altura" value="${p.altura_cm || 170}" style="width:100%; padding:8px 10px; background:#0b101c; border:1px solid #1f2a3f; border-radius:6px; color:#fff; font-size:13px;">
+            </div>
+            <div>
+              <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:4px;">Idade:</label>
+              <input type="number" id="edt-idade" value="${parseInt(p.idade) || 30}" style="width:100%; padding:8px 10px; background:#0b101c; border:1px solid #1f2a3f; border-radius:6px; color:#fff; font-size:13px;">
+            </div>
+            <div>
+              <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:4px;">Local de Treino:</label>
+              <select id="edt-local" style="width:100%; padding:8px 10px; background:#0b101c; border:1px solid #1f2a3f; border-radius:6px; color:#fff; font-size:13px;">
+                <option value="academia" ${p.local_treino === 'academia' ? 'selected' : ''}>Academia de Musculação</option>
+                <option value="casa" ${p.local_treino === 'casa' ? 'selected' : ''}>Treino em Casa (Funcional/Objetos)</option>
+              </select>
+            </div>
+            <div style="grid-column:1 / -1;">
+              <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:4px;">Objetivo Principal:</label>
+              <input type="text" id="edt-objetivo" value="${a.objetivo || ''}" style="width:100%; padding:8px 10px; background:#0b101c; border:1px solid #1f2a3f; border-radius:6px; color:#fff; font-size:13px;">
+            </div>
+            <div style="grid-column:1 / -1;">
+              <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:4px;">Dores / Restrições Clínicas:</label>
+              <input type="text" id="edt-restricoes" value="${p.dores_articulares || a.restricoes || ''}" style="width:100%; padding:8px 10px; background:#0b101c; border:1px solid #1f2a3f; border-radius:6px; color:#fff; font-size:13px;">
+            </div>
+            <div>
+              <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:4px;">Pressão Arterial:</label>
+              <input type="text" id="edt-pressao" value="${p.pressao_arterial || 'Normal'}" style="width:100%; padding:8px 10px; background:#0b101c; border:1px solid #1f2a3f; border-radius:6px; color:#fff; font-size:13px;">
+            </div>
+            <div>
+              <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:4px;">Remédios Contínuos:</label>
+              <input type="text" id="edt-remedios" value="${p.remedios_continuos || 'Nenhum'}" style="width:100%; padding:8px 10px; background:#0b101c; border:1px solid #1f2a3f; border-radius:6px; color:#fff; font-size:13px;">
+            </div>
+            <div>
+              <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:4px;">Horas de Sono / Noite:</label>
+              <input type="number" step="0.5" id="edt-sono" value="${p.sono_horas || 7}" style="width:100%; padding:8px 10px; background:#0b101c; border:1px solid #1f2a3f; border-radius:6px; color:#fff; font-size:13px;">
+            </div>
+            <div>
+              <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:4px;">Água Diária (Litros):</label>
+              <input type="number" step="0.1" id="edt-agua" value="${p.agua_litros_habitual || 2.5}" style="width:100%; padding:8px 10px; background:#0b101c; border:1px solid #1f2a3f; border-radius:6px; color:#fff; font-size:13px;">
+            </div>
+            <div>
+              <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:4px;">Tempo de Treino (min):</label>
+              <input type="number" id="edt-tempo" value="${p.tempo_treino_min || 45}" style="width:100%; padding:8px 10px; background:#0b101c; border:1px solid #1f2a3f; border-radius:6px; color:#fff; font-size:13px;">
+            </div>
+            <div>
+              <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:4px;">Frequência Semanal (dias):</label>
+              <input type="number" id="edt-dias" value="${p.dias_semana || 3}" style="width:100%; padding:8px 10px; background:#0b101c; border:1px solid #1f2a3f; border-radius:6px; color:#fff; font-size:13px;">
+            </div>
+            <div style="grid-column:1 / -1; display:flex; justify-content:flex-end; gap:10px; margin-top:10px;">
+              <button type="button" onclick="fecharProntuarioClinico()" class="btn" style="background:#1e293b; color:#cbd5e1; border:none; padding:8px 16px; border-radius:6px; cursor:pointer;">Cancelar</button>
+              <button type="submit" class="btn btn-approve" style="padding:8px 20px;">💾 Salvar Prontuário</button>
+            </div>
+          </form>
+        `;
+      }
+    }
+
+    async function salvarProntuarioModal(e, id) {
+      e.preventDefault();
+      const a = alunoAtivoProntuario;
+      if (!a) return;
+
+      const payload = {
+        id: id,
+        telefone: a.telefone,
+        remote_jid: a.remote_jid,
+        nome: a.nome,
+        peso: parseFloat(document.getElementById('edt-peso').value),
+        altura_cm: parseFloat(document.getElementById('edt-altura').value),
+        idade: parseInt(document.getElementById('edt-idade').value, 10),
+        local_treino: document.getElementById('edt-local').value,
+        objetivo: document.getElementById('edt-objetivo').value,
+        restricoes: document.getElementById('edt-restricoes').value,
+        pressao_arterial: document.getElementById('edt-pressao').value,
+        remedios_continuos: document.getElementById('edt-remedios').value,
+        sono_horas: parseFloat(document.getElementById('edt-sono').value),
+        agua_litros: parseFloat(document.getElementById('edt-agua').value),
+        tempo_treino_min: parseInt(document.getElementById('edt-tempo').value, 10),
+        dias_semana: parseInt(document.getElementById('edt-dias').value, 10),
+        consentimento_lgpd: true
+      };
+
+      showToast('Salvando prontuário médico-esportivo...');
+      try {
+        const res = await fetch('/api/vip/salvar-anamnese', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const d = await res.json();
+        if (d.success) {
+          showToast('✅ Prontuário atualizado com sucesso!');
+          fecharProntuarioClinico();
+          loadVIPClients();
+        } else {
+          showToast('Erro ao salvar: ' + (d.error || 'Falha na requisição'));
+        }
+      } catch (err) {
+        showToast('Erro de conexão ao salvar prontuário.');
+      }
+    }
+
+    // Funções do Smartwatch Hub & Ativação de Balança
+    async function cadastrarCompraBalancaManual() {
+      const tel = prompt('Digite o WhatsApp do cliente com DDD (ex: 5532988887777):');
+      if (!tel) return;
+      const nome = prompt('Digite o nome do cliente:', 'Aluno VIP Balança');
+      if (!nome) return;
+
+      showToast('Cadastrando compra e ativando 90 dias VIP...');
+      try {
+        const res = await fetch('/api/webhooks/compra-balanca', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            telefone: tel,
+            nome: nome,
+            produto: 'Balança de Bioimpedância Bluetooth 360°',
+            valor: 89.90
+          })
+        });
+        const d = await res.json();
+        if (d.success) {
+          alert(`✅ Cliente ${nome} ativado com sucesso!\n\n• Período: 3 Meses Grátis (90 dias)\n• Vencimento: ${d.data_expiracao}\n• Mensagem de boas-vindas e acesso ao relógio disparados no WhatsApp!`);
+          loadVIPClients();
+        } else {
+          alert('Erro ao ativar: ' + (d.error || 'Falha'));
+        }
+      } catch (e) {
+        alert('Erro de conexão ao ativar compra: ' + e.message);
+      }
+    }
+
+    function mostrarModalAppleWatch() {
+      alert(`🍏 GUIA DE ATIVAÇÃO: APPLE WATCH (OPÇÃO 2 NATIVA)\n\n1. No iPhone do aluno, abra o app "Atalhos" (Shortcuts);\n2. Toque em Automação > Criar Automação Pessoal > Treino;\n3. Selecione: "Ao terminar qualquer treino" > Executar Imediatamente;\n4. Adicione a ação: Obter detalhes do último treino e "Obter Conteúdo do URL" (POST);\n5. URL do Webhook do Marcão:\nhttps://admin.marcaopersonal.com/api/webhooks/treino-relogio\n\nPronto! A cada treino finalizado no Apple Watch, o Marcão recebe os batimentos e dispara a análise no WhatsApp do aluno!`);
+    }
+
+    function mostrarModalStrava() {
+      alert(`🏃 GUIA DE ATIVAÇÃO: STRAVA API (OPÇÃO 1)\n\nStatus Atual: Backend 100% pronto!\n\nChecklist para o Diretor Evandro:\n1. Acessar: https://www.strava.com/settings/api\n2. Nome do App: Marcão Personal AI\n3. Domínio de Callback: admin.marcaopersonal.com\n4. Obter o "Client ID" e o "Client Secret" e salvar no .env do servidor;\n\nAssim que preenchido, os alunos conectam com 1 clique no Strava!`);
     }
 
     async function loadSalesLeads() {
