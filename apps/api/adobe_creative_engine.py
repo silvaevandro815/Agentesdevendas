@@ -16,6 +16,7 @@ Inclui:
 """
 
 import os
+import re
 import math
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
@@ -314,33 +315,42 @@ class AdobeLayeredCompositor:
         draw = ImageDraw.Draw(self.canvas)
         palavras = headline.strip().split()
 
-        # Definição de tamanho por contagem de palavras para o card inferior
+        # Definição de tamanho por contagem de palavras
         if len(palavras) <= 4:
-            font_size = 56
-        elif len(palavras) <= 7:
-            font_size = 48
+            font_size = 52
+        elif len(palavras) <= 8:
+            font_size = 46
         else:
-            font_size = 42
+            font_size = 40
 
         font_extra = get_font("Montserrat-ExtraBold.ttf", font_size)
         font_black = get_font("Montserrat-Black.ttf", int(font_size * 1.05))
 
-        # Quebra equilibrada de linhas na largura total livre
-        linhas = []
-        linha_atual = []
-        max_largura = self.width - 120  # Margem segura de 60px de cada lado
+        # ZONA DE COLISÃO DO SELO: Se o título começar próximo do topo (< 210px),
+        # restringimos a largura para 740px para NUNCA encostar no selo superior direito!
+        max_largura = 740 if start_y < 210 else 940
 
-        for p in palavras:
-            linha_atual.append(p)
-            teste = " ".join(linha_atual).upper()
-            bbox = draw.textbbox((0, 0), teste, font=font_extra)
-            if (bbox[2] - bbox[0]) > max_largura:
-                linha_atual.pop()
-                if linha_atual:
-                    linhas.append(" ".join(linha_atual).upper())
-                linha_atual = [p]
-        if linha_atual:
-            linhas.append(" ".join(linha_atual).upper())
+        # Quebra inteligente com blindagem total mesmo se houver quebras manuais de linha (\n)
+        raw_linhas = [l.strip().upper() for l in headline.split("\n") if l.strip()]
+        linhas = []
+        for raw_l in raw_linhas:
+            bbox = draw.textbbox((0, 0), raw_l, font=font_extra)
+            if (bbox[2] - bbox[0]) <= max_largura:
+                linhas.append(raw_l)
+            else:
+                words_l = raw_l.split()
+                cur_l = []
+                for w in words_l:
+                    cur_l.append(w)
+                    test_str = " ".join(cur_l)
+                    t_bbox = draw.textbbox((0, 0), test_str, font=font_extra)
+                    if (t_bbox[2] - t_bbox[0]) > max_largura:
+                        cur_l.pop()
+                        if cur_l:
+                            linhas.append(" ".join(cur_l))
+                        cur_l = [w]
+                if cur_l:
+                    linhas.append(" ".join(cur_l))
 
         curr_y = start_y
         for i, lin in enumerate(linhas):
@@ -392,41 +402,162 @@ class AdobeLayeredCompositor:
         return curr_y
 
     # ----------------------------------------------------------------------------------
-    # 5. CARTÕES DE BENEFÍCIOS (GLASSMORPHISM COM CHECKS VETORIAIS)
+    # 4.1 MOTOR DE REALCE INTELIGENTE DE TERMOS (KEYWORD & ENTITY HIGHLIGHTER)
     # ----------------------------------------------------------------------------------
-    def draw_benefit_cards(self, points: list, start_y: int, card_w: int = None, card_x: int = 80):
-        """Cartões em vidro fosco com checks vetoriais esmeralda/dourado e tipografia limpa."""
-        font_body = get_font("Montserrat-SemiBold.ttf", 23)
+    def parse_smart_tokens(self, text: str) -> list:
+        """
+        Analisa o texto do benefício e divide em tokens identificando palavras-chave,
+        métricas numéricas, laudos, órgãos, termos fisiológicos e prefixos de ação
+        para destacar com iluminação dourada (accent_bright).
+        Suporta também sintaxe manual com asteriscos duplos: **termo destacado**.
+        """
+        tokens = []
+        if "**" in text:
+            parts = text.split("**")
+            for i, p in enumerate(parts):
+                if p:
+                    tokens.append((p, i % 2 == 1))
+            return tokens
+
+        patterns = [
+            r"(^[\dIVX]+\.\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+:)",
+            r"(\b\d+%\b|\bR\$\s*[\d,.]+|\b\d+(?:\s*a\s*\d+)?\s*(?:min|minutos|doses|meses|anos|dias|ml|kg|g|mg|h)\b)",
+            r"(\b(?:COX-2|óxido nítrico|corpos cavernosos|vasodilatação|ATP|síntese proteica|células satélites|sarcopenia|bioimpedância|gordura visceral|massa magra|peptídeos de colágeno|laudo oficial|sem remédios|sem taquicardia|dor tardia|DMIT|100% puro|hidratação intracelular|firmeza|rigidez máxima|vigor viril|bloqueada|paralisa o crescimento|laudo técnico|padrão ouro|zero remédios|sobrecarga química)\b)"
+        ]
+        master_regex = re.compile("|".join(patterns), re.IGNORECASE)
+
+        last_idx = 0
+        for m in master_regex.finditer(text):
+            start, end = m.span()
+            if start > last_idx:
+                tokens.append((text[last_idx:start], False))
+            tokens.append((text[start:end], True))
+            last_idx = end
+        if last_idx < len(text):
+            tokens.append((text[last_idx:], False))
+
+        return tokens
+
+    def wrap_rich_tokens(self, tokens: list, font_normal, font_bold, max_w: int) -> list:
+        """Quebra tokens estilizados em linhas equilibradas sem ultrapassar a largura útil."""
+        dummy_draw = ImageDraw.Draw(self.canvas)
+        lines = []
+        current_line = []
+        current_w = 0
+
+        word_tokens = []
+        for text, is_hl in tokens:
+            parts = text.split(" ")
+            for i, p in enumerate(parts):
+                if i > 0:
+                    word_tokens.append((" ", is_hl))
+                if p:
+                    word_tokens.append((p, is_hl))
+
+        for word, is_hl in word_tokens:
+            f = font_bold if is_hl else font_normal
+            bbox = dummy_draw.textbbox((0, 0), word, font=f)
+            ww = bbox[2] - bbox[0]
+            if current_w + ww > max_w and current_line:
+                lines.append(current_line)
+                current_line = []
+                current_w = 0
+                if word == " ":
+                    continue
+            current_line.append((word, is_hl))
+            current_w += ww
+
+        if current_line:
+            lines.append(current_line)
+        return lines
+
+    def draw_rich_line(self, line_tokens: list, x: int, y: int, font_normal, font_bold):
+        """Desenha uma linha com múltiplos tokens estilizados e sombras suaves."""
+        curr_x = x
+        draw = ImageDraw.Draw(self.canvas)
+        for word, is_hl in line_tokens:
+            f = font_bold if is_hl else font_normal
+            color = self.theme["accent_bright"] if is_hl else self.theme["text_primary"]
+            self._draw_text_shadow(word, f, (curr_x, y), blur=5, offset=(0, 2), color=(0, 0, 0, 210))
+            draw = ImageDraw.Draw(self.canvas)
+            draw.text((curr_x, y), word, font=f, fill=color)
+            bbox = draw.textbbox((0, 0), word, font=f)
+            curr_x += (bbox[2] - bbox[0])
+
+    # ----------------------------------------------------------------------------------
+    # 5. CARTÕES DE BENEFÍCIOS INTELIGENTES (SMART VERTICAL FLEXBOX + GLASSMORPHISM)
+    # ----------------------------------------------------------------------------------
+    def draw_benefit_cards(
+        self,
+        points: list = None,
+        start_y: int = 150,
+        card_w: int = None,
+        card_x: int = 80,
+        available_height: int = None,
+        max_points: int = 4,
+        pontos: list = None
+    ) -> int:
+        """
+        Cartões em vidro fosco inteligentes:
+        - Distribuição proporcional adaptativa para preencher todo o espaço útil do post sem vazios
+        - Altura generosa e fontes confortáveis de leitura editorial no mobile
+        - Realce de palavras-chave, laudos e termos médicos em Ouro Solar
+        """
+        if points is None:
+            points = pontos or []
+
+        pts = points[:max_points]
+        if not pts:
+            return start_y
+
         if card_w is None:
             card_w = self.width - (card_x * 2)
-        curr_y = start_y
 
-        for pt in points[:3]:
+        # Ajuste adaptativo de fontes conforme a largura do card
+        is_wide = card_w >= 700
+        f_size = 25 if is_wide else 23
+        line_step = 36 if is_wide else 32
+        font_normal = get_font("Montserrat-SemiBold.ttf", f_size)
+        font_bold = get_font("Montserrat-Black.ttf", f_size)
+
+        max_inner_w = card_w - 95
+        cards_data = []
+
+        # 1. Medir linhas e tokens de cada card
+        for pt in pts:
             texto_pt = pt.strip()
-            dummy_draw = ImageDraw.Draw(self.canvas)
-            bbox = dummy_draw.textbbox((0, 0), texto_pt, font=font_body)
-            tw = bbox[2] - bbox[0]
-            th = bbox[3] - bbox[1]
+            tokens = self.parse_smart_tokens(texto_pt)
+            lines = self.wrap_rich_tokens(tokens, font_normal, font_bold, max_inner_w)
+            cards_data.append((lines, len(lines)))
 
-            max_inner_w = card_w - 90
-            if tw > max_inner_w:
-                palavras = texto_pt.split()
-                mid = len(palavras) // 2
-                linhas_pt = [" ".join(palavras[:mid]), " ".join(palavras[mid:])]
-                card_h = (th * 2) + 36
-            else:
-                linhas_pt = [texto_pt]
-                card_h = th + 32
+        num_cards = len(cards_data)
+        num_gaps = max(1, num_cards - 1)
+
+        # 2. Calcular altura dinâmica para preencher com elegância o espaço disponível
+        if available_height and available_height > 250:
+            target_gap = 36 if is_wide else 30
+            total_gaps_h = num_gaps * target_gap
+            usable_for_cards = available_height - total_gaps_h
+            base_card_h = max(120, min(175, usable_for_cards // num_cards))
+            gap = target_gap
+        else:
+            base_card_h = 130 if is_wide else 115
+            gap = 26
+
+        curr_y = start_y
+        for lines, num_lines in cards_data:
+            text_total_h = num_lines * line_step
+            card_h = max(base_card_h, text_total_h + 46)
 
             # Sombra Gaussiana da caixa
-            self._draw_box_shadow((card_x, curr_y, card_x + card_w, curr_y + card_h), radius=16, blur=14, opacity=120)
+            self._draw_box_shadow((card_x, curr_y, card_x + card_w, curr_y + card_h), radius=18, blur=16, opacity=130)
 
             # Placa de Vidro
             card_layer = Image.new("RGBA", (self.width, self.height), (0, 0, 0, 0))
             cdraw = ImageDraw.Draw(card_layer)
             cdraw.rounded_rectangle(
                 [card_x, curr_y, card_x + card_w, curr_y + card_h],
-                radius=16,
+                radius=18,
                 fill=self.theme["card_bg"],
                 outline=self.theme["card_border"],
                 width=1
@@ -435,8 +566,8 @@ class AdobeLayeredCompositor:
 
             # Círculo com Checkmark Vetorial
             draw = ImageDraw.Draw(self.canvas)
-            circle_r = 16
-            circle_cx = card_x + 36
+            circle_r = 19
+            circle_cx = card_x + 42
             circle_cy = curr_y + card_h // 2
             draw.ellipse(
                 [circle_cx - circle_r, circle_cy - circle_r, circle_cx + circle_r, circle_cy + circle_r],
@@ -444,19 +575,19 @@ class AdobeLayeredCompositor:
                 outline=self.theme["accent_bright"],
                 width=1
             )
-            draw_vector_checkmark(draw, circle_cx, circle_cy, size=18, color=(10, 12, 16), width=3)
+            draw_vector_checkmark(draw, circle_cx, circle_cy, size=21, color=(10, 12, 16), width=3)
 
-            # Texto do benefício
-            tx = card_x + 72
-            if len(linhas_pt) == 1:
-                draw.text((tx, curr_y + (card_h - th) // 2 - 2), linhas_pt[0], font=font_body, fill=self.theme["text_primary"])
-            else:
-                l_y = curr_y + 12
-                for l in linhas_pt:
-                    draw.text((tx, l_y), l, font=font_body, fill=self.theme["text_primary"])
-                    l_y += th + 6
+            # Texto do benefício com palavras-chave destacadas
+            tx = card_x + 78
+            start_text_y = curr_y + (card_h - text_total_h) // 2 - 2
 
-            curr_y += card_h + 16
+            for i, line_tokens in enumerate(lines):
+                ly = start_text_y + (i * line_step)
+                self.draw_rich_line(line_tokens, tx, ly, font_normal, font_bold)
+
+            curr_y += card_h + gap
+
+        return curr_y
 
         return curr_y
 
@@ -588,72 +719,155 @@ class AdobeLayeredCompositor:
     # ----------------------------------------------------------------------------------
     # 8. COMPONENTES EXCLUSIVOS DE CARROSSEL EDITORIAL (INÍCIO, MEIO E FIM)
     # ----------------------------------------------------------------------------------
-    def draw_carousel_header(self, category: str, num_slide: int, total_slides: int, preco: str = None, y: int = 50):
-        """Cabeçalho editorial de carrossel com pílula de passo e contador/preço de lote."""
+    def draw_carousel_header(self, category: str, num_slide: int, total_slides: int, preco: str = None, y: int = 45):
+        """Cabeçalho editorial ultra-refinado com proteção total de colisão e largura dinâmica."""
         draw = ImageDraw.Draw(self.canvas)
-        font_pill = get_font("Montserrat-Bold.ttf", 19)
-        font_counter = get_font("Montserrat-ExtraBold.ttf", 20)
+        font_pill = get_font("Montserrat-Bold.ttf", 18)
+        font_counter = get_font("Montserrat-ExtraBold.ttf", 19)
 
-        # 1. Pílula esquerda de Categoria / Passo narrativo
+        # 1. Definir rótulo de etapa narrativa limpa
         if num_slide == 1:
-            step_label = "INÍCIO  •  O PROBLEMA"
+            step_label = "INÍCIO • O PROBLEMA"
         elif num_slide == total_slides:
-            step_label = "FIM  •  SOLUÇÃO OFICIAL"
+            step_label = "SOLUÇÃO DEFINITIVA"
         else:
-            step_label = f"PASSO 0{num_slide}  •  O MECANISMO"
+            step_label = f"PASSO 0{num_slide} • MECANISMO"
 
-        cat_clean = f"{category.upper()}  |  {step_label}" if category else step_label
-        bbox_cat = draw.textbbox((0, 0), cat_clean, font=font_pill)
-        cw = bbox_cat[2] - bbox_cat[0]
-        ch = bbox_cat[3] - bbox_cat[1]
+        # Limpar duplicidades caso a categoria já contenha passo ou divisor
+        clean_cat = category.strip() if category else ""
+        clean_cat = re.sub(r'\s*\|\s*(PASSO\s*\d+|INÍCIO|FIM|SOLUÇÃO).*$', '', clean_cat, flags=re.IGNORECASE).strip()
 
+        # 2. Medir Pílula da Direita (Contador ou Preço)
+        if preco and num_slide == total_slides:
+            tag_right = f"LOTE: {preco.upper()}"
+            color_right = (0, 229, 255)
+        else:
+            tag_right = f"0{num_slide} / 0{total_slides}"
+            color_right = self.theme["accent_bright"]
+
+        bbox_r = draw.textbbox((0, 0), tag_right, font=font_counter)
+        rw = bbox_r[2] - bbox_r[0]
+        rh = bbox_r[3] - bbox_r[1]
         card_h = 44
-        card_w = cw + 46
-        card_x = 60
+        bx_w = rw + 36
+        bx_x = self.width - 60 - bx_w
 
-        self._draw_box_shadow((card_x, y, card_x + card_w, y + card_h), radius=card_h // 2, blur=8, opacity=110)
-        pill_layer = Image.new("RGBA", (self.width, self.height), (0, 0, 0, 0))
-        pdraw = ImageDraw.Draw(pill_layer)
-        pdraw.rounded_rectangle([card_x, y, card_x + card_w, y + card_h], radius=card_h // 2, fill=(18, 24, 34, 230), outline=self.theme["accent"], width=2)
-        self.canvas = Image.alpha_composite(self.canvas, pill_layer)
+        # 3. Medir Pílula da Esquerda (Garantir gap mínimo de 40px para a direita)
+        max_left_w = bx_x - 60 - 40
+        cat_full = f"{clean_cat.upper()}  |  {step_label}" if clean_cat else step_label
+        bbox_l = draw.textbbox((0, 0), cat_full, font=font_pill)
+        lw = bbox_l[2] - bbox_l[0]
+
+        # Se ultrapassar, simplificar
+        if (lw + 48) > max_left_w:
+            cat_full = f"{clean_cat.upper()}  •  0{num_slide}" if clean_cat else step_label
+            bbox_l = draw.textbbox((0, 0), cat_full, font=font_pill)
+            lw = bbox_l[2] - bbox_l[0]
+            if (lw + 48) > max_left_w:
+                cat_full = clean_cat[:18].upper() + "..."
+                bbox_l = draw.textbbox((0, 0), cat_full, font=font_pill)
+                lw = bbox_l[2] - bbox_l[0]
+
+        lh = bbox_l[3] - bbox_l[1]
+        left_w = min(max_left_w, lw + 48)
+        left_x = 60
+
+        # Desenhar pílula esquerda
+        self._draw_box_shadow((left_x, y, left_x + left_w, y + card_h), radius=card_h // 2, blur=8, opacity=110)
+        p_layer = Image.new("RGBA", (self.width, self.height), (0, 0, 0, 0))
+        pdraw = ImageDraw.Draw(p_layer)
+        pdraw.rounded_rectangle([left_x, y, left_x + left_w, y + card_h], radius=card_h // 2, fill=(18, 24, 34, 230), outline=self.theme["accent"], width=2)
+        self.canvas = Image.alpha_composite(self.canvas, p_layer)
 
         draw = ImageDraw.Draw(self.canvas)
-        draw_vector_lightning(draw, card_x + 18, y + card_h // 2, size=14, color=self.theme["accent_bright"])
-        draw.text((card_x + 32, y + (card_h - ch) // 2 - 2), cat_clean, font=font_pill, fill=self.theme["accent_bright"])
+        draw_vector_lightning(draw, left_x + 18, y + card_h // 2, size=14, color=self.theme["accent_bright"])
+        draw.text((left_x + 32, y + (card_h - lh) // 2 - 2), cat_full, font=font_pill, fill=self.theme["accent_bright"])
 
-        # 2. Contador / Preço na direita
-        if preco and num_slide == total_slides:
-            tag_pr = f"LOTE: {preco.upper()}"
-            bbox_pr = draw.textbbox((0, 0), tag_pr, font=font_counter)
-            pw = bbox_pr[2] - bbox_pr[0]
-            ph = bbox_pr[3] - bbox_pr[1]
-            bx_w = pw + 36
-            bx_x = self.width - 60 - bx_w
+        # Desenhar pílula direita
+        self._draw_box_shadow((bx_x, y, bx_x + bx_w, y + card_h), radius=card_h // 2, blur=8, opacity=110)
+        r_layer = Image.new("RGBA", (self.width, self.height), (0, 0, 0, 0))
+        rdraw = ImageDraw.Draw(r_layer)
+        rdraw.rounded_rectangle([bx_x, y, bx_x + bx_w, y + card_h], radius=card_h // 2, fill=(18, 24, 34, 230), outline=color_right, width=2)
+        self.canvas = Image.alpha_composite(self.canvas, r_layer)
 
-            self._draw_box_shadow((bx_x, y, bx_x + bx_w, y + card_h), radius=card_h // 2, blur=8, opacity=110)
-            pr_layer = Image.new("RGBA", (self.width, self.height), (0, 0, 0, 0))
-            prdraw = ImageDraw.Draw(pr_layer)
-            prdraw.rounded_rectangle([bx_x, y, bx_x + bx_w, y + card_h], radius=card_h // 2, fill=(18, 24, 34, 230), outline=(0, 229, 255), width=2)
-            self.canvas = Image.alpha_composite(self.canvas, pr_layer)
+        draw = ImageDraw.Draw(self.canvas)
+        draw.text((bx_x + 18, y + (card_h - rh) // 2 - 2), tag_right, font=font_counter, fill=color_right)
 
-            draw = ImageDraw.Draw(self.canvas)
-            draw.text((bx_x + 18, y + (card_h - ph) // 2 - 2), tag_pr, font=font_counter, fill=(0, 229, 255))
-        else:
-            tag_cnt = f"0{num_slide} / 0{total_slides}"
-            bbox_cnt = draw.textbbox((0, 0), tag_cnt, font=font_counter)
-            cw = bbox_cnt[2] - bbox_cnt[0]
-            ch = bbox_cnt[3] - bbox_cnt[1]
-            bx_w = cw + 36
-            bx_x = self.width - 60 - bx_w
+    def draw_highlight_callout(self, title: str, text: str, y: int = 960, height: int = 155, width: int = 940, x: int = 70):
+        """Card de destaque científico/dica de ouro para preencher 100% da área útil sem vazios."""
+        self._draw_box_shadow((x, y, x + width, y + height), radius=18, blur=18, opacity=140)
 
-            self._draw_box_shadow((bx_x, y, bx_x + bx_w, y + card_h), radius=card_h // 2, blur=8, opacity=110)
-            cnt_layer = Image.new("RGBA", (self.width, self.height), (0, 0, 0, 0))
-            cdraw = ImageDraw.Draw(cnt_layer)
-            cdraw.rounded_rectangle([bx_x, y, bx_x + bx_w, y + card_h], radius=card_h // 2, fill=(18, 24, 34, 230), outline=self.theme["accent"], width=2)
-            self.canvas = Image.alpha_composite(self.canvas, cnt_layer)
+        layer = Image.new("RGBA", (self.width, self.height), (0, 0, 0, 0))
+        ldraw = ImageDraw.Draw(layer)
+        ldraw.rounded_rectangle([x, y, x + width, y + height], radius=18, fill=(24, 20, 14, 235), outline=self.theme["accent"], width=2)
+        self.canvas = Image.alpha_composite(self.canvas, layer)
 
-            draw = ImageDraw.Draw(self.canvas)
-            draw.text((bx_x + 18, y + (card_h - ch) // 2 - 2), tag_cnt, font=font_counter, fill=self.theme["accent_bright"])
+        draw = ImageDraw.Draw(self.canvas)
+        draw_vector_lightning(draw, x + 35, y + 36, size=18, color=self.theme["accent_bright"])
+
+        f_title = get_font("Montserrat-Black.ttf", 20)
+        draw.text((x + 55, y + 25), title.upper(), font=f_title, fill=self.theme["accent_bright"])
+
+        f_body = get_font("Montserrat-SemiBold.ttf", 22)
+        palavras = text.strip().split()
+        linhas = []
+        cur_l = []
+        max_w = width - 70
+        for w in palavras:
+            cur_l.append(w)
+            bbox = draw.textbbox((0, 0), " ".join(cur_l), font=f_body)
+            if (bbox[2] - bbox[0]) > max_w:
+                cur_l.pop()
+                if cur_l:
+                    linhas.append(" ".join(cur_l))
+                cur_l = [w]
+        if cur_l:
+            linhas.append(" ".join(cur_l))
+
+        ty = y + 62
+        for lin in linhas[:3]:
+            draw.text((x + 35, ty), lin, font=f_body, fill=self.theme["text_primary"])
+            ty += 30
+
+    def draw_trust_badges(self, y: int = 970, width: int = 960, x: int = 60, height: int = 90):
+        """Barra de 3 selos de garantia e conversão para o slide de produto (zero espaço ocioso)."""
+        self._draw_box_shadow((x, y, x + width, y + height), radius=16, blur=14, opacity=120)
+
+        layer = Image.new("RGBA", (self.width, self.height), (0, 0, 0, 0))
+        ldraw = ImageDraw.Draw(layer)
+        ldraw.rounded_rectangle([x, y, x + width, y + height], radius=16, fill=(16, 20, 28, 225), outline=self.theme["accent_deep"], width=1)
+        self.canvas = Image.alpha_composite(self.canvas, layer)
+
+        badges = [
+            ("LAUDO OFICIAL", "100% Puro & Aprovado", "check"),
+            ("ENVIO IMEDIATO", "Correios para todo Brasil", "lightning"),
+            ("COMPRA SEGURA", "Garantia Marcão Personal", "star")
+        ]
+
+        col_w = width // 3
+        draw = ImageDraw.Draw(self.canvas)
+        f_top = get_font("Montserrat-Black.ttf", 18)
+        f_sub = get_font("Montserrat-Bold.ttf", 15)
+
+        for i, (btop, bsub, icon) in enumerate(badges):
+            bx = x + (i * col_w)
+            cx = bx + col_w // 2
+
+            if i > 0:
+                draw.line([(bx, y + 16), (bx, y + height - 16)], fill=(245, 158, 11, 70), width=1)
+
+            icx = bx + 36
+            icy = y + height // 2
+            if icon == "check":
+                draw_vector_checkmark(draw, icx, icy, size=18, color=self.theme["accent_bright"], width=3)
+            elif icon == "lightning":
+                draw_vector_lightning(draw, icx, icy, size=16, color=self.theme["accent_bright"])
+            else:
+                draw_vector_star(draw, icx, icy, r_out=9, r_in=4.5, color=self.theme["accent_bright"])
+
+            tx = icx + 22
+            draw.text((tx, y + 22), btop, font=f_top, fill=self.theme["text_primary"])
+            draw.text((tx, y + 48), bsub, font=f_sub, fill=self.theme["accent_bright"])
 
     def draw_carousel_indicator(self, cta_text: str = "ARRASTE PARA O LADO", y: int = 1240):
         """Indicador sutil e sofisticado de arrastar carrossel com linha de respiro."""
@@ -802,26 +1016,27 @@ def renderizar_criativo_masterpiece(
     # 4. Manchete de Duplo Peso com Drop Shadow
     y_after_headline = compositor.draw_hero_headline(headline, subheadline, start_y=start_headline)
 
-    # 5. Lista de Benefícios e/ou Produto Hero Mockup
+    # 5. Lista de Benefícios e/ou Produto Hero Mockup com Distribuição Inteligente
     tem_produto = produto_img_path and os.path.exists(produto_img_path)
     if pontos_beneficio:
-        actual_benefits_y = max(start_benefits, y_after_headline + 35)
+        actual_benefits_y = max(start_benefits, y_after_headline + 30)
+        actual_avail_h = max(220, y_cta - actual_benefits_y - 20)
         if tem_produto:
             card_w = 580
             card_x = 60
-            compositor.draw_benefit_cards(pontos_beneficio, start_y=actual_benefits_y, card_w=card_w, card_x=card_x)
+            compositor.draw_benefit_cards(pontos_beneficio, start_y=actual_benefits_y, card_w=card_w, card_x=card_x, available_height=actual_avail_h, max_points=3)
             
             # Produto Hero no lado direito com pedestal, glow e sombra realista
             prod_cx = 855
-            prod_cy = actual_benefits_y + 130
-            compositor.draw_hero_product(produto_img_path, (prod_cx, prod_cy), max_size=(350, 370), glow=True, ground_shadow=True)
+            prod_cy = actual_benefits_y + (actual_avail_h // 2)
+            compositor.draw_hero_product(produto_img_path, (prod_cx, prod_cy), max_size=(380, 420), glow=True, ground_shadow=True)
         else:
-            compositor.draw_benefit_cards(pontos_beneficio, start_y=actual_benefits_y)
+            compositor.draw_benefit_cards(pontos_beneficio, start_y=actual_benefits_y, available_height=actual_avail_h)
     elif tem_produto:
         # Se não houver bullets mas houver produto, centraliza o produto com destaque
         prod_cx = width // 2
         prod_cy = (y_after_headline + y_cta) // 2
-        compositor.draw_hero_product(produto_img_path, (prod_cx, prod_cy), max_size=(440, 440), glow=True, ground_shadow=True)
+        compositor.draw_hero_product(produto_img_path, (prod_cx, prod_cy), max_size=(460, 480), glow=True, ground_shadow=True)
 
     # 6. Botão CTA 3D
     final_cta = cta_texto
@@ -872,7 +1087,9 @@ def renderizar_slide_carrossel_masterpiece(
     # 1. Background com Safe Zone Facial
     if num_slide == 1 and bg_path and os.path.exists(bg_path):
         # Slide 1 (Início): Foto de estúdio/ação com rosto e expressão 100% protegidos
-        compositor.set_cinematic_background(bg_path, start_vignette=0.48, end_vignette=0.58)
+        start_vig = 0.52 if not pontos else 0.48
+        end_vig = 0.64 if not pontos else 0.58
+        compositor.set_cinematic_background(bg_path, start_vignette=start_vig, end_vignette=end_vig)
     else:
         # Slides 2 e 3 (Meio e Fim): Estúdio escuro premium tecnológico
         compositor.set_cinematic_background(None)
@@ -880,56 +1097,106 @@ def renderizar_slide_carrossel_masterpiece(
     # 2. Header do Carrossel (Pílula de Categoria / Passo e Contador / Preço)
     compositor.draw_carousel_header(categoria, num_slide, total_slides, preco=preco if num_slide == total_slides else None, y=45)
 
-    # 3. Selo de Autoridade Metálico Concêntrico com Estrelas Vetoriais
+    # 3. Selo de Autoridade Metálico Concêntrico com Estrelas Vetoriais (Folga vertical garantida)
     if num_slide == 2:
-        compositor.draw_authority_seal((width - 95, 140), radius=50, text_top="100% CIÊNCIA", text_sub="LAUDO TÉCNICO")
+        compositor.draw_authority_seal((width - 95, 148), radius=42, text_top="100% CIÊNCIA", text_sub="LAUDO TÉCNICO")
     elif num_slide == total_slides:
-        seal_top = preco if preco else "100% PURO"
-        seal_sub = "LOTE OFICIAL" if preco else "LAUDO OFICIAL"
-        compositor.draw_authority_seal((width - 95, 140), radius=55, text_top=seal_top, text_sub=seal_sub)
+        # Selo de pureza/laudo (sem duplicar o preço se já estiver na pílula do cabeçalho)
+        seal_top = "100% PURO" if preco else "LAUDO APROVADO"
+        seal_sub = "LOTE OFICIAL" if preco else "PADRÃO OURO"
+        compositor.draw_authority_seal((width - 95, 148), radius=42, text_top=seal_top, text_sub=seal_sub)
 
-    # 4. Posicionamento de Manchete Dinâmico (Respeito rigoroso à Zona Facial)
+    # 4. Posicionamento de Manchete Dinâmico (Respeito rigoroso à Zona Facial e Selo)
     if num_slide == 1:
-        # Slide 1: Começa no terço inferior para jamais sobrepor o rosto ou tronco
-        start_y = int(height * 0.52)
+        start_y = 690 if not pontos else 650
     else:
-        # Slides 2 e 3: Começa na parte superior livre
-        start_y = 120
+        # Slides 2 e 3: Começa a 220px, estritamente abaixo do selo superior (termina em 190px)
+        start_y = 220
 
     y_after_head = compositor.draw_hero_headline(titulo, subtitulo, start_y=start_y)
 
-    # 5. Lista de Pontos / Benefícios e Mockup Hero do Produto
+    # 5. Lista de Pontos / Benefícios e Mockup Hero com Distribuição Inteligente (Eliminação Total de Vazios)
     tem_produto = produto_img_path and os.path.exists(produto_img_path) and (num_slide == total_slides)
 
-    if pontos:
-        actual_pts_y = y_after_head + 25
+    if num_slide == 2:
+        # Slide 2: 3 Cards generosos preenchendo o espaço + Banner Dica de Ouro
+        top_content_y = y_after_head + 25
+        card_w = 940
+        card_x = (width - card_w) // 2
+        avail_for_cards = 550
+        y_end_cards = compositor.draw_benefit_cards(
+            pontos=pontos,
+            start_y=top_content_y,
+            card_w=card_w,
+            card_x=card_x,
+            available_height=avail_for_cards,
+            max_points=3
+        )
+
+        # Banner de Destaque Científico / Dica de Ouro (Elimina 100% do vazio inferior)
+        callout_y = max(y_end_cards + 25, 960)
+        compositor.draw_highlight_callout(
+            title="DICA DE OURO DO MARCÃO • PROTOCOLO COMPROVADO",
+            text="A saturação diária e o descanso celular adequado multiplicam a síntese de novas fibras musculares e previnem o catabolismo.",
+            y=callout_y,
+            height=160,
+            width=940,
+            x=card_x
+        )
+        compositor.draw_carousel_indicator(cta_slide if cta_slide else "ARRASTE PARA O LADO", y=height - 95)
+
+    elif num_slide == total_slides:
+        # Slide 3: Split cards + Produto Hero + Barra de Selos de Confiança + Botão 3D
+        top_content_y = y_after_head + 25
+        card_w = 540
+        card_x = 60
+        avail_for_cards = 550
+        y_end_cards = compositor.draw_benefit_cards(
+            pontos=pontos,
+            start_y=top_content_y,
+            card_w=card_w,
+            card_x=card_x,
+            available_height=avail_for_cards,
+            max_points=3
+        )
+
+        # Produto Hero à direita perfeitamente centralizado e imponente
         if tem_produto:
-            card_w = 570
-            compositor.draw_benefit_cards(pontos[:3], start_y=actual_pts_y, card_w=card_w, card_x=60)
+            prod_cx = 835
+            prod_cy = top_content_y + (avail_for_cards // 2)
+            compositor.draw_hero_product(
+                produto_img_path,
+                (prod_cx, prod_cy),
+                max_size=(440, 520),
+                glow=True,
+                ground_shadow=True
+            )
 
-            # Produto Hero à direita com pedestal, aura dourada/glow e sombra realista
-            prod_cx = 855
-            prod_cy = actual_pts_y + 130
-            compositor.draw_hero_product(produto_img_path, (prod_cx, prod_cy), max_size=(350, 370), glow=True, ground_shadow=True)
-        else:
-            compositor.draw_benefit_cards(pontos[:3], start_y=actual_pts_y)
-    elif tem_produto:
-        prod_cx = width // 2
-        prod_cy = y_after_head + 180
-        compositor.draw_hero_product(produto_img_path, (prod_cx, prod_cy), max_size=(420, 420), glow=True, ground_shadow=True)
+        # Barra de Selos de Confiança (Preenchimento nobre antes do botão)
+        trust_y = 965
+        compositor.draw_trust_badges(y=trust_y, width=960, x=60, height=90)
 
-    # 6. Rodapé do Slide: Arraste no Início/Meio ou CTA 3D no Fim
-    if num_slide < total_slides:
-        # Slides 1 e 2: Indicador elegante com seta animada
-        indicador = cta_slide if cta_slide else "ARRASTE PARA O LADO"
-        compositor.draw_carousel_indicator(indicador, y=height - 95)
-    else:
-        # Slide 3 (Final): Botão 3D de alta conversão + Rodapé Oficial
+        # CTA 3D de Alta Conversão
         final_cta = cta_slide if cta_slide else "GARANTA NO LINK DA BIO"
         if preco and ("COMPRE" in final_cta.upper() or "GARANTA" in final_cta.upper()) and preco not in final_cta:
             final_cta = f"{final_cta} POR {preco}"
         compositor.draw_cta_button_3d(final_cta, y=height - 180)
         compositor.draw_brand_footer(y=height - 85)
+
+    else:
+        # Slide 1 ou intermediário genérico
+        top_content_y = y_after_head + 25
+        card_w = 940
+        card_x = (width - card_w) // 2
+        compositor.draw_benefit_cards(
+            pontos=pontos,
+            start_y=top_content_y,
+            card_w=card_w,
+            card_x=card_x,
+            available_height=420,
+            max_points=2 if num_slide == 1 else 3
+        )
+        compositor.draw_carousel_indicator(cta_slide if cta_slide else "ARRASTE PARA O LADO", y=height - 95)
 
     return compositor.save(out_path)
 

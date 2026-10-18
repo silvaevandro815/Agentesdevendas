@@ -821,7 +821,22 @@ def montar_prompt_por_estilo(estilo: str, item: dict, eh_venda: bool = False) ->
     categoria = item.get("categoria", "SAÚDE")
     texto_busca = (nome_item + " " + categoria + " " + str(item.get("pontos", "")) + " " + str(item.get("headline", ""))).lower()
 
-    if estilo == "evandro":
+    # REGRA INVIOLÁVEL DO DIRETOR EVANDRO GALLINA:
+    # PROIBIDO USAR O ROSTO DE EVANDRO PARA AZEMPIKA / CANETA PENIANA / PRODUTOS DE POTÊNCIA SEXUAL.
+    # Usar exclusivamente modelos masculinos maduros grisalhos gerados por IA.
+    eh_produto_sexual_azempika = any(kw in texto_busca for kw in [
+        "azempika", "caneta", "potência", "potencia", "ereção", "erecao", "firmeza", "vascular íntima", "corpos cavernosos"
+    ])
+
+    if eh_produto_sexual_azempika and estilo not in ["produto_only", "produto_lifestyle"]:
+        ref_path = None
+        prompt = (
+            "Cinematic 8k commercial editorial photography of a distinguished, handsome, fit mature man (56 to 62 years old) "
+            "with stylish short silver-grey hair and neat trimmed salt-and-pepper beard, charismatic and confident masculine expression, "
+            "wearing a tailored charcoal Italian polo shirt. Set in a luxury high-end penthouse terrace or modern executive lounge at dusk "
+            "with warm golden ambient rim lighting, rich depth of field, 85mm portrait lens, f/1.8, ultra-photorealistic, high vitality aesthetic, ZERO text, NO words."
+        )
+    elif estilo == "evandro":
         if fotos_evandro:
             ref_path = fotos_evandro[0]
             instrucao_face = (
