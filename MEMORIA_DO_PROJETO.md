@@ -143,3 +143,10 @@
   - **Simulação de Digitação & Pausas Naturais:** Envio sequencial de cada balão precedido por 'composing' de 2000ms e delays de 1.2s a 1.8s entre as mensagens no WhatsApp e no Instagram Direct.
   - **Reações de Emojis nos Balões do Lead:** Configurada a reação imediata com emojis autênticos (👊, 💪, 🔥, 🦁, 👍) nos balões de mensagem do cliente/lead.
   - **Guardrails Ativados:** Injetados nos prompts de F3 (WhatsApp), I1 (Instagram Direct), M9 (CRM Follow-up), M11 (Personal Proativo VIP) e no Painel Admin (/api/vip/:id/cobrar-dados).
+- [x] P15 — Smartwatch Hub (Strava & Apple/Android), Prontuário Clínico & Exclusividade Balança VIP (3 Meses Grátis -> R$ 19,90/mês) Concluída!
+  - **Regra de Exclusividade da Balança:** O monitoramento aprofundado de Smartwatch (batimentos cardíacos, pontualidade de horários e diagnóstico de "Treino Bom vs. Treino Fofo") é 100% exclusivo para alunos que compraram a Balança de Bioimpedância 360°.
+  - **Reconhecimento Multicanal de Compra da Balança:** (1) Webhook de venda aprovada (/api/webhooks/compra-balanca); (2) Leitura visual automática da primeira pesagem via balanca_engine.py; (3) Palavra-chave do unboxing ("CHEGOU MINHA BALANCA"); (4) Ativação manual no Painel Admin.
+  - **Esteira de Retenção e Transbordo:** 90 dias (3 meses) gratuitos de mentoria total com contagem regressiva em clientes_balanca, transbordando para assinatura de R$ 19,90/mês gerenciada pelo Stripe e workflow M10.
+  - **Opção 2 Ativa (Apple Shortcuts & Android Webhook):** Endpoint /api/webhooks/treino-relogio ativo, avaliando FC média, picos de esforço e disparando feedback humanizado em múltiplos balões curtos via Evolution API.
+  - **Opção 1 Estruturada (Strava API):** Endpoints /api/integracoes/strava/webhook e /api/integracoes/strava/callback criados e prontos no servidor, aguardando apenas as credenciais de Client ID/Secret do Strava.
+
