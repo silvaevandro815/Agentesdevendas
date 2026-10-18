@@ -52,13 +52,13 @@ MATRIZ_TEMAS = [
         "preco": "R$ 164,90"
     },
     {
-        "id": "emagrecimento_drenagem",
-        "nome": "Definição Corporal & Drenagem Metabólica",
-        "categoria": "DEFINIÇÃO & EMAGRECIMENTO",
-        "palavras_chave": ["azempika", "drenagem", "emagrecimento", "saciedade", "secar"],
-        "produto": "Azempika Original Caneta Drenante 60 Doses",
+        "id": "potencia_masculina_azempika",
+        "nome": "Saúde Vascular Íntima & Potência Masculina 40+",
+        "categoria": "POTÊNCIA & SAÚDE MASCULINA 40+",
+        "palavras_chave": ["azempika", "potência", "firmeza", "corpos cavernosos", "homem maduro", "ereção", "vasodilatação"],
+        "produto": "Caneta Peniana Azempika Original (Clinical Formula 20ml)",
         "link_venda": "https://ev.braip.com/ref?pl=plaljlxy&ck=che6vnvr&af=afine5z3yv",
-        "preco": "R$ 197,00"
+        "preco": "R$ 99,00"
     },
     {
         "id": "balanca_bioimpedancia",
@@ -481,12 +481,27 @@ def gerar_angulo_criativo_inedito(tema_escolhido=None, tipo="manha", estilo_visu
     else:
         tema_obj = tema_escolhido
 
-    # Rotação obrigatória de Personagem e Cenário com suporte total à diversidade de elenco
-    if estilo_visual and estilo_visual not in ["auto", "todos"]:
-        candidatos = [p for p in MATRIZ_PERSONAGENS if p.get("categoria_persona") == estilo_visual]
-        personagem_sorteado = random.choice(candidatos) if candidatos else random.choice(MATRIZ_PERSONAGENS)
+    # REGRA INVIOLÁVEL DO DIRETOR EVANDRO GALLINA:
+    # PROIBIDO USAR O ROSTO DE EVANDRO PARA AZEMPIKA / CANETA PENIANA / PRODUTOS DE POTÊNCIA SEXUAL.
+    # Exclusivamente modelos masculinos maduros grisalhos de IA (55+ a 65 anos).
+    texto_tema_check = (tema_obj["nome"] + " " + tema_obj.get("categoria", "") + " " + tema_obj.get("produto", "")).lower()
+    eh_produto_sexual_azempika = any(kw in texto_tema_check for kw in ["azempika", "caneta", "potência", "potencia", "ereção", "erecao", "firmeza", "vascular íntima", "corpos cavernosos"])
+    
+    if eh_produto_sexual_azempika:
+        candidatos = [p for p in MATRIZ_PERSONAGENS if p.get("categoria_persona") in ["homem_senior"]]
+        personagem_sorteado = random.choice(candidatos) if candidatos else {
+            "id": "homem_senior_grisalho_azempika",
+            "categoria_persona": "homem_senior",
+            "descricao": "Homem maduro distinto de 58 anos com cabelos grisalhos elegantes, barba aparada e físico atlético saudável",
+            "prompt_char": "Cinematic 8k commercial portrait of a distinguished, fit 58-year-old Brazilian mature man with stylish silver-grey hair and neat salt-and-pepper beard, confident masculine gaze, wearing a tailored charcoal polo shirt"
+        }
     else:
-        personagem_sorteado = random.choice(MATRIZ_PERSONAGENS)
+        # Rotação obrigatória de Personagem e Cenário com suporte total à diversidade de elenco
+        if estilo_visual and estilo_visual not in ["auto", "todos"]:
+            candidatos = [p for p in MATRIZ_PERSONAGENS if p.get("categoria_persona") == estilo_visual]
+            personagem_sorteado = random.choice(candidatos) if candidatos else random.choice(MATRIZ_PERSONAGENS)
+        else:
+            personagem_sorteado = random.choice(MATRIZ_PERSONAGENS)
     cenario_sorteado = random.choice(MATRIZ_CENARIOS)
 
     # Prompt instruindo a IA sobre ineditismo estrito

@@ -48,11 +48,11 @@ PRODUTOS_FOLLOWUP = {
         "foco": "Construir volume firme nos glúteos e pernas, explosão de força e tônus muscular sem retenção"
     },
     "azempika": {
-        "nome": "Caneta Azempika Original",
+        "nome": "Caneta Peniana Azempika Original (Clinical Formula 20ml)",
         "preco": "R$ 99,00",
         "condicoes": "R$ 99,00 no PIX ou 12x no cartão",
         "link": "https://ev.braip.com/ref?pl=plaljlxy&ck=che6vnvr&af=afine5z3yv",
-        "foco": "Secar gordura localizada do abdômen/pochete e acelerar saciedade sem perder massa magra"
+        "foco": "Saúde vascular íntima, vasodilatação dos corpos cavernosos, rigidez máxima e vigor viril 40+"
     },
     "colageno": {
         "nome": "Colágeno Hidrolisado + Ácido Hialurônico Nature's Prime",
@@ -141,19 +141,35 @@ def diagnosticar_dor_lead(lead: dict) -> dict:
             "baloes": baloes
         }
 
-    # 2. Caso Específico: Perder Barriga Pochete / Secar Rápido / Azempika
-    if any(k in conversa_completa for k in ["barriga", "pochete", "secar", "gordura", "emagrecer", "peso", "fome", "apetite"]):
+    # 2. Caso Específico: Potência Masculina / Firmeza / Vigor 40+ / Azempika
+    if any(k in conversa_completa for k in ["potencia", "potência", "erecao", "ereção", "firmeza", "vigor", "40+", "hora h", "azempika", "caneta"]):
         prod = PRODUTOS_FOLLOWUP["azempika"]
         baloes = [
-            f"Fala, {primeiro_nome}! Marcão na área! Passando pra saber como você tá! 🦁",
-            f"Lembrei do que você me falou sobre queimar aquela gordurinha teimosa e afinar a cintura.",
-            f"Pra acelerar sua queima sem perder massa magra nem passar fome, a Caneta Azempika Original tá sendo o maior sucesso dos alunos.",
-            f"O lote com desconto tá saindo por R$ 99 no PIX ou até 12x no cartão: {prod['link']}",
-            "Bora destravar essa pochete de vez? Conta comigo! 👊"
+            f"Fala, {primeiro_nome}! Marcão na área! Passando pra saber como você tá, meu parceiro! 🦁",
+            f"Lembrei do papo direto de homem pra homem sobre recuperar a firmeza máxima, vasodilatação e vigor na hora H.",
+            f"Pra devolver rigidez de rocha sem taquicardia nem remédio sintético, a Caneta Peniana Azempika Original (20ml) tá saindo por R$ 99 no lote oficial:",
+            f"Garante a sua com envio 100% discreto em embalagem lacrada (PIX ou 12x no cartão): {prod['link']}",
+            "Conta com meu sigilo absoluto e vamos pra cima! 👊🔥"
         ]
         return {
             "produto_chave": "azempika",
-            "dor_diagnosticada": "Gordura abdominal e emagrecimento acelerado",
+            "dor_diagnosticada": "Saúde vascular íntima e potência masculina 40+",
+            "baloes": baloes
+        }
+
+    # 3. Caso Específico: Perder Barriga Pochete / Secar Rápido / Balança Inteligente
+    if any(k in conversa_completa for k in ["barriga", "pochete", "secar", "gordura", "emagrecer", "peso", "fome", "apetite"]):
+        prod = PRODUTOS_FOLLOWUP["balanca"]
+        baloes = [
+            f"Fala, {primeiro_nome}! Marcão na área! Passando pra saber como você tá! 🦁",
+            f"Lembrei da sua meta de queimar aquela gordurinha teimosa da barriga e desenhar o shape.",
+            f"Pra gente destravar sua evolução e eu montar sua dieta sob medida com 3 meses de consultoria VIP grátis comigo no WhatsApp:",
+            f"A Balança de Bioimpedância com App IA tá saindo por apenas R$ 129,90 no link oficial: {prod['link']}",
+            "Bora secar com acompanhamento de verdade? Conta comigo! 👊"
+        ]
+        return {
+            "produto_chave": "balanca",
+            "dor_diagnosticada": "Gordura abdominal, secar barriga e consultoria VIP",
             "baloes": baloes
         }
 
@@ -189,18 +205,16 @@ def diagnosticar_dor_lead(lead: dict) -> dict:
             "baloes": baloes
         }
 
-    # 5. Abordagem Padrão / Consultiva (para "Oi", "Obrigada", áudio ou mensagens curtas)
-    prod = PRODUTOS_FOLLOWUP["creatina"]
+    # 5. Abordagem Padrão / Consultiva Humanizada (Pergunta de estética corporal, saúde e atratividade)
     baloes = [
         f"Fala, {primeiro_nome}! Marcão Personal na área! 🦁",
-        "Tô organizando a agenda de consultoria dos alunos aqui no Instagram e lembrei de você!",
-        "Me conta uma coisa: qual é a sua principal meta de shape hoje? Secar gordura ou colocar massa e definição?",
-        f"Se você quiser acelerar seus resultados com matéria-prima 100% pura, dá uma olhada na nossa Creatina com laudo laboratorial: {prod['link']} (aceita PIX e até 12x no cartão!)",
-        "Bora pra cima! Me responde aqui pra eu te ajudar a montar a estratégia certa! 💪"
+        "Tava organizando a agenda de consultorias aqui no Instagram e lembrei de você!",
+        "Me conta uma coisa: você tá precisando de alguma coisa hoje pra melhorar seu corpo físico e ser uma pessoa mais saudável e mais atraente? 👊💪",
+        "Como tão seus treinos e sua rotina hoje? Me responde aqui pra gente alinhar seu shape!"
     ]
     return {
-        "produto_chave": "creatina",
-        "dor_diagnosticada": "Abordagem consultiva geral de hipertrofia e definição",
+        "produto_chave": "balanca",
+        "dor_diagnosticada": "Diagnóstico inicial de estética corporal, saúde física e atratividade",
         "baloes": baloes
     }
 
@@ -220,7 +234,7 @@ def extrair_sender_id(remote_jid: str) -> str:
 def enviar_direct_instagram(recipient_id: str, baloes: list) -> dict:
     """
     Envia sequência humanizada de balões no Instagram Direct via Meta Graph API.
-    Aplica delay de 1.5s entre os balões para emular digitação humana autêntica.
+    Aplica indicador de digitação (typing_on) e delay natural entre balões.
     """
     if not INSTAGRAM_ACCESS_TOKEN:
         return {"sucesso": False, "erro": "INSTAGRAM_ACCESS_TOKEN ausente"}
@@ -238,6 +252,16 @@ def enviar_direct_instagram(recipient_id: str, baloes: list) -> dict:
             if not b_limpo:
                 continue
 
+            # 1. Simular presença de digitação (typing_on) autêntica
+            try:
+                client.post(url, headers=headers, json={"recipient": {"id": recipient_id}, "sender_action": "typing_on"})
+            except Exception:
+                pass
+
+            # Pausa natural proporcional ao tamanho do balão (1.5s a 2.5s)
+            time.sleep(1.8)
+
+            # 2. Envio do balão de texto
             payload = {
                 "recipient": {"id": recipient_id},
                 "message": {"text": b_limpo}
@@ -251,9 +275,6 @@ def enviar_direct_instagram(recipient_id: str, baloes: list) -> dict:
                     envios.append({"balao": idx + 1, "sucesso": False, "erro": r.text})
             except Exception as e:
                 envios.append({"balao": idx + 1, "sucesso": False, "erro": str(e)})
-
-            if idx < len(baloes) - 1:
-                time.sleep(1.5)
 
     todos_ok = all(e.get("sucesso") for e in envios)
     return {"sucesso": todos_ok, "detalhes": envios}
