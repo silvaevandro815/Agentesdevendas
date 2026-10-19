@@ -153,5 +153,10 @@
   - **Credenciais & Renovação de Token:** Client ID 187215 e Segredo integrados. Renovação automática de access token implementada via OAuth 2.0.
   - **Fluxo do Aluno em 1 Clique:** Endpoint `/api/integracoes/strava/auth-url` gera o link de autorização com state atrelado ao WhatsApp do aluno. Após autorização na web do Strava, a rota `/api/integracoes/strava/callback` armazena os tokens do atleta em `clientes_balanca` e envia boas-vindas automáticas no WhatsApp.
   - **Diagnóstico Fisiológico em Tempo Real:** Webhook `/api/integracoes/strava/webhook` recebe eventos `activity:create`, extrai distância, pace, FC média e FC máxima, avalia se o treino foi "Treino Monstro" ou "Treino Fofo" (Zonas de FC) e responde no WhatsApp em 2 a 3 balões curtos com presença humana.
-  - **Status da Conta Strava:** Tokens 100% válidos. Aplicação pronta para receber tráfego assim que ativada a assinatura do desenvolvedor no painel do Strava.
+- [x] P17 — Motor de Vídeo com IA para Reels Verticais 9:16 (ElevenLabs & Motion Design) Concluído!
+  - **Importação da Tecnologia:** Módulos de geração de vídeo, composição e sound design portados para `apps/api/video_engine/` sem alterar a pasta original `Editor de Video IA`.
+  - **Identidade Visual com o Rosto de Evandro:** Utilização das fotos de referência de `assets/evandro` para geração de keyframes cinematográficos atléticos em academia moderna (9:16 vertical), respeitando a regra de persona (fotos de Evandro para fitness/treino/creatina).
+  - **Voz ElevenLabs Multilíngue (Zero OpenRouter):** Narração fitness inspiradora gerada via ElevenLabs com voz `Adam` (`pNInz6obpgDQGcFmaJgB`) em português brasileiro, preservando tokens do OpenRouter.
+  - **Soundscape & Trilha Sonora:** Gerador em Python (`soundscape.py`) com sub-bass analógico de 50Hz, LFO pulsante e varredura atmosférica a -16dB.
+  - **Compositor FFmpeg Master:** Enquadramento 9:16 (1080x1920), movimentos de câmera cinematográficos (push-in, tracking pan), legendas dinâmicas em amarelo/branco com borda de alto contraste e mixagem de áudio com atempo de precisão (10.2s).
 
