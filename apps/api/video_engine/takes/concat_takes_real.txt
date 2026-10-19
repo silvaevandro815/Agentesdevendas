@@ -1,0 +1,3 @@
+file 'c:/Users/User/Desktop/Agentes de venda/apps/api/video_engine/takes/take1_reel.mp4'
+file 'c:/Users/User/Desktop/Agentes de venda/apps/api/video_engine/takes/take2_reel.mp4'
+file 'c:/Users/User/Desktop/Agentes de venda/apps/api/video_engine/takes/take3_reel.mp4'

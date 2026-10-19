@@ -898,9 +898,9 @@ async def processar_mensagem_marcao(payload_webhook: dict) -> dict:
     else:
         instrucao_vip = (
             f"LEAD/CLIENTE SEM A BALANÇA ({primeiro_nome}):\n"
-            "- Ele AINDA NÃO TEM a nossa Balança de Bioimpedância Bluetooth.\n"
-            "- REGRA MANDATÓRIA DE EXCLUSIVIDADE: Avaliação física corporal por foto (frente/costas) e prescrição de treino individual SÓ são feitas para quem comprou a nossa Balança!\n"
-            "- Se ele pedir para avaliar o corpo ou shape por foto: Explique com simpatia e autoridade que foto isolada engana a visão (não mostra água celular, massa magra real ou gordura visceral profunda). Para ter acesso ao seu suporte VIP direto por 3 MESES DE FORMA 100% GRATUITA, ele só precisa garantir a nossa Balança por R$ 89,90 na loja: https://marcaopersonal.com#balanca.\n"
+            "- Ele AINDA NÃO TEM a nossa Balança de Bioimpedância Xiaomi Mi Scale 2.\n"
+            "- REGRA MANDATÓRIA DE EXCLUSIVIDADE: Avaliação física corporal por foto (frente/costas) e prescrição de treino individual SÓ são feitas para quem comprou a Balança!\n"
+            "- Se ele pedir para avaliar o corpo ou shape por foto: Explique com simpatia e autoridade que foto isolada engana a visão (não mostra água celular, massa magra real ou gordura visceral profunda). Para ter acesso ao seu suporte VIP direto por 3 MESES DE FORMA 100% GRATUITA, ele só precisa garantir a Balança Xiaomi Mi Scale 2 por apenas R$ 149,90 (R$ 0,41/dia) na Amazon oficial com frete rápido: https://www.amazon.com.br/dp/B07T48Z4TN?tag=marcaopersona-20.\n"
             "- Após esses 3 meses gratuitos, o acompanhamento continua por apenas R$ 19,90/mês."
         )
 
@@ -1022,7 +1022,7 @@ IDENTIDADE, ÉTICA & GUARDRAILS REGULATÓRIOS (ITEM 14 DO SISTEMA OPERACIONAL):
 BALANÇA DE BIOIMPEDÂNCIA COM IA & REGRA DE 3 MESES:
 - A balança mede por microcorrente BIA: Peso, % Gordura, Gordura Visceral, Massa Magra, % Água, Massa Óssea, TMB e Idade Metabólica.
 - Pesar sempre em jejum pela manhã, descalço, pés limpos/secos sobre as 4 placas, chão rígido/plano.
-- Compradores da Balança ganham 3 MESES GRÁTIS de mentoria direta no WhatsApp. Após 3 meses, o acompanhamento continua por apenas R$ 19,90/mês. Link da Balança: https://marcaopersonal.com#balanca
+- Compradores da Balança Xiaomi Mi Scale 2 ganham 3 MESES GRÁTIS de mentoria direta no WhatsApp. Após 3 meses, o acompanhamento continua por apenas R$ 19,90/mês. Link da Balança: https://www.amazon.com.br/dp/B07T48Z4TN?tag=marcaopersona-20 (ou https://marcaopersonal.com#carro-chefe)
 
 REGRAS DE FORMATAÇÃO HUMANIZADA (SEM TEXTÃO - PADRÃO WHATSAPP BRASIL):
 1. HUMANOS NÃO ESCREVEM TEXTÃO! Jamais mande parágrafos gigantescos ou explicações com cara de artigo.

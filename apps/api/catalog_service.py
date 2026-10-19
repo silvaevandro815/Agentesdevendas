@@ -27,17 +27,77 @@ CACHE_TTL_SEGUNDOS = 60
 
 # Metadados complementares de enriquecimento (doses, benefícios científicos e claims regulatórios)
 METADADOS_CONHECIDOS = {
+    "BALANCA-XIAOMI-AMAZON": {
+        "doses": 365,
+        "beneficio_chave": "Balança Xiaomi Mi Body Composition Scale 2 oficial com 13 parâmetros de bioimpedância de alta precisão (sensor de manganês) e 3 meses de acompanhamento VIP grátis no WhatsApp.",
+        "claims_permitidos": ["Precisão clínica G-sensor de manganês", "Teste de equilíbrio corporal", "Sincronização automática Bluetooth", "Mentoria VIP Marcão inclusa"],
+        "pitch_diario": "Apenas R$ 0,41 por dia para ter a tecnologia Xiaomi de bioimpedância e 3 meses de mentoria VIP comigo!"
+    },
     "CREATINA-PRIME": {
         "doses": 100,
-        "beneficio_chave": "Acelera ressíntese de ATP, ganho de 20% mais força e recuperação celular sem inchaço subcutâneo.",
+        "beneficio_chave": "Acelera ressíntese de ATP, ganho de 20% mais força e recuperação celular sem retenção subcutânea.",
         "claims_permitidos": ["Força e explosão muscular", "Ressíntese de ATP", "Hidratação intracelular pura", "Recuperação muscular acelerada"],
         "pitch_diario": "Apenas R$ 1,69 por dia (100 doses no pote), menos que meio café na padaria!"
     },
-    "BALANCA-BIO": {
-        "doses": 300,
-        "beneficio_chave": "Mede 14 parâmetros por microcorrente BIA (Gordura, Gordura Visceral, Massa Magra, Idade Metabólica, TMB) e dá 3 meses de acompanhamento VIP grátis no WhatsApp.",
-        "claims_permitidos": ["Métricas corporais precisas BIA", "Sincronização Bluetooth com App", "3 meses de mentoria VIP inclusos"],
-        "pitch_diario": "Menos de R$ 0,30 por dia parcelado para destravar seu acompanhamento com o Marcão!"
+    "CREATINA-CREAPURE-DUX": {
+        "doses": 83,
+        "beneficio_chave": "Creatina Creapure® alemã 100% pura da DUX Nutrition, padrão ouro mundial de biodisponibilidade e ganho de força seca.",
+        "claims_permitidos": ["Selo Creapure alemão", "Zero impurezas", "Força máxima", "Absorção imediata"],
+        "pitch_diario": "Apenas R$ 1,68 por dia para ter a Creapure alemã no seu treino diário!"
+    },
+    "WHEY-MAX-TITANIUM": {
+        "doses": 30,
+        "beneficio_chave": "100% Whey Pure Max Titanium com 21g de proteína por dose, 4.8g de BCAA e alto valor biológico para ganho de massa seca e saciedade.",
+        "claims_permitidos": ["21g proteína por dose", "4.8g BCAA", "Recuperação muscular rápida", "Padrão ouro nacional"],
+        "pitch_diario": "Apenas R$ 3,33 por dia (30 doses) para garantir sua meta de proteína com padrão ouro!"
+    },
+    "WHEY-DUX-CONCENTRADO": {
+        "doses": 30,
+        "beneficio_chave": "Whey Concentrado DUX Nutrition com matéria-prima importada 100% pura, sabor premium inigualável e 22g de proteína de alta absorção.",
+        "claims_permitidos": ["Matéria-prima importada", "Sabor premium", "22g proteína", "Perfil completo de aminoácidos"],
+        "pitch_diario": "Apenas R$ 4,99 por dia para saborear o whey mais cremoso e puro do Brasil!"
+    },
+    "WHEY-GOLD-OPTIMUM": {
+        "doses": 30,
+        "beneficio_chave": "100% Whey Gold Standard Optimum Nutrition, o whey nº 1 do planeta com predomínio de whey isolado e 24g de pura proteína microfiltrada.",
+        "claims_permitidos": ["Nº 1 do mundo", "Predomínio de isolado", "24g proteína microfiltrada", "Digestão perfeita"],
+        "pitch_diario": "R$ 8,33 por dia para colocar no seu corpo o padrão ouro mundial absoluto de proteína!"
+    },
+    "SMARTWATCH-XIAOMI-BAND": {
+        "doses": 365,
+        "beneficio_chave": "Xiaomi Smart Band 8 com monitoramento contínuo de frequência cardíaca, SpO2, rastreio de sono profundo, mais de 150 esportes e sincronização com Strava.",
+        "claims_permitidos": ["Monitor cardíaco 24/7", "Integração Strava e App", "Análise de sono profundo", "Bateria de até 16 dias"],
+        "pitch_diario": "Apenas R$ 0,65 por dia (diluído em 1 ano) para monitorar seus batimentos e evolução aeróbica!"
+    },
+    "SMARTWATCH-AMAZFIT-BIP": {
+        "doses": 365,
+        "beneficio_chave": "Smartwatch Amazfit Bip 5 com GPS integrado de 4 satélites, tela ultragrande de 1.91 polegadas, chamadas Bluetooth e monitor esportivo completo.",
+        "claims_permitidos": ["GPS integrado preciso", "Tela HD 1.91 polegadas", "Chamadas no pulso", "Monitoramento de VO2Max"],
+        "pitch_diario": "Apenas R$ 1,09 por dia para ter um computador de treino com GPS no seu pulso!"
+    },
+    "ROUPA-COMPRESSAO-UV50": {
+        "doses": 180,
+        "beneficio_chave": "Camiseta Térmica Segunda Pele Compressão UV50+ Dry Fit: melhora o retorno venoso, previne assaduras, regula a temperatura e destaca o shape atlético.",
+        "claims_permitidos": ["Proteção solar UV50+", "Compressão muscular ativa", "Tecido Dry Fit respirável", "Secagem ultrarrápida"],
+        "pitch_diario": "Apenas R$ 0,27 por dia para treinar com máxima performance térmica e postura firme!"
+    },
+    "BERMUDA-COMPRESSAO-FIT": {
+        "doses": 180,
+        "beneficio_chave": "Bermuda Térmica de Compressão Fitness com Bolso para Celular: suporte total ao quadríceps e posterior, zero atrito entre as pernas e firmeza nos treinos de perna e corrida.",
+        "claims_permitidos": ["Bolso interno antifurto", "Zero atrito/assadura", "Sustentação muscular", "Elasticidade 4 vias"],
+        "pitch_diario": "Apenas R$ 0,33 por dia para treinar pernas ou correr sem nenhum incômodo!"
+    },
+    "OMEGA3-ULTRA-CONCENTRADO": {
+        "doses": 60,
+        "beneficio_chave": "Ômega 3 Ultra Concentrado DUX com 1000mg de puro óleo de peixe com alto teor de EPA e DHA com selo MEG-3, combate inflamação nas articulações, joelhos e tendões.",
+        "claims_permitidos": ["Selo MEG-3 de pureza", "Alto EPA e DHA", "Anti-inflamatório articular", "Saúde cardiovascular e cerebral"],
+        "pitch_diario": "Apenas R$ 1,66 por dia para blindar suas articulações, joelhos e ligamentos contra o desgaste dos treinos!"
+    },
+    "MELATONINA-MAGNESIO-SONO": {
+        "doses": 60,
+        "beneficio_chave": "Complexo Sono Reparador Melatonina + Magnésio Dimalato: relaxamento muscular profundo do sistema nervoso, combate à insônia e estímulo ao pico de GH noturno.",
+        "claims_permitidos": ["Sono profundo reparador", "Relaxamento muscular", "Pico de GH noturno", "Zero sonolência diurna"],
+        "pitch_diario": "Apenas R$ 1,16 por dia para ter noites anabólicas e acordar 100% recuperado!"
     },
     "VIP-STRIPE": {
         "doses": 30,
@@ -47,25 +107,25 @@ METADADOS_CONHECIDOS = {
     },
     "AZEMPIKA-CANETA": {
         "doses": 30,
-        "beneficio_chave": "Fórmula natural de suporte à saciedade prolongada e controle da compulsão alimentar noturna.",
-        "claims_permitidos": ["Suporte ao controle de saciedade", "Equilíbrio de hábitos alimentares", "Fórmula natural"],
-        "pitch_diario": "Cerca de R$ 3,30 por dia para silenciar a compulsão noturna (menos que um lanche)!"
+        "beneficio_chave": "Fórmula natural de suporte à saciedade prolongada, controle da compulsão alimentar noturna e vigor masculino.",
+        "claims_permitidos": ["Suporte ao controle de saciedade", "Equilíbrio de hábitos alimentares", "Fórmula natural e vigor"],
+        "pitch_diario": "Cerca de R$ 3,30 por dia para silenciar a compulsão noturna e recuperar o vigor!"
     },
     "COLAGENO-PRIME": {
         "doses": 30,
-        "beneficio_chave": "Peptídeos bioativos de colágeno hidrolisado + ácido hialurônico para firmeza dérmica e sustentação tecidual.",
+        "beneficio_chave": "Peptídeos bioativos de colágeno hidrolisado + ácido hialurônico para firmeza dérmica, sustentação tecidual e elasticidade articular.",
         "claims_permitidos": ["Firmeza e sustentação da pele", "Hidratação tecidual profunda", "Saúde de articulações e unhas"],
-        "pitch_diario": "Apenas R$ 5,40 por dia para hidratação e firmeza profunda da pele!"
+        "pitch_diario": "Apenas R$ 5,40 por dia para hidratação, firmeza profunda da pele e saúde articular!"
     },
     "VISION-PRIME": {
         "doses": 60,
-        "beneficio_chave": "Nutrição celular com luteína e zeaxantina para alívio de fadiga ocular e proteção contra luz azul.",
+        "beneficio_chave": "Nutrição celular com luteína e zeaxantina para alívio de fadiga ocular e proteção contra luz azul de telas.",
         "claims_permitidos": ["Saúde macular", "Proteção contra luz de telas", "Alívio da fadiga visual"],
         "pitch_diario": "Apenas R$ 3,30 por dia para cuidar da visão e combater o cansaço das telas!"
     },
     "IARMONIZE-KIT": {
         "doses": 90,
-        "beneficio_chave": "Tratamento capilar bioidêntico completo em 4 fases para nutrição do folículo e estímulo do couro cabeludo.",
+        "beneficio_chave": "Tratamento capilar bioidêntico completo em 4 fases para nutrição do folículo, combate à calvície e estímulo ao couro cabeludo.",
         "claims_permitidos": ["Revitalização folicular", "Força e densidade capilar", "Tratamento antiqueda intensivo"],
         "pitch_diario": "Cerca de R$ 13,95 por dia para recuperação e densidade capilar clínica!"
     }
@@ -135,13 +195,13 @@ async def obter_produtos_ativos() -> list:
     if not produtos:
         produtos = [
             {
-                "sku": "BALANCA-BIO",
-                "name": "Balança de Bioimpedância Bluetooth com App",
-                "price": 89.90,
-                "affiliate_url": "https://marcaopersonal.com#balanca",
-                "custo_dia": 0.30,
-                "pitch_diario": "Menos de R$ 0,30 por dia parcelado para destravar 3 meses de acompanhamento VIP no WhatsApp!",
-                "beneficio_chave": "14 métricas corporais BIA e liberação de 3 meses de mentoria no WhatsApp."
+                "sku": "BALANCA-XIAOMI-AMAZON",
+                "name": "Balança Xiaomi Mi Body Composition Scale 2",
+                "price": 149.90,
+                "affiliate_url": "https://www.amazon.com.br/dp/B07T48Z4TN?tag=marcaopersona-20",
+                "custo_dia": 0.41,
+                "pitch_diario": "Apenas R$ 0,41 por dia para ter a tecnologia Xiaomi de bioimpedância e 3 meses de mentoria VIP comigo!",
+                "beneficio_chave": "13 métricas corporais BIA de precisão clínica e liberação de 3 meses de mentoria VIP no WhatsApp."
             },
             {
                 "sku": "CREATINA-PRIME",
@@ -177,7 +237,7 @@ async def obter_catalogo_para_prompt() -> str:
     
     linhas = [
         "CATÁLOGO OFICIAL UNIFICADO & LINKS DE VENDAS ATIVOS (MEMÓRIA COMPARTILHADA WHATSAPP & INSTAGRAM):",
-        "Use SEMPRE estes links oficiais e aplique o custo diário no fechamento:"
+        "Use SEMPRE estes links oficiais e aplique o custo diário no fechamento:\n"
     ]
 
     for p in produtos:
@@ -188,10 +248,23 @@ async def obter_catalogo_para_prompt() -> str:
             f"  * Link Direto Oficial: {p['affiliate_url']}"
         )
 
-    linhas.append("- Site Oficial da Loja Geral: https://marcaopersonal.com#loja")
+    linhas.append("\n- Site Oficial da Loja Geral: https://marcaopersonal.com#loja")
     linhas.append("- Assinatura Mensal VIP Stripe (R$ 19,90/mês): https://buy.stripe.com/7sYfZgbmtgaI5dncwrfMA01")
+
+    linhas.append("\nMATRIZ DE DISPARO AUTÔNOMO DE VENDAS (A DOR DO LEAD -> A SOLUÇÃO IMEDIATA DO MARCÃO):")
+    linhas.append("Você tem autonomia plena e contínua para vender. Identifique a dor, queixa ou desejo do interlocutor e prescreva a solução com o link na lata:")
+    linhas.append("1. DOR NO JOELHO, ARTICULAÇÕES, TENDÕES, ESTALO: Prescreva Ômega 3 Ultra Concentrado (Dux) ou Colágeno com Ácido Hialurônico (Nature's Prime). Link direto na mensagem!")
+    linhas.append("2. CANSAÇO, FALTA DE FORÇA, TREINO NÃO RENDE: Prescreva Creatina (Creatina Prime Braip ou Creatina Creapure Dux Amazon). Explique a saturação de ATP e custo diário de R$ 1,69/dia!")
+    linhas.append("3. NÃO BATE META DE PROTEÍNA, DIFICULDADE DE CRESCER SECO, FOME DE DOCE: Prescreva Whey Protein (Max Titanium R$ 99,90 ou Dux Concentrado R$ 149,90 ou Gold Standard R$ 249,90). Ensine receitas de brigadeiro proteico!")
+    linhas.append("4. PAROU DE EMAGRECER, DÚVIDA SE PERDEU GORDURA OU MÚSCULO, QUER AVALIAÇÃO DE SHAPE: Prescreva a BALANÇA DE BIOIMPEDÂNCIA XIAOMI MI SCALE 2 (Amazon R$ 149,90, apenas R$ 0,41/dia). CARRO-CHEFE Nº 1: DESTACA QUE COMPRANDO A BALANÇA GANHA 3 MESES DE MENTORIA VIP GRÁTIS COM O MARCÃO NO WHATSAPP! Link: https://www.amazon.com.br/dp/B07T48Z4TN?tag=marcaopersona-20")
+    linhas.append("5. QUER CORRER, MONITORAR BATIMENTOS CARDÍACOS, QUEIMA CALÓRICA, STRAVA OU SONO: Prescreva o Smartwatch Xiaomi Smart Band 8 ou Amazfit Bip 5 com GPS. Custa centavos de real por dia!")
+    linhas.append("6. ASSADURAS ENTRE AS PERNAS, SUOR EXCESSIVO, ROUPA PESADA, POSTURA FIRME: Prescreva Camiseta Térmica Compressão UV50+ ou Bermuda Térmica de Compressão com Bolso antifurto.")
+    linhas.append("7. COMPULSÃO ALIMENTAR NOTURNA, VONTADE DESCONTROLADA DE COMER / VIGOR MASCULINO: Prescreva Caneta Azempika (apenas para maiores de 18 anos).")
+    linhas.append("8. QUEDA DE CABELO, CABELO FRACO, CALVÍCIE: Prescreva o Kit IArmonize Capilar em 4 Fases.")
+    linhas.append("9. INSÔNIA, ACORDA CANSADO, SONO LEVE: Prescreva o Complexo Sono Melatonina + Magnésio Dimalato para pico de GH.")
+
     linhas.append("\nDISCLOSURE OBRIGATÓRIO (CONAR/META/LEGISLAÇÃO BRASIL):")
-    linhas.append("Alguns links são de afiliados oficiais. A entrega e cobrança acontecem com o parceiro indicado com garantia.")
+    linhas.append("Alguns links são de parceiros afiliados oficiais da marca. A entrega, garantia e cobrança acontecem com o parceiro indicado com nota fiscal e total segurança.")
 
     return "\n".join(linhas)
 
@@ -205,13 +278,55 @@ async def buscar_produto_por_termo(termo: str) -> dict:
         if termo_limpo in p["name"].lower() or termo_limpo in p["sku"].lower():
             return p
             
-    # Mapeamentos conceituais comuns
+    # Mapeamentos conceituais comuns (sinônimos de dores, queixas e categorias)
     sinonimos = {
         "creatina": "CREATINA-PRIME",
-        "balanca": "BALANCA-BIO",
-        "balança": "BALANCA-BIO",
-        "bioimpedancia": "BALANCA-BIO",
-        "bioimpedância": "BALANCA-BIO",
+        "creapure": "CREATINA-CREAPURE-DUX",
+        "balanca": "BALANCA-XIAOMI-AMAZON",
+        "balança": "BALANCA-XIAOMI-AMAZON",
+        "bioimpedancia": "BALANCA-XIAOMI-AMAZON",
+        "bioimpedância": "BALANCA-XIAOMI-AMAZON",
+        "xiaomi": "BALANCA-XIAOMI-AMAZON",
+        "whey": "WHEY-MAX-TITANIUM",
+        "whey protein": "WHEY-MAX-TITANIUM",
+        "proteina": "WHEY-MAX-TITANIUM",
+        "proteína": "WHEY-MAX-TITANIUM",
+        "dux": "WHEY-DUX-CONCENTRADO",
+        "gold": "WHEY-GOLD-OPTIMUM",
+        "optimum": "WHEY-GOLD-OPTIMUM",
+        "relogio": "SMARTWATCH-XIAOMI-BAND",
+        "relógio": "SMARTWATCH-XIAOMI-BAND",
+        "smartwatch": "SMARTWATCH-XIAOMI-BAND",
+        "band": "SMARTWATCH-XIAOMI-BAND",
+        "cardiaco": "SMARTWATCH-XIAOMI-BAND",
+        "cardíaco": "SMARTWATCH-XIAOMI-BAND",
+        "batimento": "SMARTWATCH-XIAOMI-BAND",
+        "strava": "SMARTWATCH-XIAOMI-BAND",
+        "gps": "SMARTWATCH-AMAZFIT-BIP",
+        "amazfit": "SMARTWATCH-AMAZFIT-BIP",
+        "roupa": "ROUPA-COMPRESSAO-UV50",
+        "camisa compressao": "ROUPA-COMPRESSAO-UV50",
+        "camisa compressão": "ROUPA-COMPRESSAO-UV50",
+        "segunda pele": "ROUPA-COMPRESSAO-UV50",
+        "dry fit": "ROUPA-COMPRESSAO-UV50",
+        "dry-fit": "ROUPA-COMPRESSAO-UV50",
+        "bermuda": "BERMUDA-COMPRESSAO-FIT",
+        "short": "BERMUDA-COMPRESSAO-FIT",
+        "assadura": "BERMUDA-COMPRESSAO-FIT",
+        "joelho": "OMEGA3-ULTRA-CONCENTRADO",
+        "articulacao": "OMEGA3-ULTRA-CONCENTRADO",
+        "articulação": "OMEGA3-ULTRA-CONCENTRADO",
+        "tendao": "OMEGA3-ULTRA-CONCENTRADO",
+        "tendão": "OMEGA3-ULTRA-CONCENTRADO",
+        "omega 3": "OMEGA3-ULTRA-CONCENTRADO",
+        "ômega 3": "OMEGA3-ULTRA-CONCENTRADO",
+        "sono": "MELATONINA-MAGNESIO-SONO",
+        "insonia": "MELATONINA-MAGNESIO-SONO",
+        "insônia": "MELATONINA-MAGNESIO-SONO",
+        "dormir": "MELATONINA-MAGNESIO-SONO",
+        "magnesio": "MELATONINA-MAGNESIO-SONO",
+        "magnésio": "MELATONINA-MAGNESIO-SONO",
+        "melatonina": "MELATONINA-MAGNESIO-SONO",
         "vip": "VIP-STRIPE",
         "assinatura": "VIP-STRIPE",
         "colageno": "COLAGENO-PRIME",

@@ -271,54 +271,61 @@ class AdobeLayeredCompositor:
     # ----------------------------------------------------------------------------------
     # 3. SELO CIRCULAR DE AUTORIDADE METÁLICO (COM ESTRELAS PROCEDURAIS)
     # ----------------------------------------------------------------------------------
-    def draw_authority_seal(self, center_xy: tuple, radius: int = 65, text_top: str = "100% PURO", text_sub: str = "LAUDO OFICIAL"):
-        """Selo circular de garantia e pureza com estrelas vetoriais douradas."""
+    def draw_authority_seal(self, center_xy: tuple = None, radius: int = 38, text_top: str = "100% PURO", text_sub: str = "LAUDO OFICIAL"):
+        """Selo circular de garantia e pureza com estrelas vetoriais douradas e raio compacto."""
+        if center_xy is None:
+            center_xy = (self.width - 85, 135)
         cx, cy = center_xy
-        self._draw_box_shadow((cx - radius, cy - radius, cx + radius, cy + radius), radius=radius, blur=16, opacity=170)
+        self._draw_box_shadow((cx - radius, cy - radius, cx + radius, cy + radius), radius=radius, blur=14, opacity=160)
 
         seal_layer = Image.new("RGBA", (self.width, self.height), (0, 0, 0, 0))
         sdraw = ImageDraw.Draw(seal_layer)
 
         # Círculo base metálico
-        sdraw.ellipse([cx - radius, cy - radius, cx + radius, cy + radius], fill=(16, 20, 28, 245), outline=self.theme["accent"], width=3)
-        sdraw.ellipse([cx - radius + 6, cy - radius + 6, cx + radius - 6, cy + radius - 6], outline=self.theme["accent_bright"], width=1)
-        sdraw.ellipse([cx - radius + 10, cy - radius + 10, cx + radius - 10, cy + radius - 10], outline=self.theme["accent_deep"], width=2)
+        sdraw.ellipse([cx - radius, cy - radius, cx + radius, cy + radius], fill=(16, 20, 28, 245), outline=self.theme["accent"], width=2)
+        sdraw.ellipse([cx - radius + 4, cy - radius + 4, cx + radius - 4, cy + radius - 4], outline=self.theme["accent_bright"], width=1)
+        sdraw.ellipse([cx - radius + 7, cy - radius + 7, cx + radius - 7, cy + radius - 7], outline=self.theme["accent_deep"], width=1)
 
         # 5 Estrelas douradas vetoriais no arco superior
-        star_y = cy - radius + 22
-        spacing = 13
+        star_y = cy - radius + 15
+        spacing = 9
         for idx, offset in enumerate([-2, -1, 0, 1, 2]):
-            draw_vector_star(sdraw, cx + offset * spacing, star_y, r_out=5.5, r_in=2.5, color=self.theme["accent_bright"])
+            draw_vector_star(sdraw, cx + offset * spacing, star_y, r_out=3.5, r_in=1.6, color=self.theme["accent_bright"])
 
         # Texto Principal do Selo (Montserrat Black - auto-ajustável)
-        size_main = 21 if len(text_top) <= 7 else (16 if len(text_top) <= 10 else 13)
+        size_main = 14 if len(text_top) <= 7 else (12 if len(text_top) <= 10 else 10)
         font_main = get_font("Montserrat-Black.ttf", size_main)
         bbox_m = sdraw.textbbox((0, 0), text_top, font=font_main)
         mw = bbox_m[2] - bbox_m[0]
         mh = bbox_m[3] - bbox_m[1]
-        sdraw.text((cx - mw // 2, cy - (mh // 2) - 2), text_top, font=font_main, fill=self.theme["text_primary"])
+        sdraw.text((cx - mw // 2, cy - (mh // 2) - 1), text_top, font=font_main, fill=self.theme["text_primary"])
 
         # Subtexto do Selo (Montserrat Bold)
-        size_sub = 10 if len(text_sub) > 11 else 12
+        size_sub = 8 if len(text_sub) > 10 else 9
         font_sub = get_font("Montserrat-Bold.ttf", size_sub)
         bbox_s = sdraw.textbbox((0, 0), text_sub, font=font_sub)
         sw = bbox_s[2] - bbox_s[0]
-        sdraw.text((cx - sw // 2, cy + 14), text_sub, font=font_sub, fill=self.theme["accent_bright"])
+        sdraw.text((cx - sw // 2, cy + 9), text_sub, font=font_sub, fill=self.theme["accent_bright"])
 
         self.canvas = Image.alpha_composite(self.canvas, seal_layer)
 
     # ----------------------------------------------------------------------------------
     # 4. HIERARQUIA TIPOGRÁFICA EDITORIAL (MONTSERRAT BLACK + EXTRABOLD)
     # ----------------------------------------------------------------------------------
-    def draw_hero_headline(self, headline: str, subheadline: str = None, start_y: int = 150):
-        """Diagrama título editorial com quebra inteligente, dupla tipografia e sombra."""
+    def draw_hero_headline(self, headline: str, subheadline: str = None, start_y: int = 150, has_seal: bool = False):
+        """Diagrama título editorial com quebra inteligente, dupla tipografia e blindagem anti-colisão."""
         draw = ImageDraw.Draw(self.canvas)
         palavras = headline.strip().split()
 
+        # BLINDAGEM ANTI-COLISÃO COM O SELO:
+        # Se houver selo no cabeçalho, a manchete nunca deve começar acima de 235px (selo termina em y=173)
+        if has_seal and start_y < 235:
+            start_y = 235
+
         # Definição de tamanho por contagem de palavras
-        if len(palavras) <= 4:
+        if len(palavras) <= 3:
             font_size = 52
-        elif len(palavras) <= 8:
+        elif len(palavras) <= 6:
             font_size = 46
         else:
             font_size = 40
@@ -326,9 +333,9 @@ class AdobeLayeredCompositor:
         font_extra = get_font("Montserrat-ExtraBold.ttf", font_size)
         font_black = get_font("Montserrat-Black.ttf", int(font_size * 1.05))
 
-        # ZONA DE COLISÃO DO SELO: Se o título começar próximo do topo (< 210px),
-        # restringimos a largura para 740px para NUNCA encostar no selo superior direito!
-        max_largura = 740 if start_y < 210 else 940
+        # ZONA DE COLISÃO DO SELO: Se o título começar na faixa do topo (< 220px),
+        # restringimos a largura para 680px para NUNCA encostar no selo superior direito!
+        max_largura = 680 if start_y < 220 else 940
 
         # Quebra inteligente com blindagem total mesmo se houver quebras manuais de linha (\n)
         raw_linhas = [l.strip().upper() for l in headline.split("\n") if l.strip()]
@@ -362,7 +369,13 @@ class AdobeLayeredCompositor:
             bbox = draw.textbbox((0, 0), lin, font=f)
             tw = bbox[2] - bbox[0]
             th = bbox[3] - bbox[1]
-            tx = (self.width - tw) // 2
+
+            # BLINDAGEM LATERAL EXTRA: Se por qualquer motivo a linha estiver na faixa y < 215,
+            # restringe tx para não invadir o selo no canto superior direito (x >= 940)
+            if curr_y < 215:
+                tx = (self.width - 240 - tw) // 2 + 30
+            else:
+                tx = (self.width - tw) // 2
 
             # Sombra Gaussiana pronunciada
             self._draw_text_shadow(lin, f, (tx, curr_y), blur=10, offset=(0, 5), color=(0, 0, 0, 230))
@@ -535,14 +548,16 @@ class AdobeLayeredCompositor:
 
         # 2. Calcular altura dinâmica para preencher com elegância o espaço disponível
         if available_height and available_height > 250:
-            target_gap = 36 if is_wide else 30
+            target_gap = 26 if num_cards >= 4 else (36 if is_wide else 30)
             total_gaps_h = num_gaps * target_gap
             usable_for_cards = available_height - total_gaps_h
-            base_card_h = max(120, min(175, usable_for_cards // num_cards))
+            min_h = 110 if num_cards >= 4 else 135
+            max_h = 145 if num_cards >= 4 else 175
+            base_card_h = max(min_h, min(max_h, usable_for_cards // num_cards))
             gap = target_gap
         else:
-            base_card_h = 130 if is_wide else 115
-            gap = 26
+            base_card_h = 120 if num_cards >= 4 else (140 if is_wide else 125)
+            gap = 24 if num_cards >= 4 else 30
 
         curr_y = start_y
         for lines, num_lines in cards_data:
@@ -586,8 +601,6 @@ class AdobeLayeredCompositor:
                 self.draw_rich_line(line_tokens, tx, ly, font_normal, font_bold)
 
             curr_y += card_h + gap
-
-        return curr_y
 
         return curr_y
 
@@ -1050,6 +1063,42 @@ def renderizar_criativo_masterpiece(
     return compositor.save(out_path)
 
 
+def _gerar_dica_contextual(titulo: str = "", subtitulo: str = "", categoria: str = "") -> str:
+    """Gera um takeaway científico ou dica de ouro altamente contextualizada ao tema do post."""
+    texto_busca = f"{titulo} {subtitulo} {categoria}".lower()
+    if any(k in texto_busca for k in ["abdominal", "gordura", "secar", "barriga", "pochete", "lipólise"]):
+        return "O déficit calórico sustentado e o treino de força com sobrecarga são as únicas vias fisiológicas reais para oxidar gordura corporal profunda."
+    elif any(k in texto_busca for k in ["suor", "ensopado", "desidratação", "água"]):
+        return "Suor é apenas controle de temperatura corporal. Mais de 80% da gordura oxidada é eliminada na expiração pulmonar em forma de CO2."
+    elif any(k in texto_busca for k in ["colágeno", "pele", "flacidez", "rugas", "hialurônico"]):
+        return "Peptídeos bioativos de colágeno Verisol com ácido hialurônico reconstroem a derme de dentro para fora, devolvendo sustentação celular."
+    elif any(k in texto_busca for k in ["remédio", "anti-inflamatório", "dmit", "cox-2"]):
+        return "A inflamação fisiológica pós-treino é o gatilho biológico de hipertrofia. Remédios de farmácia desligam a síntese de novas fibras musculares."
+    elif any(k in texto_busca for k in ["creatina", "força", "atp", "inchaço", "músculo"]):
+        return "A creatina satura o meio intracelular das fibras com água e fosfatos, multiplicando a ressíntese de ATP e prevenindo lesões musculares."
+    elif any(k in texto_busca for k in ["sono", "gh", "noite", "descanso", "cortisol"]):
+        return "O pico de secreção do GH e a reparação do sistema nervoso central ocorrem nas fases profundas de sono REM. Treino sem descanso gera catabolismo."
+    elif any(k in texto_busca for k in ["azempika", "potência", "homem", "vigor", "cavernos"]):
+        return "A circulação dos corpos cavernosos responde a bioativos tópicos vasodilatadores que ativam o fluxo sanguíneo local com máxima segurança."
+    elif any(k in texto_busca for k in ["balança", "peso", "bioimpedância"]):
+        return "O peso bruto da balança comum é cego. Apenas a bioimpedância separa massa magra, hidratação celular e gordura visceral com precisão."
+    elif any(k in texto_busca for k in ["articular", "joelho", "ombro", "cartilagem", "40+"]):
+        return "O fortalecimento muscular conjunto e a reposição de colágeno protegem os tendões e restauram a amplitude de movimento sem dor crônica."
+    else:
+        return "A aplicação consistente de princípios fisiológicos comprovados e hábitos diários traz resultados estéticos e de saúde superiores a qualquer promessa milagrosa."
+
+
+def _gerar_conclusao_acao_contextual(titulo: str = "", subtitulo: str = "", categoria: str = "") -> str:
+    """Gera um resumo de ação prático do Marcão para o slide de encerramento sem produto físico."""
+    texto_busca = f"{titulo} {subtitulo} {categoria}".lower()
+    if any(k in texto_busca for k in ["abdominal", "gordura", "secar", "barriga"]):
+        return "Combine treino resistido pesado com dieta hipocalórica rica em proteínas e acompanhamento de métricas para definir o core de verdade."
+    elif any(k in texto_busca for k in ["suor", "ensopado"]):
+        return "Hidrate-se com eletrólitos, vista tecidos tecnológicos leves e meça sua evolução por bioimpedância, nunca pela quantidade de suor na camisa."
+    else:
+        return "Salve este carrossel para consultar nos seus treinos e compartilhe com seu parceiro de academia para aplicar o método certo!"
+
+
 # ======================================================================================
 # MOTOR DE SLIDES DE CARROSSEL MASTERPIECE 2.0 (INÍCIO, MEIO E FIM)
 # ======================================================================================
@@ -1098,70 +1147,96 @@ def renderizar_slide_carrossel_masterpiece(
     compositor.draw_carousel_header(categoria, num_slide, total_slides, preco=preco if num_slide == total_slides else None, y=45)
 
     # 3. Selo de Autoridade Metálico Concêntrico com Estrelas Vetoriais (Folga vertical garantida)
+    tem_selo = False
     if num_slide == 2:
-        compositor.draw_authority_seal((width - 95, 148), radius=42, text_top="100% CIÊNCIA", text_sub="LAUDO TÉCNICO")
+        tem_selo = True
+        compositor.draw_authority_seal((width - 85, 135), radius=38, text_top="100% CIÊNCIA", text_sub="LAUDO TÉCNICO")
     elif num_slide == total_slides:
-        # Selo de pureza/laudo (sem duplicar o preço se já estiver na pílula do cabeçalho)
+        tem_selo = True
         seal_top = "100% PURO" if preco else "LAUDO APROVADO"
         seal_sub = "LOTE OFICIAL" if preco else "PADRÃO OURO"
-        compositor.draw_authority_seal((width - 95, 148), radius=42, text_top=seal_top, text_sub=seal_sub)
+        compositor.draw_authority_seal((width - 85, 135), radius=38, text_top=seal_top, text_sub=seal_sub)
 
     # 4. Posicionamento de Manchete Dinâmico (Respeito rigoroso à Zona Facial e Selo)
     if num_slide == 1:
-        start_y = 690 if not pontos else 650
+        start_y = 660 if pontos else 700
+        has_seal = False
     else:
-        # Slides 2 e 3: Começa a 220px, estritamente abaixo do selo superior (termina em 190px)
-        start_y = 220
+        # Slides 2 e 3: Começa a 235px, estritamente abaixo do selo superior (termina em 173px + 62px de ar limpo)
+        start_y = 235
+        has_seal = True
 
-    y_after_head = compositor.draw_hero_headline(titulo, subtitulo, start_y=start_y)
+    y_after_head = compositor.draw_hero_headline(titulo, subtitulo, start_y=start_y, has_seal=has_seal)
 
     # 5. Lista de Pontos / Benefícios e Mockup Hero com Distribuição Inteligente (Eliminação Total de Vazios)
-    tem_produto = produto_img_path and os.path.exists(produto_img_path) and (num_slide == total_slides)
+    tem_produto = bool(produto_img_path and os.path.exists(produto_img_path) and (num_slide == total_slides))
+    pts = pontos or []
 
     if num_slide == 2:
-        # Slide 2: 3 Cards generosos preenchendo o espaço + Banner Dica de Ouro
+        # Slide 2: Cards generosos preenchendo o espaço + Banner Dica de Ouro Contextual
         top_content_y = y_after_head + 25
         card_w = 940
         card_x = (width - card_w) // 2
-        avail_for_cards = 550
-        y_end_cards = compositor.draw_benefit_cards(
-            pontos=pontos,
-            start_y=top_content_y,
-            card_w=card_w,
-            card_x=card_x,
-            available_height=avail_for_cards,
-            max_points=3
-        )
+        num_pts = min(len(pts), 4)
 
-        # Banner de Destaque Científico / Dica de Ouro (Elimina 100% do vazio inferior)
-        callout_y = max(y_end_cards + 25, 960)
+        if num_pts >= 4:
+            avail_for_cards = 590
+            y_end_cards = compositor.draw_benefit_cards(
+                pontos=pts,
+                start_y=top_content_y,
+                card_w=card_w,
+                card_x=card_x,
+                available_height=avail_for_cards,
+                max_points=4
+            )
+            callout_y = max(y_end_cards + 22, 1020)
+            callout_h = min(150, height - 110 - callout_y)
+        else:
+            avail_for_cards = 510
+            y_end_cards = compositor.draw_benefit_cards(
+                pontos=pts,
+                start_y=top_content_y,
+                card_w=card_w,
+                card_x=card_x,
+                available_height=avail_for_cards,
+                max_points=3
+            )
+            callout_y = max(y_end_cards + 25, 960)
+            callout_h = 165
+
+        # Banner de Destaque Científico / Dica de Ouro 100% contextual (Elimina 100% do vazio inferior)
+        texto_dica = _gerar_dica_contextual(titulo, subtitulo, categoria)
         compositor.draw_highlight_callout(
             title="DICA DE OURO DO MARCÃO • PROTOCOLO COMPROVADO",
-            text="A saturação diária e o descanso celular adequado multiplicam a síntese de novas fibras musculares e previnem o catabolismo.",
+            text=texto_dica,
             y=callout_y,
-            height=160,
+            height=callout_h,
             width=940,
             x=card_x
         )
-        compositor.draw_carousel_indicator(cta_slide if cta_slide else "ARRASTE PARA O LADO", y=height - 95)
+        compositor.draw_carousel_indicator(cta_slide if cta_slide else "ARRASTE PARA O LADO ››", y=height - 95)
 
     elif num_slide == total_slides:
-        # Slide 3: Split cards + Produto Hero + Barra de Selos de Confiança + Botão 3D
         top_content_y = y_after_head + 25
-        card_w = 540
-        card_x = 60
-        avail_for_cards = 550
-        y_end_cards = compositor.draw_benefit_cards(
-            pontos=pontos,
-            start_y=top_content_y,
-            card_w=card_w,
-            card_x=card_x,
-            available_height=avail_for_cards,
-            max_points=3
-        )
+        final_cta = cta_slide if cta_slide else "GARANTA NO LINK DA BIO"
+        if preco and ("COMPRE" in final_cta.upper() or "GARANTA" in final_cta.upper()) and preco not in final_cta:
+            final_cta = f"{final_cta} POR {preco}"
 
-        # Produto Hero à direita perfeitamente centralizado e imponente
         if tem_produto:
+            # Slide 3 COM PRODUTO: Split cards à esquerda + Produto Hero 3D à direita + Trust Badges + Botão 3D
+            card_w = 540
+            card_x = 60
+            avail_for_cards = 550
+            y_end_cards = compositor.draw_benefit_cards(
+                pontos=pts,
+                start_y=top_content_y,
+                card_w=card_w,
+                card_x=card_x,
+                available_height=avail_for_cards,
+                max_points=3
+            )
+
+            # Produto Hero à direita perfeitamente centralizado e imponente
             prod_cx = 835
             prod_cy = top_content_y + (avail_for_cards // 2)
             compositor.draw_hero_product(
@@ -1172,31 +1247,76 @@ def renderizar_slide_carrossel_masterpiece(
                 ground_shadow=True
             )
 
-        # Barra de Selos de Confiança (Preenchimento nobre antes do botão)
-        trust_y = 965
-        compositor.draw_trust_badges(y=trust_y, width=960, x=60, height=90)
+            # Barra de Selos de Confiança (Preenchimento nobre antes do botão)
+            trust_y = 965
+            compositor.draw_trust_badges(y=trust_y, width=960, x=60, height=90)
+            compositor.draw_cta_button_3d(final_cta, y=height - 180)
+            compositor.draw_brand_footer(y=height - 85)
 
-        # CTA 3D de Alta Conversão
-        final_cta = cta_slide if cta_slide else "GARANTA NO LINK DA BIO"
-        if preco and ("COMPRE" in final_cta.upper() or "GARANTA" in final_cta.upper()) and preco not in final_cta:
-            final_cta = f"{final_cta} POR {preco}"
-        compositor.draw_cta_button_3d(final_cta, y=height - 180)
-        compositor.draw_brand_footer(y=height - 85)
+        else:
+            # Slide 3 SEM PRODUTO (Curiosidades / Google Trends): LAYOUT FULL-WIDTH TOTAL!
+            # Zero espaço ocioso no lado direito e zero vazio na parte inferior!
+            card_w = 940
+            card_x = (width - card_w) // 2
+            num_pts = min(len(pts), 4)
+            y_cta = height - 180
+
+            if num_pts >= 4:
+                avail_for_cards = 540
+                y_end_cards = compositor.draw_benefit_cards(
+                    pontos=pts,
+                    start_y=top_content_y,
+                    card_w=card_w,
+                    card_x=card_x,
+                    available_height=avail_for_cards,
+                    max_points=4
+                )
+                remaining_h = y_cta - y_end_cards - 20
+                if remaining_h >= 75:
+                    trust_y = y_end_cards + 15
+                    badge_h = min(80, remaining_h - 15)
+                    compositor.draw_trust_badges(y=trust_y, width=940, x=card_x, height=badge_h)
+            else:
+                avail_for_cards = 470
+                y_end_cards = compositor.draw_benefit_cards(
+                    pontos=pts,
+                    start_y=top_content_y,
+                    card_w=card_w,
+                    card_x=card_x,
+                    available_height=avail_for_cards,
+                    max_points=3
+                )
+                callout_y = y_end_cards + 20
+                callout_h = min(145, y_cta - callout_y - 20)
+                callout_text_s3 = _gerar_conclusao_acao_contextual(titulo, subtitulo, categoria)
+                compositor.draw_highlight_callout(
+                    title="PROTOCOLO DE AÇÃO • MARCÃO PERSONAL",
+                    text=callout_text_s3,
+                    y=callout_y,
+                    height=callout_h,
+                    width=940,
+                    x=card_x
+                )
+
+            compositor.draw_cta_button_3d(final_cta, y=y_cta)
+            compositor.draw_brand_footer(y=height - 85)
 
     else:
         # Slide 1 ou intermediário genérico
-        top_content_y = y_after_head + 25
+        top_content_y = y_after_head + 20
         card_w = 940
         card_x = (width - card_w) // 2
+        y_ind = height - 95
+        max_avail = y_ind - top_content_y - 35
         compositor.draw_benefit_cards(
             pontos=pontos,
             start_y=top_content_y,
             card_w=card_w,
             card_x=card_x,
-            available_height=420,
-            max_points=2 if num_slide == 1 else 3
+            available_height=min(320, max_avail),
+            max_points=2
         )
-        compositor.draw_carousel_indicator(cta_slide if cta_slide else "ARRASTE PARA O LADO", y=height - 95)
+        compositor.draw_carousel_indicator(cta_slide if cta_slide else "ARRASTE PARA O LADO ››", y=y_ind)
 
     return compositor.save(out_path)
 

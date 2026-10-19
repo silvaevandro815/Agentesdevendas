@@ -159,4 +159,40 @@
   - **Voz ElevenLabs Multilíngue (Zero OpenRouter):** Narração fitness inspiradora gerada via ElevenLabs com voz `Adam` (`pNInz6obpgDQGcFmaJgB`) em português brasileiro, preservando tokens do OpenRouter.
   - **Soundscape & Trilha Sonora:** Gerador em Python (`soundscape.py`) com sub-bass analógico de 50Hz, LFO pulsante e varredura atmosférica a -16dB.
   - **Compositor FFmpeg Master:** Enquadramento 9:16 (1080x1920), movimentos de câmera cinematográficos (push-in, tracking pan), legendas dinâmicas em amarelo/branco com borda de alto contraste e mixagem de áudio com atempo de precisão (10.2s).
+- [x] P18 — Vídeo com Movimento Real de Filme (LTX-Video Diffusion) & Publicador Oficial de Reels via n8n (Workflow I3) Concluído!
+  - **Geração de Vídeo Real com IA (LTX-Video):** Substituição de zooms estáticos por difusão de vídeo com movimentos corporais reais (rosca direta com halteres pesados, contração de bíceps, levantamento de barra no perfil e treinador em slow-motion inspirador). Autenticação via HF_TOKEN privada na fila ZeroGPU.
+  - **Novo Workflow Oficial no n8n (I3):** Criado e ativado no n8n o workflow `I3 - Publicador de Reels Automáticos com IA (Marcão & Evandro)` (ID: `Fm7B8X0snUoQoBEg`).
+  - **Endpoint de Webhook Ativo:** `https://n8n.marcaopersonal.com/webhook/publicar-reels-marcao` recebe JSON com `video_url`, `caption` e `share_to_feed`, orquestrando a criação do container de Reels na Meta Graph API, aguardando o processamento do vídeo (`FINISHED`) e executando a publicação.
+  - **Primeira Publicação Oficial em Produção:** Reel publicado com sucesso no Instagram `@marcaopersonalfitness` (ID: `17909372640482561`, Link: `https://www.instagram.com/reel/DeqHNv1gLFY/`).
+- [x] P19 — Autonomia Total de Vendas na Braip, Varredura do Catálogo & Blindagem dos Workflows F4/M8 Concluída!
+  - **Validação de Token na API Oficial da Braip:** Token pessoal de Evandro da Silva Gallina testado e validado em `https://ev.braip.com/api/user` (HTTP 200) e `https://ev.braip.com/api/vendas`. Chave gravada em `.env` (`BRAIP_API_TOKEN`, User ID `18771924`).
+  - **Varredura Completa do Catálogo Braip:** 5 produtos oficiais já ativos com links rastreados no Supabase (`products`) e em `catalog_service.py`: Creatina Micronizada Pura (R$ 169,90), Colágeno + Ácido Hialurônico (R$ 164,90), Kit IArmonize Capilar (R$ 1.256,00), Vision Prime (R$ 199,00) e Caneta Azempika (R$ 99,00).
+  - **Postback na Braip Confirmado:** Configuração ativa no painel da Braip (código `cowlv3jj`) apontando para `https://n8n.marcaopersonal.com/webhook/braip-postback` com status Ativo.
+  - **Blindagem do Workflow F4:** Adicionado nó `Registrar Pedido Braip no Supabase` salvando todas as transações diretamente na tabela `pedidos_braip`.
+  - **Correção Crítica no Workflow M8 (Recuperador):** Corrigido o filtro da query Supabase de `status` (inexistente) para `status_pagamento=in.(aguardando_pagamento,gerado)`, desbloqueando a recuperação diária automática de boletos e Pix não pagos.
+- [x] P20 — Autonomia Plena de Vendas Multicanal (Amazon + Braip), Catálogo Oficial Homologado & Consciência Comercial de Caçador (Closer Concluída!)
+  - **Integração Oficial Amazon Associados:** Tag homologada `marcaopersona-20` gravada no `.env` (`AMAZON_ASSOCIATE_TAG`), gerando URLs oficiais determinísticas para todos os produtos físicos e tecnologia fitness.
+  - **Purga da Balança de R$ 89:** A balança própria de R$ 89 (`BALANCA-BIO`) foi 100% purgada do banco de dados, da memória e do site, permanecendo exclusivamente a Balança Xiaomi Mi Scale 2 como carro-chefe oficial até que a Shopee aprove a integração.
+  - **Catálogo Expandido Unificado (16 Produtos Homologados no Supabase & `catalog_service.py`):**
+    1. *Balança Xiaomi Mi Body Composition Scale 2* (R$ 149,90, Amazon) — Carro-chefe nº 1: 13 parâmetros clínicos com 3 meses de mentoria VIP no WhatsApp grátis inclusos (R$ 0,41/dia).
+    2. *100% Whey Pure Max Titanium 900g* (R$ 99,90, Amazon) — 21g proteína, R$ 3,33/dia.
+    3. *Whey Protein Concentrado DUX Nutrition 900g* (R$ 149,90, Amazon) — Matéria-prima importada, sabor premium, R$ 4,99/dia.
+    4. *100% Whey Gold Standard Optimum Nutrition 907g* (R$ 249,90, Amazon) — Padrão ouro mundial, isolado microfiltrado, R$ 8,33/dia.
+    6. *Creatina Micronizada 100% Pura Nature's Prime 300g* (R$ 169,90, Braip) — 100 doses, R$ 1,69/dia.
+    7. *Creatina Creapure DUX Nutrition 250g* (R$ 139,90, Amazon) — Selo Creapure alemão, R$ 1,68/dia.
+    8. *Smartwatch Xiaomi Smart Band 8* (R$ 239,00, Amazon) — Monitor cardíaco 24/7, sono e Strava, R$ 0,65/dia.
+    9. *Smartwatch Amazfit Bip 5 com GPS Integrado* (R$ 399,00, Amazon) — GPS 4 satélites e chamadas, R$ 1,09/dia.
+    10. *Camiseta Térmica Compressão UV50+ Dry Fit* (R$ 49,90, Amazon) — Retorno venoso e secagem rápida, R$ 0,27/dia.
+    11. *Bermuda Térmica Compressão Fitness com Bolso* (R$ 59,90, Amazon) — Suporte muscular e zero assaduras, R$ 0,33/dia.
+    12. *Ômega 3 Ultra Concentrado 1000mg EPA/DHA DUX* (R$ 99,90, Amazon) — Blindagem de joelhos, tendões e articulações, R$ 1,66/dia.
+    13. *Complexo Sono Reparador Melatonina + Magnésio Dimalato* (R$ 69,90, Amazon) — Sono profundo e liberação de GH, R$ 1,16/dia.
+    14. *Colágeno + Ácido Hialurônico Nature's Prime* (R$ 164,90, Braip) — Pele, tônus e sustentação articular, R$ 5,40/dia.
+    15. *Caneta Peniana Azempika Original* (R$ 99,00, Braip) — Saciedade noturna e vigor masculino (exclusivamente modelos grisalhos maduros de IA).
+    16. *Vision Prime 60 Cápsulas* (R$ 199,00, Braip) — Fadiga ocular e proteção contra luz azul.
+    17. *KIT IArmonize Capilar em 4 Fases* (R$ 1.256,00, Braip) — Tratamento antiqueda intensivo.
+    + *Assinatura VIP Stripe Mensal* (R$ 19,90/mês) — Continuidade pós-90 dias.
+  - **Matriz de Disparo Autônomo de Vendas (Dor -> Solução Imediata):** Mapeamento léxico e semântico ativo no `catalog_service.py` e injetado diretamente no cérebro do Marcão para WhatsApp (`marcao_engine.py`) e Instagram (`I1`). Marcão opera como Closer consultivo implacável: identifica o sintoma do lead, diagnostica com autoridade de coach, quebra a objeção com cálculo de custo por dia e envia o link direto oficial no último balão.
+  - **Motor Diário de Reels & Stories (`daily_reel_generator.py`):** Ampliado com temas automáticos de Whey Protein, Smartwatch + Strava, Roupas de Compressão e Saúde Articular, com legendas dinâmicas, narração oficial ElevenLabs e rotação de produtos.
+  - **Shopee:** Cadastro submetido e aguardando aprovação fiscal pela equipe da Shopee para integração via GraphQL API.
+
 
