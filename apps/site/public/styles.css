@@ -184,6 +184,68 @@ header {
   box-shadow: var(--glow-green) !important;
 }
 
+/* Mobile Quick Category Nav Bar */
+.mobile-nav-bar {
+  display: none;
+}
+
+@media (max-width: 991px) {
+  .mobile-nav-bar {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    background: rgba(6, 13, 27, 0.95) !important;
+    border-bottom: 1px solid rgba(0, 229, 255, 0.15) !important;
+    position: sticky;
+    top: 55px;
+    z-index: 99;
+    scrollbar-width: none;
+  }
+  .mobile-nav-bar::-webkit-scrollbar {
+    display: none;
+  }
+  .mobile-nav-scroll {
+    display: flex !important;
+    gap: 8px !important;
+    padding: 8px 14px !important;
+    width: max-content !important;
+    white-space: nowrap !important;
+  }
+  .mobile-nav-pill {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 6px 14px !important;
+    border-radius: 20px !important;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    text-decoration: none !important;
+    background: rgba(16, 31, 62, 0.7) !important;
+    color: var(--text-muted) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    flex-shrink: 0 !important;
+    transition: all 0.2s ease;
+  }
+  .mobile-nav-pill.active {
+    background: rgba(0, 229, 255, 0.15) !important;
+    color: var(--neon-cyan) !important;
+    border-color: var(--neon-cyan) !important;
+  }
+  .mobile-nav-pill.highlight {
+    background: rgba(0, 255, 136, 0.15) !important;
+    color: var(--neon-green) !important;
+    border-color: var(--neon-green) !important;
+  }
+  .mobile-nav-pill.wa {
+    background: rgba(37, 211, 102, 0.15) !important;
+    color: #25d366 !important;
+    border-color: #25d366 !important;
+  }
+}
+
 /* HERO SECTION */
 .hero {
   padding: 70px 0 60px;
@@ -1182,30 +1244,31 @@ footer p {
     box-sizing: border-box !important;
   }
   .hero h1 {
-    font-size: clamp(1.4rem, 6.2vw, 1.95rem) !important;
+    font-size: clamp(1.15rem, 5.0vw, 1.60rem) !important;
     line-height: 1.25 !important;
     letter-spacing: -0.5px !important;
     word-break: break-word !important;
     overflow-wrap: break-word !important;
     max-width: 100% !important;
-    margin-bottom: 16px !important;
+    margin-bottom: 12px !important;
     text-align: center !important;
   }
   .hero-description {
-    font-size: 0.90rem !important;
-    line-height: 1.55 !important;
-    margin: 0 auto 22px !important;
+    font-size: 0.85rem !important;
+    line-height: 1.50 !important;
+    margin: 0 auto 18px !important;
     word-break: break-word !important;
     overflow-wrap: break-word !important;
     max-width: 100% !important;
     text-align: center !important;
+    padding: 0 4px !important;
   }
   .hero-ctas {
     flex-direction: column !important;
     width: 100% !important;
     max-width: 100% !important;
-    gap: 12px !important;
-    margin-bottom: 24px !important;
+    gap: 10px !important;
+    margin-bottom: 18px !important;
     align-items: stretch !important;
     box-sizing: border-box !important;
   }
@@ -1213,8 +1276,8 @@ footer p {
     width: 100% !important;
     max-width: 100% !important;
     justify-content: center !important;
-    padding: 13px 14px !important;
-    font-size: 0.88rem !important;
+    padding: 12px 14px !important;
+    font-size: 0.85rem !important;
     text-align: center !important;
     box-sizing: border-box !important;
     white-space: normal !important;
@@ -1236,8 +1299,8 @@ footer p {
   .hero-stats {
     display: grid !important;
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 10px !important;
-    padding-top: 18px !important;
+    gap: 8px !important;
+    padding-top: 14px !important;
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
@@ -1246,15 +1309,15 @@ footer p {
   .stat-item {
     background: rgba(11, 22, 44, 0.6) !important;
     border: 1px solid rgba(0, 229, 255, 0.2) !important;
-    border-radius: 14px !important;
-    padding: 10px 8px !important;
+    border-radius: 12px !important;
+    padding: 8px 6px !important;
     text-align: center !important;
     min-width: 0 !important;
     width: 100% !important;
     box-sizing: border-box !important;
   }
   .stat-item .stat-number, .stat-item h3 {
-    font-size: 1.25rem !important;
+    font-size: 1.12rem !important;
     font-weight: 900 !important;
     color: #ffffff !important;
     display: block !important;
@@ -1262,7 +1325,7 @@ footer p {
     line-height: 1.2 !important;
   }
   .stat-item .stat-label, .stat-item p {
-    font-size: 0.70rem !important;
+    font-size: 0.66rem !important;
     color: var(--text-muted) !important;
     line-height: 1.25 !important;
     word-break: break-word !important;
@@ -1280,10 +1343,10 @@ footer p {
     box-sizing: border-box !important;
   }
   .hero-card-glow, .mascot-card {
-    max-width: 320px !important;
+    max-width: 280px !important;
     width: 100% !important;
-    padding: 12px !important;
-    border-radius: 22px !important;
+    padding: 10px !important;
+    border-radius: 20px !important;
     box-sizing: border-box !important;
     margin: 0 auto !important;
   }
@@ -1296,11 +1359,11 @@ footer p {
     line-height: 1.2 !important;
   }
   .hero-img-main, .mascot-img {
-    max-height: 290px !important;
+    max-height: 250px !important;
     max-width: 100% !important;
     width: 100% !important;
     height: auto !important;
-    border-radius: 16px !important;
+    border-radius: 14px !important;
     object-fit: cover !important;
     display: block !important;
     margin: 0 auto !important;
