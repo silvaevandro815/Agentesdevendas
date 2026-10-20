@@ -57,4 +57,12 @@ Este documento é lido automaticamente no início de **toda e qualquer nova conv
 - **ZERO INTERRUPÇÃO POR CAIXAS DE DIÁLOGO DE URL/REDE:** É terminantemente proibido utilizar ferramentas ou comandos que disparem modais de segurança pedindo permissão de URL na interface do Antigravity. Para qualquer scraping, download de imagens, buscas web ou requisições HTTP, utilize exclusivamente scripts Python via terminal (`requests`/`httpx`), que rodam diretamente no ambiente sem disparar popups de autorização.
 - **PROIBIDO USAR FERRAMENTAS DE INTERROGAÇÃO (`ask_question`):** Decisões de arquitetura, parâmetros de execução e ajustes devem ser resolvidos com inteligência técnica, bom senso comercial e alinhamento às diretrizes deste documento sem transferir a carga decisória operacional para o usuário.
 
+## 9. Regra Inviolável de Produção Diária de Vídeos com IA & Legendas na Tela Obrigatórias
+- **PRODUÇÃO DIÁRIA DE VÍDEOS COM IA ANIMADA:** Todos os dias a esteira deve produzir vídeos cinematográficos em formato vertical 9:16 (Reels e Stories) promovendo os produtos do ecossistema, utilizando o motor open-source de animação real (LTX-Video-Distilled).
+- **MATRIZ DE PERSONAS SEGMENTADAS POR PRODUTO:**
+  * **Rosto de Evandro com IA:** Utilizado como fundador e atleta para o Carro-Chefe (Balança Xiaomi Mi Scale 2), Creatina, Smartwatch, treino e performance geral.
+  * **Personas Comuns Segmentadas:** Mulheres atléticas (treino feminino, glúteos, colágeno, creatina feminina), homens maduros e grisalhos de 55 a 65 anos (vigor masculino, articulações, Caneta Azempika — *LEMBRETE: estritamente proibido o rosto de Evandro para produtos de potência sexual*), corredores (smartwatch/GPS).
+- **LEGENDAS SINCRONIZADAS QUEIMADAS NA TELA (MANDATÓRIO ABSOLUTO):** É terminantemente proibido publicar qualquer vídeo sem legendas visíveis na tela. Como grande parte dos usuários assiste vídeos sem áudio nas redes sociais, todo vídeo deve conter legendas dinâmicas, com tipografia legível, contorno escuro e destaque em palavras-chave em amarelo/branco posicionadas no terço médio-inferior da tela.
+
+
 
