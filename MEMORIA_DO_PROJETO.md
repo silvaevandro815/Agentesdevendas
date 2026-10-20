@@ -194,5 +194,27 @@
   - **Matriz de Disparo Autônomo de Vendas (Dor -> Solução Imediata):** Mapeamento léxico e semântico ativo no `catalog_service.py` e injetado diretamente no cérebro do Marcão para WhatsApp (`marcao_engine.py`) e Instagram (`I1`). Marcão opera como Closer consultivo implacável: identifica o sintoma do lead, diagnostica com autoridade de coach, quebra a objeção com cálculo de custo por dia e envia o link direto oficial no último balão.
   - **Motor Diário de Reels & Stories (`daily_reel_generator.py`):** Ampliado com temas automáticos de Whey Protein, Smartwatch + Strava, Roupas de Compressão e Saúde Articular, com legendas dinâmicas, narração oficial ElevenLabs e rotação de produtos.
   - **Shopee:** Cadastro submetido e aguardando aprovação fiscal pela equipe da Shopee para integração via GraphQL API.
+- [x] P21 — Blindagem de Gênero nos Comentários do Instagram & Nova Esteira de Vídeos HD com Fidelidade Facial do Evandro e Rotação Anti-Repetição Concluída!
+  - **Detecção de Gênero e Neutralidade Total (Workflow I1 no n8n):**
+    * Resolvido o incidente em que o Marcão chamou uma seguidora mulher (`@evamaria3243`) de "campeão".
+    * Implementada a função `detectarGenero(username, nome)` nos nós `Montar Prompt Comentário Marcão` e `Processar Decisão Comentário e DM` do workflow `I1` (ID `jlG1OPBCsaAx75zQ`).
+    * Dicionário exaustivo de prenomes femininos e masculinos brasileiros e marcadores de arroba.
+    * Se mulher: `@usuario Tamo junto, campeã! Bora pra cima! 💪🦁` (ou `Fala, campeã!` no Direct).
+    * Se homem: `@usuario Tamo junto, campeão! Bora pra cima! 💪🦁` (ou `Fala, campeão!` no Direct).
+    * Se neutro / indeterminado: `@usuario Tamo junto! Bora pra cima com tudo! 💪🦁` (ou `Fala aí! Marcão Personal na área! 🦁` no Direct) — 100% blindado contra gafe.
+    * Se pedido de link/post: `@usuario Te mandei no direct! Dá uma olhada lá! 👊🔥` (100% neutro, educado e maromba).
+    * Regra 6 do `GEMINI.md` atualizada permanentemente.
+  - **Fidelidade Facial Máxima do Evandro (OpenRouter + Gemini 2.5 Flash Image):**
+    * Integração com a foto matriz do Diretor Evandro (`assets/evandro/evandro_front_master.jpg`), replicando seus traços faciais, mandíbula, formato dos olhos, cabelo escuro e porte atlético com 100% de autenticidade (respeitando a Regra 4: nunca para Azempika).
+    * Gerados e validados 8 takes verticais 9:16 fotorealistas em 8K para os 8 temas da esteira (Balança Xiaomi, Creatina Micronizada, Smartwatch Strava, Whey Protein, Sono GH, Articulações Ômega/Colágeno, Roupas de Compressão e Constância).
+  - **Resolução Nativa 1080x1920 (9:16) & Movimento Cinematográfico (compose_reel.py):**
+    * Eliminação completa dos takes borrados em 704x512 recortados. Agora todos os vídeos são compostos em 1080x1920 nativo a 30fps (CRF 18) via FFmpeg 9.0.1.
+    * Movimento contínuo de câmera lenta (Ken Burns suave com zoom e pan) com filtro de nitidez extrema (`unsharp=5:5:0.8`).
+    * Legendas dinâmicas sincronizadas queimadas na tela (Regra 9 inviolável): fonte `Montserrat Bold` / `Anton`, tamanho 50-52px, contorno de 5px preto, sombra e palavras-chave em amarelo ouro (`#FFD700`) e branco na zona de segurança inferior.
+    * Mixagem de áudio profissional com voz brasileira nativa (`marcao_voice.py`) em 1.35x e trilha de fundo com fadeout suave de 1.2s.
+  - **Fim da Repetição de Vídeos & Rotação Anti-Repetição (daily_reel_generator.py + Workflow I3):**
+    * Resolvida a causa raiz da repetição: o workflow `I3` (ID `Fm7B8X0snUoQoBEg`) tinha um gatilho agendado às 19:00h que caía num fallback estático hardcoded de um único vídeo.
+    * O código do nó no workflow `I3` foi reformulado no n8n com banco de 4 Master Reels HD rotativos (`reel_balanca_xiaomi_hd.mp4`, `reel_creatina_mito_hd.mp4`, `reel_smartwatch_strava_hd.mp4`, `reel_whey_protein_hd.mp4`) com rotação diária automática por dia do mês (`diaDoMes % REELS_ROTATIVOS.length`).
+    * Motor local `daily_reel_generator.py` agora possui `historico_reels.json` persistente e sincronização com o `content_calendar` do Supabase, garantindo que o tema mais antigo ou inédito seja sempre o próximo a ser renderizado e postado.
 
 

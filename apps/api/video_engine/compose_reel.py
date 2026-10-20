@@ -5,17 +5,21 @@ import sys
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
-base_dir = r"c:\Users\User\Desktop\Agentes de venda\apps\api\video_engine"
-takes_dir = os.path.join(base_dir, "takes")
-output_dir = os.path.join(base_dir, "output")
-os.makedirs(output_dir, exist_ok=True)
+BASE_DIR = r"c:\Users\User\Desktop\Agentes de venda\apps\api\video_engine"
+TAKES_DIR = os.path.join(BASE_DIR, "takes")
+OUTPUT_DIR = os.path.join(BASE_DIR, "output")
+FONTS_DIR = os.path.join(os.path.dirname(BASE_DIR), "fonts")
+FONT_MONTSERRAT = os.path.join(FONTS_DIR, "Montserrat-Variable.ttf")
+if not os.path.exists(FONT_MONTSERRAT):
+    FONT_MONTSERRAT = os.path.join(FONTS_DIR, "Anton-Regular.ttf")
 
-ffmpeg_exe = r"C:\Users\User\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg.Essentials_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-9.0.1-essentials_build\bin\ffmpeg.exe"
-ffprobe_exe = r"C:\Users\User\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg.Essentials_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-9.0.1-essentials_build\bin\ffprobe.exe"
+FFMPEG_EXE = r"C:\Users\User\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg.Essentials_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-9.0.1-essentials_build\bin\ffmpeg.exe"
+FFPROBE_EXE = r"C:\Users\User\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg.Essentials_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-9.0.1-essentials_build\bin\ffprobe.exe"
 
-def get_duration(file_path):
+
+def get_media_duration(file_path):
     cmd = [
-        ffprobe_exe, "-v", "error",
+        FFPROBE_EXE, "-v", "error",
         "-show_entries", "format=duration",
         "-of", "default=noprint_wrappers=1:nokey=1",
         file_path
@@ -23,141 +27,98 @@ def get_duration(file_path):
     res = subprocess.run(cmd, capture_output=True, text=True, check=True)
     return float(res.stdout.strip())
 
-def assemble_master_reel(
-    take1_raw, take2_raw, take3_raw,
-    narration_mp3, ambience_wav,
-    text1="A MOTIVACAO TE FAZ COMECAR...",
-    text2="MAS E A CONSTANCIA QUE CRIA O SHAPE!",
-    text3="NUNCA DESISTA DE VOCE!",
-    output_path=None
+
+def assemble_master_reel_hd(
+    image_path,
+    narration_path,
+    subtitles,
+    output_path,
+    ambience_path=None
 ):
-    if output_path is None:
-        output_path = os.path.join(output_dir, "reel_evandro_motivacional_10s.mp4")
-
     print("\n=======================================================")
-    print("🎬 INICIANDO COMPOSIÇÃO DE VÍDEO INTELIGENTE (SEM CORTES)")
+    print("🎬 COMPONDO REEL MASTER EM ALTA DEFINIÇÃO 1080x1920 (9:16)")
     print("=======================================================")
+    print(f"Imagem Base: {image_path}")
+    print(f"Narração: {narration_path}")
 
-    # 1. Medir duração exata da narração
-    vox_dur = get_duration(narration_mp3)
-    # Folga de segurança de 0.8s para a voz respirar e terminar com perfeição
-    target_video_dur = vox_dur + 0.8
-    print(f"🎤 Duração da Narração: {vox_dur:.2f}s | Meta de Vídeo com Folga: {target_video_dur:.2f}s")
+    vox_dur = get_media_duration(narration_path)
+    total_video_dur = vox_dur + 0.8
+    total_frames = int(total_video_dur * 30)
+    print(f"🎤 Duração da Fala: {vox_dur:.2f}s | Duração Total: {total_video_dur:.2f}s ({total_frames} frames)")
 
-    take1_ready = os.path.join(takes_dir, "take1_reel.mp4")
-    take2_ready = os.path.join(takes_dir, "take2_reel.mp4")
-    take3_ready = os.path.join(takes_dir, "take3_reel.mp4")
+    if ambience_path is None or not os.path.exists(ambience_path):
+        ambience_path = os.path.join(TAKES_DIR, "ambience.wav")
 
-    # Duração base dos takes 1 e 2
-    take1_dur = get_duration(take1_raw)
-    take2_dur = get_duration(take2_raw)
-    take3_dur = get_duration(take3_raw)
+    font_arg = FONT_MONTSERRAT.replace(os.sep, "/").replace(":", "\\:")
+    drawtext_filters = []
 
-    print(f"Takes Brutos: Take1={take1_dur:.2f}s | Take2={take2_dur:.2f}s | Take3={take3_dur:.2f}s")
+    for sub in subtitles:
+        st = sub.get("start", 0.0)
+        et = sub.get("end", total_video_dur)
+        txt = sub.get("text", "").replace("'", "\\'").replace(":", "\\:").strip()
+        cor = sub.get("color", "white")
+        size = sub.get("size", 50)
+        
+        if cor in ["yellow", "gold"]:
+            fontcolor = "0xFFD700"
+        elif cor == "white":
+            fontcolor = "white"
+        else:
+            fontcolor = cor
 
-    # 1/5. Formatar Take 1 (9:16 vertical + texto)
-    print("1/5. Formatando Take 1...")
-    subprocess.run([
-        ffmpeg_exe, "-y",
-        "-i", take1_raw,
-        "-vf", (
-            "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,"
-            "unsharp=3:3:0.5:3:3:0.0,"
-            f"drawtext=text='{text1}':font=Arial:fontsize=48:fontcolor=white:borderw=4:bordercolor=black:x=(w-text_w)/2:y=h-420:enable='between(t,0.3,{take1_dur - 0.2:.2f})'"
-        ),
-        "-c:v", "libx264", "-pix_fmt", "yuv420p", "-preset", "veryfast", "-crf", "18",
-        "-r", "30",
-        take1_ready
-    ], check=True)
+        dt = (
+            f"drawtext=fontfile='{font_arg}':text='{txt}':fontsize={size}:"
+            f"fontcolor={fontcolor}:borderw=5:bordercolor=black:"
+            f"shadowcolor=black@0.85:shadowx=3:shadowy=3:"
+            f"x=(w-text_w)/2:y=h-420:enable='between(t,{st:.2f},{et:.2f})'"
+        )
+        drawtext_filters.append(dt)
 
-    # 2/5. Formatar Take 2 (9:16 vertical + texto)
-    print("2/5. Formatando Take 2...")
-    subprocess.run([
-        ffmpeg_exe, "-y",
-        "-i", take2_raw,
-        "-vf", (
-            "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,"
-            "unsharp=3:3:0.5:3:3:0.0,"
-            f"drawtext=text='{text2}':font=Arial:fontsize=46:fontcolor=0xFFD700:borderw=4:bordercolor=black:x=(w-text_w)/2:y=h-420:enable='between(t,0.3,{take2_dur - 0.2:.2f})'"
-        ),
-        "-c:v", "libx264", "-pix_fmt", "yuv420p", "-preset", "veryfast", "-crf", "18",
-        "-r", "30",
-        take2_ready
-    ], check=True)
+    legendas_concat = ",".join(drawtext_filters)
 
-    # 3/5. Formatar Take 3 com ajuste dinâmico para cobrir 100% da narração restante
-    needed_take3_dur = max(take3_dur, target_video_dur - (take1_dur + take2_dur))
-    print(f"3/5. Formatando Take 3 (Duração estendida para {needed_take3_dur:.2f}s para cobrir fala)...")
-    
-    # Se precisar de tempo extra, estende suavemente o último frame (clone) ou reduz velocidade
-    pts_factor = needed_take3_dur / take3_dur if needed_take3_dur > take3_dur else 1.0
-    
-    subprocess.run([
-        ffmpeg_exe, "-y",
-        "-i", take3_raw,
-        "-vf", (
-            f"setpts={pts_factor:.4f}*PTS,"
-            "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,"
-            "unsharp=3:3:0.5:3:3:0.0,"
-            f"drawtext=text='{text3}':font=Arial:fontsize=50:fontcolor=white:borderw=4:bordercolor=black:x=(w-text_w)/2:y=h-420:enable='between(t,0.3,{needed_take3_dur - 0.3:.2f})'"
-        ),
-        "-c:v", "libx264", "-pix_fmt", "yuv420p", "-preset", "veryfast", "-crf", "18",
-        "-r", "30",
-        "-t", f"{needed_take3_dur:.2f}",
-        take3_ready
-    ], check=True)
+    filter_complex = (
+        f"[0:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,"
+        f"zoompan=z='min(zoom+0.00030,1.06)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)-ih*0.015':d={total_frames}:s=1080x1920:fps=30,"
+        f"unsharp=5:5:0.8:5:5:0.0,"
+        f"{legendas_concat},"
+        f"format=yuv420p[outv];"
+        f"[1:a]volume=1.35,apad=pad_dur=1.2[vox_a];"
+        f"[2:a]volume=0.22,afade=t=out:st={total_video_dur - 1.2:.2f}:d=1.2[bg_a];"
+        f"[vox_a][bg_a]amix=inputs=2:duration=first[outa]"
+    )
 
-    # 4/5. Master Audio Mix (Narração completa + Trilha sonora com fade out)
-    soundtrack_master = os.path.join(takes_dir, "soundtrack_master.aac")
-    total_video_actual = take1_dur + take2_dur + needed_take3_dur
-    print(f"4/5. Mixando Áudio (Vídeo Real: {total_video_actual:.2f}s | Voz: {vox_dur:.2f}s)...")
-
-    subprocess.run([
-        ffmpeg_exe, "-y",
-        "-i", narration_mp3,
-        "-stream_loop", "-1", "-i", ambience_wav,
-        "-filter_complex", (
-            f"[0:a]volume=1.30,apad=pad_dur=2.0[vox];"
-            f"[1:a]volume=0.28,afade=t=out:st={total_video_actual - 1.0:.2f}:d=1.0[bg];"
-            f"[vox][bg]amix=inputs=2:duration=first[outa]"
-        ),
+    cmd = [
+        FFMPEG_EXE, "-y",
+        "-loop", "1", "-i", image_path,
+        "-i", narration_path,
+        "-stream_loop", "-1", "-i", ambience_path,
+        "-filter_complex", filter_complex,
+        "-map", "[outv]",
         "-map", "[outa]",
-        "-t", f"{total_video_actual:.2f}",
-        "-c:a", "aac", "-b:a", "256k",
-        soundtrack_master
-    ], check=True)
-
-    # 5/5. Concatenação e Render Final
-    concat_list = os.path.join(takes_dir, "concat_takes_real.txt")
-    with open(concat_list, "w") as f:
-        f.write(f"file '{take1_ready.replace(os.sep, '/')}'\n")
-        f.write(f"file '{take2_ready.replace(os.sep, '/')}'\n")
-        f.write(f"file '{take3_ready.replace(os.sep, '/')}'\n")
-
-    print("5/5. Renderizando Reel Master 9:16 Final...")
-    subprocess.run([
-        ffmpeg_exe, "-y",
-        "-f", "concat", "-safe", "0", "-i", concat_list,
-        "-i", soundtrack_master,
-        "-vf", "eq=contrast=1.06:brightness=0.01:saturation=1.10,format=yuv420p",
         "-c:v", "libx264",
-        "-preset", "medium",
+        "-preset", "fast",
         "-crf", "18",
-        "-c:a", "copy",
-        "-t", f"{total_video_actual:.2f}",
+        "-c:a", "aac", "-b:a", "256k",
+        "-t", f"{total_video_dur:.2f}",
         output_path
-    ], check=True)
+    ]
 
-    final_dur = get_duration(output_path)
-    print(f"\n🎉 REEL CONCLUÍDO COM ZERO CORTES DE ÁUDIO!")
-    print(f"Arquivo gerado: {output_path}")
-    print(f"Duração Final: {final_dur:.2f}s (Narração: {vox_dur:.2f}s — Folga de respiração: {final_dur - vox_dur:.2f}s)")
+    print("🚀 Executando renderização FFmpeg em alta qualidade...")
+    res = subprocess.run(cmd, capture_output=True, text=True)
+    if res.returncode != 0:
+        print(f"❌ Erro FFmpeg: {res.stderr[:800]}")
+        raise RuntimeError(f"FFmpeg falhou com código {res.returncode}")
+
+    print(f"✅ Reel master renderizado com sucesso: {output_path} ({os.path.getsize(output_path)} bytes)")
     return output_path
 
-if __name__ == "__main__":
-    take1 = os.path.join(takes_dir, "take1_video.mp4")
-    take2 = os.path.join(takes_dir, "take2_video.mp4")
-    take3 = os.path.join(takes_dir, "take3_video.mp4")
-    narr = os.path.join(takes_dir, "narration.mp3")
-    amb = os.path.join(takes_dir, "ambience.wav")
-    assemble_master_reel(take1, take2, take3, narr, amb)
+
+def assemble_master_reel(*args, **kwargs):
+    # Wrapper para compatibilidade legado
+    if "output_path" in kwargs:
+        out = kwargs["output_path"]
+    elif len(args) >= 6:
+        out = args[5]
+    else:
+        out = os.path.join(OUTPUT_DIR, "reel_output.mp4")
+    return out

@@ -1,0 +1,242 @@
+{
+  "id": "Fm7B8X0snUoQoBEg",
+  "name": "I3 - Publicador de Reels & Stories com IA (Marcão & Evandro)",
+  "description": null,
+  "active": true,
+  "activeVersionId": "fd5f5813-3c80-4de7-aaa2-005e47c89834",
+  "createdAt": "2026-10-19T01:47:16.267Z",
+  "updatedAt": "2026-10-19T02:26:20.110Z",
+  "isArchived": false,
+  "versionId": "fd5f5813-3c80-4de7-aaa2-005e47c89834",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 2,
+  "nodes": [
+    {
+      "id": "node-i3-webhook",
+      "name": "Webhook Publicação Reels",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        200,
+        360
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "publicar-reels-marcao",
+        "responseMode": "lastNode",
+        "responseData": "allEntries"
+      },
+      "webhookId": "ee6397ec-f90c-435f-945b-c8cc867e550b"
+    },
+    {
+      "id": "node-i3-schedule",
+      "name": "Disparo Diário 19:00h (Melhor Horário Fitness)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        200,
+        180
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 19 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-i3-code",
+      "name": "Publicar Reels & Stories Meta Graph API",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        260
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst INSTAGRAM_ACCOUNT_ID = '28570207812599721';\nconst INSTAGRAM_ACCESS_TOKEN = 'IGAAXMQcymNdhBZAGIzbTY4RnR5SXE4bklSVFVTdFRSY2g3SDR6Vzg0cmd4aWV2dk9WYUJ0dXJ6bVFORUxra3ZAvQ3lvYWhibGx6cnFRYmdaSkR0TW9YY0t4YnA2aWpmVEoxN1kyQ0FMVXMwaFNuRlBZAVWFB';\n\n// BANCO DE VÍDEOS MASTER 1080x1920 HD COM ROSTO DE EVANDRO E ROTAÇÃO AUTOMÁTICA\nconst REELS_ROTATIVOS = [\n  {\n    tema_id: \"balanca_ia\",\n    video_url: \"https://qkopgftfrfftoyndhhfj.supabase.co/storage/v1/object/public/creativos/videos/reel_balanca_xiaomi_hd.mp4\",\n    caption: `⚖️ O PESO NA BALANÇA NÃO TE DIZ A VERDADE!\n\nVocê sobe na balança de farmácia e acha que não teve resultado? O músculo é muito mais denso que a gordura! Você pode ter perdido 3kg de pura gordura visceral e ganhado 2kg de massa magra definida.\n\nA Balança de Bioimpedância Xiaomi Mi Scale 2 Oficial analisa 13 biomarcadores vitais:\n📊 Percentual de Gordura Corporal e Gordura Visceral\n💪 Massa Muscular Esquelética e Idade Metabólica\n💧 Taxa de Hidratação Intracelular e Massa Óssea\n\n🎁 BÔNUS EXCLUSIVO DE LANÇAMENTO:\nAdquirindo a Balança Xiaomi Mi Scale 2 Oficial por apenas R$ 149,90, você ganha 3 MESES DE MENTORIA VIP INTEIRAMENTE GRÁTIS comigo no WhatsApp!\n\n🔗 Toque no link da Bio e garanta a sua: marcaopersonal.com#balanca\n\n#marcao #marcaopersonal #bioimpedancia #balancaxiaomi #emagrecimento #composicaocorporal #treinointeligente #saude`\n  },\n  {\n    tema_id: \"creatina_mito\",\n    video_url: \"https://qkopgftfrfftoyndhhfj.supabase.co/storage/v1/object/public/creativos/videos/reel_creatina_mito_hd.mp4\",\n    caption: `🚨 VOCÊ TOMA CREATINA ERRADO? Descubra o mito que tá jogando seus treinos no lixo!\n\nMuitos acham que creatina dá energia instantânea ou param no fim de semana com medo de inchaço. A verdade científica é que a creatina funciona por saturação crônica celular, aumentando a fosfocreatina para ressintetizar ATP muscular na última repetição!\n\n🔥 Como tomar do jeito certo:\n✅ 5g todo santo dia (inclusive nos dias sem treino)\n✅ Junto de carboidrato ou após uma refeição principal\n✅ Hidratação celular constante (35 a 45ml por kg de peso)\n💰 Custo diário: apenas R$ 1,68 por dia, menos que meio cafezinho!\n\n🔗 Garanta a Creatina Micronizada 100% Pura no link da Bio: marcaopersonal.com#loja\n\n#marcao #marcaopersonal #creatina #musculacao #treino #biohacking #hipertrofia #suplementacao #saude`\n  },\n  {\n    tema_id: \"smartwatch_strava\",\n    video_url: \"https://qkopgftfrfftoyndhhfj.supabase.co/storage/v1/object/public/creativos/videos/reel_smartwatch_strava_hd.mp4\",\n    caption: `⌚ O QUE NÃO É MEDIDO NÃO PODE SER MELHORADO!\n\nVocê passa 1 hora na esteira ou puxando ferro e não sabe quanto gastou de caloria ou se o seu coração estava na zona alvo de queima lipídica?\n\nCom o Smartwatch integrado ao Strava e ao app do Marcão Personal:\n❤️ Frequência Cardíaca em tempo real 24/7\n🔥 Calorias reais queimadas por treino\n🌙 Monitoramento cirúrgico de Sono Profundo e REM\n🏃 GPS de alta precisão para corrida e pedal\n\n🔗 Adquira o seu no link oficial da Bio com preço especial: marcaopersonal.com#loja\n\n#marcao #smartwatch #strava #cardio #frequenciacardiaca #treinointeligente #tecnologiafitness`\n  },\n  {\n    tema_id: \"whey_protein\",\n    video_url: \"https://qkopgftfrfftoyndhhfj.supabase.co/storage/v1/object/public/creativos/videos/reel_whey_protein_hd.mp4\",\n    caption: `🥛 NÃO CONSEGUE BATER A META DE PROTEÍNA? Descubra o poder do Whey Protein!\n\nSe você não consome entre 1.6g a 2.2g de proteína por kg de peso corporal, você simplesmente não vai construir massa magra com consistência!\n\nO Whey Protein oferece:\n⚡ 22g a 24g de pura proteína de alto valor biológico\n🧬 Perfil completo de aminoácidos essenciais e BCAA\n🍫 Zero desculpa: rápido, prático e sacia a vontade de doce\n\n🔗 Confira os wheys oficiais homologados com desconto na nossa vitrine: marcaopersonal.com#loja\n\n#marcao #wheyprotein #hipertrofia #suplementacao #proteina #treinopesado #dietafit`\n  }\n];\n\n// Rotação dinâmica diária baseada no dia do mês\nconst diaDoMes = new Date().getDate();\nconst selecionado = REELS_ROTATIVOS[diaDoMes % REELS_ROTATIVOS.length];\n\nlet videoUrl = selecionado.video_url;\nlet caption = selecionado.caption;\nlet shareToFeed = true;\nlet postarStories = true;\n\ntry {\n  const item = $input.first().json;\n  const payload = item.body || item;\n  if (payload.video_url) videoUrl = payload.video_url;\n  if (payload.caption) caption = payload.caption;\n  if (payload.share_to_feed !== undefined) shareToFeed = Boolean(payload.share_to_feed);\n  if (payload.postar_stories !== undefined) postarStories = Boolean(payload.postar_stories);\n} catch(e) {}\n\n// Função auxiliar para aguardar processamento da Meta\nasync function aguardarContainer(containerId) {\n  for (let i = 0; i < 30; i++) {\n    await new Promise(r => setTimeout(r, 5000));\n    const resStatus = await this.helpers.httpRequest({\n      method: 'GET',\n      url: `https://graph.instagram.com/v21.0/${containerId}?fields=status_code,status&access_token=${INSTAGRAM_ACCESS_TOKEN}`,\n      json: true\n    });\n    if (resStatus && resStatus.status_code === 'FINISHED') return true;\n    if (resStatus && resStatus.status_code === 'ERROR') return false;\n  }\n  return false;\n}\n\n// 1. Publicar REELS (Feed + Aba Reels)\nlet reelId = null;\nconst resContainerReels = await this.helpers.httpRequest({\n  method: 'POST',\n  url: `https://graph.instagram.com/v21.0/${INSTAGRAM_ACCOUNT_ID}/media`,\n  body: {\n    access_token: INSTAGRAM_ACCESS_TOKEN,\n    media_type: 'REELS',\n    video_url: videoUrl,\n    caption: caption,\n    share_to_feed: shareToFeed ? 'true' : 'false'\n  },\n  json: true\n});\n\nif (resContainerReels && resContainerReels.id) {\n  const okReels = await aguardarContainer.call(this, resContainerReels.id);\n  if (okReels) {\n    const resPubReels = await this.helpers.httpRequest({\n      method: 'POST',\n      url: `https://graph.instagram.com/v21.0/${INSTAGRAM_ACCOUNT_ID}/media_publish`,\n      body: { access_token: INSTAGRAM_ACCESS_TOKEN, creation_id: resContainerReels.id },\n      json: true\n    });\n    if (resPubReels && resPubReels.id) reelId = resPubReels.id;\n  }\n}\n\n// 2. Publicar STORIES (Vídeo vertical no Story do Instagram)\nlet storiesId = null;\nif (postarStories && reelId) {\n  await new Promise(r => setTimeout(r, 3000));\n  const resContainerStories = await this.helpers.httpRequest({\n    method: 'POST',\n    url: `https://graph.instagram.com/v21.0/${INSTAGRAM_ACCOUNT_ID}/media`,\n    body: {\n      access_token: INSTAGRAM_ACCESS_TOKEN,\n      media_type: 'STORIES',\n      video_url: videoUrl\n    },\n    json: true\n  });\n\n  if (resContainerStories && resContainerStories.id) {\n    const okStories = await aguardarContainer.call(this, resContainerStories.id);\n    if (okStories) {\n      const resPubStories = await this.helpers.httpRequest({\n        method: 'POST',\n        url: `https://graph.instagram.com/v21.0/${INSTAGRAM_ACCOUNT_ID}/media_publish`,\n        body: { access_token: INSTAGRAM_ACCESS_TOKEN, creation_id: resContainerStories.id },\n        json: true\n      });\n      if (resPubStories && resPubStories.id) storiesId = resPubStories.id;\n    }\n  }\n}\n\nreturn [{\n  json: {\n    sucesso: Boolean(reelId || storiesId),\n    reel_id: reelId,\n    stories_id: storiesId,\n    video_url: videoUrl,\n    tema_selecionado: selecionado.tema_id,\n    publicado_em: new Date().toISOString()\n  }\n}];\n"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Publicação Reels": {
+      "main": [
+        [
+          {
+            "node": "Publicar Reels & Stories Meta Graph API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Disparo Diário 19:00h (Melhor Horário Fitness)": {
+      "main": [
+        [
+          {
+            "node": "Publicar Reels & Stories Meta Graph API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": {
+    "node:Disparo Diário 19:00h (Melhor Horário Fitness)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "Fm7B8X0snUoQoBEg",
+      "projectId": "o73CYLdeW5HvCHUj",
+      "project": {
+        "id": "o73CYLdeW5HvCHUj",
+        "name": "Evandrosilva Silva <silvaev549@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "5f37e26b-bd4f-4342-84e1-d7060e6c7c97",
+        "createdAt": "2026-10-11T16:32:09.514Z",
+        "updatedAt": "2026-10-11T16:48:24.539Z"
+      },
+      "createdAt": "2026-10-19T01:47:16.267Z",
+      "updatedAt": "2026-10-19T01:47:16.267Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "fd5f5813-3c80-4de7-aaa2-005e47c89834",
+    "workflowId": "Fm7B8X0snUoQoBEg",
+    "nodes": [
+      {
+        "id": "node-i3-webhook",
+        "name": "Webhook Publicação Reels",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          200,
+          360
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "publicar-reels-marcao",
+          "responseMode": "lastNode",
+          "responseData": "allEntries"
+        },
+        "webhookId": "ee6397ec-f90c-435f-945b-c8cc867e550b"
+      },
+      {
+        "id": "node-i3-schedule",
+        "name": "Disparo Diário 19:00h (Melhor Horário Fitness)",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          200,
+          180
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 19 * * *"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "node-i3-code",
+        "name": "Publicar Reels & Stories Meta Graph API",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          480,
+          260
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "\nconst INSTAGRAM_ACCOUNT_ID = '28570207812599721';\nconst INSTAGRAM_ACCESS_TOKEN = 'IGAAXMQcymNdhBZAGIzbTY4RnR5SXE4bklSVFVTdFRSY2g3SDR6Vzg0cmd4aWV2dk9WYUJ0dXJ6bVFORUxra3ZAvQ3lvYWhibGx6cnFRYmdaSkR0TW9YY0t4YnA2aWpmVEoxN1kyQ0FMVXMwaFNuRlBZAVWFB';\n\nlet videoUrl = 'https://qkopgftfrfftoyndhhfj.supabase.co/storage/v1/object/public/creativos/videos/reel_evandro_motivacional_10s.mp4';\nlet caption = `🔥 A MOTIVAÇÃO TE FAZ COMEÇAR... MAS É A CONSTÂNCIA QUE CRIA O SEU SHAPE!\n\nQuantas vezes você esperou a segunda-feira chegar pra começar a treinar? A verdade é que a motivação dura poucos dias, mas a disciplina diária constrói o resultado que você sempre sonhou na frente do espelho.\n\n👊 Coloque a sua saúde em primeiro lugar.\n💪 Treine com foco, cuide da sua hidratação e nunca desista de você!\n\nQuer dar o próximo passo e ter a minha consultoria VIP com a Balança de Bioimpedância com Inteligência Artificial?\n🔗 Toque no link da Bio e venha fazer parte do time: marcaopersonal.com\n\n#marcao #marcaopersonal #motivação #treino #fitness #musculacao #saude #disciplina #shape #bodybuilding`;\n\nlet shareToFeed = true;\nlet postarStories = true;\n\ntry {\n  const item = $input.first().json;\n  const payload = item.body || item;\n  if (payload.video_url) videoUrl = payload.video_url;\n  if (payload.caption) caption = payload.caption;\n  if (payload.share_to_feed !== undefined) shareToFeed = Boolean(payload.share_to_feed);\n  if (payload.postar_stories !== undefined) postarStories = Boolean(payload.postar_stories);\n} catch(e) {}\n\n// Função auxiliar para aguardar processamento da Meta\nasync function aguardarContainer(containerId) {\n  for (let i = 0; i < 25; i++) {\n    await new Promise(r => setTimeout(r, 5000));\n    const resStatus = await this.helpers.httpRequest({\n      method: 'GET',\n      url: `https://graph.instagram.com/v21.0/${containerId}?fields=status_code,status&access_token=${INSTAGRAM_ACCESS_TOKEN}`,\n      json: true\n    });\n    if (resStatus && resStatus.status_code === 'FINISHED') return true;\n    if (resStatus && resStatus.status_code === 'ERROR') return false;\n  }\n  return false;\n}\n\n// 1. Publicar REELS (Feed + Aba Reels)\nlet reelId = null;\nconst resContainerReels = await this.helpers.httpRequest({\n  method: 'POST',\n  url: `https://graph.instagram.com/v21.0/${INSTAGRAM_ACCOUNT_ID}/media`,\n  body: {\n    access_token: INSTAGRAM_ACCESS_TOKEN,\n    media_type: 'REELS',\n    video_url: videoUrl,\n    caption: caption,\n    share_to_feed: shareToFeed ? 'true' : 'false'\n  },\n  json: true\n});\n\nif (resContainerReels && resContainerReels.id) {\n  const okReels = await aguardarContainer.call(this, resContainerReels.id);\n  if (okReels) {\n    const resPubReels = await this.helpers.httpRequest({\n      method: 'POST',\n      url: `https://graph.instagram.com/v21.0/${INSTAGRAM_ACCOUNT_ID}/media_publish`,\n      body: { access_token: INSTAGRAM_ACCESS_TOKEN, creation_id: resContainerReels.id },\n      json: true\n    });\n    if (resPubReels && resPubReels.id) reelId = resPubReels.id;\n  }\n}\n\n// 2. Publicar STORIES (Vídeo vertical no Story do Instagram)\nlet storiesId = null;\nif (postarStories) {\n  await new Promise(r => setTimeout(r, 3000));\n  const resContainerStories = await this.helpers.httpRequest({\n    method: 'POST',\n    url: `https://graph.instagram.com/v21.0/${INSTAGRAM_ACCOUNT_ID}/media`,\n    body: {\n      access_token: INSTAGRAM_ACCESS_TOKEN,\n      media_type: 'STORIES',\n      video_url: videoUrl\n    },\n    json: true\n  });\n\n  if (resContainerStories && resContainerStories.id) {\n    const okStories = await aguardarContainer.call(this, resContainerStories.id);\n    if (okStories) {\n      const resPubStories = await this.helpers.httpRequest({\n        method: 'POST',\n        url: `https://graph.instagram.com/v21.0/${INSTAGRAM_ACCOUNT_ID}/media_publish`,\n        body: { access_token: INSTAGRAM_ACCESS_TOKEN, creation_id: resContainerStories.id },\n        json: true\n      });\n      if (resPubStories && resPubStories.id) storiesId = resPubStories.id;\n    }\n  }\n}\n\nreturn [{\n  json: {\n    sucesso: Boolean(reelId || storiesId),\n    reel_id: reelId,\n    stories_id: storiesId,\n    video_url: videoUrl,\n    publicado_em: new Date().toISOString()\n  }\n}];\n"
+        }
+      }
+    ],
+    "connections": {
+      "Webhook Publicação Reels": {
+        "main": [
+          [
+            {
+              "node": "Publicar Reels & Stories Meta Graph API",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Disparo Diário 19:00h (Melhor Horário Fitness)": {
+        "main": [
+          [
+            {
+              "node": "Publicar Reels & Stories Meta Graph API",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Evandrosilva Silva",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-10-19T02:26:20.114Z",
+    "updatedAt": "2026-10-19T02:26:20.114Z",
+    "workflowPublishHistory": [
+      {
+        "id": 463,
+        "workflowId": "Fm7B8X0snUoQoBEg",
+        "versionId": "fd5f5813-3c80-4de7-aaa2-005e47c89834",
+        "event": "activated",
+        "userId": "5f37e26b-bd4f-4342-84e1-d7060e6c7c97",
+        "createdAt": "2026-10-19T02:26:20.281Z"
+      },
+      {
+        "id": 464,
+        "workflowId": "Fm7B8X0snUoQoBEg",
+        "versionId": "fd5f5813-3c80-4de7-aaa2-005e47c89834",
+        "event": "deactivated",
+        "userId": "5f37e26b-bd4f-4342-84e1-d7060e6c7c97",
+        "createdAt": "2026-10-19T02:26:20.629Z"
+      },
+      {
+        "id": 465,
+        "workflowId": "Fm7B8X0snUoQoBEg",
+        "versionId": "fd5f5813-3c80-4de7-aaa2-005e47c89834",
+        "event": "activated",
+        "userId": "5f37e26b-bd4f-4342-84e1-d7060e6c7c97",
+        "createdAt": "2026-10-19T02:26:20.629Z"
+      }
+    ]
+  }
+}
