@@ -40,6 +40,12 @@ SUPABASE_URL = os.getenv("SUPABASE_URL", "https://qkopgftfrfftoyndhhfj.supabase.
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
 N8N_WEBHOOK_URL = "https://n8n.marcaopersonal.com/webhook/publicar-reels-marcao"
 
+sys.path.append(os.path.abspath(os.path.join(BASE_DIR, "..")))
+try:
+    from marcao_voice import gerar_voz_marcao
+except ImportError:
+    from apps.api.marcao_voice import gerar_voz_marcao
+
 # Banco de Temas Oficiais do Marcão Personal
 TEMAS_FITNESS = [
     {
@@ -234,7 +240,15 @@ Como blindar o seu corpo:
 ]
 
 def gerar_audio_elevenlabs(texto, out_file):
-    print(f"🎙️ Gerando áudio ElevenLabs com voz oficial Adam...")
+    print(f"🎙️ Gerando áudio com Voz Oficial Ilimitada do Marcão...")
+    try:
+        gerar_voz_marcao(texto, out_file)
+        if os.path.exists(out_file) and os.path.getsize(out_file) > 1000:
+            print(f"✅ Áudio salvo com sucesso: {out_file} ({os.path.getsize(out_file)} bytes)")
+            return True
+    except Exception as e:
+        print(f"⚠️ Erro ao gerar com motor ilimitado ({e}), tentando ElevenLabs direto...")
+        
     url = "https://api.elevenlabs.io/v1/text-to-speech/pNInz6obpgDQGcFmaJgB"
     headers = {
         "xi-api-key": ELEVENLABS_API_KEY,
@@ -254,7 +268,7 @@ def gerar_audio_elevenlabs(texto, out_file):
     if r.status_code == 200:
         with open(out_file, "wb") as f:
             f.write(r.content)
-        print(f"✅ Áudio salvo com sucesso: {out_file} ({len(r.content)} bytes)")
+        print(f"✅ Áudio salvo via ElevenLabs: {out_file} ({len(r.content)} bytes)")
         return True
     else:
         print(f"❌ Erro ElevenLabs ({r.status_code}): {r.text}")

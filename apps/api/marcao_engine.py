@@ -34,6 +34,7 @@ try:
         avaliar_prato_comida,
         verificar_e_gerar_upsell_30dias
     )
+    from marcao_voice import gerar_voz_marcao_bytes
 except ImportError:
     from apps.api.balanca_engine import (
         verificar_status_vip,
@@ -48,6 +49,7 @@ except ImportError:
         avaliar_prato_comida,
         verificar_e_gerar_upsell_30dias
     )
+    from apps.api.marcao_voice import gerar_voz_marcao_bytes
 
 try:
     from catalog_service import obter_catalogo_para_prompt
@@ -344,45 +346,58 @@ async def enviar_texto_whatsapp(target_number: str, texto: str):
         return None
 
 async def gerar_e_enviar_audio_elevenlabs(target_number: str, texto: str):
-    """Gera áudio do Marcão no ElevenLabs e envia como nota de voz no WhatsApp."""
+    """Gera áudio do Marcão (F5-TTS ilimitado com fallback ElevenLabs) e envia como nota de voz no WhatsApp."""
     if eh_numero_teste_ou_invalido(target_number):
         print(f"[BLOQUEIO ANTI-SPAM] Disparo de áudio bloqueado para número fictício: {target_number}")
         return False
 
-    await enviar_presenca(target_number, "recording", delay_ms=5000)
+    await enviar_presenca(target_number, "recording", delay_ms=4000)
     
-    headers_eleven = {
-        "xi-api-key": ELEVENLABS_API_KEY,
-        "Content-Type": "application/json"
-    }
-    payload_eleven = {
-        "text": texto,
-        "model_id": "eleven_multilingual_v2",
-        "voice_settings": {
-            "stability": 0.45,
-            "similarity_boost": 0.85
-        }
-    }
-    async with httpx.AsyncClient(timeout=35.0, verify=False) as client:
-        res = await client.post(
-            "https://api.elevenlabs.io/v1/text-to-speech/pNInz6obpgDQGcFmaJgB",
-            headers=headers_eleven,
-            json=payload_eleven
-        )
-        if res.status_code == 200:
-            audio_bytes = res.content
-            audio_b64 = base64.b64encode(audio_bytes).decode("utf-8")
-            
-            time.sleep(3)
-            
-            headers_evo = {
-                "apikey": EVOLUTION_API_KEY,
+    # 1. Tenta gerar via motor ilimitado Marcão Voice (F5-TTS / Cloud GPU)
+    audio_bytes = None
+    try:
+        audio_bytes = await asyncio.to_thread(gerar_voz_marcao_bytes, texto)
+    except Exception as e:
+        print(f"[MARCAO VOZ] Falha no motor F5-TTS ({e}), acionando fallback ElevenLabs...")
+        
+    # 2. Fallback direto ElevenLabs se necessário
+    if not audio_bytes and ELEVENLABS_API_KEY:
+        try:
+            headers_eleven = {
+                "xi-api-key": ELEVENLABS_API_KEY,
                 "Content-Type": "application/json"
             }
-            payload_evo = {
-                "number": target_number,
-                "audio": audio_b64
+            payload_eleven = {
+                "text": texto,
+                "model_id": "eleven_multilingual_v2",
+                "voice_settings": {
+                    "stability": 0.45,
+                    "similarity_boost": 0.85
+                }
             }
+            async with httpx.AsyncClient(timeout=35.0, verify=False) as client:
+                res = await client.post(
+                    "https://api.elevenlabs.io/v1/text-to-speech/pNInz6obpgDQGcFmaJgB",
+                    headers=headers_eleven,
+                    json=payload_eleven
+                )
+                if res.status_code == 200:
+                    audio_bytes = res.content
+        except Exception as e_elev:
+            print(f"[MARCAO VOZ] Falha no fallback ElevenLabs: {e_elev}")
+            
+    if audio_bytes:
+        audio_b64 = base64.b64encode(audio_bytes).decode("utf-8")
+        time.sleep(1)
+        headers_evo = {
+            "apikey": EVOLUTION_API_KEY,
+            "Content-Type": "application/json"
+        }
+        payload_evo = {
+            "number": target_number,
+            "audio": audio_b64
+        }
+        async with httpx.AsyncClient(timeout=35.0, verify=False) as client:
             res_evo = await client.post(
                 f"{EVOLUTION_API_URL}/message/sendWhatsAppAudio/sofia",
                 headers=headers_evo,

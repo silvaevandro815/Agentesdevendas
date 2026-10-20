@@ -16,7 +16,7 @@
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-* {
+*, *::before, *::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -24,9 +24,9 @@
 
 html {
   scroll-behavior: smooth;
-  overflow-x: hidden;
-  width: 100%;
-  max-width: 100vw;
+  overflow-x: hidden !important;
+  width: 100% !important;
+  max-width: 100% !important;
   -webkit-text-size-adjust: 100%;
 }
 
@@ -35,9 +35,9 @@ body {
   background-color: var(--bg-dark);
   color: var(--text-main);
   line-height: 1.6;
-  width: 100%;
-  max-width: 100vw;
-  overflow-x: hidden;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
   -webkit-text-size-adjust: 100%;
   position: relative;
   background-image: 
@@ -45,6 +45,11 @@ body {
     radial-gradient(circle at 85% 60%, rgba(0, 255, 136, 0.08) 0%, transparent 45%),
     radial-gradient(circle at 50% 90%, rgba(255, 122, 0, 0.06) 0%, transparent 45%);
   background-attachment: fixed;
+}
+
+img, svg, video {
+  max-width: 100%;
+  height: auto;
 }
 
 /* Circuito de Fundo Tecnológico */
@@ -310,12 +315,14 @@ header {
   color: var(--text-muted);
 }
 
-/* Mascot Display Frame */
+/* Mascot & Hero Visual Display Frame */
+.hero-visual,
 .mascot-container {
   position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
+  width: 100%;
 }
 
 .mascot-glow {
@@ -333,6 +340,7 @@ header {
   100% { transform: scale(1.05); opacity: 1; }
 }
 
+.hero-card-glow,
 .mascot-card {
   position: relative;
   z-index: 1;
@@ -345,10 +353,26 @@ header {
   max-width: 440px;
   width: 100%;
   text-align: center;
+  box-sizing: border-box;
 }
 
+.hero-badge-top {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--neon-cyan), var(--neon-green));
+  color: #060d1b;
+  font-size: 0.78rem;
+  font-weight: 900;
+  padding: 5px 14px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.hero-img-main,
 .mascot-img {
   width: 100%;
+  max-width: 100%;
   border-radius: 24px;
   object-fit: cover;
   box-shadow: 0 10px 25px rgba(0,0,0,0.5);
@@ -1032,95 +1056,343 @@ footer p {
   }
 }
 
-/* 3. SMARTPHONES EM GERAL (<= 768px - iPhones 12/13/14/15/16, Samsung Galaxy, Xiaomi) */
+/* ==========================================================================
+   3. SMARTPHONES EM GERAL (<= 768px - Android, iPhones, telas móveis)
+   ========================================================================== */
 @media (max-width: 768px) {
   html, body {
-    overflow-x: hidden;
-    width: 100%;
-    max-width: 100vw;
+    overflow-x: hidden !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    position: relative !important;
     -webkit-text-size-adjust: 100%;
   }
-  .container {
-    padding: 0 16px;
+
+  *, *::before, *::after {
+    max-width: 100%;
+    box-sizing: border-box !important;
   }
+
+  .container {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden;
+  }
+
+  /* Top Announcement Banner */
   .top-banner {
-    font-size: 0.76rem;
-    padding: 6px 10px;
+    font-size: 0.72rem;
+    padding: 8px 10px;
     line-height: 1.35;
+    word-break: break-word;
+    text-align: center;
+    box-sizing: border-box;
+    width: 100% !important;
+  }
+
+  /* Header & Navigation */
+  header {
+    padding: 8px 0;
+    width: 100% !important;
+  }
+  .nav-content {
+    width: 100% !important;
+    padding: 0 4px;
+    box-sizing: border-box;
+  }
+  .brand {
+    gap: 10px;
+    max-width: 100%;
   }
   .brand-logo {
-    width: 40px;
-    height: 40px;
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
   }
   .brand-title {
-    font-size: 1.15rem;
+    font-size: 1.05rem;
+    line-height: 1.15;
+    word-break: break-word;
   }
   .brand-sub {
-    font-size: 0.65rem;
-    letter-spacing: 1px;
-  }
-  header {
-    padding: 10px 0;
+    font-size: 0.60rem;
+    letter-spacing: 0.5px;
+    word-break: break-word;
   }
   .mobile-nav-bar {
-    top: 61px;
+    top: 55px;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+  }
+  .mobile-nav-scroll {
+    gap: 8px;
+    padding: 8px 12px;
+  }
+  .mobile-nav-pill {
+    font-size: 0.75rem;
+    padding: 6px 12px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* Badge Tag (Hero & Sections) */
+  .badge-tag {
+    display: inline-block !important;
+    max-width: 100% !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    font-size: 0.70rem !important;
+    padding: 6px 12px !important;
+    letter-spacing: 0.5px !important;
+    line-height: 1.35 !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+    margin-bottom: 16px !important;
+  }
+  .badge-tag span {
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    display: inline-block !important;
   }
 
   /* Hero Section */
   .hero {
-    padding: 30px 0 40px;
+    padding: 20px 0 32px;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  .hero-grid {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    text-align: center !important;
+  }
+  .hero-text {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
   .hero h1 {
-    font-size: clamp(1.75rem, 6.8vw, 2.3rem);
-    line-height: 1.2;
-    letter-spacing: -0.5px;
-    word-break: break-word;
+    font-size: clamp(1.4rem, 6.2vw, 1.95rem) !important;
+    line-height: 1.25 !important;
+    letter-spacing: -0.5px !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    max-width: 100% !important;
+    margin-bottom: 16px !important;
+    text-align: center !important;
   }
   .hero-description {
-    font-size: 0.98rem;
-    line-height: 1.5;
-    margin-bottom: 24px;
+    font-size: 0.90rem !important;
+    line-height: 1.55 !important;
+    margin: 0 auto 22px !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    max-width: 100% !important;
+    text-align: center !important;
   }
   .hero-ctas {
-    flex-direction: column;
-    width: 100%;
-    gap: 12px;
-    margin-bottom: 30px;
+    flex-direction: column !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    gap: 12px !important;
+    margin-bottom: 24px !important;
+    align-items: stretch !important;
+    box-sizing: border-box !important;
   }
   .btn-primary, .btn-secondary {
-    width: 100%;
-    justify-content: center;
-    padding: 14px 20px;
-    font-size: 0.95rem;
-    text-align: center;
+    width: 100% !important;
+    max-width: 100% !important;
+    justify-content: center !important;
+    padding: 13px 14px !important;
+    font-size: 0.88rem !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    display: flex !important;
+    align-items: center !important;
   }
+  .btn-primary span, .btn-secondary span {
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    line-height: 1.3 !important;
+    display: inline-block !important;
+    max-width: 100% !important;
+  }
+
+  /* Hero Stats (Balanced 2x2 Grid) */
   .hero-stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-    padding-top: 20px;
-    width: 100%;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    padding-top: 18px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
   }
-  .stat-item h3 {
-    font-size: 1.35rem;
+  .stat-item {
+    background: rgba(11, 22, 44, 0.6) !important;
+    border: 1px solid rgba(0, 229, 255, 0.2) !important;
+    border-radius: 14px !important;
+    padding: 10px 8px !important;
+    text-align: center !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
-  .stat-item p {
-    font-size: 0.72rem;
+  .stat-item .stat-number, .stat-item h3 {
+    font-size: 1.25rem !important;
+    font-weight: 900 !important;
+    color: #ffffff !important;
+    display: block !important;
+    word-break: break-word !important;
+    line-height: 1.2 !important;
+  }
+  .stat-item .stat-label, .stat-item p {
+    font-size: 0.70rem !important;
+    color: var(--text-muted) !important;
+    line-height: 1.25 !important;
+    word-break: break-word !important;
+    display: block !important;
+    margin-top: 4px !important;
   }
 
-  /* Mascote */
-  .mascot-card {
-    padding: 12px;
-    border-radius: 24px;
-    max-width: 340px;
+  /* Mascot & Hero Visual Card */
+  .hero-visual {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    display: flex !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
   }
-  .mascot-img {
-    border-radius: 18px;
+  .hero-card-glow, .mascot-card {
+    max-width: 320px !important;
+    width: 100% !important;
+    padding: 12px !important;
+    border-radius: 22px !important;
+    box-sizing: border-box !important;
+    margin: 0 auto !important;
+  }
+  .hero-badge-top {
+    font-size: 0.68rem !important;
+    padding: 4px 10px !important;
+    max-width: 100% !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    line-height: 1.2 !important;
+  }
+  .hero-img-main, .mascot-img {
+    max-height: 290px !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    height: auto !important;
+    border-radius: 16px !important;
+    object-fit: cover !important;
+    display: block !important;
+    margin: 0 auto !important;
+  }
+  .mascot-label {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 8px 10px !important;
+    gap: 8px !important;
+    margin-top: 12px !important;
+  }
+  .mascot-label span {
+    font-size: 0.75rem !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    line-height: 1.3 !important;
   }
 
-  /* Protocolos & Cards de Produtos */
+  /* Section Headers */
+  .section-header {
+    margin-bottom: 28px !important;
+    padding: 0 4px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  .section-header h2 {
+    font-size: clamp(1.35rem, 5.5vw, 1.85rem) !important;
+    line-height: 1.25 !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+  .section-header p {
+    font-size: 0.88rem !important;
+    line-height: 1.5 !important;
+    word-break: break-word !important;
+  }
+
+  /* Universal Reset for Over-padded Container Cards */
+  div[style*="padding: 40px"],
+  div[style*="padding: 45px 35px"] {
+    padding: 20px 14px !important;
+    border-radius: 20px !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Universal Reset for Multi-column Inline Grids on Mobile */
+  div[style*="minmax(280px"],
+  div[style*="minmax(300px"],
+  div[style*="minmax(260px"],
+  div[style*="minmax(240px"] {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Section 3: Carro-Chefe Balança Xiaomi */
+  #carro-chefe h2,
+  #carro-chefe div[style*="font-size: 2.3rem"] {
+    font-size: clamp(1.35rem, 5.5vw, 1.8rem) !important;
+    line-height: 1.25 !important;
+    word-break: break-word !important;
+  }
+  div[style*="repeat(2, 1fr)"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  div[style*="repeat(2, 1fr)"] > div {
+    font-size: 0.74rem !important;
+    padding: 8px 6px !important;
+    text-align: center !important;
+    word-break: break-word !important;
+    box-sizing: border-box !important;
+  }
+  div[style*="gap: 14px; justify-content: center; align-items: center"] img {
+    height: 130px !important;
+    max-width: 46% !important;
+    object-fit: contain !important;
+  }
+  div[style*="font-size: 2.5rem"] {
+    font-size: 1.9rem !important;
+  }
+
+  /* Protocol Cards & Features */
   .protocols {
-    padding: 40px 0;
+    padding: 30px 0;
   }
   .protocol-card {
     padding: 20px 14px;
@@ -1146,7 +1418,7 @@ footer p {
     padding: 4px 12px;
   }
   .protocol-grid {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: 1fr;
     gap: 20px;
     width: 100%;
   }
@@ -1204,7 +1476,7 @@ footer p {
     overflow-wrap: break-word;
   }
 
-  /* Box de Preço e Ações no Mobile */
+  /* Price Box & Action Buttons */
   .price-box {
     flex-direction: column;
     align-items: stretch;
@@ -1245,7 +1517,7 @@ footer p {
     line-height: 1.3;
   }
 
-  /* Combo Creatina + Azempika no Mobile */
+  /* Combo Row on Mobile */
   .combo-item-row {
     flex-direction: column;
     align-items: stretch;
@@ -1275,61 +1547,100 @@ footer p {
     box-sizing: border-box;
   }
 
-  /* Benefícios & Garantia */
+  /* Comparison Table on Mobile */
+  div[style*="overflow-x: auto"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    box-sizing: border-box !important;
+    margin: 0 auto !important;
+  }
+  div[style*="overflow-x: auto"] table {
+    min-width: 580px !important;
+    width: 100% !important;
+  }
+  div[style*="overflow-x: auto"] th,
+  div[style*="overflow-x: auto"] td {
+    padding: 12px 14px !important;
+    font-size: 0.80rem !important;
+    white-space: normal !important;
+  }
+
+  /* Benefits & Trust Grid */
   .tech-grid {
     grid-template-columns: 1fr;
     gap: 16px;
-    margin-bottom: 40px;
+    margin-bottom: 30px;
   }
   .tech-card {
-    padding: 20px;
+    padding: 18px 14px;
+    border-radius: 18px;
+    box-sizing: border-box;
   }
   .trust-grid {
     grid-template-columns: 1fr;
-    gap: 20px;
+    gap: 16px;
   }
   .trust-section {
-    padding: 40px 0;
-  }
-  .section-header h2 {
-    font-size: 1.75rem;
-    word-break: break-word;
+    padding: 30px 0;
   }
 
   /* WhatsApp Flutuante */
   .whatsapp-float {
-    bottom: 16px;
-    right: 16px;
-    padding: 10px 16px;
-    font-size: 0.85rem;
-    gap: 8px;
+    bottom: 14px;
+    right: 14px;
+    padding: 9px 14px;
+    font-size: 0.82rem;
+    gap: 6px;
+    box-shadow: 0 6px 20px rgba(0, 255, 136, 0.4);
+    z-index: 999;
   }
   .wa-icon-svg {
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
   }
 }
 
-/* 4. DISPOSITIVOS ULTRA-COMPACTOS (<= 380px - iPhone SE, Galaxy A03, telas estreitas) */
+/* ==========================================================================
+   4. DISPOSITIVOS ULTRA-COMPACTOS (<= 380px - Android estreitos, iPhone SE)
+   ========================================================================== */
 @media (max-width: 380px) {
+  .container {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
   .hero h1 {
-    font-size: 1.55rem;
+    font-size: 1.30rem !important;
+    line-height: 1.2 !important;
   }
   .hero-description {
-    font-size: 0.9rem;
+    font-size: 0.84rem !important;
+    line-height: 1.45 !important;
   }
-  .stat-item h3 {
-    font-size: 1.15rem;
+  .badge-tag {
+    font-size: 0.65rem !important;
+    padding: 4px 8px !important;
   }
-  .stat-item p {
-    font-size: 0.65rem;
+  .stat-item .stat-number, .stat-item h3 {
+    font-size: 1.10rem !important;
   }
-  .price-current {
-    font-size: 1.45rem;
+  .stat-item .stat-label, .stat-item p {
+    font-size: 0.65rem !important;
+  }
+  .hero-card-glow, .mascot-card {
+    max-width: 275px !important;
+    padding: 10px !important;
+  }
+  .hero-img-main, .mascot-img {
+    max-height: 240px !important;
   }
   .btn-primary, .btn-secondary {
-    font-size: 0.85rem;
-    padding: 12px 10px;
+    font-size: 0.80rem !important;
+    padding: 12px 8px !important;
+  }
+  .price-current {
+    font-size: 1.40rem !important;
   }
   .product-combo-images {
     flex-direction: column;
@@ -1341,13 +1652,13 @@ footer p {
     height: 140px;
   }
   .whatsapp-float {
-    padding: 9px 12px;
-    font-size: 0.8rem;
-    gap: 6px;
+    padding: 8px 10px;
+    font-size: 0.78rem;
+    gap: 5px;
   }
   .wa-icon-svg {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
   }
 }
 

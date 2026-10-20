@@ -1176,73 +1176,151 @@ def gerar_orientacao_modo_atleta(ficha: dict, meta_status: dict) -> dict:
     }
 
 
-async def cobrar_dados_pendentes_aluno(remote_jid: str, nome: str = "Aluno(a)") -> dict:
+async def enviar_presenca_fichas(target_number: str, presence: str = "composing", delay_ms: int = 1500):
+    evo_url = os.getenv("EVOLUTION_API_URL", "https://evolution.marcaopersonal.com")
+    evo_key = os.getenv("EVOLUTION_API_KEY", "")
+    evo_inst = os.getenv("EVOLUTION_INSTANCE", "sofia")
+    try:
+        async with httpx.AsyncClient(timeout=8.0, verify=False) as client:
+            await client.post(
+                f"{evo_url}/chat/sendPresence/{evo_inst}",
+                headers={"apikey": evo_key, "Content-Type": "application/json"},
+                json={"number": target_number, "presence": presence, "delay": delay_ms}
+            )
+    except Exception:
+        pass
+
+async def cobrar_dados_pendentes_aluno(ficha: dict) -> dict:
     """
-    Dispara cobrança conversacional, amigável e próxima do Marcão para o aluno preencher
-    seus dados reais (peso, altura, idade, objetivo, dores). Zero dados fictícios.
+    Dispara acompanhamento amigável e personalizado do Marcão em múltiplos balões curtos
+    (Regra 5: 2 a 4 balões, composing, delays naturais de 1.5s a 2.0s) para coletar exatamente
+    os dados ou fotos que faltam na ficha do aluno.
     """
-    primeiro_nome = nome.strip().split()[0] if nome else "Guerreira"
-    tel = "".join(filter(str.isdigit, remote_jid.split("@")[0]))
+    import asyncio
+    nome = ficha.get("nome") or ficha.get("nome_aluno") or "Campeão(ã)"
+    primeiro_nome = nome.strip().split()[0]
+    remote_jid = ficha.get("remote_jid", "")
+    tel = ficha.get("telefone") or "".join(filter(str.isdigit, remote_jid.split("@")[0]))
     if not tel:
         return {"sucesso": False, "erro": "Telefone inválido"}
-
-    mensagem = (
-        f"Fala, {primeiro_nome}! Tudo na paz por aí? 🦁 Marcão passando pra dar um toque rápido e super amigo!\n\n"
-        f"Pra eu deixar seu treino e seus macros 100% afinados sem inventar nenhum número, preciso dos seus dados reais:\n"
-        f"1️⃣ Seu peso atual aproximado (ou foto do visor da balança);\n"
-        f"2️⃣ Sua altura e idade aproximadas;\n"
-        f"3️⃣ Se você tem alguma dorzinha no joelho, coluna ou ombro.\n\n"
-        f"Me manda aqui no seu tempo que assim que você me responder eu monto sua ficha real com o maior carinho! Tamo junto! 💪👊"
-    )
 
     evo_url = os.getenv("EVOLUTION_API_URL", "https://evolution.marcaopersonal.com")
     evo_key = os.getenv("EVOLUTION_API_KEY", "")
     evo_inst = os.getenv("EVOLUTION_INSTANCE", "sofia")
 
+    # Diagnóstico cirúrgico do que falta na ficha
+    fotos = ficha.get("fotos_criptografadas") or []
+    falta_fotos = len(fotos) == 0
+    falta_dias = ficha.get("dias_disponiveis_semana") is None
+    falta_peso = not bool(ficha.get("metas_nutricionais", {}).get("peso") or ficha.get("ultimo_peso"))
+    falta_restricoes = not bool(ficha.get("restricoes_saude"))
+    objetivo = ficha.get("objetivo") or ""
+
+    # Se nada faltar e onboarding completo, não há pendência
+    if not falta_fotos and not falta_dias and not falta_peso and ficha.get("etapa_onboarding", 0) >= 5:
+        return {"sucesso": True, "pendente": False, "mensagem": "Ficha 100% preenchida"}
+
+    # Monta os balões curtos e ágeis (obedecendo Regra 5: 50-130 chars por balão)
+    baloes = []
+    
+    # Balão 1: Saudação autêntica do Marcão
+    baloes.append(f"Fala, {primeiro_nome}! Tudo na paz por aí? 🦁 Marcão passando aqui pra ver como você tá!")
+
+    # Balão 2: Contexto amigável citando o objetivo
+    if "glúteo" in objetivo.lower() or "perna" in objetivo.lower():
+        baloes.append("Tô finalizando sua periodização pra definir pernas e glúteos, mas vi que faltam só 2 detalhezinhos na sua ficha:")
+    elif objetivo:
+        baloes.append(f"Tô aqui montando sua periodização pra {objetivo[:40]}..., mas vi que faltam só 2 detalhezinhos:")
+    else:
+        baloes.append("Tô aqui organizando sua planilha de treino exclusiva, mas faltam alguns detalhezinhos na sua ficha:")
+
+    # Balão 3: Os itens específicos que faltam
+    itens_pendentes = []
+    if falta_dias:
+        itens_pendentes.append("🗓️ Quantos dias por semana você vai conseguir treinar na academia? (3, 4 ou 5 dias?)")
+    if falta_fotos:
+        itens_pendentes.append("📸 1 ou 2 fotinhas de avaliação no espelho (frente e costas) em roupa de treino pra eu ver sua linha muscular e acompanhar sua evolução visual! Fica 100% segura e criptografada aqui comigo! 🔒")
+    if falta_peso:
+        itens_pendentes.append("⚖️ Seu peso atual ou uma foto do visor da balança de bioimpedância!")
+
+    if itens_pendentes:
+        baloes.append("\n".join(itens_pendentes))
+
+    # Balão 4: Fechamento parceiro e acolhedor
+    baloes.append("Me manda aqui no seu tempo, que assim que você me enviar eu fecho seu treino com todo o carinho! Tamo junto! 👊🔥")
+
+    # Envio sequencial dos balões com simulação de presença (composing)
+    resultados_envio = []
     try:
-        async with httpx.AsyncClient(verify=False, timeout=15.0) as client:
-            resp = await client.post(
-                f"{evo_url}/message/sendText/{evo_inst}",
-                headers={"apikey": evo_key, "Content-Type": "application/json"},
-                json={"number": tel, "text": mensagem}
-            )
-            return {
-                "sucesso": resp.status_code in (200, 201),
-                "remote_jid": remote_jid,
-                "mensagem": mensagem,
-                "status_code": resp.status_code
-            }
+        async with httpx.AsyncClient(verify=False, timeout=20.0) as client:
+            for i, balao in enumerate(baloes):
+                # 1. Simula digitando
+                await enviar_presenca_fichas(tel, "composing", delay_ms=1800)
+                await asyncio.sleep(1.6)
+
+                # 2. Envia balão
+                resp = await client.post(
+                    f"{evo_url}/message/sendText/{evo_inst}",
+                    headers={"apikey": evo_key, "Content-Type": "application/json"},
+                    json={"number": tel, "text": balao}
+                )
+                resultados_envio.append(resp.status_code in (200, 201))
+
+                # 3. Pequeno delay entre balões
+                if i < len(baloes) - 1:
+                    await asyncio.sleep(1.2)
+
+        # Atualiza timestamp de follow-up na ficha
+        try:
+            await atualizar_campo_ficha(remote_jid, {"ultimo_followup_pendencias_em": datetime.now().isoformat()})
+        except Exception:
+            pass
+
+        return {
+            "sucesso": all(resultados_envio),
+            "remote_jid": remote_jid,
+            "telefone": tel,
+            "aluno": nome,
+            "baloes_enviados": len(baloes),
+            "itens_pendentes": itens_pendentes
+        }
     except Exception as e:
         return {"sucesso": False, "erro": str(e)}
 
-
-async def verificar_e_cobrar_alunos_com_dados_pendentes() -> list:
+async def verificar_e_cobrar_alunos_com_dados_pendentes(filtro_aluno: str = None) -> list:
     """
-    Verifica todas as fichas de alunos VIP ativas no Supabase.
-    Se a ficha não possuir peso real ou estiver com onboarding incompleto,
-    dispara a cobrança conversacional do Marcão de forma totalmente amigável.
+    Verifica todas as fichas de alunos VIP no Supabase.
+    Identifica faltas de dados ou fotos e dispara contato amigável em múltiplos balões.
+    Se filtro_aluno for informado (ex: 'eva'), foca no aluno específico.
     """
     headers = get_supabase_headers()
     resultados = []
     try:
         async with httpx.AsyncClient(verify=False, timeout=20.0) as client:
             res = await client.get(
-                f"{SUPABASE_URL}/rest/v1/fichas_alunos?select=id,remote_jid,nome,nome_aluno,telefone,etapa_onboarding,metas_nutricionais,objetivo,consentimento_lgpd",
+                f"{SUPABASE_URL}/rest/v1/fichas_alunos?select=*",
                 headers=headers
             )
             if res.status_code == 200:
                 fichas = res.json()
                 for f in fichas:
-                    etapa = f.get("etapa_onboarding", 0)
-                    tem_peso = bool(f.get("metas_nutricionais", {}).get("peso"))
-                    tem_obj = bool(f.get("objetivo"))
-                    # Se faltar dados fundamentais
-                    if etapa < 4 or not tem_peso or not tem_obj:
-                        r_jid = f.get("remote_jid")
-                        nome = f.get("nome") or f.get("nome_aluno") or "Aluno"
-                        if r_jid:
-                            cob = await cobrar_dados_pendentes_aluno(r_jid, nome)
-                            resultados.append(cob)
+                    nome_f = (f.get("nome") or f.get("nome_aluno") or "").lower()
+                    tel_f = (f.get("telefone") or "").lower()
+                    
+                    # Se houver filtro e não bater, pula
+                    if filtro_aluno:
+                        filtro_low = filtro_aluno.strip().lower()
+                        if filtro_low not in nome_f and filtro_low not in tel_f:
+                            continue
+                            
+                    # Não cobrar o próprio Evandro em ambiente de produção
+                    if "84587255" in tel_f and not filtro_aluno:
+                        continue
+
+                    r_jid = f.get("remote_jid")
+                    if r_jid:
+                        cob = await cobrar_dados_pendentes_aluno(f)
+                        resultados.append(cob)
     except Exception as e:
         print(f"[FICHAS_ENGINE] Erro na checagem de dados pendentes: {e}")
     return resultados

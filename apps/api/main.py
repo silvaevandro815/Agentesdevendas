@@ -270,6 +270,33 @@ async def gerar_voz(req: VozRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+class MarcaoVozRequest(BaseModel):
+    texto: str
+    modo: Optional[str] = "auto"
+
+try:
+    from marcao_voice import gerar_voz_marcao_bytes
+except ImportError:
+    from apps.api.marcao_voice import gerar_voz_marcao_bytes
+
+@app.post("/api/voz/marcao")
+async def api_gerar_voz_marcao(req: MarcaoVozRequest):
+    """Gera áudio ilimitado do Marcão via F5-TTS / Cloud GPU com fallback ElevenLabs."""
+    import base64
+    import asyncio
+    try:
+        audio_bytes = await asyncio.to_thread(gerar_voz_marcao_bytes, req.texto, req.modo)
+        audio_b64 = base64.b64encode(audio_bytes).decode('utf-8')
+        return {
+            "sucesso": True,
+            "motor": "marcao_voice_unlimited",
+            "formato": "mp3",
+            "tamanho_bytes": len(audio_bytes),
+            "audio_base64": f"data:audio/mp3;base64,{audio_b64}"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 class ElevenLabsRequest(BaseModel):
     texto: str
     voice_id: Optional[str] = "pNInz6obpgDQGcFmaJgB"  # Adam (Marcão Personal)
@@ -281,7 +308,23 @@ ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
 @app.post("/api/voz/elevenlabs")
 async def gerar_voz_elevenlabs(req: ElevenLabsRequest):
     import base64
+    import asyncio
     
+    # 1. Tenta prioritariamente via motor ilimitado Marcão Voice
+    try:
+        audio_bytes = await asyncio.to_thread(gerar_voz_marcao_bytes, req.texto, "auto")
+        if audio_bytes and len(audio_bytes) > 1000:
+            audio_b64 = base64.b64encode(audio_bytes).decode('utf-8')
+            return {
+                "sucesso": True,
+                "motor": "f5_tts_unlimited",
+                "formato": "mp3",
+                "tamanho_bytes": len(audio_bytes),
+                "audio_base64": f"data:audio/mp3;base64,{audio_b64}"
+            }
+    except Exception as e_unl:
+        print(f"[API VOZ] Fallback ElevenLabs após aviso: {e_unl}")
+        
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{req.voice_id}"
     headers = {
         "xi-api-key": ELEVENLABS_API_KEY,
@@ -303,6 +346,7 @@ async def gerar_voz_elevenlabs(req: ElevenLabsRequest):
                 audio_b64 = base64.b64encode(audio_bytes).decode('utf-8')
                 return {
                     "sucesso": True,
+                    "motor": "elevenlabs_cloud",
                     "formato": "mp3",
                     "tamanho_bytes": len(audio_bytes),
                     "audio_base64": f"data:audio/mp3;base64,{audio_b64}"
@@ -871,6 +915,23 @@ async def onboarding_aluno_api(req: FichaOnboardingRequest):
     remote_jid = f"{req.telefone}@s.whatsapp.net"
     ficha = await buscar_ou_criar_ficha_aluno(remote_jid, req.telefone, req.nome)
     return await processar_etapa_onboarding(remote_jid, req.telefone, req.nome, req.mensagem, ficha)
+
+class FollowupPendenciasRequest(BaseModel):
+    filtro_aluno: Optional[str] = None
+
+@app.post("/api/fichas/followup-pendencias")
+async def rota_followup_pendencias_fichas(req: FollowupPendenciasRequest):
+    """Dispara acompanhamento amigável em múltiplos balões para alunos com dados ou fotos pendentes."""
+    try:
+        from fichas_engine import verificar_e_cobrar_alunos_com_dados_pendentes
+    except ImportError:
+        from apps.api.fichas_engine import verificar_e_cobrar_alunos_com_dados_pendentes
+    res = await verificar_e_cobrar_alunos_com_dados_pendentes(req.filtro_aluno)
+    return {
+        "sucesso": True,
+        "total_disparados": len(res),
+        "detalhes": res
+    }
 
 class FotoCriptoRequest(BaseModel):
     telefone: str
