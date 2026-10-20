@@ -32,7 +32,9 @@ try:
         processar_etapa_onboarding,
         armazenar_foto_aluno_criptografada,
         avaliar_prato_comida,
-        verificar_e_gerar_upsell_30dias
+        verificar_e_gerar_upsell_30dias,
+        atualizar_ficha_com_dados_extraidos,
+        identificar_campos_pendentes_ficha
     )
     from marcao_voice import gerar_voz_marcao_bytes
 except ImportError:
@@ -47,7 +49,9 @@ except ImportError:
         processar_etapa_onboarding,
         armazenar_foto_aluno_criptografada,
         avaliar_prato_comida,
-        verificar_e_gerar_upsell_30dias
+        verificar_e_gerar_upsell_30dias,
+        atualizar_ficha_com_dados_extraidos,
+        identificar_campos_pendentes_ficha
     )
     from apps.api.marcao_voice import gerar_voz_marcao_bytes
 
@@ -820,6 +824,8 @@ async def processar_mensagem_marcao(payload_webhook: dict) -> dict:
     ficha_aluno = None
     if tem_balanca and not is_evandro:
         try:
+            # Extrai e salva imediatamente qualquer dado real informado na mensagem do aluno
+            await atualizar_ficha_com_dados_extraidos(f"{target_number}@s.whatsapp.net", texto_recebido)
             ficha_aluno = await buscar_ou_criar_ficha_aluno(f"{target_number}@s.whatsapp.net", target_number, push_name or primeiro_nome)
             etapa_onb = ficha_aluno.get("etapa_onboarding", 0)
 

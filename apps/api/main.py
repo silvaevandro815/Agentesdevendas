@@ -933,6 +933,31 @@ async def rota_followup_pendencias_fichas(req: FollowupPendenciasRequest):
         "detalhes": res
     }
 
+@app.get("/api/fichas/{telefone}/pendencias")
+async def obter_pendencias_ficha_api(telefone: str):
+    """Retorna o diagnóstico cirúrgico de dados e fotos pendentes na ficha do aluno."""
+    try:
+        from fichas_engine import buscar_ou_criar_ficha_aluno, identificar_campos_pendentes_ficha
+    except ImportError:
+        from apps.api.fichas_engine import buscar_ou_criar_ficha_aluno, identificar_campos_pendentes_ficha
+    remote_jid = f"{telefone}@s.whatsapp.net"
+    ficha = await buscar_ou_criar_ficha_aluno(remote_jid, telefone, "Aluno")
+    return identificar_campos_pendentes_ficha(ficha)
+
+class ExtrairDadosRequest(BaseModel):
+    telefone: str
+    mensagem: str
+
+@app.post("/api/fichas/extrair-dados")
+async def extrair_dados_ficha_api(req: ExtrairDadosRequest):
+    """Extrai dados reais declarados pelo aluno via IA (zero adivinhação) e atualiza no Supabase."""
+    try:
+        from fichas_engine import atualizar_ficha_com_dados_extraidos
+    except ImportError:
+        from apps.api.fichas_engine import atualizar_ficha_com_dados_extraidos
+    remote_jid = f"{req.telefone}@s.whatsapp.net"
+    return await atualizar_ficha_com_dados_extraidos(remote_jid, req.mensagem)
+
 class FotoCriptoRequest(BaseModel):
     telefone: str
     imagem_base64: str

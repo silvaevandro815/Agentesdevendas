@@ -40,15 +40,18 @@ async def buscar_ou_criar_ficha_aluno(remote_jid: str, telefone: str, nome: str)
                 if dados and len(dados) > 0:
                     return dados[0]
 
-            # Se não existe, cria ficha inicial
+            # Se não existe, cria ficha inicial zerada (sem inventar nenhum dado!)
             payload = {
                 "remote_jid": remote_jid,
                 "telefone": telefone,
                 "nome_aluno": nome,
                 "etapa_onboarding": 0,
                 "consentimento_lgpd": False,
-                "dias_disponiveis_semana": 3,
-                "local_treino": "academia",
+                "idade": None,
+                "dias_disponiveis_semana": None,
+                "local_treino": None,
+                "restricoes_saude": None,
+                "metas_nutricionais": {},
                 "fotos_criptografadas": []
             }
             create_res = await client.post(
@@ -587,12 +590,32 @@ async def processar_etapa_onboarding(remote_jid: str, telefone: str, nome: str, 
 
         # Usuário confirmou expressamente com CONCORDO / CIENTE / SIM
         obj = ficha.get("objetivo") or "Secar barriga e definição"
-        loc = ficha.get("local_treino") or "academia"
-        rest = ficha.get("restricoes_saude") or "Nenhuma dor reportada"
-        idade = ficha.get("idade") or 32
+        loc = ficha.get("local_treino")
+        rest = ficha.get("restricoes_saude")
+        idade = ficha.get("idade")
         genero = ficha.get("genero", "mulher")
-        peso = ficha.get("ultimo_peso") or 68.0
-        altura = ficha.get("altura_cm") or 165.0
+        peso = ficha.get("ultimo_peso") or (ficha.get("metas_nutricionais") or {}).get("peso")
+        altura = ficha.get("altura_cm") or (ficha.get("metas_nutricionais") or {}).get("altura_cm")
+
+        # REGRA INVIOLÁVEL: NUNCA ADIVINHA OU INVENTA DADOS!
+        # Se faltar idade, peso, altura ou local de treino, pergunta ao aluno antes de prescrever!
+        faltas_criticas = []
+        if idade is None or not isinstance(idade, (int, float)) or idade <= 0:
+            faltas_criticas.append("sua idade real")
+        if peso is None or not isinstance(peso, (int, float)) or peso <= 0:
+            faltas_criticas.append("seu peso atual")
+        if altura is None or not isinstance(altura, (int, float)) or altura <= 0:
+            faltas_criticas.append("sua altura")
+        if not loc:
+            faltas_criticas.append("se você treina em casa ou na academia")
+
+        if faltas_criticas:
+            resposta = (
+                f"Show, {primeiro_nome}! Termo LGPD formalizado com sucesso! 🛡️🔐\n\n"
+                f"Pra eu calcular seus macros, calorias e treino com precisão médica sem adivinhar absolutamente nada sobre você, me passa só {', '.join(faltas_criticas)} rapidinho!\n\n"
+                f"Assim que você mandar, seu protocolo sob medida sai do forno na hora! Tamo junto! 👊🔥"
+            )
+            return {"onboarding_ativo": True, "resposta": resposta}
 
         meta_info = ficha.get("metas_nutricionais") or {}
         fisio = meta_info.get("anamnese_fisiologica") or {}
@@ -600,14 +623,14 @@ async def processar_etapa_onboarding(remote_jid: str, telefone: str, nome: str, 
         agua_l = fisio.get("agua_litros", 2.0)
         tempo_t = meta_info.get("tempo_treino_min", 45)
 
-        treino = gerar_treino_personalizado(obj, loc, rest, idade=idade, genero=genero)
+        treino = gerar_treino_personalizado(obj, loc, rest or "", idade=idade, genero=genero)
         diag = calcular_diagnostico_clinico_completo(
             peso=peso,
             altura_cm=altura,
             idade=idade,
             genero=genero,
             objetivo=obj,
-            restricoes=rest,
+            restricoes=rest or "",
             sono_horas=sono_h,
             agua_litros_habitual=agua_l,
             tempo_treino_min=tempo_t
@@ -1190,15 +1213,274 @@ async def enviar_presenca_fichas(target_number: str, presence: str = "composing"
     except Exception:
         pass
 
+def identificar_campos_pendentes_ficha(ficha: dict) -> dict:
+    """
+    Inspeciona com rigor cirúrgico a ficha do aluno no Supabase.
+    Retorna a lista exata do que ainda falta para a ficha estar 100% preenchida com dados reais.
+    REGRA INVIOLÁVEL: NENHUM DADO PODE SER ADIVINHADO OU INVENTADO!
+    """
+    if not ficha:
+        return {"ficha_completa": False, "campos_faltantes": ["Ficha inexistente"], "score_completude": 0}
+
+    nome = (ficha.get("nome") or ficha.get("nome_aluno") or "Aluno").strip().split()[0]
+    metas = ficha.get("metas_nutricionais") or {}
+    local_treino = ficha.get("local_treino")
+    eh_casa = local_treino == "casa"
+
+    # Checagens individuais com tolerância zero para dados inventados/zerados
+    idade = ficha.get("idade")
+    tem_idade = idade is not None and isinstance(idade, (int, float)) and idade > 0
+
+    peso = ficha.get("ultimo_peso") or metas.get("peso")
+    tem_peso = peso is not None and isinstance(peso, (int, float)) and peso > 0
+
+    altura = ficha.get("altura_cm") or metas.get("altura_cm")
+    tem_altura = altura is not None and isinstance(altura, (int, float)) and altura > 0
+
+    tem_local = bool(local_treino)
+    equipamentos = metas.get("equipamentos_casa")
+    tem_equipamentos = bool(equipamentos and str(equipamentos).strip()) if eh_casa else True
+
+    dias = ficha.get("dias_disponiveis_semana")
+    tem_dias = dias is not None and isinstance(dias, int) and dias > 0
+
+    tempo = metas.get("tempo_treino_min")
+    tem_tempo = tempo is not None and isinstance(tempo, (int, float)) and tempo > 0
+
+    restricoes = ficha.get("restricoes_saude")
+    tem_restricoes = bool(restricoes and str(restricoes).strip())
+
+    fotos = ficha.get("fotos_criptografadas") or []
+    tem_fotos = isinstance(fotos, list) and len(fotos) > 0
+
+    tem_bioimpedancia = bool(metas.get("dados_bioimpedancia"))
+
+    campos_faltantes = []
+    if not tem_idade: campos_faltantes.append("idade_real")
+    if not tem_peso: campos_faltantes.append("peso_atual")
+    if not tem_altura: campos_faltantes.append("altura")
+    if not tem_local: campos_faltantes.append("local_treino")
+    if eh_casa and not tem_equipamentos: campos_faltantes.append("equipamentos_em_casa")
+    if not tem_dias: campos_faltantes.append("dias_semana")
+    if not tem_tempo: campos_faltantes.append("tempo_por_treino")
+    if not tem_restricoes: campos_faltantes.append("dores_restricoes_saude")
+    if not tem_fotos: campos_faltantes.append("fotos_avaliacao_espelho")
+    if not tem_bioimpedancia: campos_faltantes.append("balanca_bioimpedancia")
+
+    total_campos = 10 if eh_casa else 9
+    campos_preenchidos = total_campos - len(campos_faltantes)
+    score_completude = max(0, min(100, int((campos_preenchidos / total_campos) * 100)))
+
+    return {
+        "aluno": nome,
+        "score_completude": score_completude,
+        "ficha_completa": len(campos_faltantes) == 0,
+        "campos_faltantes": campos_faltantes,
+        "eh_casa": eh_casa,
+        "local_treino": local_treino,
+        "tem_idade": tem_idade,
+        "tem_peso": tem_peso,
+        "tem_altura": tem_altura,
+        "tem_local": tem_local,
+        "tem_equipamentos": tem_equipamentos,
+        "tem_dias": tem_dias,
+        "tem_tempo": tem_tempo,
+        "tem_restricoes": tem_restricoes,
+        "tem_fotos": tem_fotos,
+        "tem_bioimpedancia": tem_bioimpedancia
+    }
+
+async def extrair_dados_reais_anamnese(texto_aluno: str, ficha_atual: dict = None) -> dict:
+    """
+    Extrator de Alta Precisão (Personal Trainer & Nutrição):
+    Analisa o texto do aluno e extrai APENAS dados que o aluno explicitamente declarou.
+    REGRA INVIOLÁVEL: NUNCA INVENTA OU ADIVINHA NENHUM DADO.
+    Campos não informados retornam estritamente None.
+    """
+    if not texto_aluno or not texto_aluno.strip():
+        return {}
+
+    api_key = os.getenv("OPENROUTER_API_KEY", "")
+    dados_extraidos = {}
+
+    if api_key:
+        prompt = (
+            "Você é um extrator de prontuário esportivo e clínico de um Personal Trainer de elite. "
+            "Analise a mensagem enviada pelo aluno e extraia estritamente os dados que o aluno informou. "
+            "REGRA INVIOLÁVEL: NUNCA INVENTE OU ADIVINHE NENHUM DADO. Se o aluno não informou, coloque null.\n\n"
+            f'Mensagem do aluno:\n"{texto_aluno}"\n\n'
+            "Retorne ESTRITAMENTE um JSON válido (sem markdown, sem backticks):\n"
+            "{\n"
+            '  "idade": int ou null,\n'
+            '  "peso": float ou null,\n'
+            '  "altura_cm": float ou null,\n'
+            '  "genero": "homem" ou "mulher" ou null,\n'
+            '  "local_treino": "casa" ou "academia" ou "ar_livre" ou null,\n'
+            '  "equipamentos_casa": string ou null,\n'
+            '  "dias_disponiveis_semana": int ou null,\n'
+            '  "tempo_treino_min": int ou null,\n'
+            '  "restricoes_saude": string ou null,\n'
+            '  "objetivo": string ou null\n'
+            "}"
+        )
+        try:
+            async with httpx.AsyncClient(timeout=15.0, verify=False) as client:
+                res = await client.post(
+                    "https://openrouter.ai/api/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {api_key}",
+                        "Content-Type": "application/json",
+                        "HTTP-Referer": "https://marcaopersonal.com",
+                        "X-Title": "Marcao Anamnese Scanner"
+                    },
+                    json={
+                        "model": "openai/gpt-4o-mini",
+                        "messages": [{"role": "user", "content": prompt}],
+                        "temperature": 0.0
+                    }
+                )
+                if res.status_code == 200:
+                    raw = res.json()["choices"][0]["message"]["content"].strip()
+                    if raw.startswith("```"):
+                        raw = raw.split("```")[1]
+                        if raw.startswith("json"):
+                            raw = raw[4:].strip()
+                    dados_extraidos = json.loads(raw)
+        except Exception as e:
+            print(f"[FICHAS_ENGINE] Erro no extrator LLM: {e}")
+
+    # Fallback ou reforço via regex para máxima resiliência
+    txt_low = texto_aluno.lower()
+
+    # 1. Idade
+    if dados_extraidos.get("idade") is None:
+        idade_m = re.search(r'\b(\d{1,2})\s*(?:anos|ano|primaveras)\b', txt_low)
+        if idade_m and int(idade_m.group(1)) in range(12, 95):
+            dados_extraidos["idade"] = int(idade_m.group(1))
+
+    # 2. Peso
+    if dados_extraidos.get("peso") is None:
+        peso_m = re.search(r'(\d{2,3}(?:[.,]\d+)?)\s*(?:kg|quilos|kilos)\b', txt_low)
+        if peso_m:
+            try:
+                dados_extraidos["peso"] = float(peso_m.group(1).replace(",", "."))
+            except Exception:
+                pass
+
+    # 3. Altura
+    if dados_extraidos.get("altura_cm") is None:
+        alt_m = re.search(r'\b(1[.,]\d{2}|1\d{2})\s*(?:m|cm|metro|metros)?\b', txt_low)
+        if alt_m:
+            try:
+                val = float(alt_m.group(1).replace(",", "."))
+                dados_extraidos["altura_cm"] = val if val > 3.0 else val * 100.0
+            except Exception:
+                pass
+
+    # 4. Local de treino
+    if dados_extraidos.get("local_treino") is None:
+        if any(w in txt_low for w in ["em casa", "minha casa", "treino em casa", "malho em casa", "home"]):
+            dados_extraidos["local_treino"] = "casa"
+        elif any(w in txt_low for w in ["na academia", "academia", "gym", "smart fit", "musculação"]):
+            dados_extraidos["local_treino"] = "academia"
+
+    # 5. Dias na semana
+    if dados_extraidos.get("dias_disponiveis_semana") is None:
+        dias_m = re.search(r'(\d+)\s*(?:dias|x|vezes)\s*(?:na|por|semana)?', txt_low)
+        if dias_m and int(dias_m.group(1)) in range(1, 8):
+            dados_extraidos["dias_disponiveis_semana"] = int(dias_m.group(1))
+
+    # 6. Tempo de treino
+    if dados_extraidos.get("tempo_treino_min") is None:
+        tempo_m = re.search(r'(\d+)\s*(?:min|minutos)\b', txt_low)
+        if tempo_m and int(tempo_m.group(1)) in range(15, 180):
+            dados_extraidos["tempo_treino_min"] = int(tempo_m.group(1))
+
+    # 7. Restrições e dores articulares
+    if dados_extraidos.get("restricoes_saude") is None:
+        if any(w in txt_low for w in ["sem dor", "nenhuma dor", "sem lesao", "sem lesão", "tudo certo", "100%", "tudo bem", "saudavel", "saudável"]):
+            dados_extraidos["restricoes_saude"] = "Nenhuma dor ou lesão reportada"
+        elif any(w in txt_low for w in ["joelho", "coluna", "lombar", "ombro", "hernia", "hérnia", "tendinite", "bursite", "menisco"]):
+            dados_extraidos["restricoes_saude"] = texto_aluno.strip()
+
+    # 8. Equipamentos em casa
+    if dados_extraidos.get("equipamentos_casa") is None and dados_extraidos.get("local_treino") == "casa":
+        if any(w in txt_low for w in ["halter", "halteres", "elastico", "elástico", "caneleira", "colchonete", "peso do corpo", "peso corporal"]):
+            dados_extraidos["equipamentos_casa"] = texto_aluno.strip()
+
+    return dados_extraidos
+
+async def atualizar_ficha_com_dados_extraidos(remote_jid: str, texto_aluno: str) -> dict:
+    """
+    Extrai dados reais da mensagem do aluno e atualiza o Supabase imediatamente.
+    Nunca sobrescreve com dados nulos, apenas agrega dados reais confirmados.
+    """
+    headers = get_supabase_headers()
+    try:
+        async with httpx.AsyncClient(verify=False) as client:
+            res = await client.get(
+                f"{SUPABASE_URL}/rest/v1/fichas_alunos?remote_jid=eq.{remote_jid}",
+                headers=headers
+            )
+            if res.status_code != 200 or not res.json():
+                return {"sucesso": False, "erro": "Ficha não encontrada"}
+
+            ficha = res.json()[0]
+            extraidos = await extrair_dados_reais_anamnese(texto_aluno, ficha)
+
+            patch_data = {}
+            metas_patch = dict(ficha.get("metas_nutricionais") or {})
+
+            if extraidos.get("idade"):
+                patch_data["idade"] = extraidos["idade"]
+            if extraidos.get("peso"):
+                patch_data["ultimo_peso"] = extraidos["peso"]
+                metas_patch["peso"] = extraidos["peso"]
+            if extraidos.get("altura_cm"):
+                patch_data["altura_cm"] = extraidos["altura_cm"]
+                metas_patch["altura_cm"] = extraidos["altura_cm"]
+            if extraidos.get("local_treino"):
+                patch_data["local_treino"] = extraidos["local_treino"]
+            if extraidos.get("equipamentos_casa"):
+                metas_patch["equipamentos_casa"] = extraidos["equipamentos_casa"]
+            if extraidos.get("dias_disponiveis_semana"):
+                patch_data["dias_disponiveis_semana"] = extraidos["dias_disponiveis_semana"]
+            if extraidos.get("tempo_treino_min"):
+                metas_patch["tempo_treino_min"] = extraidos["tempo_treino_min"]
+            if extraidos.get("restricoes_saude"):
+                patch_data["restricoes_saude"] = extraidos["restricoes_saude"]
+            if extraidos.get("objetivo") and not ficha.get("objetivo"):
+                patch_data["objetivo"] = extraidos["objetivo"]
+
+            if metas_patch != ficha.get("metas_nutricionais"):
+                patch_data["metas_nutricionais"] = metas_patch
+
+            if patch_data:
+                await atualizar_campo_ficha(remote_jid, patch_data)
+                ficha.update(patch_data)
+                diag = identificar_campos_pendentes_ficha(ficha)
+                return {
+                    "sucesso": True,
+                    "campos_atualizados": list(patch_data.keys()),
+                    "dados_extraidos": extraidos,
+                    "score_completude": diag["score_completude"],
+                    "ficha_completa": diag["ficha_completa"],
+                    "campos_faltantes": diag["campos_faltantes"]
+                }
+            return {"sucesso": True, "nenhum_dado_novo": True}
+    except Exception as e:
+        print(f"[FICHAS_ENGINE] Erro ao atualizar ficha com dados extraídos: {e}")
+        return {"sucesso": False, "erro": str(e)}
+
 async def cobrar_dados_pendentes_aluno(ficha: dict) -> dict:
     """
     Dispara acompanhamento amigável e personalizado do Marcão em múltiplos balões curtos
     (Regra 5: 2 a 4 balões, composing, delays naturais de 1.5s a 2.0s) para coletar exatamente
-    os dados ou fotos que faltam na ficha do aluno.
+    os dados ou fotos que faltam na ficha do aluno. NUNCA ADIVINHA OU INVENTA DADOS!
     """
     import asyncio
-    nome = ficha.get("nome") or ficha.get("nome_aluno") or "Campeão(ã)"
-    primeiro_nome = nome.strip().split()[0]
+    nome = (ficha.get("nome") or ficha.get("nome_aluno") or "Campeão(ã)").strip()
+    primeiro_nome = nome.split()[0]
     remote_jid = ficha.get("remote_jid", "")
     tel = ficha.get("telefone") or "".join(filter(str.isdigit, remote_jid.split("@")[0]))
     if not tel:
@@ -1208,46 +1490,52 @@ async def cobrar_dados_pendentes_aluno(ficha: dict) -> dict:
     evo_key = os.getenv("EVOLUTION_API_KEY", "")
     evo_inst = os.getenv("EVOLUTION_INSTANCE", "sofia")
 
-    # Diagnóstico cirúrgico do que falta na ficha
-    fotos = ficha.get("fotos_criptografadas") or []
-    falta_fotos = len(fotos) == 0
-    falta_dias = ficha.get("dias_disponiveis_semana") is None
-    falta_peso = not bool(ficha.get("metas_nutricionais", {}).get("peso") or ficha.get("ultimo_peso"))
-    falta_restricoes = not bool(ficha.get("restricoes_saude"))
+    diag = identificar_campos_pendentes_ficha(ficha)
+    if diag["ficha_completa"]:
+        return {"sucesso": True, "pendente": False, "mensagem": "Ficha 100% preenchida com dados reais!"}
+
     objetivo = ficha.get("objetivo") or ""
+    eh_casa = diag["eh_casa"] or "casa" in (ficha.get("local_treino") or "").lower()
 
-    # Se nada faltar e onboarding completo, não há pendência
-    if not falta_fotos and not falta_dias and not falta_peso and ficha.get("etapa_onboarding", 0) >= 5:
-        return {"sucesso": True, "pendente": False, "mensagem": "Ficha 100% preenchida"}
-
-    # Monta os balões curtos e ágeis (obedecendo Regra 5: 50-130 chars por balão)
     baloes = []
-    
-    # Balão 1: Saudação autêntica do Marcão
-    baloes.append(f"Fala, {primeiro_nome}! Tudo na paz por aí? 🦁 Marcão passando aqui pra ver como você tá!")
 
-    # Balão 2: Contexto amigável citando o objetivo
-    if "glúteo" in objetivo.lower() or "perna" in objetivo.lower():
-        baloes.append("Tô finalizando sua periodização pra definir pernas e glúteos, mas vi que faltam só 2 detalhezinhos na sua ficha:")
-    elif objetivo:
-        baloes.append(f"Tô aqui montando sua periodização pra {objetivo[:40]}..., mas vi que faltam só 2 detalhezinhos:")
+    # Balão 1: Saudação amigável personalizada (Regra 5: 80-130 chars)
+    if eh_casa:
+        baloes.append(f"Fala, {primeiro_nome}! Tudo na paz? 🦁 Marcão aqui! Como você treina em casa, vou montar seu treino sob medida sem adivinhar nada.")
+    elif diag["local_treino"] == "academia":
+        baloes.append(f"Fala, {primeiro_nome}! Tudo na paz? 🦁 Marcão aqui! Tô montando sua planilha de academia sob medida pra sua rotina.")
     else:
-        baloes.append("Tô aqui organizando sua planilha de treino exclusiva, mas faltam alguns detalhezinhos na sua ficha:")
+        baloes.append(f"Fala, {primeiro_nome}! Tudo na paz? 🦁 Marcão aqui! Pra eu montar seu protocolo sob medida, me tira só umas dúvidas rápidas:")
 
-    # Balão 3: Os itens específicos que faltam
-    itens_pendentes = []
-    if falta_dias:
-        itens_pendentes.append("🗓️ Quantos dias por semana você vai conseguir treinar na academia? (3, 4 ou 5 dias?)")
-    if falta_fotos:
-        itens_pendentes.append("📸 1 ou 2 fotinhas de avaliação no espelho (frente e costas) em roupa de treino pra eu ver sua linha muscular e acompanhar sua evolução visual! Fica 100% segura e criptografada aqui comigo! 🔒")
-    if falta_peso:
-        itens_pendentes.append("⚖️ Seu peso atual ou uma foto do visor da balança de bioimpedância!")
+    # Balão 2: Medidas corporais e rotina (Regra 5: 50-120 chars)
+    perguntas_b2 = []
+    faltas_corpo = []
+    if not diag["tem_idade"]: faltas_corpo.append("sua idade real")
+    if not diag["tem_peso"]: faltas_corpo.append("peso atual")
+    if not diag["tem_altura"]: faltas_corpo.append("altura")
+    if faltas_corpo:
+        perguntas_b2.append(f"Qual {', '.join(faltas_corpo)}?")
+    if not diag["tem_dias"]:
+        perguntas_b2.append("Quantos dias na semana consegue treinar?")
+    if perguntas_b2:
+        baloes.append(" ".join(perguntas_b2))
 
-    if itens_pendentes:
-        baloes.append("\n".join(itens_pendentes))
+    # Balão 3: Local/equipamentos em casa e dores (Regra 5: 50-130 chars)
+    perguntas_b3 = []
+    if not diag["local_treino"]:
+        perguntas_b3.append("Você vai treinar em casa ou na academia?")
+    elif eh_casa and not diag.get("tem_equipamentos"):
+        perguntas_b3.append("Em casa você tem algum halter/elástico ou é só peso do corpo?")
+    if not diag["tem_restricoes"]:
+        perguntas_b3.append("Sente dor no joelho, coluna ou tem restrição médica?")
+    if perguntas_b3:
+        baloes.append(" ".join(perguntas_b3))
 
-    # Balão 4: Fechamento parceiro e acolhedor
-    baloes.append("Me manda aqui no seu tempo, que assim que você me enviar eu fecho seu treino com todo o carinho! Tamo junto! 👊🔥")
+    # Balão 4: Fotos / Balança / Fechamento acolhedor (Regra 5: 80-120 chars)
+    if not diag["tem_fotos"] or not diag["tem_bioimpedancia"]:
+        baloes.append("Quando der, manda 1 foto no espelho e do visor da balança pro prontuário blindado! Tamo junto! 👊🔥")
+    else:
+        baloes.append("Me manda aqui no seu tempo que assim que responder eu fecho seu treino com todo o carinho! Tamo junto! 👊🔥")
 
     # Envio sequencial dos balões com simulação de presença (composing)
     resultados_envio = []
@@ -1281,8 +1569,9 @@ async def cobrar_dados_pendentes_aluno(ficha: dict) -> dict:
             "remote_jid": remote_jid,
             "telefone": tel,
             "aluno": nome,
-            "baloes_enviados": len(baloes),
-            "itens_pendentes": itens_pendentes
+            "score_completude": diag["score_completude"],
+            "campos_faltantes": diag["campos_faltantes"],
+            "baloes_enviados": len(baloes)
         }
     except Exception as e:
         return {"sucesso": False, "erro": str(e)}
@@ -1306,15 +1595,18 @@ async def verificar_e_cobrar_alunos_com_dados_pendentes(filtro_aluno: str = None
                 for f in fichas:
                     nome_f = (f.get("nome") or f.get("nome_aluno") or "").lower()
                     tel_f = (f.get("telefone") or "").lower()
-                    
+
                     # Se houver filtro e não bater, pula
                     if filtro_aluno:
                         filtro_low = filtro_aluno.strip().lower()
-                        if filtro_low not in nome_f and filtro_low not in tel_f:
+                        tokens_nome = [w.lower() for w in nome_f.split()]
+                        bate_nome = any(filtro_low == t for t in tokens_nome) or (len(filtro_low) > 3 and filtro_low in nome_f)
+                        bate_tel = filtro_low in tel_f
+                        if not (bate_nome or bate_tel):
                             continue
-                            
-                    # Não cobrar o próprio Evandro em ambiente de produção
-                    if "84587255" in tel_f and not filtro_aluno:
+
+                    # Não cobrar o próprio Evandro em ambiente de produção (a menos que explicitamente filtrado por 'evandro')
+                    if "84587255" in tel_f and (not filtro_aluno or "evandro" not in filtro_aluno.lower()):
                         continue
 
                     r_jid = f.get("remote_jid")
