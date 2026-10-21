@@ -29,9 +29,9 @@ CACHE_TTL_SEGUNDOS = 60
 METADADOS_CONHECIDOS = {
     "BALANCA-BIOIMPEDANCIA-SHOPEE": {
         "doses": 365,
-        "beneficio_chave": "Balança Inteligente de Bioimpedância Clínica com 13 biomarcadores corporais (massa muscular, gordura visceral profunda, hidratação celular, taxa metabólica) e 3 Meses de Mentoria VIP Grátis no WhatsApp com o Marcão Personal.",
-        "claims_permitidos": ["13 biomarcadores clínicos", "Leitura de gordura visceral dos órgãos", "4 eletrodos BIA de alta condutividade", "Sincronização Bluetooth com app", "3 Meses de Mentoria VIP Marcão Inclusa"],
-        "pitch_diario": "Apenas R$ 0,24 por dia (menos que uma bala!) para ter a balança inteligente de bioimpedância e 3 meses de mentoria VIP comigo!"
+        "beneficio_chave": "Balança Inteligente de Bioimpedância Clínica com 13 biomarcadores corporais (massa muscular, gordura visceral profunda, hidratação celular, taxa metabólica) e acompanhamento VIP com o Marcão Personal no WhatsApp.",
+        "claims_permitidos": ["13 biomarcadores clínicos", "Leitura de gordura visceral dos órgãos", "4 eletrodos BIA de alta condutividade", "Sincronização Bluetooth com app", "Preço direto de fábrica Shopee"],
+        "pitch_diario": "Apenas R$ 0,09 por dia (menos de 10 centavos!) para ter a balança inteligente de bioimpedância direto de fábrica e acompanhamento VIP comigo!"
     },
     "BALANCA-XIAOMI-AMAZON": {
         "doses": 365,
@@ -203,11 +203,11 @@ async def obter_produtos_ativos() -> list:
             {
                 "sku": "BALANCA-BIOIMPEDANCIA-SHOPEE",
                 "name": "Balança Inteligente Bioimpedância Bluetooth BIA (Shopee)",
-                "price": 89.90,
+                "price": 34.90,
                 "affiliate_url": "https://s.shopee.com.br/2BFoInIBeb",
-                "custo_dia": 0.24,
-                "pitch_diario": "Apenas R$ 0,24 por dia (menos que uma bala!) para ter a balança inteligente de bioimpedância e 3 meses de mentoria VIP comigo!",
-                "beneficio_chave": "13 biomarcadores corporais BIA (massa muscular, gordura visceral, água celular, metabolismo) e liberação de 3 meses de mentoria VIP no WhatsApp."
+                "custo_dia": 0.09,
+                "pitch_diario": "Apenas R$ 0,09 por dia (menos de 10 centavos!) para ter a balança inteligente de bioimpedância direto de fábrica e acompanhamento VIP comigo!",
+                "beneficio_chave": "13 biomarcadores corporais BIA (massa muscular, gordura visceral, água celular, metabolismo) a preço direto de fábrica e acompanhamento VIP no WhatsApp."
             },
             {
                 "sku": "BALANCA-XIAOMI-AMAZON",
