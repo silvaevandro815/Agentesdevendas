@@ -27,6 +27,12 @@ CACHE_TTL_SEGUNDOS = 60
 
 # Metadados complementares de enriquecimento (doses, benefícios científicos e claims regulatórios)
 METADADOS_CONHECIDOS = {
+    "BALANCA-BIOIMPEDANCIA-SHOPEE": {
+        "doses": 365,
+        "beneficio_chave": "Balança Inteligente de Bioimpedância Clínica com 13 biomarcadores corporais (massa muscular, gordura visceral profunda, hidratação celular, taxa metabólica) e 3 Meses de Mentoria VIP Grátis no WhatsApp com o Marcão Personal.",
+        "claims_permitidos": ["13 biomarcadores clínicos", "Leitura de gordura visceral dos órgãos", "4 eletrodos BIA de alta condutividade", "Sincronização Bluetooth com app", "3 Meses de Mentoria VIP Marcão Inclusa"],
+        "pitch_diario": "Apenas R$ 0,24 por dia (menos que uma bala!) para ter a balança inteligente de bioimpedância e 3 meses de mentoria VIP comigo!"
+    },
     "BALANCA-XIAOMI-AMAZON": {
         "doses": 365,
         "beneficio_chave": "Balança Xiaomi Mi Body Composition Scale 2 oficial com 13 parâmetros de bioimpedância de alta precisão (sensor de manganês) e 3 meses de acompanhamento VIP grátis no WhatsApp.",
@@ -194,6 +200,15 @@ async def obter_produtos_ativos() -> list:
     # Fallback seguro caso o Supabase falhe momentaneamente
     if not produtos:
         produtos = [
+            {
+                "sku": "BALANCA-BIOIMPEDANCIA-SHOPEE",
+                "name": "Balança Inteligente Bioimpedância Bluetooth BIA (Shopee)",
+                "price": 89.90,
+                "affiliate_url": "https://s.shopee.com.br/2BFoInIBeb",
+                "custo_dia": 0.24,
+                "pitch_diario": "Apenas R$ 0,24 por dia (menos que uma bala!) para ter a balança inteligente de bioimpedância e 3 meses de mentoria VIP comigo!",
+                "beneficio_chave": "13 biomarcadores corporais BIA (massa muscular, gordura visceral, água celular, metabolismo) e liberação de 3 meses de mentoria VIP no WhatsApp."
+            },
             {
                 "sku": "BALANCA-XIAOMI-AMAZON",
                 "name": "Balança Xiaomi Mi Body Composition Scale 2",

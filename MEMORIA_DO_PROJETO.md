@@ -171,10 +171,10 @@
   - **Blindagem do Workflow F4:** Adicionado nó `Registrar Pedido Braip no Supabase` salvando todas as transações diretamente na tabela `pedidos_braip`.
   - **Correção Crítica no Workflow M8 (Recuperador):** Corrigido o filtro da query Supabase de `status` (inexistente) para `status_pagamento=in.(aguardando_pagamento,gerado)`, desbloqueando a recuperação diária automática de boletos e Pix não pagos.
 - [x] P20 — Autonomia Plena de Vendas Multicanal (Amazon + Braip), Catálogo Oficial Homologado & Consciência Comercial de Caçador (Closer Concluída!)
-  - **Integração Oficial Amazon Associados:** Tag homologada `marcaopersona-20` gravada no `.env` (`AMAZON_ASSOCIATE_TAG`), gerando URLs oficiais determinísticas para todos os produtos físicos e tecnologia fitness.
-  - **Purga da Balança de R$ 89:** A balança própria de R$ 89 (`BALANCA-BIO`) foi 100% purgada do banco de dados, da memória e do site, permanecendo exclusivamente a Balança Xiaomi Mi Scale 2 como carro-chefe oficial até que a Shopee aprove a integração.
-  - **Catálogo Expandido Unificado (16 Produtos Homologados no Supabase & `catalog_service.py`):**
-    1. *Balança Xiaomi Mi Body Composition Scale 2* (R$ 149,90, Amazon) — Carro-chefe nº 1: 13 parâmetros clínicos com 3 meses de mentoria VIP no WhatsApp grátis inclusos (R$ 0,41/dia).
+  - **Balança Inteligente Shopee R$ 89,90 Ativada como Carro-Chefe Nº 1:** Link oficial Shopee `https://s.shopee.com.br/2BFoInIBeb` integrado no site, Supabase e catálogo com 3 fotos oficiais (design preto com display LCD azul, relatório do app com 13 biomarcadores e pesagem real com BLE). 3 Meses de Mentoria VIP Grátis no WhatsApp inclusos (R$ 0,24/dia). Protocolo oficial de ativação: pesagem de 3s nos 4 eletrodos BIA -> app gera laudo -> aluno envia print no WhatsApp do Marcão para leitura em 5s via Visão Computacional.
+  - **Catálogo Expandido Unificado (17 Produtos Homologados no Supabase & `catalog_service.py`):**
+    1. *Balança Inteligente de Bioimpedância Shopee* (R$ 89,90, Shopee `https://s.shopee.com.br/2BFoInIBeb`) — Carro-chefe nº 1: 13 biomarcadores com 3 meses de mentoria VIP no WhatsApp grátis inclusos (R$ 0,24/dia).
+    2. *Balança Xiaomi Mi Body Composition Scale 2* (R$ 149,90, Amazon) — Opção premium alternativa: 13 parâmetros clínicos com sensor G de manganês e mentoria VIP (R$ 0,41/dia).
     2. *100% Whey Pure Max Titanium 900g* (R$ 99,90, Amazon) — 21g proteína, R$ 3,33/dia.
     3. *Whey Protein Concentrado DUX Nutrition 900g* (R$ 149,90, Amazon) — Matéria-prima importada, sabor premium, R$ 4,99/dia.
     4. *100% Whey Gold Standard Optimum Nutrition 907g* (R$ 249,90, Amazon) — Padrão ouro mundial, isolado microfiltrado, R$ 8,33/dia.

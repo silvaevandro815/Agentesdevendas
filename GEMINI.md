@@ -41,9 +41,11 @@ Este documento é lido automaticamente no início de **toda e qualquer nova conv
 - **Ecossistema Multi-Plataforma Homologado:**
   * **Braip Integrado:** Token autenticado (`BRAIP_API_TOKEN`), Postbacks ativos em `https://n8n.marcaopersonal.com/webhook/braip-postback` (`cow5j2gy`), monitoramento em tempo real (`F4`) e recuperação automática de Pix/Boletos (`M8`).
   * **Amazon Associados Integrado:** Associate Tag Oficial `marcaopersona-20` ativa para todos os produtos físicos e de tecnologia fitness.
-- **Carro-Chefe Nº 1 — A Balança de Bioimpedância Xiaomi Mi Scale 2 com Mentoria VIP:**
-  * Balança Xiaomi Mi Scale 2 Oficial (Amazon, R$ 149,90, link com tag `marcaopersona-20`). A balança de R$ 89 foi purgada e só entrará futuramente quando ativada na Shopee ou linha própria.
-  * Gatilho Irresistível: Quem compra a Balança ganha **3 MESES DE MENTORIA VIP GRÁTIS** diretamente com o Marcão no WhatsApp (avaliação corporal, acompanhamento de evolução e análise de pratos). Após os 3 meses, transição suave para a assinatura de R$ 19,90/mês na Stripe.
+- **Carro-Chefe Nº 1 — Balança Inteligente de Bioimpedância Shopee (R$ 89,90) com Mentoria VIP:**
+  * **Balança Inteligente Shopee Oficial (R$ 89,90, link `https://s.shopee.com.br/2BFoInIBeb`):** Carro-chefe absoluto e produto de entrada de maior conversão do ecossistema Marcão Personal. Custo de apenas R$ 0,24 por dia!
+  * **Conexão e Ativação com Marcão:** O aluno sobe descalço na balança (display LED azul e 4 eletrodos BIA escaneiam 13 biomarcadores), abre o app no celular (Bluetooth BLE) e envia 1 print da tela no WhatsApp. A IA do Marcão com Visão Computacional Multimodal lê todos os 13 biomarcadores instantaneamente em 5 segundos e cadastra a evolução.
+  * **Gatilho Irresistível:** Quem compra a Balança ganha **3 MESES DE MENTORIA VIP 100% GRÁTIS** diretamente com o Marcão no WhatsApp (anamnese, acompanhamento de evolução física e análise de pratos de almoço/jantar por foto). Após os 3 meses, transição suave e opcional para a assinatura de R$ 19,90/mês na Stripe.
+  * **Opção Premium Alternativa:** Balança Xiaomi Mi Scale 2 Oficial mantida na Amazon (R$ 149,90, tag `marcaopersona-20`) para alunos que preferem o ecossistema Mi Fit / Amazon Prime.
 - **Catálogo Oficial Expandido e Mapeamento de Dores (Matriz de Disparo Autônomo):**
   * **Dor no joelho / articulações / tendões:** Ômega 3 Ultra Concentrado DUX + Colágeno com Ácido Hialurônico Nature's Prime.
   * **Cansaço / fraqueza / treino não rende:** Creatina Micronizada 100% Pura (Braip) ou Creatina Creapure DUX (Amazon). Custo diário de apenas R$ 1,68/dia!
