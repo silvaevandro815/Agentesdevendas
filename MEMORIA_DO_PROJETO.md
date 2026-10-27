@@ -217,4 +217,121 @@
     * O código do nó no workflow `I3` foi reformulado no n8n com banco de 4 Master Reels HD rotativos (`reel_balanca_xiaomi_hd.mp4`, `reel_creatina_mito_hd.mp4`, `reel_smartwatch_strava_hd.mp4`, `reel_whey_protein_hd.mp4`) com rotação diária automática por dia do mês (`diaDoMes % REELS_ROTATIVOS.length`).
     * Motor local `daily_reel_generator.py` agora possui `historico_reels.json` persistente e sincronização com o `content_calendar` do Supabase, garantindo que o tema mais antigo ou inédito seja sempre o próximo a ser renderizado e postado.
 
+## 14. Padrão Cinematográfico BeatDesign: Multi-Cenas (6-8 Cortes) e Matriz Facial Fiel (frente.jpg + lado2.jpg)
+- **Zero Boomerang / Zero Cena Única:** Todo vídeo deve conter entre 6 a 8 cortes cinematográficos de alta retenção (3.5s a 4.5s cada).
+- **Diversidade de Ambientes:** Praia ao pôr do sol, trilha na natureza, parque urbano / futebol, cozinha / nutrição e academia de luxo.
+- **Elementos Visuais:** Células 3D, produto girando 360°, display LED e eletrodos acendendo, app Marcão AI no celular e contração muscular real.
+- **Fidelidade Facial Evandro:** Triangulação obrigatória de frente.jpg e lado2.jpg.
+- **Agendamento Automático:** Todos os dias às 18:00h pontualmente via n8n (I3) e Meta Graph API.
 
+
+## 15. Arquitetura de Cibersegurança & Proteção de Dados (Anti-Vibecoding Homologado)
+- **Motivação:** Auditoria técnica de segurança contra os 3 riscos críticos de desenvolvimento com IA (demonstrados em `WhatsApp Video 2026-10-21 at 10.31.25 PM.mp4`):
+  1. Vazamento de chaves secretas no cliente via DevTools Sources.
+  2. Burlar telas privadas excluindo cookies ou manipulando rotas frontend.
+  3. Ausência de rate limiting, permitindo ataques de brute-force, DoS e esgotamento financeiro de créditos de API.
+- **Implementações Ativas:**
+  - **Site Oficial (`apps/site`):**
+    * Helmet ativo com remoção de `X-Powered-By`, proteção contra clickjacking (`X-Frame-Options: SAMEORIGIN`) e MIME-sniffing (`X-Content-Type-Options: nosniff`).
+    * Rate Limiting estrito de 30 requisições/minuto em `/api/lead` e `/api/track` (Meta Conversions API) e 300 reqs/15min em navegação.
+    * Limite de payload JSON de 30KB contra DoS por estouro de buffer (HTTP 413).
+    * Remoção de qualquer segredo no frontend; isolamento total das chamadas à Meta via relay backend.
+  - **Centro de Comando Admin (`apps/admin`):**
+    * Remoção completa de chaves e segredos default hardcoded no código (`SUPABASE_KEY` e tokens Strava).
+    * `Login Gate` executivo com autenticação por chave mestra (`ADMIN_MASTER_PASSWORD`).
+    * Assinatura criptográfica de sessão via HMAC-SHA256 e cookie HTTP-Only (`marcao_admin_session`) com SameSite.
+    * Middleware `requireAdminAuth` protegendo todas as rotas sensíveis (`/api/vip/*`, `/api/approvals/*`, `/api/cfo/*`, `/api/creatives/*`, `/api/sales/*`).
+    * Validação estrita: se o usuário ou invasor excluir o cookie ou manipular a UI no DevTools, o backend responde imediatamente com HTTP 401 Unauthorized e a tela é bloqueada na hora.
+    * Rate Limiting anti-brute-force no login (máximo 5 tentativas a cada 15 minutos).
+    * Rate Limiting de processamento pesado de IA (máximo 3 gerações por minuto).
+    * Botão de Bloqueio Instantâneo no cabeçalho do painel ("Bloquear Painel").
+  - **Motor de Inteligência e Automações (`apps/api`):**
+    * Middleware de segurança com Rate Limiting: 10 requisições/minuto para rotas pesadas de IA (`/api/voz/`, `/api/visao/`, `/api/creatives/`) e 120 reqs/minuto para rotas gerais.
+    * Limite de upload de 20MB para fotos de avaliação corporal/bioimpedância.
+    * Cabeçalhos de segurança HTTP e HSTS injetados em todas as respostas.
+    * `apps/api/strava_service.py` e scripts de automação limpos de segredos estáticos, lendo exclusivamente de variáveis de ambiente.
+  - **Repositório & Git:**
+    * `.gitignore` rigoroso protegendo `.env`, `.env.local`, `*.key`, `*.pem`, `APYKEYs/` e credenciais.
+
+
+## 16. Ativação das 9 Instagram Skills & Esteira Cinematográfica Multi-Cenas
+- **Framework Ativo:** `sergebulaev/instagram-skills` integrado ao Antigravity (`.agents/skills/`, `skills/` e `apps/api/instagram_skills_engine.py`).
+- **As 9 Skills Implementadas:**
+  1. `ig-audience-insights`: Leitura ao vivo da Meta Graph API para guiar decisões por números reais.
+  2. `ig-hook-extractor`: 10 fórmulas canônicas de 2026 nos primeiros 3 segundos.
+  3. `ig-caption-writer`: Gancho estrito <125 caracteres antes do "...mais", tópicos escaneáveis e CTA única.
+  4. `ig-carousel-planner`: Arquitetura de 5 a 10 lâminas otimizadas para Salvamento.
+  5. `ig-content-planner`: Grade semanal multi-formatos e alavancas de compartilhamento.
+  6. `ig-hashtag-strategist`: 3 a 5 hashtags dimensionadas por nicho, tamanho médio e amplo.
+  7. `ig-humanizer`: Desintoxicação de IA e voz marcante do Marcão Personal.
+  8. `ig-profile-optimizer`: Diagnóstico de 9 pontos da biografia e destaques.
+  9. `ig-repurposer`: Adaptação de estudos em carrosséis e roteiros 9:16.
+- **Produção Multi-Cenas Ativa (Zero Boomerang / Zero Ping-Pong):**
+  * Concatenação de 5 a 8 takes em 1080x1920 nativo por vídeo.
+  * Diversidade total de locações: Cozinha preparando suplementos, Praia/Orla ao entardecer, Academia moderna de luxo, Trilha na natureza, Pista de atletismo e Living room com a Balança Shopee.
+  * Rotação anti-repetição contínua em `historico_reels.json` e `content_calendar` do Supabase.
+
+
+## 17. Auditoria Rígida de Onboarding & Varredura Automática de Prontuários (Zero Dados Incompletos)
+- **Regra do Sistema:** É proibido permitir alunos com prontuário incompleto ou dados biométricos ausentes.
+- **Auditoria de 8 Dimensões em `apps/api/fichas_engine.py`:**
+  1. Identificação completa (Nome e WhatsApp).
+  2. Biometria estrita: Peso numérico válido (35kg a 250kg) e Altura válida (110cm a 230cm).
+  3. Idade real (12 a 95 anos).
+  4. Objetivo de treino claro (Hipertrofia, Queima de Gordura, Definição ou Saúde).
+  5. Triagem clínica ortopédica (Pressão arterial, medicamentos contínuos e lesões articulares).
+  6. Fisiologia circadiana (Horas de sono e litros de água habitual).
+  7. Rotina esportiva (Local: Casa ou Academia; Dias disponíveis na semana).
+  8. Termo de consentimento LGPD formalizado.
+- **Portão de Entrada Rígido no Onboarding:**
+  * O aluno NÃO avança para a fase concluída se deixar peso ou altura de fora.
+  * O Marcão interrompe imediatamente e cobra os dados que faltam com simpatia e autoridade de personal trainer.
+- **Motor de Varredura Geral (`/api/admin/varredura-onboarding` e `/api/fichas/varredura-onboarding`):**
+  * Varredura periódica em todas as fichas no Supabase.
+  * Cálculo em tempo real da Taxa de Conformidade (%) e lista detalhada de pendências.
+  * Geração instantânea de mensagens de cobrança em 2 balões curtos (Regra 5) com botão de disparo em lote via Evolution API.
+
+## 18. Alunos de Demonstração Executiva & Otimização Total para Tablet (Investor Mode)
+- **Ambiente de Apresentação ao Investidor no Tablet (iPad / Galaxy Tab - 768px a 1024px):**
+  * **Admin (`admin.marcaopersonal.com`):**
+    - Banner Executivo no topo da aba VIP: `[ 💼 APRESENTAÇÃO EXECUTIVA | VISÃO DO INVESTIDOR ]` com 4 KPIs-chave (Balanças BLE Ativas, Retenção de 94.2%, LTV Projetado de R$ 418,80 e Taxa de Conformidade de 85%).
+    - Painel interativo de Varredura de Onboarding com barra de progresso em tempo real e botões `⚡ Rodar Varredura Agora` e `📲 Cobrar Todos os Pendentes (WhatsApp)`.
+    - Alunos fictícios de demonstração de alta performance:
+      * **Dra. Mariana Souza Bittencourt:** Médica, 31 anos, 61.2kg, 21.4% gordura, Balança Shopee ativa, 14d streak, Ficha 100% Completa com treino ABCD e macros calibrados.
+      * **Rodrigo Mendes Fagundes:** Empresário, 44 anos, 84.8kg (-4.4kg eliminados), 23.9% gordura, Balança Shopee ativa, 21d streak, Ficha 100% Completa com treino ABC metabólico e sono anabólico GH.
+      * **Lucas Martins Oliveira:** Arquiteto, 29 anos, 78.5kg, Ficha 60% (Em Onboarding) para demonstrar ao investidor a IA cobrando dados pendentes ao vivo.
+    - Media queries dedicadas para tablet, botões com altura mínima de 44px para toque suave e tabela responsiva com scroll horizontal fluido.
+  * **Landing Page (`marcaopersonal.com`):**
+    - Seção Destaque Executivo / Investor Proof: **O Flywheel de Conversão & LTV** (Entrada Low-Ticket Balança R$ 34,90 -> Visão Multimodal OCR 13 Biomarcadores -> Auditoria Ativa de Onboarding -> Assinatura Stripe R$ 19,90/mês).
+    - Grid responsivo de 2 colunas refinado no tablet (768px - 1024px) com alinhamento perfeito de títulos, mockups e cartões de bioimpedância.
+
+
+## 19. Blindagem Anti-Repetição no n8n e Proibição de Criativos Genéricos com Shaker
+- **Causa Raiz Identificada e Extirpada:**
+  * O workflow do n8n `I2 - Fábrica de Criativos & Publicador Instagram 2x/dia (Marcão)` (ID: `jd2hOvXwJO2dwUaE`) possuía um item de Creatina travado com `status: 'ready'` no Supabase `content_calendar` porque o comando PATCH falhava silenciosamente ao atualizar a linha após o disparo.
+  * Além disso, a esteira não consultava o histórico recente do Instagram antes de publicar, fazendo o mesmo carrossel de Creatina sair 4 dias seguidos (22/10 a 25/10).
+- **Correções Aplicadas:**
+  1. **Sentinela Anti-Repetição no n8n `I2`:** Antes de qualquer postagem, o nó orquestrador consulta os últimos 10 posts na Meta Graph API. Se "creatina" ou qualquer outro tema apareceu recentemente, o tópico é **100% bloqueado** para o dia.
+  2. **Atualização Blindada do Supabase:** O PATCH agora utiliza cabeçalhos restritos com `Prefer: return=minimal` e tratamento de erros explícito, garantindo que o item seja marcado como `published` na hora.
+  3. **Extinção do Prompt "Homem Loiro Bebendo em Garrafa":** O prompt genérico que gerava um homem loiro com coqueteleira plástica foi substituído por renders científicos em 3D de alta definição (contração de fibras musculares e síntese de ATP mitocondrial) e personas reais diversificadas (Evandro, Mulher Atlética e Homem Maduro Grisalho).
+  4. **Fila Restante no Supabase Limpa:** O item duplicado de Creatina foi marcado como `published`, liberando os temas inéditos da fila: *Saúde Articular & Longevidade aos 40+*, *Mito do Suor no Emagrecimento*, *Musculação na Terceira Idade (60+)* e o *Comercial da Balança Shopee*.
+
+
+## 20. Shopee Affiliate Open API & Autonomia Total de Vendas do Marcão Personal
+- **Integração Homologada:** Credenciais da Shopee Affiliate Open API inseridas no `.env`:
+  * `SHOPEE_APP_ID=18302091279`
+  * `SHOPEE_SECRET=4KLNIQLXFE7TNE7UTNZHE44BBRIIHDOS`
+  * `SHOPEE_GRAPHQL_URL=https://open-api.affiliate.shopee.com.br/graphql`
+- **Mecanismo de Assinatura Criptográfica:** SHA256 compacto de `AppId + Timestamp + PayloadJSON + Secret` enviado no cabeçalho `Authorization: SHA256 Credential=...,Timestamp=...,Signature=...`.
+- **Motor Central (`apps/api/shopee_affiliate_engine.py`):**
+  * `buscar_produtos_shopee(keyword, limit, sort_type)`: Busca produtos com fallback automático, extraindo título, preço, avaliação, fotos, comissão e link encurtado oficial (`https://s.shopee.com.br/...`).
+  * `gerar_link_afiliado_shopee(url_original, sub_id)`: Converte qualquer link da Shopee em link rastreado com SubID (identificador do aluno ou campanha).
+  * `prescrever_produto_autonomo(mensagem_aluno, sub_id)`: Mapeador semântico de dores biomecânicas (joelho -> joelheira compressão, lombar -> cinto agachamento, antebraço/pegada -> strap, ombro -> faixa manguito, treino em casa -> kit elásticos, gravação de treino -> suporte magnético de celular, hidratação -> garrafa térmica 2L, etc.).
+  * `obter_relatorio_vendas_shopee(dias)`: Monitoramento em tempo real de pedidos e comissões geradas via `partnerOrderReport`.
+- **Comportamento Autônomo no WhatsApp e Instagram:**
+  * O Marcão não depende de catálogo estático. Quando o aluno relata uma queixa física ou pede um acessório, a IA consulta a Shopee ao vivo, seleciona o item campeão e fecha a venda em 2 a 4 balões curtos com a quebra do custo por dia e o link oficial de afiliado.
+- **Endpoints REST Expostos (`apps/api/main.py`):**
+  * `GET /api/shopee/busca?q={termo}`
+  * `POST /api/shopee/gerar-link`
+  * `POST /api/shopee/prescrever`
+  * `GET /api/shopee/relatorio-vendas`

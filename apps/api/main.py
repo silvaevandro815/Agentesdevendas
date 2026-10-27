@@ -1,9 +1,16 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
 import os
+import time
 import httpx
+import threading
+from collections import defaultdict
 from datetime import datetime
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = FastAPI(
     title="Marcão Personal Protocol AI Engine",
@@ -11,9 +18,52 @@ app = FastAPI(
     version="2.0.0"
 )
 
-from dotenv import load_dotenv
+# Rate Limiter em memória por IP (Sliding Window Thread-Safe)
+class InMemoryRateLimiter:
+    def __init__(self):
+        self.requests = defaultdict(list)
+        self.lock = threading.Lock()
 
-load_dotenv()
+    def is_allowed(self, client_ip: str, max_requests: int, window_seconds: int) -> bool:
+        now = time.time()
+        with self.lock:
+            valid_window = now - window_seconds
+            self.requests[client_ip] = [t for t in self.requests[client_ip] if t > valid_window]
+            if len(self.requests[client_ip]) >= max_requests:
+                return False
+            self.requests[client_ip].append(now)
+            return True
+
+rate_limiter = InMemoryRateLimiter()
+
+@app.middleware("http")
+async def security_and_rate_limit_middleware(request: Request, call_next):
+    # 1. Proteção de Tamanho de Payload (Anti-DoS / Buffer Overflow)
+    content_length = request.headers.get("content-length")
+    if content_length and int(content_length) > 20 * 1024 * 1024:
+        return JSONResponse(status_code=413, content={"detail": "Payload excessivamente grande. Máximo permitido: 20MB."})
+
+    # 2. Identificação do IP Real (Suporte a Traefik / Coolify / Cloudflare)
+    forwarded = request.headers.get("x-forwarded-for")
+    client_ip = forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else "127.0.0.1")
+
+    # 3. Rate Limiting por Sensibilidade da Rota
+    path = request.url.path
+    heavy_paths = ["/api/voz/", "/api/visao/", "/api/documento/", "/api/creatives/", "/api/instagram/gerar-e-publicar", "/api/balanca/escanear-tela"]
+    if any(h in path for h in heavy_paths):
+        if not rate_limiter.is_allowed(f"{client_ip}:heavy", max_requests=10, window_seconds=60):
+            return JSONResponse(status_code=429, content={"detail": "Taxa de processamento de IA excedida. Máximo de 10 chamadas por minuto."})
+    else:
+        if not rate_limiter.is_allowed(f"{client_ip}:general", max_requests=120, window_seconds=60):
+            return JSONResponse(status_code=429, content={"detail": "Muitas requisições. Limite de 120 chamadas por minuto excedido."})
+
+    response: Response = await call_next(request)
+
+    # 4. Cabeçalhos de Segurança HTTP
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    return response
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "https://qkopgftfrfftoyndhhfj.supabase.co")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
@@ -1147,3 +1197,92 @@ async def definir_meta_aluno_api(req: MetaAlunoRequest):
         "orientacao_atleta": orientacao
     }
 
+
+
+
+@app.get("/api/fichas/varredura-onboarding")
+@app.post("/api/fichas/varredura-onboarding")
+async def varredura_onboarding_api():
+    """Varre todas as fichas no Supabase, identifica pendências e calcula conformidade de onboarding."""
+    from fichas_engine import executar_varredura_onboarding_completa
+    resultado = await executar_varredura_onboarding_completa(disparar_whatsapp=False)
+    return resultado
+
+@app.post("/api/fichas/disparar-followup-pendentes")
+async def disparar_followup_pendentes_api():
+    """Executa varredura e dispara mensagens cirúrgicas de WhatsApp para alunos pendentes."""
+    from fichas_engine import executar_varredura_onboarding_completa
+    resultado = await executar_varredura_onboarding_completa(disparar_whatsapp=True)
+    return resultado
+
+
+# -------------------------------------------------------------------------
+# SHOPEE AFFILIATE OPEN API ENDPOINTS (AUTONOMIA DE VENDAS MARCÃO PERSONAL)
+# -------------------------------------------------------------------------
+class ShopeeBuscaRequest(BaseModel):
+    termo: str
+    limite: Optional[int] = 3
+    sort_type: Optional[int] = 1
+
+class ShopeeGerarLinkRequest(BaseModel):
+    url_original: str
+    sub_id: Optional[str] = "marcao"
+
+class ShopeePrescreverRequest(BaseModel):
+    mensagem: str
+    sub_id: Optional[str] = "aluno"
+
+@app.get("/api/shopee/busca")
+async def shopee_busca_api(q: str, limit: int = 3, sort_type: int = 1):
+    """Busca produtos ao vivo na Shopee com links de afiliado oficiais e cálculo de custo/dia."""
+    try:
+        from shopee_affiliate_engine import buscar_produtos_shopee
+    except ImportError:
+        from apps.api.shopee_affiliate_engine import buscar_produtos_shopee
+    produtos = await buscar_produtos_shopee(keyword=q, limit=limit, sort_type=sort_type)
+    return {
+        "sucesso": True,
+        "termo": q,
+        "total": len(produtos),
+        "produtos": produtos
+    }
+
+@app.post("/api/shopee/gerar-link")
+async def shopee_gerar_link_api(req: ShopeeGerarLinkRequest):
+    """Gera link de afiliado encurtado oficial (s.shopee.com.br) para qualquer URL de produto."""
+    try:
+        from shopee_affiliate_engine import gerar_link_afiliado_shopee
+    except ImportError:
+        from apps.api.shopee_affiliate_engine import gerar_link_afiliado_shopee
+    link = await gerar_link_afiliado_shopee(url_original=req.url_original, sub_id=req.sub_id)
+    if not link:
+        raise HTTPException(status_code=400, detail="Não foi possível gerar o link de afiliado")
+    return {
+        "sucesso": True,
+        "url_original": req.url_original,
+        "short_link": link
+    }
+
+@app.post("/api/shopee/prescrever")
+async def shopee_prescrever_api(req: ShopeePrescreverRequest):
+    """Prescreve autonomamente o produto ideal da Shopee com base na dor física ou dúvida do aluno."""
+    try:
+        from shopee_affiliate_engine import prescrever_produto_autonomo
+    except ImportError:
+        from apps.api.shopee_affiliate_engine import prescrever_produto_autonomo
+    prescricao = await prescrever_produto_autonomo(mensagem_aluno=req.mensagem, sub_id=req.sub_id)
+    if not prescricao:
+        return {"sucesso": False, "mensagem": "Nenhuma dor mapeada ou produto encontrado"}
+    return {
+        "sucesso": True,
+        "prescricao": prescricao
+    }
+
+@app.get("/api/shopee/relatorio-vendas")
+async def shopee_relatorio_vendas_api(dias: int = 7):
+    """Consulta o relatório de pedidos e comissões da Shopee Open API."""
+    try:
+        from shopee_affiliate_engine import obter_relatorio_vendas_shopee
+    except ImportError:
+        from apps.api.shopee_affiliate_engine import obter_relatorio_vendas_shopee
+    return await obter_relatorio_vendas_shopee(dias=dias)

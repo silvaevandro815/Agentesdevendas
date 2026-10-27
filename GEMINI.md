@@ -39,6 +39,11 @@ Este documento é lido automaticamente no início de **toda e qualquer nova conv
 ## 7. Autonomia Total e Consciência Comercial de Vendas (Marcão Hunter de Vendas)
 - **Delegação Executiva do Diretor Evandro:** O agente Marcão Personal e a IA têm autonomia plena, contínua e prioritária para decidir o que vender, quando ofertar, como promover e quais produtos prescrever no WhatsApp, no Instagram Direct/Comentários, no site (`marcaopersonal.com`) e nos Reels/Stories diários. Vender a solução certa é a missão central do ecossistema.
 - **Ecossistema Multi-Plataforma Homologado:**
+  * **Shopee Affiliate Open API Integrada (Autonomia Total de Busca & Conversão):**
+    - Credenciais oficiais: AppId `18302091279`, Secret autenticada no `.env` (`SHOPEE_APP_ID`, `SHOPEE_SECRET`, `SHOPEE_GRAPHQL_URL`).
+    - Motor autônomo: `apps/api/shopee_affiliate_engine.py` com assinatura SHA256 e conversão instantânea de URLs para links encurtados oficiais (`https://s.shopee.com.br/...`).
+    - Prescrição dinâmica por dor do aluno: Se o aluno/lead no WhatsApp ou Instagram Direct queixar-se de dor física (joelho, ombro, lombar, cotovelo, punho, calos), necessidade de treino (strap, elástico extensor, corda, cinto, tênis reto, suporte de celular, garrafa térmica) ou pedir indicações de compras, o Marcão consulta a Shopee API em tempo real, seleciona o item campeão em avaliação, quebra o valor em custo por dia e fecha a venda em 2 a 4 balões curtos com o link oficial.
+    - Monitoramento de pedidos e comissões via `partnerOrderReport` e endpoints `/api/shopee/*`.
   * **Braip Integrado:** Token autenticado (`BRAIP_API_TOKEN`), Postbacks ativos em `https://n8n.marcaopersonal.com/webhook/braip-postback` (`cow5j2gy`), monitoramento em tempo real (`F4`) e recuperação automática de Pix/Boletos (`M8`).
   * **Amazon Associados Integrado:** Associate Tag Oficial `marcaopersona-20` ativa para todos os produtos físicos e de tecnologia fitness.
 - **Carro-Chefe Nº 1 — Balança Inteligente de Bioimpedância Shopee (R$ 34,90) com Mentoria VIP:**
@@ -69,5 +74,56 @@ Este documento é lido automaticamente no início de **toda e qualquer nova conv
   * **Personas Comuns Segmentadas:** Mulheres atléticas (treino feminino, glúteos, colágeno, creatina feminina), homens maduros e grisalhos de 55 a 65 anos (vigor masculino, articulações, Caneta Azempika — *LEMBRETE: estritamente proibido o rosto de Evandro para produtos de potência sexual*), corredores (smartwatch/GPS).
 - **LEGENDAS SINCRONIZADAS QUEIMADAS NA TELA (MANDATÓRIO ABSOLUTO):** É terminantemente proibido publicar qualquer vídeo sem legendas visíveis na tela. Como grande parte dos usuários assiste vídeos sem áudio nas redes sociais, todo vídeo deve conter legendas dinâmicas, com tipografia legível, contorno escuro e destaque em palavras-chave em amarelo/branco posicionadas no terço médio-inferior da tela.
 
+## 10. Regra Inviolável de Padrão Cinematográfico: Multi-Cenas (6 a 8 Cortes), Riqueza de Ambientes e Matriz Facial Fiel
+- **PROIBIDO CENA ÚNICA OU BOOMERANG PENDULAR:** É expressamente proibido gerar vídeos com cena única ou loops de ida e volta repetitivos que cansam o espectador.
+- **OBRIGATÓRIO MULTI-CENAS DINÂMICAS (6 A 8 CORTES A CADA 3 A 4 SEGUNDOS):** Todo vídeo deve ser estruturado e editado como um filme cinematográfico com cortes ágeis:
+  1. Gancho de curiosidade e atenção nos primeiros 3 segundos.
+  2. Elementos científicos e biológicos em 3D (células, mitocôndrias, gordura visceral, contração de fibras musculares, via mTOR).
+  3. Produto físico em rotação 360 graus com iluminação de estúdio de alta tecnologia.
+  4. Demonstração prática de uso do produto (eletrodos da balança acendendo, app Marcão AI no celular).
+  5. Atleta em múltiplos ambientes de vida e treino (academia de luxo, praia ao entardecer, trilha na natureza, parque urbano / futebol, cozinha preparando suplemento, etc.).
+  6. Closer de vendas com quebra do valor em custo por dia e chamada para o link da Bio.
+- **MATRIZ FACIAL EXATA DO DIRETOR EVANDRO (FRENTE + LADO2):** Em todas as gerações da persona do fundador Evandro, é obrigatório utilizar como âncora a triangulação fotográfica de ssets/evandro/frente.jpg e ssets/evandro/lado2.jpg (ângulo 3/4) para replicação fiel e consistente de seus traços faciais, estrutura óssea, nariz, mandíbula e olhar.
 
 
+## 11. Regra Inviolável de Cibersegurança & Proteção Total (Padrão Anti-Vibecoding Obrigatório)
+- **ZERO VAZAMENTO DE SEGREDOS NO FRONTEND (PILAR 1):** É expressamente proibido expor qualquer chave privada (`sk_...`, `SUPABASE_SERVICE_ROLE_KEY`, `OPENROUTER_API_KEY`, `STRIPE_SECRET_KEY`, `EVOLUTION_API_KEY`, Meta tokens) no código do cliente (HTML, JS, frameworks front-end, Next.js público, Vite). Nenhuma chave sensível pode ter fallback hardcoded em arquivos de código. Toda e qualquer integração externa que exija credenciais deve ser intermediada exclusivamente por endpoints server-side (proxy/relay seguro) que leem o `.env` no servidor.
+- **AUTENTICAÇÃO SERVER-SIDE & PROTEÇÃO DE SESSÃO / COOKIES (PILAR 2):** Nenhuma página administrativa, painel executivo ou rota com dados de clientes/alunos pode depender de verificações puramente client-side.
+  * Todas as rotas de API protegidas (`/api/approvals`, `/api/vip/*`, `/api/cfo/*`, etc.) DEVEM validar sessão via token assinado (HMAC-SHA256) ou cookie HTTP-Only no backend (`requireAdminAuth`).
+  * Se o cookie for excluído ou a requisição não possuir credenciais válidas, o servidor DEVE rejeitar imediatamente com HTTP 401 Unauthorized.
+  * O painel executivo possui tela de bloqueio (Login Gate) com senha mestra (`ADMIN_MASTER_PASSWORD`), invalidando imediatamente qualquer tentativa de bypass.
+- **RATE LIMITING OBRIGATÓRIO EM TODOS OS SERVIÇOS (PILAR 3):** Toda aplicação do ecossistema (Node.js/Express, Python/FastAPI, Next.js) deve possuir limitadores de taxa (Rate Limiting) ativos por IP:
+  * Endpoints de Login / Autenticação: Limite estrito de no máximo 5 tentativas por 15 minutos (anti-brute force).
+  * Endpoints de Telemetria e Formulários Públicos (`/api/track`, `/api/lead`): Máximo de 30 requisições por minuto.
+  * Endpoints de Processamento Pesado de IA / GPU / Automações (`/api/creatives/generate`, `/api/voz/`, etc.): Máximo de 3 a 10 requisições por minuto para impedir exaustão de saldo de APIs e esgotamento de CPU/GPU.
+- **CABEÇALHOS DE SEGURANÇA HTTP & BUFFER OVERFLOW (HELMET):** Todos os servidores devem aplicar cabeçalhos de segurança via Helmet/Middleware (`X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN` contra clickjacking, HSTS e desativação do cabeçalho `X-Powered-By`). Limite rigoroso de tamanho de payload JSON (máximo de 30KB no site público e 100KB no admin) contra ataques de estouro de buffer e Denial of Service (DoS).
+
+
+## 12. Regra Inviolável de Ativação das 9 Instagram Skills & Diversidade Criativa Total
+- **ATIVIDADE OBRIGATÓRIA DAS 9 INSTAGRAM SKILLS:** Todas as produções de Reels, Stories, Carrosséis e Legendas DEVEM seguir a engenharia de conteúdo do framework `instagram-skills` (`apps/api/instagram_skills_engine.py` e `.agents/skills/`):
+  1. `ig-audience-insights`: Leitura contínua das métricas reais da conta (Graph API) para guiar os temas de maior engajamento.
+  2. `ig-hook-extractor`: Roteiros e carrosséis iniciam com uma das 10 fórmulas canônicas de retenção nos primeiros 3 segundos.
+  3. `ig-caption-writer`: O gancho da legenda DEVE estar estritamente dentro dos primeiros 125 caracteres (antes do botão "...mais").
+  4. `ig-hashtag-strategist`: Proibido paredes de 30 hashtags. Obrigatório usar de 3 a 5 hashtags dimensionadas (nicho, média e ampla).
+  5. `ig-humanizer`: Desintoxicação ativa de clichês e jargões robóticos de IA, aplicando a voz autêntica, direta e vigorosa do Treinador Marcão.
+  6. `ig-carousel-planner` & `ig-repurposer`: Carrosséis de 5 a 10 lâminas focados na alavanca máxima de Salvamento (Saves).
+- **DIVERSIDADE TOTAL DE CENAS, AMBIENTES E PRODUTOS (PROIBIDO REPETIR):**
+  * É expressamente proibido publicar temas ou ambientes repetidos consecutivamente.
+  * A esteira deve rotacionar obrigatoriamente entre os múltiplos ambientes (Cozinha de alta tecnologia preparando suplementos, Praia / Orla marítima ao entardecer, Academia moderna de luxo com pesos livres, Trilha na natureza / montanhas, Pista de atletismo / calistenia urbana, Living room com a Balança Shopee).
+  * A esteira deve rotacionar entre o catálogo oficial completo: Balança Shopee Oficial (R$ 34,90), Creatina Micronizada Pura, Whey Protein, Smartwatch Strava, Ômega 3 + Colágeno Articular, Roupas de Compressão UV50+ e Sono Anabólico GH.
+
+
+## 13. Regra Inviolável Anti-Repetição & Proibição de "Homem Loiro com Shaker"
+- **PROIBIDO GERAR OU PUBLICAR "HOMEM LOIRO BEBENDO EM GARRAFA":**
+  É expressamente proibido gerar ou publicar criativos, posts ou carrosséis com imagens genéricas de homens loiros bebendo em coqueteleira/garrafa de plástico. Toda geração fotográfica deve ter prompt com negative prompt explícito: `blond hair, blonde man, plastic shaker cup, generic stock photo`.
+- **SENTINELA ANTI-REPETIÇÃO EM TEMPO REAL (META GRAPH API):**
+  Antes de selecionar qualquer post para o Instagram (no n8n `I2`, no `creative_factory.py` ou na esteira de vídeo), o sistema DEVE checar em tempo real os últimos 10 posts publicados na conta `@marcaopersonalfitness`.
+  * Se um tema ou produto (ex: Creatina) foi publicado nos últimos 4 posts, ele é **SUMARIAMENTE BLOQUEADO** para publicação no dia.
+  * O sistema é obrigado a escolher o tema menos recentemente utilizado dentre o catálogo oficial de 8 produtos.
+- **DIVERSIDADE OBRIGATÓRIA DE PERSONAS & AMBIENTES:**
+  A esteira deve rotacionar estritamente entre:
+  1. *Evandro Gallina (Fundador & Atleta):* Matriz facial fiel (`assets/evandro/frente.jpg` e `assets/evandro/lado2.jpg`) em academia de luxo, praia ao entardecer ou trilha.
+  2. *Mulher Atlética Brasileira (28 a 35 anos):* Treino feminino de glúteos/pernas, colágeno dérmico e definição muscular.
+  3. *Homem Maduro Grisalho Elegante (55 a 65 anos):* Mobilidade articular, longevidade e Caneta Azempika (*proibido rosto de Evandro para produtos de potência sexual*).
+  4. *Corredor Urbano / Calistenia:* Monitoramento cardíaco Strava e Smartwatch.
+  5. *Renderização Científica e Celular em 3D:* Mitocôndrias, via mTOR, quebra de triglicerídeos e gordura visceral.

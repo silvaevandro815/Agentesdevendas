@@ -58,9 +58,19 @@ except ImportError:
 try:
     from catalog_service import obter_catalogo_para_prompt
     from autonomous_curator import processar_e_ingerir_afiliado
+    from shopee_affiliate_engine import (
+        buscar_produtos_shopee,
+        gerar_link_afiliado_shopee,
+        prescrever_produto_autonomo
+    )
 except ImportError:
     from apps.api.catalog_service import obter_catalogo_para_prompt
     from apps.api.autonomous_curator import processar_e_ingerir_afiliado
+    from apps.api.shopee_affiliate_engine import (
+        buscar_produtos_shopee,
+        gerar_link_afiliado_shopee,
+        prescrever_produto_autonomo
+    )
 
 def identificar_genero(push_name: str) -> str:
     """Identifica se o contato é homem ou mulher pelo primeiro nome."""
@@ -955,6 +965,31 @@ async def processar_mensagem_marcao(payload_webhook: dict) -> dict:
 
     bloco_catalogo_unificado = await obter_catalogo_para_prompt()
 
+    # PRESCRICAO AUTONOMA VIA SHOPEE OPEN API EM TEMPO REAL
+    bloco_shopee_autonomo = ""
+    if not is_evandro and texto_recebido:
+        try:
+            prescricao = await prescrever_produto_autonomo(texto_recebido, sub_id=target_number or "aluno")
+            if prescricao and prescricao.get("produto"):
+                prod = prescricao["produto"]
+                bloco_shopee_autonomo = f"""
+AUTONOMIA TOTAL DE VENDA SHOPEE (API EM TEMPO REAL):
+O aluno expressou dor, queixa ou necessidade relacionada a: '{prescricao.get("termo_buscado", "")}' (Categoria: {prescricao.get("dor_detectada", "acessorio de treino")}).
+A API Oficial da Shopee buscou em tempo real o produto mais recomendado:
+- PRODUTO: {prod.get("titulo")}
+- PREÇO: {prod.get("preco_formatado")} (Custo diário: {prod.get("custo_dia_formatado")} por dia!)
+- AVALIAÇÃO: ⭐ {prod.get("avaliacao")} estrelas
+- LINK OFICIAL DE AFILIADO SHOPEE: {prod.get("link_afiliado")}
+
+INSTRUÇÃO CLOSER MANDATÓRIA DO TREINADOR:
+Recomende com entusiasmo e autoridade este acessório/produto para resolver a queixa do aluno!
+1. Empatia com a dor física + explicação biomecânica curta.
+2. Ancoragem de valor: '{prod.get("custo_dia_formatado")} por dia, menos que um troco de bala!'.
+3. Mande o link oficial de afiliado no último balão para ele garantir agora!
+"""
+        except Exception as e_shopee:
+            print("[MARCAO ENGINE] Erro buscando produto Shopee:", e_shopee)
+
     system_prompt = f"""Você é o MARCÃO PERSONAL, personal trainer maromba de 35 anos, fundador do Marcão Personal 360°.
 Você é um ser humano autêntico, animado, focado em musculação, saúde, treino pesado e estética corporal.
 
@@ -1066,6 +1101,8 @@ O pote vem com 100 doses diárias. Isso dá apenas R$ 1,69 por dia, menos que me
 Deixar pro mês que vem é jogar 30 dias de evolução no lixo e continuar estagnado no espelho. O lote oficial com frete promocional tá ativo agora, garante a sua aqui: https://ev.braip.com/ref?pl=pla1x6xn&ck=chen80rq&af=afimeno621"
 
 {bloco_catalogo_unificado}
+
+{bloco_shopee_autonomo}
 
 PODER DE VISÃO COMPUTACIONAL & ANÁLISE DE MÍDIAS:
 - Você tem VISÃO TOTAL para enxergar qualquer imagem, foto ou arquivo enviado (artes, pratos de comida, suplementos, prints, exames ou documentos)!
