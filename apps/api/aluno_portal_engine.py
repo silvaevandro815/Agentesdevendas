@@ -52,8 +52,10 @@ async def calcular_ranking_top5(aluno_atual_telefone: str) -> list:
     ]
     
     resultado = []
+    last8_atual = tel_limpo[-8:] if len(tel_limpo) >= 8 else tel_limpo
     for pos, r in enumerate(ranking_base, 1):
-        is_user = (tel_limpo and tel_limpo in r["telefone"]) or (r["telefone"] in tel_limpo)
+        r_tel = "".join(filter(str.isdigit, str(r.get("telefone", ""))))
+        is_user = bool(last8_atual and (last8_atual in r_tel or r_tel in tel_limpo))
         resultado.append({
             "posicao": pos,
             "nome": r["nome"],
@@ -187,11 +189,11 @@ async def obter_dados_portal_aluno(identificador: str) -> Dict[str, Any]:
     ficha = None
 
     async with httpx.AsyncClient(verify=False, timeout=12.0) as client:
-        # 1. Busca em fichas_alunos
-        query = f"{SUPABASE_URL}/rest/v1/fichas_alunos?or=(telefone.eq.{id_limpo},remote_jid.ilike.*{id_limpo}*)&select=*"
+        # 1. Busca flexível em fichas_alunos (com ou sem dígito 9 e DDI 55)
+        last8 = id_limpo[-8:] if len(id_limpo) >= 8 else id_limpo
+        query = f"{SUPABASE_URL}/rest/v1/fichas_alunos?or=(telefone.eq.{id_limpo},remote_jid.ilike.*{id_limpo}*,telefone.ilike.*{last8}*,remote_jid.ilike.*{last8}*)&select=*"
         if id_limpo.isdigit() and len(id_limpo) < 6:
             query = f"{SUPABASE_URL}/rest/v1/fichas_alunos?or=(id.eq.{id_limpo},telefone.eq.{id_limpo})&select=*"
-        
         res = await client.get(query, headers=headers)
         if res.status_code == 200 and res.json():
             ficha = res.json()[0]

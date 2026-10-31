@@ -826,6 +826,82 @@ async def processar_mensagem_marcao(payload_webhook: dict) -> dict:
 
     tem_conversa_recente = len(historico_mensagens) > 0
 
+    link_portal_aluno = f"https://marcaopersonal.com/aluno?id={target_number}"
+
+    # -------------------------------------------------------------------------
+    # DETECÇÃO DE PEDIDO DA PLATAFORMA / LANDING PAGE INDIVIDUAL DO ALUNO
+    # -------------------------------------------------------------------------
+    termos_portal = [
+        "landpage", "landing page", "landingpage", "landing-page",
+        "minha pagina", "minha página", "meu portal", "portal do aluno",
+        "meus dados", "minhas metricas", "minhas métricas", "minha plataforma",
+        "plataforma de saude", "plataforma de saúde", "link da pagina", "link da página",
+        "link do meu portal", "link dos meus dados", "link dos meus treinos",
+        "link com minhas metricas", "link com meus dados", "onde vejo meus dados",
+        "onde vejo minhas metricas", "onde vejo meus treinos", "ver meu ranking",
+        "minha evolucao", "minha evolução", "ver minhas fotos", "link da plataforma"
+    ]
+    pediu_portal = any(t in texto_lower for t in termos_portal) and not any(p in texto_lower for p in ["shopee", "comprar", "preco", "preço", "quanto custa"])
+
+    if pediu_portal:
+        resp_portal = (
+            f"Fala, {primeiro_nome or 'campeão'}! Tá na mão o seu acesso exclusivo à sua Central de Saúde & Treinos:\n\n"
+            f"{link_portal_aluno}\n\n"
+            f"Lá você acompanha sua matemática física diária (metas de água, proteínas e calorias), sua ficha de treinos completa, horários ideais de sono, evolução por fotos e seu ranking semanal! Dá uma olhada e bora pra cima! 👊🔥"
+        )
+        historico_mensagens.append({"role": "user", "content": texto_recebido, "timestamp": datetime.now().isoformat()})
+        historico_mensagens.append({"role": "assistant", "content": resp_portal, "timestamp": datetime.now().isoformat()})
+        await salvar_historico_lead(f"{target_number}@s.whatsapp.net", target_number, push_name, historico_mensagens, texto_recebido)
+
+        parags = [p.strip() for p in resp_portal.split("\n\n") if p.strip()]
+        for i, p in enumerate(parags):
+            await enviar_presenca(target_number, "composing", delay_ms=1800)
+            await asyncio.sleep(1.2)
+            await enviar_texto_whatsapp(target_number, p)
+            if i < len(parags) - 1:
+                await asyncio.sleep(0.8)
+
+        return {
+            "sucesso": True,
+            "tipo": "envio_portal_aluno",
+            "target": target_number,
+            "resposta": resp_portal
+        }
+
+    # -------------------------------------------------------------------------
+    # VALIDAÇÃO ANTIFRAUDE DA BALANÇA SHOPEE & MENTORIA VIP GRATUITA (90 DIAS)
+    # -------------------------------------------------------------------------
+    termos_comprovante_balanca = [
+        "comprei a balanca", "comprei a balança", "ja comprei a balanca", "já comprei a balança",
+        "ativar mentoria", "ativar meu acompanhamento", "ativar o acompanhamento", "ativar vip"
+    ]
+    pediu_ativar_balanca = any(t in texto_lower for t in termos_comprovante_balanca) and not is_evandro and not ("tem_balanca" in locals() and tem_balanca)
+    
+    if pediu_ativar_balanca:
+        resp_antifraude = (
+            f"Parabéns demais pela decisão, {primeiro_nome or 'campeão'}! Ter a balança inteligente é o passo que muda o seu jogo! 👊💪\n\n"
+            f"Pra eu destravar seus 90 dias de Mentoria VIP gratuita aqui no sistema, me manda o *ID / Código do Pedido da Shopee* (ou 1 print da tela 'Detalhes do Pedido' no seu app da Shopee).\n\n"
+            f"Nosso sistema cruza com o relatório oficial de vendas da Shopee e ativa seu prontuário na hora! 🦁"
+        )
+        historico_mensagens.append({"role": "user", "content": texto_recebido, "timestamp": datetime.now().isoformat()})
+        historico_mensagens.append({"role": "assistant", "content": resp_antifraude, "timestamp": datetime.now().isoformat()})
+        await salvar_historico_lead(f"{target_number}@s.whatsapp.net", target_number, push_name, historico_mensagens, texto_recebido)
+
+        parags = [p.strip() for p in resp_antifraude.split("\n\n") if p.strip()]
+        for i, p in enumerate(parags):
+            await enviar_presenca(target_number, "composing", delay_ms=2000)
+            await asyncio.sleep(1.2)
+            await enviar_texto_whatsapp(target_number, p)
+            if i < len(parags) - 1:
+                await asyncio.sleep(0.8)
+
+        return {
+            "sucesso": True,
+            "tipo": "solicitacao_comprovante_shopee",
+            "target": target_number,
+            "resposta": resp_antifraude
+        }
+
     # Consulta de Status VIP da Balança de Bioimpedância e Scoring de Vendas
     status_vip_info = await verificar_status_vip(target_number) if not is_evandro else {}
     tem_balanca = status_vip_info.get("tem_balanca", False)
@@ -928,6 +1004,7 @@ async def processar_mensagem_marcao(payload_webhook: dict) -> dict:
         faltas = diag_pend.get("campos_faltantes", [])
 
         link_strava_oauth = f"https://api.marcaopersonal.com/api/integracoes/strava/oauth?tel={target_number}"
+        link_portal_aluno = f"https://marcaopersonal.com/aluno?id={target_number}"
 
         instrucao_vip = (
             f"ALUNO ATIVO DO MARCÃO PERSONAL ({primeiro_nome}):\n"
@@ -943,6 +1020,8 @@ async def processar_mensagem_marcao(payload_webhook: dict) -> dict:
             f"  * Suplementos Essenciais: {'Em uso' if diag_pend.get('tem_suplementos_essenciais') else 'NÃO TOMA - PRESCREVER CREATINA MICRONIZADA E VITAMINAS/COLÁGENO ESSENCIAIS PARA BLINDAR ARTICULAÇÕES E RECUPERAÇÃO'}\n"
             f"  * Acompanhamento Nutricional: Se oportuno, peça foto do almoço ou da janta para avaliar se tem nutrientes suficientes para vencer dores e atingir a meta!\n"
             f"  * Smartwatch / Strava: {'Já conectado ao Strava' if diag_pend.get('tem_strava') else f'Se treina na academia ou esporte aeróbico, ofereça relógio inteligente ou peça para conectar ao Strava: {link_strava_oauth}'}\n"
+            f"- LINK OFICIAL DO PORTAL DO ALUNO: {link_portal_aluno}\n"
+            f"  * Se o aluno pedir o link da página, landing page, métricas, dados ou ficha de treino: NUNCA mande marcaopersonal.com#loja! Mande {link_portal_aluno}!\n"
             f"- DIRETRIZ DE COBRANÇA PERSISTENTE: Cobre com carinho, proximidade e autoridade de personal as pendências acima sem deixar nenhum dado em branco!"
         )
     elif tem_balanca:
