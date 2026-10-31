@@ -166,7 +166,8 @@ services:
     environment:
       - PORT=8000
       - SUPABASE_URL=https://qkopgftfrfftoyndhhfj.supabase.co
-      - SUPABASE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - SUPABASE_KEY=${SUPABASE_KEY:-${SUPABASE_SERVICE_ROLE_KEY}}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_KEY:-${SUPABASE_SERVICE_ROLE_KEY}}
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
     networks:
       - loja_network

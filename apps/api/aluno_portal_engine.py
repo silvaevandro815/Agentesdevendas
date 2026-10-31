@@ -26,7 +26,7 @@ load_dotenv(os.path.join(_base_dir, "..", "..", ".env"))
 load_dotenv()
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "https://qkopgftfrfftoyndhhfj.supabase.co")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY") or os.getenv("SUPABASE_SERVICE_ROLE_KEY") or "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrb3BnZnRmcmZmdG95bmRoaGZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MTgwMTU4MywiZXhwIjoyMTA3Mzc3NTgzfQ.S_RRdnI6SZTVR1UH7jryDVHf316YmnMOVEBuoedyKv8"
 
 def get_supabase_headers():
     return {
