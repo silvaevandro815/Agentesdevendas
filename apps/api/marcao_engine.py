@@ -191,11 +191,15 @@ def eh_numero_teste_ou_invalido(numero: str) -> bool:
             
     return False
 
-def quebrar_em_baloes_curtos(texto: str, max_chars: int = 130, max_baloes: int = 3) -> list:
+def quebrar_em_baloes_curtos(texto: str, max_chars: int = 110, min_baloes: int = 4, max_baloes: int = 5) -> list:
     """
-    Divide a resposta em no máximo 2 a 3 balões curtos e leves (80 a 130 caracteres),
-    preservando links íntegros no último balão.
+    Divide a resposta em exatamente 4 a 5 balões curtos, ágeis e naturais (50 a 110 caracteres),
+    preservando links íntegros no último balão e garantindo a cadência humana do Marcão.
     """
+    if not texto:
+        return []
+
+    # 1. Separar linhas e quebras intencionais
     linhas = [l.strip() for l in re.split(r'\n+', texto) if l.strip()]
     frases = []
     for l in linhas:
@@ -211,6 +215,23 @@ def quebrar_em_baloes_curtos(texto: str, max_chars: int = 130, max_baloes: int =
             partes = [p.strip() for p in re.split(r'(?<=[.!?])\s+', l) if p.strip()]
             frases.extend(partes)
 
+    # 2. Se tivermos poucas frases, quebrar frases longas em metades
+    if len(frases) < min_baloes:
+        frases_expandidas = []
+        for f in frases:
+            if f.startswith("http") or len(f) <= 50:
+                frases_expandidas.append(f)
+            else:
+                palavras = f.split()
+                meio = len(palavras) // 2
+                if meio > 0 and len(palavras) >= 5:
+                    frases_expandidas.append(" ".join(palavras[:meio]))
+                    frases_expandidas.append(" ".join(palavras[meio:]))
+                else:
+                    frases_expandidas.append(f)
+        frases = frases_expandidas
+
+    # 3. Agrupar em balões respeitando max_chars
     baloes = []
     balao_atual = ""
     for f in frases:
@@ -232,35 +253,41 @@ def quebrar_em_baloes_curtos(texto: str, max_chars: int = 130, max_baloes: int =
     if balao_atual:
         baloes.append(balao_atual)
 
-    # Se o último balão for um link isolado e o anterior for curto, junta os dois
-    if len(baloes) > 1 and baloes[-1].startswith("http"):
-        if len(baloes[-2]) + len(baloes[-1]) + 1 <= 140:
-            baloes[-2] = baloes[-2] + " " + baloes[-1]
-            baloes.pop()
+    # 4. Ajustar para faixa de min_baloes a max_baloes (4 a 5)
+    tentativas = 0
+    while len(baloes) < min_baloes and tentativas < 4:
+        tentativas += 1
+        candidatos = [(idx, len(b)) for idx, b in enumerate(baloes) if not b.startswith("http") and len(b) > 40]
+        if not candidatos:
+            break
+        candidatos.sort(key=lambda x: x[1], reverse=True)
+        idx_maior = candidatos[0][0]
+        texto_maior = baloes[idx_maior]
+        palavras = texto_maior.split()
+        if len(palavras) < 4:
+            break
+        meio = len(palavras) // 2
+        p1 = " ".join(palavras[:meio])
+        p2 = " ".join(palavras[meio:])
+        baloes = baloes[:idx_maior] + [p1, p2] + baloes[idx_maior+1:]
 
-    if len(baloes) > max_baloes:
-        tem_link_no_fim = baloes[-1].startswith("http")
-        if tem_link_no_fim and max_baloes >= 2:
-            texto_baloes = baloes[:-1]
-            slots = max_baloes - 1
-            tamanho = max(1, len(texto_baloes) // slots)
-            novos = []
-            for s in range(slots):
-                inicio = s * tamanho
-                fim = (s + 1) * tamanho if s < slots - 1 else len(texto_baloes)
-                novos.append(" ".join(texto_baloes[inicio:fim]))
-            novos.append(baloes[-1])
-            baloes = novos
-        else:
-            tamanho = max(1, len(baloes) // max_baloes)
-            novos = []
-            for s in range(max_baloes):
-                inicio = s * tamanho
-                fim = (s + 1) * tamanho if s < max_baloes - 1 else len(baloes)
-                novos.append(" ".join(baloes[inicio:fim]))
-            baloes = novos
+    # Se passar de max_baloes (5), fundir balões menores adjacentes
+    while len(baloes) > max_baloes:
+        tem_link = baloes[-1].startswith("http")
+        limite_busca = len(baloes) - 2 if tem_link else len(baloes) - 1
+        if limite_busca < 1:
+            break
+        menor_par_idx = 0
+        menor_tam_par = 9999
+        for i in range(limite_busca):
+            tam = len(baloes[i]) + len(baloes[i+1])
+            if tam < menor_tam_par:
+                menor_tam_par = tam
+                menor_par_idx = i
+        baloes[menor_par_idx] = baloes[menor_par_idx] + " " + baloes[menor_par_idx+1]
+        baloes.pop(menor_par_idx+1)
 
-    return [b for b in baloes if b.strip()]
+    return [b.strip() for b in baloes if b.strip()]
 
 async def enviar_presenca(target_number: str, presenca: str, delay_ms: int = 4000):
     """Envia presença na Evolution API (composing ou recording)."""
@@ -568,16 +595,19 @@ async def processar_mensagem_marcao(payload_webhook: dict) -> dict:
     # 4. Efeito Reação de Emoji no WhatsApp (Surpreender e Acolher o Usuário)
     msg_id = key.get("id")
     if raw_jid and msg_id:
+        emojis_treinador = ["👊", "💪", "🔥", "🦁", "👍"]
         if is_evandro:
             emoji_reacao = "💪"
         elif is_foto or is_pdf:
             emoji_reacao = "🔥"
-        elif any(w in texto_recebido.lower() for w in ["treino", "academia", "musculo", "massa", "creatina", "hipertrofia"]):
+        elif any(w in texto_recebido.lower() for w in ["treino", "academia", "musculo", "massa", "creatina", "hipertrofia", "supino", "agachamento"]):
             emoji_reacao = "💪"
-        elif any(w in texto_recebido.lower() for w in ["secar", "emagrecer", "gordura", "barriga", "dieta", "peso"]):
+        elif any(w in texto_recebido.lower() for w in ["secar", "emagrecer", "gordura", "barriga", "dieta", "peso", "balanca"]):
             emoji_reacao = "👊"
+        elif any(w in texto_recebido.lower() for w in ["valeu", "obrigado", "show", "boa", "bora", "vamos"]):
+            emoji_reacao = "🦁"
         else:
-            emoji_reacao = "👊"
+            emoji_reacao = random.choice(emojis_treinador)
         asyncio.create_task(reagir_mensagem_whatsapp(raw_jid, msg_id, emoji_reacao))
 
     # Download de mídia para visão computacional e leitura de PDF
@@ -1297,7 +1327,7 @@ REGRAS OBRIGATÓRIAS DE CONVERSAÇÃO HUMANA:
    - Se ele pediu áudio, mande um recado em áudio animado de prontidão.
    - Se pedir status, relatório ou ordens, responda com prontidão executiva.
 4. FORMATO DA RESPOSTA:
-   - {'Se for ÁUDIO: crie um texto falado, direto, fluido e persuasivo (35 a 55 palavras no máximo). No áudio, NÃO soletre URLs longas; diga algo como: "Tô te mandando o link direto aqui no nosso chat pra você conferir agora!" e coloque o link ao final.' if pediu_audio else 'Se for TEXTO: divida em 2 ou 3 parágrafos curtos separados por duas quebras de linha (\\n\\n) para leitura dinâmica com pausas. O link do produto e o chamado para fechar devem vir em destaque no final.'}"""
+   - {'Se for ÁUDIO: crie um texto falado, direto, fluido e persuasivo (35 a 55 palavras no máximo). No áudio, NÃO soletre URLs longas; diga algo como: "Tô te mandando o link direto aqui no nosso chat pra você conferir agora!" e coloque o link ao final.' if pediu_audio else 'Se for TEXTO: divida OBRIGATORIAMENTE sua resposta em 4 a 5 balões curtos e ágeis (50 a 110 caracteres por balão), separados por duas quebras de linha (\\n\\n). NUNCA mande textão em bloco único! Conclua o último balão com uma pergunta motivadora ou o link oficial.'}"""
 
     messages_llm = [{"role": "system", "content": system_prompt}]
     for h in historico_mensagens[-10:]:
@@ -1369,13 +1399,13 @@ REGRAS OBRIGATÓRIAS DE CONVERSAÇÃO HUMANA:
             "resposta": resposta_gerada
         }
     else:
-        baloes = quebrar_em_baloes_curtos(resposta_gerada, max_chars=130, max_baloes=3)
+        baloes = quebrar_em_baloes_curtos(resposta_gerada, max_chars=110, min_baloes=4, max_baloes=5)
         for i, b in enumerate(baloes):
-            await enviar_presenca(target_number, "composing", delay_ms=2000)
-            await asyncio.sleep(1.2)
+            await enviar_presenca(target_number, "composing", delay_ms=2200)
+            await asyncio.sleep(1.5)
             await enviar_texto_whatsapp(target_number, b)
             if i < len(baloes) - 1:
-                await asyncio.sleep(1.2)
+                await asyncio.sleep(1.5)
         return {
             "sucesso": True,
             "tipo": "texto",

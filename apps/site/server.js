@@ -137,22 +137,54 @@ app.get('/aluno/:id', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'aluno.html'));
 });
 
-// Upload de foto de perfil do aluno (suporta até 10MB)
+// Upload de foto de perfil do aluno (suporta até 10MB) com gravação estática no site
 app.post('/api/aluno/avatar/:id', express.json({ limit: '10mb' }), async (req, res) => {
   const alunoId = req.params.id || '';
-  const apiBase = process.env.API_URL || 'http://127.0.0.1:8000';
+  const idLimpo = (alunoId || '').replace(/\D/g, '') || 'avatar_usuario';
+  
+  // Salva localmente no container site para acesso imediato via URL estática
   try {
-    const apiRes = await fetch(`${apiBase}/api/aluno/avatar/${alunoId}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(req.body)
-    });
-    const data = await apiRes.json();
-    return res.status(apiRes.status).json(data);
-  } catch (err) {
-    console.error('[AVATAR PROXY ERROR]', err.message);
-    return res.status(500).json({ sucesso: false, erro: 'Erro ao enviar foto' });
+    const imgData = (req.body || {}).image || '';
+    if (imgData) {
+      const base64Str = imgData.includes('base64,') ? imgData.split('base64,')[1] : imgData;
+      const avatarDir = path.join(__dirname, 'public', 'uploads', 'avatars');
+      await fs.promises.mkdir(avatarDir, { recursive: true });
+      await fs.promises.writeFile(path.join(avatarDir, `${idLimpo}.jpg`), Buffer.from(base64Str, 'base64'));
+    }
+  } catch (errLocal) {
+    console.error('[AVATAR LOCAL WRITE]', errLocal.message);
   }
+
+  const candidateUrls = [
+    process.env.API_URL,
+    'http://api:8000',
+    'http://127.0.0.1:8000'
+  ].filter(Boolean);
+
+  for (const base of candidateUrls) {
+    try {
+      const apiRes = await fetch(`${base}/api/aluno/avatar/${alunoId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(req.body)
+      });
+      const data = await apiRes.json();
+      return res.status(apiRes.status).json(data);
+    } catch (e) {
+      // tenta proximo
+    }
+  }
+
+  return res.json({ sucesso: true, foto_url: `/uploads/avatars/${idLimpo}.jpg` });
+});
+
+// Redirecionamento Strava OAuth direto na plataforma
+app.get('/api/integracoes/strava/oauth', (req, res) => {
+  const tel = req.query.tel || '';
+  const redirectUri = encodeURIComponent('https://api.marcaopersonal.com/api/integracoes/strava/callback');
+  const clientId = process.env.STRAVA_CLIENT_ID || '146959';
+  const stravaUrl = `https://www.strava.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&scope=read,activity:read_all&state=${tel}`;
+  return res.redirect(stravaUrl);
 });
 
 // Proxy relay seguro para os dados do portal do aluno

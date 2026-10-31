@@ -508,23 +508,54 @@
       margin-top: 4px;
     }
 
-    /* PODIUM VISUAL (1º, 2º e 3º) */
+    /* PODIUM VISUAL (1º, 2º e 3º) - RESPONSIVO E SEGURO NO MOBILE */
     .podium-grid {
       display: grid;
-      grid-template-columns: 1fr 1.15fr 1fr;
-      gap: 10px;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr) minmax(0, 1fr);
+      gap: 8px;
       align-items: flex-end;
       margin-bottom: 18px;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     .podium-card {
       background: rgba(11, 22, 44, 0.85);
       border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 18px;
-      padding: 16px 8px;
+      border-radius: 16px;
+      padding: 14px 6px;
       text-align: center;
       position: relative;
       transition: transform 0.2s ease;
+      min-width: 0 !important;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    @media (max-width: 480px) {
+      .ranking-container {
+        padding: 16px 8px !important;
+      }
+      .podium-grid {
+        gap: 5px !important;
+      }
+      .podium-card {
+        padding: 10px 3px !important;
+        border-radius: 12px !important;
+      }
+      .podium-name {
+        font-size: 11px !important;
+      }
+      .podium-score {
+        font-size: 10px !important;
+      }
+      .podium-streak {
+        font-size: 9px !important;
+      }
+      .podium-card.first {
+        padding-top: 18px !important;
+        padding-bottom: 12px !important;
+      }
     }
 
     .podium-card.first {
@@ -658,39 +689,50 @@
       text-align: right;
     }
 
-    /* STORY SHARE BOX */
+    /* STORY SHARE BOX (FUNDO PRETO & ALTO CONTRASTE) */
     .story-share-banner {
-      background: linear-gradient(135deg, rgba(0, 229, 255, 0.15) 0%, rgba(0, 255, 136, 0.1) 100%);
-      border: 1px dashed var(--neon-cyan);
+      background: #000000 !important;
+      border: 1.5px solid rgba(0, 229, 255, 0.45) !important;
       border-radius: 16px;
-      padding: 16px;
+      padding: 18px 14px;
       text-align: center;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.85) !important;
     }
 
     .story-share-banner span {
-      font-size: 12px;
-      color: #cbd5e1;
-      line-height: 1.45;
+      font-size: 12.5px;
+      color: #f1f5f9 !important;
+      line-height: 1.5;
     }
 
     .btn-copy-story {
-      background: linear-gradient(135deg, #00e5ff, #00ff88);
-      color: #060d1b;
-      font-size: 13px;
-      font-weight: 800;
-      border: none;
-      padding: 11px 20px;
-      border-radius: 12px;
+      background: #060d1b !important;
+      color: #ffffff !important;
+      font-size: 13px !important;
+      font-weight: 800 !important;
+      border: 2px solid var(--neon-cyan) !important;
+      padding: 12px 22px !important;
+      border-radius: 12px !important;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      box-shadow: 0 4px 18px rgba(0, 229, 255, 0.35);
-      transition: transform 0.2s ease;
+      box-shadow: 0 0 18px rgba(0, 229, 255, 0.4) !important;
+      transition: all 0.2s ease;
+    }
+
+    .btn-copy-story:hover {
+      background: #0d1e3d !important;
+      border-color: var(--neon-green) !important;
+      box-shadow: 0 0 25px rgba(0, 255, 136, 0.5) !important;
+    }
+
+    .btn-copy-story svg {
+      stroke: var(--neon-cyan) !important;
     }
 
     .btn-copy-story:hover {
@@ -750,6 +792,70 @@
       font-size: 13px;
       color: #cbd5e1;
       line-height: 1.5;
+    }
+
+    .strava-steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 8px 0;
+    }
+
+    @media (max-width: 640px) {
+      .strava-steps-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+    }
+
+    .strava-step-item {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(252, 76, 2, 0.25);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 11.5px;
+      color: #e2e8f0;
+      line-height: 1.4;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .strava-step-num {
+      background: #fc4c02;
+      color: #fff;
+      font-weight: 900;
+      font-size: 11px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .btn-connect-strava {
+      background: linear-gradient(135deg, #fc4c02, #ff7a00);
+      color: #ffffff !important;
+      font-weight: 900;
+      font-size: 13px;
+      padding: 12px 20px;
+      border-radius: 12px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 18px rgba(252, 76, 2, 0.4);
+      transition: all 0.2s ease;
+      text-align: center;
+      margin: 4px 0;
+    }
+
+    .btn-connect-strava:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(252, 76, 2, 0.6);
     }
 
     .strava-status-pill {
@@ -1238,10 +1344,17 @@
       position: relative;
     }
 
+    .product-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
     .product-badge {
-      position: absolute;
-      top: 14px;
-      right: 14px;
+      position: static !important;
       background: rgba(0, 255, 136, 0.15);
       border: 1px solid rgba(0, 255, 136, 0.35);
       color: var(--neon-green);
@@ -1249,6 +1362,7 @@
       font-weight: 800;
       padding: 4px 10px;
       border-radius: 8px;
+      white-space: nowrap;
     }
 
     .product-origin-tag {
@@ -1266,7 +1380,7 @@
       font-size: 16px;
       font-weight: 800;
       color: #fff;
-      padding-right: 90px;
+      padding-right: 0 !important;
     }
 
     .product-pricing {
@@ -1561,7 +1675,7 @@
       <div class="story-share-banner">
         <span><svg class="neon-icon cyan" style="width:14px; height:14px; margin-right:4px;" viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="3"></circle></svg><strong>Poste nos Stories:</strong> Mostre que você tá no foco! Tire um print deste ranking e marque o Marcão para ser repostado!</span>
         <button class="btn-copy-story" onclick="compartilharStory()">
-          <svg class="neon-svg" style="stroke:#060d1b;" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg>
+          <svg class="neon-svg" style="stroke:var(--neon-cyan); width:16px; height:16px;" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg>
           <span>Copiar Legenda & Marcar @marcaopersonalfitness</span>
         </button>
       </div>
@@ -1609,21 +1723,43 @@
       </div>
     </div>
 
-    <!-- INTEGRAÇÃO STRAVA & AUDITORIA NOTURNA -->
+    <!-- INTEGRAÇÃO STRAVA & AUDITORIA NOTURNA (CONEXÃO EM 1 CLIQUE) -->
     <div class="strava-card">
       <div class="strava-header">
         <div class="strava-title-box">
           <span class="strava-icon-badge">STRAVA</span>
           <span class="strava-title">Consultoria Strava & Smartwatch</span>
         </div>
-        <span class="strava-tag">Auditoria às 22h</span>
+        <span class="strava-tag">Auditoria Diária às 22h</span>
       </div>
       <div class="strava-desc">
-        Nos seus dias de treino, o Marcão audita seus batimentos cardíacos, ritmo (pace) e zonas de queima de gordura no Strava pontualmente às 22h. Se treinou com dedicação, ganha conselho de coach; se faltou, toma bronca de personal!
+        Conecte seu Strava diretamente nesta plataforma para o Marcão auditar seus treinos, batimentos cardíacos, ritmo (pace) e gasto calórico automaticamente às 22h no seu WhatsApp!
       </div>
+
+      <!-- INSTRUÇÕES PRÁTICAS PASSO A PASSO -->
+      <div class="strava-steps-grid">
+        <div class="strava-step-item">
+          <span class="strava-step-num">1</span>
+          <span>Clique no botão laranja abaixo para autorizar a conexão com sua conta Strava.</span>
+        </div>
+        <div class="strava-step-item">
+          <span class="strava-step-num">2</span>
+          <span>Treine normalmente com seu relógio ou celular (Garmin, Apple Watch, Strava).</span>
+        </div>
+        <div class="strava-step-item">
+          <span class="strava-step-num">3</span>
+          <span>Às 22h o Marcão analisa sua telemetria no WhatsApp e calibra seu plano!</span>
+        </div>
+      </div>
+
+      <a id="btnConnectStrava" href="/api/integracoes/strava/oauth" target="_blank" class="btn-connect-strava">
+        <svg class="neon-icon" style="width:16px; height:16px; stroke:#ffffff; fill:none;" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+        <span>CONECTAR MEU STRAVA AO MARCÃO EM 1 CLIQUE ⚡</span>
+      </a>
+
       <div class="strava-status-pill">
-        <svg class="neon-svg cyan" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"></circle><polyline points="12 9 12 12 13.5 13.5"></polyline><path d="M16.51 17.35l-.35 3.83a2 2 0 0 1-2 1.82H9.83a2 2 0 0 1-2-1.82l-.35-3.83m.01-10.7l.35-3.83A2 2 0 0 1 9.83 1h4.35a2 2 0 0 1 2 1.82l.35 3.83"></path></svg>
-        <span>Status: Monitoramento Noturno Ativo 4x/semana</span>
+        <svg class="neon-svg green" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"></circle><polyline points="12 9 12 12 13.5 13.5"></polyline><path d="M16.51 17.35l-.35 3.83a2 2 0 0 1-2 1.82H9.83a2 2 0 0 1-2-1.82l-.35-3.83m.01-10.7l.35-3.83A2 2 0 0 1 9.83 1h4.35a2 2 0 0 1 2 1.82l.35 3.83"></path></svg>
+        <span>Auditoria Ativa • Sincronização Automática com Marcão AI</span>
       </div>
     </div>
 
@@ -1800,7 +1936,11 @@
           });
           const ret = await res.json();
           if (ret.sucesso) {
-            showToast("Foto de perfil atualizada com sucesso!");
+            if (ret.foto_url) {
+              renderizarFotoAvatar(ret.foto_url);
+              localStorage.setItem('aluno_avatar_' + alunoId, ret.foto_url);
+            }
+            showToast("Foto de perfil atualizada e salva com sucesso!");
           } else {
             console.warn("Aviso upload:", ret.erro);
           }
@@ -1844,9 +1984,18 @@
         const streakBox = document.getElementById('userStreak');
         streakBox.querySelector('span').textContent = `${data.aluno.streak_dias} Dias Seguidos`;
 
-        // Se veio foto de perfil do servidor e não temos local, renderiza
-        if (data.aluno.foto_perfil && !cachedAvatar) {
+        // Renderiza foto de perfil persistente do servidor
+        if (data.aluno.foto_perfil) {
           renderizarFotoAvatar(data.aluno.foto_perfil);
+          localStorage.setItem('aluno_avatar_' + alunoId, data.aluno.foto_perfil);
+        } else if (cachedAvatar) {
+          renderizarFotoAvatar(cachedAvatar);
+        }
+
+        // Configura link do Strava com ID do aluno
+        const btnStrava = document.getElementById('btnConnectStrava');
+        if (btnStrava) {
+          btnStrava.href = `/api/integracoes/strava/oauth?tel=${alunoId}`;
         }
 
         // 2. Conselho do Marcão
@@ -1996,12 +2145,14 @@
         const prodGrid = document.getElementById('productsGrid');
         prodGrid.innerHTML = (data.arsenal_produtos || []).map(p => `
           <div class="product-card">
-            <span class="product-badge">${p.badge}</span>
-            <div class="product-info">
+            <div class="product-top-row">
               <div class="product-origin-tag">
                 <svg class="neon-svg cyan" style="width:12px; height:12px;" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
                 <span>${p.origem || 'Recomendação Oficial'}</span>
               </div>
+              <span class="product-badge">${p.badge}</span>
+            </div>
+            <div class="product-info">
               <h3>${p.nome}</h3>
               <div class="product-pricing">
                 <span class="product-price">${p.preco}</span>

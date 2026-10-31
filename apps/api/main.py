@@ -1404,8 +1404,8 @@ async def reformular_ficha_aluno_api(identificador: str, payload: dict):
 @app.post("/api/aluno/avatar/{identificador}")
 async def upload_avatar_aluno(identificador: str, payload: dict):
     """
-    Recebe imagem (base64) enviada pelo aluno, salva em apps/site/public/uploads/avatars/{identificador}.jpg
-    e atualiza o registro do aluno no Supabase.
+    Recebe imagem enviada pelo aluno, otimiza e comprime (300x300 JPEG),
+    grava permanentemente no Supabase (metas_nutricionais.foto_perfil) e em arquivo estático.
     """
     img_data = (payload or {}).get("image", "")
     if not img_data or not isinstance(img_data, str):
@@ -1421,41 +1421,56 @@ async def upload_avatar_aluno(identificador: str, payload: dict):
         base64_str = img_data
         
     try:
-        import base64
+        import base64, io
+        from PIL import Image
+        
         raw_bytes = base64.b64decode(base64_str)
+        # Otimiza para JPEG 300x300 leve e nítido (~20KB)
+        img = Image.open(io.BytesIO(raw_bytes))
+        img = img.convert("RGB")
+        img.thumbnail((300, 300), Image.Resampling.LANCZOS)
         
-        avatar_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "site", "public", "uploads", "avatars")
-        os.makedirs(avatar_dir, exist_ok=True)
+        out_buf = io.BytesIO()
+        img.save(out_buf, format="JPEG", quality=85, optimize=True)
+        optimized_bytes = out_buf.getvalue()
+        optimized_b64 = base64.b64encode(optimized_bytes).decode("utf-8")
+        data_uri = f"data:image/jpeg;base64,{optimized_b64}"
         
-        file_path = os.path.join(avatar_dir, f"{id_limpo}.jpg")
-        with open(file_path, "wb") as f:
-            f.write(raw_bytes)
-            
+        # 1. Tenta salvar em arquivo local
         rel_url = f"/uploads/avatars/{id_limpo}.jpg"
-        
-        # Atualiza no Supabase
+        try:
+            avatar_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "site", "public", "uploads", "avatars")
+            os.makedirs(avatar_dir, exist_ok=True)
+            with open(os.path.join(avatar_dir, f"{id_limpo}.jpg"), "wb") as f:
+                f.write(optimized_bytes)
+        except Exception:
+            pass
+            
+        # 2. Atualiza permanentemente no Supabase usando busca flexível last8
         headers = {
             "apikey": SUPABASE_KEY,
             "Authorization": f"Bearer {SUPABASE_KEY}",
             "Content-Type": "application/json"
         }
-        async with httpx.AsyncClient(verify=False, timeout=8.0) as client:
-            r_get = await client.get(
-                f"{SUPABASE_URL}/rest/v1/fichas_alunos?or=(telefone.eq.{id_limpo},id.eq.{id_limpo if id_limpo.isdigit() and len(id_limpo)<6 else 0})&select=id,metas_nutricionais",
-                headers=headers
-            )
+        last8 = id_limpo[-8:] if len(id_limpo) >= 8 else id_limpo
+        async with httpx.AsyncClient(verify=False, timeout=10.0) as client:
+            query = f"{SUPABASE_URL}/rest/v1/fichas_alunos?or=(telefone.eq.{id_limpo},remote_jid.ilike.*{id_limpo}*,telefone.ilike.*{last8}*,remote_jid.ilike.*{last8}*)&select=id,metas_nutricionais"
+            r_get = await client.get(query, headers=headers)
             if r_get.status_code == 200 and r_get.json():
                 row = r_get.json()[0]
                 aluno_id = row.get("id")
                 metas = row.get("metas_nutricionais") or {}
-                metas["foto_perfil"] = rel_url
-                await client.patch(
+                metas["foto_perfil"] = data_uri
+                patch_res = await client.patch(
                     f"{SUPABASE_URL}/rest/v1/fichas_alunos?id=eq.{aluno_id}",
                     headers=headers,
                     json={"metas_nutricionais": metas}
                 )
-        return {"sucesso": True, "foto_url": rel_url}
+                print(f"[AVATAR] Foto de {id_limpo} persistida no Supabase (status {patch_res.status_code})!")
+                
+        return {"sucesso": True, "foto_url": data_uri}
     except Exception as e:
+        print(f"[AVATAR ERROR] {e}")
         return {"sucesso": False, "erro": str(e)}
 
 @app.post("/api/fichas/disparar-portal-semanal")
