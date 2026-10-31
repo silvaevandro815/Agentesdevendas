@@ -27,7 +27,7 @@ import edge_tts
 from dotenv import load_dotenv
 
 # Carrega variáveis de ambiente
-load_dotenv('c:/Users/User/Desktop/Agentes de venda/.env')
+load_dotenv()
 
 EVOLUTION_API_URL = os.getenv('EVOLUTION_API_URL', 'https://evolution.marcaopersonal.com')
 EVOLUTION_API_KEY = os.getenv('EVOLUTION_API_KEY', '')

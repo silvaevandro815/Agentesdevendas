@@ -11,3 +11,4 @@ edge-tts==6.1.12
 apscheduler==3.10.4
 numpy==2.1.2
 pypdf==5.1.0
+imageio-ffmpeg==0.5.1
