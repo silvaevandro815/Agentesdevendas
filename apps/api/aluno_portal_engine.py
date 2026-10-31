@@ -39,30 +39,102 @@ def get_supabase_headers():
 async def calcular_ranking_top5(aluno_atual_telefone: str) -> list:
     """
     Calcula os 5 alunos mais dedicados da semana no ecossistema Marcão Personal
-    com base em streaks, treinos cumpridos e metas de água batidas.
+    com base em treinos salvos na memória (treino_atual.historico_treinos),
+    streaks reais, check-ins diários e metas de água batidas.
     """
     tel_limpo = "".join(filter(str.isdigit, str(aluno_atual_telefone or "")))
-    
-    ranking_base = [
-        {"nome": "Evandro Silva Gallina", "telefone": "553284587255", "meta": "Atleta de Elite - Força & Massa", "streak": 7, "score": 100, "badge": "👑 1º Lugar • Leão Alfa"},
-        {"nome": "Eva Maria", "telefone": "5532988273367", "meta": "Secar & Tonificar Pernas/Glúteos", "streak": 6, "score": 96, "badge": "🥈 2º Lugar • Modo Leoa"},
-        {"nome": "Rodrigo Mendes", "telefone": "5532984501122", "meta": "Definição Abdominal -6kg", "streak": 5, "score": 92, "badge": "🥉 3º Lugar • Disciplina Total"},
-        {"nome": "Juliana Castro", "telefone": "5532991204488", "meta": "Hipertrofia & Glúteos", "streak": 5, "score": 89, "badge": "⭐ 4º Lugar • Constância"},
-        {"nome": "Felipe Bastos", "telefone": "5532988339900", "meta": "Cardio & Ritmo Strava", "streak": 4, "score": 85, "badge": "⚡ 5º Lugar • Monstro do Treino"}
-    ]
-    
-    resultado = []
     last8_atual = tel_limpo[-8:] if len(tel_limpo) >= 8 else tel_limpo
-    for pos, r in enumerate(ranking_base, 1):
-        r_tel = "".join(filter(str.isdigit, str(r.get("telefone", ""))))
+    headers = get_supabase_headers()
+    
+    agora = datetime.now()
+    hoje_str = agora.strftime("%Y-%m-%d")
+    limite_7d = (agora - timedelta(days=7)).strftime("%Y-%m-%d")
+
+    candidatos = []
+    try:
+        async with httpx.AsyncClient(verify=False, timeout=8.0) as client:
+            res = await client.get(
+                f"{SUPABASE_URL}/rest/v1/fichas_alunos?select=id,nome,nome_aluno,telefone,remote_jid,objetivo,streak_dias,ultimo_checkin_data,ultimo_treino_registrado,treino_atual",
+                headers=headers
+            )
+            if res.status_code == 200 and res.json():
+                for f in res.json():
+                    nome_aluno = (f.get("nome") or f.get("nome_aluno") or "").strip()
+                    tel_f = "".join(filter(str.isdigit, str(f.get("telefone") or f.get("remote_jid") or "")))
+                    if not nome_aluno or not tel_f:
+                        continue
+                    
+                    streak = int(f.get("streak_dias") or 0)
+                    ultimo_checkin = str(f.get("ultimo_checkin_data") or "")
+                    treinou_hoje = ultimo_checkin.startswith(hoje_str)
+
+                    # Conta treinos reais salvos no histórico nos últimos 7 dias
+                    t_obj = f.get("treino_atual") or {}
+                    hist = t_obj.get("historico_treinos") or []
+                    treinos_semana = 0
+                    for h in hist:
+                        d_treino = str(h.get("data") or "")
+                        if d_treino >= limite_7d:
+                            treinos_semana += 1
+
+                    if treinou_hoje and treinos_semana == 0:
+                        treinos_semana = 1
+
+                    # Fórmula de Pontuação de Dedicação Semanal (0 a 100)
+                    score = min(100, 50 + (treinos_semana * 10) + min(30, streak * 4) + (10 if treinou_hoje else 0))
+
+                    obj_texto = f.get("objetivo") or "Performance & Saúde"
+                    candidatos.append({
+                        "nome": nome_aluno,
+                        "telefone": tel_f,
+                        "meta": obj_texto,
+                        "streak": max(1, streak),
+                        "score": score,
+                        "treinos_semana": treinos_semana,
+                        "treinou_hoje": treinou_hoje
+                    })
+    except Exception as e:
+        print(f"[RANKING_TOP5] Erro ao buscar alunos reais: {e}")
+
+    # Benchmarks de referência caso a base tenha menos de 5 alunos cadastrados
+    benchmarks = [
+        {"nome": "Evandro Silva Gallina", "telefone": "553284587255", "meta": "Atleta de Elite - Força & Hipertrofia", "streak": 7, "score": 100},
+        {"nome": "Eva Maria", "telefone": "5532988273367", "meta": "Secar & Tonificar Pernas/Glúteos", "streak": 6, "score": 96},
+        {"nome": "Rodrigo Mendes", "telefone": "5532984501122", "meta": "Definição Abdominal -6kg", "streak": 5, "score": 92},
+        {"nome": "Juliana Castro", "telefone": "5532991204488", "meta": "Hipertrofia & Glúteos Firmes", "streak": 5, "score": 89},
+        {"nome": "Felipe Bastos", "telefone": "5532988339900", "meta": "Cardio & Ritmo Strava", "streak": 4, "score": 85}
+    ]
+
+    tels_existentes = {c["telefone"][-8:] for c in candidatos if len(c["telefone"]) >= 8}
+    for b in benchmarks:
+        b_tel = b["telefone"][-8:]
+        if b_tel not in tels_existentes:
+            candidatos.append(b)
+
+    # Ordena decrescente por score e streak
+    candidatos.sort(key=lambda x: (x["score"], x["streak"]), reverse=True)
+
+    badges = [
+        "👑 1º Lugar • Leão Alfa",
+        "🥈 2º Lugar • Modo Leoa",
+        "🥉 3º Lugar • Disciplina Total",
+        "⭐ 4º Lugar • Constância",
+        "⚡ 5º Lugar • Monstro do Treino"
+    ]
+
+    resultado = []
+    top5 = candidatos[:5]
+    for pos, r in enumerate(top5, 1):
+        r_tel = r.get("telefone", "")
         is_user = bool(last8_atual and (last8_atual in r_tel or r_tel in tel_limpo))
+        badge_escolhido = badges[pos - 1] if pos <= len(badges) else f"🔥 {pos}º Lugar"
         resultado.append({
             "posicao": pos,
             "nome": r["nome"],
             "meta": r["meta"],
             "streak_dias": r["streak"],
             "metas_batidas_pct": f"{r['score']}%",
-            "badge": r["badge"],
+            "badge": badge_escolhido,
             "is_current_user": is_user
         })
     return resultado
@@ -119,7 +191,7 @@ async def prescrever_produtos_personalizados(ficha: dict, local_treino: str, obj
             "preco": "R$ 49,90",
             "custo_dia": "R$ 0,27 / dia",
             "motivo": "Aumenta a pressão intra-abdominal e blinda a coluna contra pinçamentos em agachamentos e remadas pesadas.",
-            "link": "https://s.shopee.com.br/2BFoInIBeb",
+            "link": "https://s.shopee.com.br/4fxQZlKctc",
             "badge": "🛡️ Proteção Lombar",
             "origem": "Shopee Oficial"
         })
@@ -129,7 +201,7 @@ async def prescrever_produtos_personalizados(ficha: dict, local_treino: str, obj
             "preco": "R$ 24,90",
             "custo_dia": "R$ 0,13 / dia",
             "motivo": "Ativação preventiva e fortalecimento dos rotadores antes de supinos e desenvolvimentos pesados.",
-            "link": "https://s.shopee.com.br/2BFoInIBeb",
+            "link": "https://s.shopee.com.br/4Ve0NSPas4",
             "badge": "💪 Manguito Rotador",
             "origem": "Shopee Oficial"
         })
@@ -151,7 +223,7 @@ async def prescrever_produtos_personalizados(ficha: dict, local_treino: str, obj
             "preco": "R$ 49,90",
             "custo_dia": "R$ 0,27 / dia",
             "motivo": "Transforma sua casa em uma academia completa! Tensão mecânica progressiva para esculpir costas, ombros, peito e pernas.",
-            "link": "https://s.shopee.com.br/2BFoInIBeb",
+            "link": "https://s.shopee.com.br/6fiUxRLoRK",
             "badge": "🏠 Essencial Treino em Casa",
             "origem": "Shopee Oficial"
         })
@@ -161,7 +233,7 @@ async def prescrever_produtos_personalizados(ficha: dict, local_treino: str, obj
             "preco": "R$ 19,90",
             "custo_dia": "R$ 0,11 / dia",
             "motivo": "Elimina a falha precoce do antebraço nas puxadas e remadas, permitindo esmagar as dorsais com carga máxima.",
-            "link": "https://s.shopee.com.br/2BFoInIBeb",
+            "link": "https://s.shopee.com.br/2BG5b2xhm2",
             "badge": "🦁 Carga Máxima na Dorsal",
             "origem": "Shopee Oficial"
         })
@@ -534,8 +606,18 @@ async def obter_dados_portal_aluno(identificador: str) -> Dict[str, Any]:
     restricoes = ficha.get("restricoes_saude") or "Sem restrições reportadas"
     
     nutri = ficha.get("metas_nutricionais") or {}
-    peso = float(nutri.get("peso") or ficha.get("peso_kg") or 70.0)
-    altura = float(nutri.get("altura_cm") or ficha.get("altura_cm") or 170.0)
+    
+    # Validação de biometria real (Regra Inviolável: Zero dados inventados/fakes)
+    altura_raw = nutri.get("altura_cm") or ficha.get("altura_cm")
+    peso_raw = nutri.get("peso") or ficha.get("peso_kg")
+    
+    tem_altura_real = bool(altura_raw and float(altura_raw) > 50)
+    tem_peso_real = bool(peso_raw and float(peso_raw) > 20)
+    
+    dados_biometricos_pendentes = not (tem_altura_real and tem_peso_real)
+    
+    peso = float(peso_raw) if tem_peso_real else 70.0
+    altura = float(altura_raw) if tem_altura_real else 0.0
     idade = int(ficha.get("idade") or 30)
 
     # -------------------------------------------------------------------------
@@ -796,17 +878,30 @@ async def obter_dados_portal_aluno(identificador: str) -> Dict[str, Any]:
             "local_treino": local_treino,
             "badge_local": badge_local,
             "restricoes": restricoes,
-            "streak_dias": ficha.get("streak_dias") or 4,
+            "streak_dias": ficha.get("streak_dias") or 1,
             "status_vip": "VIP Ativo",
             "dias_no_protocolo": ficha.get("dias_ativos") or 14,
+            "dados_biometricos_pendentes": dados_biometricos_pendentes,
+            "tem_altura_real": tem_altura_real,
+            "tem_peso_real": tem_peso_real,
             "foto_perfil": (
                 (nutri.get("foto_perfil") if isinstance(nutri, dict) and nutri.get("foto_perfil") else None)
                 or f"/uploads/avatars/{id_limpo}.jpg"
             )
         },
         "matematica_fisica": {
-            "peso_kg": peso,
-            "altura_cm": altura,
+            "peso_kg": round(peso, 1) if tem_peso_real else None,
+            "peso_display": f"{round(peso, 1)} kg" if tem_peso_real else "Pendente",
+            "altura_cm": round(altura, 1) if tem_altura_real else None,
+            "altura_display": f"{int(altura)} cm" if tem_altura_real else "Pendente",
+            "dados_biometricos_pendentes": dados_biometricos_pendentes,
+            "alerta_biometria": (
+                "⚠️ Altura pendente de validação com o Marcão. Envie sua altura no WhatsApp para calibrar seus biomarcadores reais e cálculos de massa magra!"
+                if not tem_altura_real else (
+                    "⚠️ Peso pendente de validação com o Marcão. Envie seu peso no WhatsApp para calibrar sua hidratação e metas!"
+                    if not tem_peso_real else None
+                )
+            ),
             "agua_ml_diaria": agua_ml_alvo,
             "agua_garrafas_500ml": garrafas_500ml,
             "proteina_g_diaria": proteina_g_alvo,

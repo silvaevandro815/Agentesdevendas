@@ -151,3 +151,15 @@ Este documento é lido automaticamente no início de **toda e qualquer nova conv
   * Legendas Hormozi Dinâmicas: Formato .ass com tipografia de alta legibilidade, contorno espesso (5px) e destaque amarelo ouro (#FACC15) sincronizado com palavras-chave.
   * Mixagem de Áudio: Locução Marcão em português brasileiro com ganho dinâmico (olume=1.35) sobreposta a trilha de fundo esportiva (olume=0.18) com fade-out nos últimos 1.5s.
   * Comando de Execução: python daily_reel_generator.py --tema balanca_ia ou python daily_reel_generator.py --publish.
+
+## 15. Regras Invioláveis do Portal do Aluno, Biometria Real, PWA & Ranking Semanal Dinâmico (Leis Máximas)
+- **LINKS DE AFILIADOS SHOPEE ESTREITAMENTE ESPECÍFICOS (PROIBIDO REDIRECIONAR TUDO PRA BALANÇA):**
+  Cada produto ou acessório prescrito pelo Marcão (joelheira, cinto de musculação, faixas elásticas de manguito, kit elásticos extensores para treino em casa, strap de algodão reforçado) DEVE possuir estritamente o seu link de afiliado oficial específico obtido via Shopee Open API. É terminantemente proibido utilizar o link da balança como fallback para outros acessórios.
+- **ORIENTAÇÃO MANDATÓRIA DE PWA / ADICIONAR À TELA INICIAL DO CELULAR:**
+  Sempre que o Marcão enviar o link do portal do aluno no WhatsApp (no disparo semanal de domingo ou quando o aluno pedir o link da sua plataforma/métricas), o agente DEVE explicar e orientar em balões curtos e claros como transformar a landing page em um ícone de aplicativo na tela inicial do celular (iOS: Compartilhar > Adicionar à Tela de Início; Android: 3 pontinhos > Adicionar à tela inicial). O portal `aluno.html` deve manter banner e modal explicativo ativo.
+- **RANKING SEMANAL DINÂMICO BASEADO EM TREINOS REAIS SALVOS NA MEMÓRIA:**
+  O Top 5 de alunos dedicados da semana DEVE ser 100% dinâmico, consultando o Supabase (`fichas_alunos`), contabilizando os treinos reais salvos pelo botão de salvar da plataforma (`treino_atual.historico_treinos`), os streaks contínuos e os check-ins recentes. Toda semana o Marcão atualiza e anuncia as posições do Top 5 no WhatsApp.
+- **ZERO DADOS BIOMÉTRICOS FAKES & AUDITORIA UNIVERSAL (INCLUSIVE EVANDRO):**
+  É expressamente proibido preencher, assumir ou exibir dados biométricos genéricos ou inventados (como 170cm ou 70kg) como se fossem medidas reais do aluno. Se a altura em cm ou peso de qualquer aluno (incluindo o Diretor e Atleta Evandro Gallina) não tiver sido informada explicitamente, o sistema DEVE marcar `dados_pendentes`, exibir o alerta no portal e o Marcão DEVE cobrar ativamente a altura e peso reais no WhatsApp. Ao receber a resposta, os dados reais são gravados imediatamente em `fichas_alunos`.
+- **ACOMPANHAMENTO ATIVO DE INCENTIVO (NO MÍNIMO 3 VEZES NA SEMANA):**
+  O Marcão deve obrigatoriamente realizar contatos de follow-up e incentivo pelo menos 3 vezes por semana (Segundas, Quartas e Sextas às 18:00 para treinos e pendências, além de almoço 12:30 e o ranking dominical às 19:00), perguntando como o aluno está, conferindo a consistência e celebrando as conquistas.

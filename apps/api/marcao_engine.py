@@ -880,9 +880,11 @@ async def processar_mensagem_marcao(payload_webhook: dict) -> dict:
 
     if pediu_portal:
         resp_portal = (
-            f"Fala, {primeiro_nome or 'campeão'}! Tá na mão o seu acesso exclusivo à sua Central de Saúde & Treinos:\n\n"
+            f"Fala, {primeiro_nome or 'campeão'}! 🦁 Tá na mão a sua Central de Saúde & Treinos oficial:\n\n"
             f"{link_portal_aluno}\n\n"
-            f"Lá você acompanha sua matemática física diária (metas de água, proteínas e calorias), sua ficha de treinos completa, horários ideais de sono, evolução por fotos e seu ranking semanal! Dá uma olhada e bora pra cima! 👊🔥"
+            f"Lá tá sua ficha de treinos completa, metas de água e proteína na risca, horários de sono, seus treinos salvos e o ranking dos top 5 da semana! 👊\n\n"
+            f"Dica de ouro: abre esse link no seu celular e fixa na tela inicial pra virar um ícone de app no seu menu!\n\n"
+            f"No iPhone: clica no botão Compartilhar (quadradinho com setinha) > 'Adicionar à Tela de Início'. No Android: clica nos 3 pontinhos no canto superior > 'Adicionar à tela inicial'. Fica direto no seu celular pra você salvar seus treinos todo dia! 📲🦁"
         )
         historico_mensagens.append({"role": "user", "content": texto_recebido, "timestamp": datetime.now().isoformat()})
         historico_mensagens.append({"role": "assistant", "content": resp_portal, "timestamp": datetime.now().isoformat()})
@@ -990,18 +992,17 @@ async def processar_mensagem_marcao(payload_webhook: dict) -> dict:
     status_vip_str = status_vip_info.get("status_vip", "sem_balanca")
 
     ficha_aluno = None
-    if not is_evandro:
-        try:
-            # 1. Busca ficha existente para NUNCA ignorar alunos ativos (com ou sem a balança)
-            ficha_aluno = await buscar_ficha_existente(f"{target_number}@s.whatsapp.net", target_number)
-            if not ficha_aluno and tem_balanca:
-                ficha_aluno = await buscar_ou_criar_ficha_aluno(f"{target_number}@s.whatsapp.net", target_number, push_name or primeiro_nome)
+    try:
+        # Busca ficha existente (inclusive do Diretor e Atleta Evandro)
+        ficha_aluno = await buscar_ficha_existente(f"{target_number}@s.whatsapp.net", target_number)
+        if not ficha_aluno and (tem_balanca or is_evandro):
+            ficha_aluno = await buscar_ou_criar_ficha_aluno(f"{target_number}@s.whatsapp.net", target_number, push_name or primeiro_nome)
 
-            if ficha_aluno:
-                # Extrai e salva imediatamente qualquer dado real informado na mensagem do aluno
-                await atualizar_ficha_com_dados_extraidos(f"{target_number}@s.whatsapp.net", texto_recebido)
-                ficha_aluno = await buscar_ficha_existente(f"{target_number}@s.whatsapp.net", target_number) or ficha_aluno
-                etapa_onb = ficha_aluno.get("etapa_onboarding", 0)
+        if ficha_aluno:
+            # Extrai e salva imediatamente qualquer dado real informado na mensagem do aluno/diretor
+            await atualizar_ficha_com_dados_extraidos(f"{target_number}@s.whatsapp.net", texto_recebido)
+            ficha_aluno = await buscar_ficha_existente(f"{target_number}@s.whatsapp.net", target_number) or ficha_aluno
+            etapa_onb = ficha_aluno.get("etapa_onboarding", 0)
 
             # Se o aluno VIP ainda não concluiu o onboarding guiado (etapas 0 a 4)
             if etapa_onb < 5:
@@ -1066,7 +1067,16 @@ async def processar_mensagem_marcao(payload_webhook: dict) -> dict:
         asyncio.create_task(processar_lead_scoring_inteligente(f"{target_number}@s.whatsapp.net", target_number, push_name, texto_recebido, historico_mensagens))
 
     if is_evandro:
-        instrucao_vip = "O interlocutor é o Diretor Evandro. Nenhuma restrição se aplica."
+        nutri_ev = (ficha_aluno.get("metas_nutricionais") or {}) if ficha_aluno else {}
+        alt_ev = nutri_ev.get("altura_cm")
+        peso_ev = nutri_ev.get("peso")
+        status_bio_ev = f"Altura: {alt_ev or 'PENDENTE - COBRAR ALTURA EM CM'} | Peso: {peso_ev or 'PENDENTE'} kg"
+        instrucao_vip = (
+            f"DIRETOR, FUNDADOR & ATLETA DE ELITE EVANDRO GALLINA:\n"
+            f"- Status biométrico no sistema: {status_bio_ev}\n"
+            f"- REGRA INVIOLÁVEL: NUNCA USE DADOS INVENTADOS/FAKES! Se a altura dele estiver PENDENTE e ele ainda não informou, COBRE com respeito e energia de Personal para calibrar a taxa metabólica, massa magra e TMB no sistema real!\n"
+            f"- Se ele informar a altura ou peso, comemore e confirme que a ficha foi 100% calibrada na plataforma!"
+        )
     elif ficha_aluno:
         obj_ficha = (ficha_aluno.get("objetivo") or "Definição corporal e saúde")
         rest_ficha = (ficha_aluno.get("restricoes_saude") or "Nenhuma restrição articular informada")

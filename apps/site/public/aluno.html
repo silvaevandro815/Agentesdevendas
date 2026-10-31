@@ -1639,6 +1639,40 @@
       </div>
     </div>
 
+    <!-- ALERTA DE BIOMETRIA PENDENTE (ZERO DADOS FAKES) -->
+    <div id="alertaBiometria" style="display: none; background: linear-gradient(135deg, rgba(255, 122, 0, 0.15), rgba(6, 13, 27, 0.95)); border: 1.5px solid #ff7a00; border-radius: 16px; padding: 16px 20px; margin-bottom: 22px; box-shadow: 0 0 25px rgba(255, 122, 0, 0.25);">
+      <div style="display: flex; align-items: flex-start; gap: 12px;">
+        <span style="font-size: 24px; line-height: 1;">⚠️</span>
+        <div style="flex: 1;">
+          <div style="font-size: 14px; font-weight: 800; color: #ff9d42; margin-bottom: 4px;">DADOS BIOMÉTRICOS PENDENTES DE CONFIRMAÇÃO</div>
+          <div id="alertaBiometriaTexto" style="font-size: 12.5px; color: #f1f5f9; line-height: 1.5; margin-bottom: 12px;">
+            Sua altura ou peso ainda não foram confirmados com o Marcão. Para o cálculo exato da sua Taxa Metabólica Basal (TMB), % de massa magra e metas sem estimativas aproximadas, informe seus dados reais!
+          </div>
+          <a id="btnConfirmarBiometria" href="https://wa.me/553285066687?text=Fala%20Marc%C3%A3o!%20Vim%20da%20minha%20plataforma%20e%20quero%20te%20passar%20minha%20altura%20e%20peso%20reais:" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; background: #ff7a00; color: #060d1b; font-size: 12.5px; font-weight: 800; padding: 8px 16px; border-radius: 20px; text-decoration: none; box-shadow: 0 4px 15px rgba(255, 122, 0, 0.4);">
+            <span>Informar Dados Reais no WhatsApp</span>
+            <svg style="width:14px; height:14px; stroke:#060d1b; stroke-width:2.5; fill:none;" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- BANNER DE ACESSO RÁPIDO: ADICIONAR À TELA INICIAL DO CELULAR -->
+    <div class="pwa-install-banner" style="background: linear-gradient(135deg, rgba(0, 229, 255, 0.1), rgba(6, 13, 27, 0.95)); border: 1px solid rgba(0, 229, 255, 0.35); border-radius: 16px; padding: 14px 18px; margin-bottom: 22px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(0, 229, 255, 0.15); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;">
+          📲
+        </div>
+        <div>
+          <div style="font-size: 13.5px; font-weight: 800; color: #fff;">Fixar Marcão na Tela Inicial do Celular</div>
+          <div style="font-size: 11.5px; color: var(--text-muted);">Acesse direto como um aplicativo pelo menu do seu smartphone</div>
+        </div>
+      </div>
+      <button onclick="abrirModalPwa()" style="background: linear-gradient(135deg, var(--neon-cyan), var(--neon-green)); color: #060d1b; font-size: 12px; font-weight: 800; padding: 8px 16px; border-radius: 20px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 15px rgba(0, 229, 255, 0.35);">
+        <span>Como Instalar</span>
+        <svg style="width:13px; height:13px; stroke:#060d1b; stroke-width:2.5; fill:none;" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+
     <!-- CONSELHO DA SEMANA DO MARCÃO -->
     <div class="coach-quote-box">
       <div class="coach-quote-header">
@@ -2052,9 +2086,25 @@
         document.getElementById('waterSub').textContent = `~${m.agua_garrafas_500ml} garrafas de 500ml`;
         document.getElementById('proteinVal').textContent = `${m.proteina_g_diaria} g`;
         document.getElementById('proteinSub').textContent = `~${Math.round(m.proteina_g_diaria / 4)}g por refeição`;
-        document.getElementById('caloriesVal').textContent = `${m.calorias_alvo_dieta} kcal`;
-        document.getElementById('caloriesSub').textContent = m.tipo_dieta.includes('Déficit') ? 'Déficit p/ Secar' : 'Superávit Anabólico';
-        document.getElementById('weightVal').textContent = `${m.peso_kg} kg`;
+        document.getElementById('caloriesVal').textContent = typeof m.calorias_alvo === 'number' ? `${m.calorias_alvo} kcal` : (m.calorias_alvo || `${m.calorias_alvo_dieta || 2100} kcal`);
+        document.getElementById('caloriesSub').textContent = m.tipo_dieta && m.tipo_dieta.includes('Déficit') ? 'Déficit p/ Secar' : 'Superávit Anabólico';
+        document.getElementById('weightVal').textContent = m.peso_display || (m.peso_kg ? `${m.peso_kg} kg` : 'Pendente');
+        const weightSubEl = document.getElementById('weightSub');
+        if (weightSubEl && m.altura_display) {
+          weightSubEl.textContent = `Altura: ${m.altura_display}`;
+        }
+
+        // Alerta de Biometria Pendente
+        const alertaBox = document.getElementById('alertaBiometria');
+        if (alertaBox) {
+          if (m.dados_biometricos_pendentes || (data.aluno && data.aluno.dados_biometricos_pendentes)) {
+            alertaBox.style.display = 'block';
+            const txtEl = document.getElementById('alertaBiometriaTexto');
+            if (txtEl && m.alerta_biometria) txtEl.textContent = m.alerta_biometria;
+          } else {
+            alertaBox.style.display = 'none';
+          }
+        }
 
         // 4. Treinos (Abas e Exercícios estilo OpenGym com Registro Diário)
         window.portalData = data;
@@ -2394,6 +2444,96 @@
     }
 
     document.addEventListener('DOMContentLoaded', carregarPortalAluno);
+  
+    function abrirModalPwa() {
+      const modal = document.getElementById('pwaModal');
+      if (modal) modal.style.display = 'flex';
+    }
+
+    function fecharModalPwa() {
+      const modal = document.getElementById('pwaModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function mudarAbaPwa(sistema) {
+      const tabIos = document.getElementById('pwaTabIos');
+      const tabAnd = document.getElementById('pwaTabAndroid');
+      const contIos = document.getElementById('pwaContentIos');
+      const contAnd = document.getElementById('pwaContentAndroid');
+      if (sistema === 'ios') {
+        tabIos.style.background = 'var(--neon-cyan)';
+        tabIos.style.color = '#060d1b';
+        tabIos.style.border = '1px solid var(--neon-cyan)';
+        tabAnd.style.background = 'rgba(255,255,255,0.05)';
+        tabAnd.style.color = '#fff';
+        tabAnd.style.border = '1px solid rgba(255,255,255,0.15)';
+        contIos.style.display = 'block';
+        contAnd.style.display = 'none';
+      } else {
+        tabAnd.style.background = 'var(--neon-green)';
+        tabAnd.style.color = '#060d1b';
+        tabAnd.style.border = '1px solid var(--neon-green)';
+        tabIos.style.background = 'rgba(255,255,255,0.05)';
+        tabIos.style.color = '#fff';
+        tabIos.style.border = '1px solid rgba(255,255,255,0.15)';
+        contAnd.style.display = 'block';
+        contIos.style.display = 'none';
+      }
+    }
+
   </script>
+  <!-- MODAL DE INSTRUÇÕES DE INSTALAÇÃO (PWA) -->
+  <div id="pwaModal" style="display: none; position: fixed; inset: 0; z-index: 99999; background: rgba(6, 13, 27, 0.85); backdrop-filter: blur(8px); align-items: center; justify-content: center; padding: 16px; box-sizing: border-box;">
+    <div style="background: #0b162c; border: 1.5px solid var(--neon-cyan); border-radius: 24px; padding: 26px 20px; max-width: 460px; width: 100%; box-shadow: 0 20px 60px rgba(0, 229, 255, 0.4); position: relative; box-sizing: border-box;">
+      <button onclick="fecharModalPwa()" style="position: absolute; top: 14px; right: 14px; background: rgba(255,255,255,0.1); border: none; color: #fff; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center;">✕</button>
+      
+      <div style="text-align: center; margin-bottom: 20px;">
+        <div style="font-size: 32px; margin-bottom: 6px;">📲</div>
+        <h3 style="font-size: 18px; font-weight: 800; color: #fff; margin: 0 0 4px 0;">Transformar em App no Celular</h3>
+        <p style="font-size: 12px; color: var(--text-muted); margin: 0;">Acesse seu treino e ranking direto da tela do smartphone:</p>
+      </div>
+
+      <!-- Abas iPhone / Android -->
+      <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+        <button id="pwaTabIos" onclick="mudarAbaPwa('ios')" style="flex: 1; padding: 8px 12px; border-radius: 10px; font-size: 12.5px; font-weight: 800; border: 1px solid var(--neon-cyan); background: var(--neon-cyan); color: #060d1b; cursor: pointer;">🍏 iPhone (Safari)</button>
+        <button id="pwaTabAndroid" onclick="mudarAbaPwa('android')" style="flex: 1; padding: 8px 12px; border-radius: 10px; font-size: 12.5px; font-weight: 800; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); color: #fff; cursor: pointer;">🤖 Android (Chrome)</button>
+      </div>
+
+      <!-- Conteúdo iOS -->
+      <div id="pwaContentIos" style="font-size: 12.5px; color: #f1f5f9; line-height: 1.6;">
+        <div style="margin-bottom: 12px; display: flex; gap: 10px;">
+          <span style="background: rgba(0,229,255,0.15); color: var(--neon-cyan); width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0;">1</span>
+          <span>No navegador <strong>Safari</strong>, toque no botão de <strong>Compartilhar</strong> (o quadrado com uma seta para cima na barra inferior).</span>
+        </div>
+        <div style="margin-bottom: 12px; display: flex; gap: 10px;">
+          <span style="background: rgba(0,229,255,0.15); color: var(--neon-cyan); width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0;">2</span>
+          <span>Role a lista de opções para baixo e toque em <strong>"Adicionar à Tela de Início"</strong>.</span>
+        </div>
+        <div style="margin-bottom: 12px; display: flex; gap: 10px;">
+          <span style="background: rgba(0,229,255,0.15); color: var(--neon-cyan); width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0;">3</span>
+          <span>Confirme em <strong>"Adicionar"</strong> no canto superior direito. Pronto! O ícone oficial do Marcão fica salvo no seu menu!</span>
+        </div>
+      </div>
+
+      <!-- Conteúdo Android -->
+      <div id="pwaContentAndroid" style="display: none; font-size: 12.5px; color: #f1f5f9; line-height: 1.6;">
+        <div style="margin-bottom: 12px; display: flex; gap: 10px;">
+          <span style="background: rgba(0,255,136,0.15); color: var(--neon-green); width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0;">1</span>
+          <span>No navegador <strong>Google Chrome</strong>, toque nos <strong>3 pontinhos verticais</strong> no canto superior direito.</span>
+        </div>
+        <div style="margin-bottom: 12px; display: flex; gap: 10px;">
+          <span style="background: rgba(0,255,136,0.15); color: var(--neon-green); width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0;">2</span>
+          <span>Selecione a opção <strong>"Adicionar à tela inicial"</strong> ou <strong>"Instalar aplicativo"</strong>.</span>
+        </div>
+        <div style="margin-bottom: 12px; display: flex; gap: 10px;">
+          <span style="background: rgba(0,255,136,0.15); color: var(--neon-green); width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0;">3</span>
+          <span>Toque em <strong>"Adicionar"</strong>. O Marcão aparecerá na tela do seu celular como um app oficial!</span>
+        </div>
+      </div>
+
+      <button onclick="fecharModalPwa()" style="width: 100%; margin-top: 18px; padding: 12px; border-radius: 12px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; font-weight: 800; cursor: pointer;">Entendi, fechar</button>
+    </div>
+  </div>
+
 </body>
 </html>

@@ -1514,10 +1514,8 @@ async def atualizar_ficha_com_dados_extraidos(remote_jid: str, texto_aluno: str)
             if extraidos.get("idade"):
                 patch_data["idade"] = extraidos["idade"]
             if extraidos.get("peso"):
-                patch_data["ultimo_peso"] = extraidos["peso"]
                 metas_patch["peso"] = extraidos["peso"]
             if extraidos.get("altura_cm"):
-                patch_data["altura_cm"] = extraidos["altura_cm"]
                 metas_patch["altura_cm"] = extraidos["altura_cm"]
             if extraidos.get("local_treino"):
                 patch_data["local_treino"] = extraidos["local_treino"]
@@ -1740,9 +1738,7 @@ async def verificar_e_cobrar_alunos_com_dados_pendentes(filtro_aluno: str = None
                         if not (bate_nome or bate_tel):
                             continue
 
-                    # Não cobrar o próprio Evandro em ambiente de produção (a menos que explicitamente filtrado por 'evandro')
-                    if "84587255" in tel_f and (not filtro_aluno or "evandro" not in filtro_aluno.lower()):
-                        continue
+                    # Auditoria Universal (inclusive Evandro): todos os alunos devem ter biometria real
 
                     r_jid = f.get("remote_jid")
                     if r_jid:
@@ -1781,10 +1777,7 @@ async def executar_varredura_onboarding_completa(disparar_whatsapp: bool = False
                     tel = f.get("telefone") or (f.get("remote_jid", "").split("@")[0] if f.get("remote_jid") else "")
                     nome = f.get("nome") or f.get("nome_aluno") or "Aluno"
 
-                    # Pula o Evandro na cobrança externa
-                    if "84587255" in tel:
-                        resultados["total_completos"] += 1
-                        continue
+                    # Auditoria Universal: verifica Evandro e todos os alunos para assegurar dados reais
 
                     if diag["ficha_completa"]:
                         resultados["total_completos"] += 1

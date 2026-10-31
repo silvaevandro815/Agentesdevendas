@@ -362,3 +362,27 @@ unpod_open_engine.py: Gerenciador de GPU Serverless para geração de takes 3D h
 - **Eliminação Total de Vácuos:** O espaço anteriormente vazio na coluna direita foi 100% preenchido com o showcase visual em alta definição da balança oficial (alanca_shopee_preta.webp), acompanhada das duas imagens de demonstração prática (alanca_shopee_app_metricas.webp e alanca_shopee_uso_real.webp).
 - **Desencavalamento dos 13 Biomarcadores:** As 13 métricas clínicas ganharam uma faixa horizontal dedicada de largura total (.biomarkers-full-strip) em grid simétrico de 4 colunas no Desktop, com ícones vetoriais SVG neon e espaçamento generoso que impede qualquer quebra indevida ou sobreposição.
 - **Centralização da Placa de Precificação na Área Segura:** A placa de precificação (.pricing-central-card) foi centralizada no coração do container, destacando o valor de R$ 34,90 (R$ 0,09/dia), o benefício dos 90 dias de mentoria VIP no WhatsApp e os botões oficiais de conversão Shopee e WhatsApp dispostos lado a lado com harmonia estética.
+
+## 22. Diretrizes Invioláveis do Portal do Aluno, Biometria Real, PWA & Ranking Semanal Dinâmico (Leis Máximas)
+- **Links Shopee Específicos por Acessório:**
+  * Joelheira Neoprene: `https://s.shopee.com.br/AUvD3t2pKw` (R$ 21,00 a R$ 29,90)
+  * Cinto de Musculação com Suporte Lombar: `https://s.shopee.com.br/4fxQZlKctc` (R$ 49,90)
+  * Faixas Elásticas Manguito Rotador: `https://s.shopee.com.br/4Ve0NSPas4` (R$ 24,90 a R$ 29,90)
+  * Kit Elásticos Extensores Treino em Casa: `https://s.shopee.com.br/6fiUxRLoRK` (R$ 29,00 a R$ 49,90)
+  * Straps de Algodão Reforçado: `https://s.shopee.com.br/2BG5b2xhm2` (R$ 19,00 a R$ 19,90)
+  * Balança Inteligente de Bioimpedância (Carro-Chefe): `https://s.shopee.com.br/2BFoInIBeb` (R$ 34,90)
+  * Regra: Proibido redirecionar acessórios para o link da balança.
+- **PWA & Adicionar à Tela Inicial do Celular:**
+  * O Marcão instrui ativamente em 4 a 5 balões como adicionar o portal como ícone na tela inicial do celular (iOS: Compartilhar > Adicionar à Tela de Início; Android: 3 pontinhos > Adicionar à tela inicial).
+  * O portal `aluno.html` conta com banner de acesso rápido e modal interativo com guia passo a passo para iPhone e Android.
+- **Ranking Semanal dos Leões Dinâmico:**
+  * Motor: `calcular_ranking_top5` consulta o Supabase `fichas_alunos`, lê `treino_atual.historico_treinos`, streak e check-ins reais para computar a pontuação de consistência (0 a 100%).
+  * Semanalmente (Domingos às 19:00), o Marcão envia a atualização do ranking para todos os alunos com incentivo para subir no pódio.
+- **Biometria Real sem Dados Fictícios:**
+  * Proibido usar valores padrão genéricos (170cm, 70kg) como se fossem medições reais.
+  * Alunos sem altura ou peso confirmados (inclusive o Diretor Evandro) são sinalizados com `dados_pendentes: True` e alerta no portal.
+  * O Marcão cobra ativamente a altura em cm e peso via WhatsApp e atualiza imediatamente no Supabase.
+- **Incentivo e Follow-up Contínuo (Mínimo 3x por semana):**
+  * Segundas, Quartas e Sextas às 18:00 (treinos e pendências).
+  * Segundas a Sextas às 12:30 (avaliação de almoço/dieta).
+  * Domingos às 19:00 (entrega da plataforma semanal e ranking).

@@ -239,10 +239,20 @@ class MarcaoAutonomousScheduler:
 
                 link_portal = f"https://marcaopersonal.com/aluno?id={tel}"
 
+                try:
+                    from apps.api.aluno_portal_engine import calcular_ranking_top5
+                    ranking = await calcular_ranking_top5(tel)
+                    top1_nome = ranking[0]["nome"] if ranking else "Evandro Silva Gallina"
+                    pos_aluno = next((r["posicao"] for r in ranking if r.get("is_current_user")), None)
+                    destaque_rank = f"Você tá em #{pos_aluno} no Ranking dos Leões!" if pos_aluno else f"O topo da semana tá com {top1_nome}! Bora buscar o Top 5!"
+                except Exception:
+                    destaque_rank = "Confira seu lugar no Ranking dos Leões da semana!"
+
                 baloes = [
-                    f"Fala, {nome}! 🦁💪 Passando pra te entregar sua Landing Page oficial atualizada desta semana!",
-                    f"Lá tá sua ficha de treino, sua meta de água e proteína na ponta do lápis, e meu parecer das suas fotos.",
-                    f"Abre aqui e dá uma olhada na sua evolução: {link_portal} 👊🔥"
+                    f"Fala, {nome}! 🦁 Passando pra te entregar sua plataforma oficial atualizada desta semana!",
+                    f"Lá tá sua ficha de treinos, metas de água e proteína, e o ranking da semana: {destaque_rank} 🏆",
+                    f"Acessa direto aqui: {link_portal}",
+                    "Dica de ouro: fixa o link na tela inicial do celular (Compartilhar > Adicionar à Tela de Início no iPhone ou 3 pontinhos > Adicionar à tela inicial no Android) pra virar um app no seu menu! 📲👊"
                 ]
 
                 for b in baloes:
