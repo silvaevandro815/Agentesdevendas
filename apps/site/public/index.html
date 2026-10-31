@@ -316,34 +316,40 @@
     <div style="background: linear-gradient(135deg, rgba(6, 13, 27, 0.98), rgba(11, 22, 44, 0.98)); border: 2px solid var(--neon-cyan); border-radius: 28px; padding: 40px 28px; box-shadow: 0 20px 60px rgba(0,229,255,0.25); position: relative; overflow: hidden;">
       
       <!-- Top Ribbon Badges -->
-      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; margin-bottom: 20px;">
-        <div style="background: linear-gradient(90deg, #ff8c00, #ff5722); color: #fff; font-size: 0.8rem; font-weight: 900; padding: 8px 18px; border-radius: 12px; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(255,87,34,0.35);">
-          <svg class="neon-icon gold" style="width:14px; height:14px; margin-right:6px;" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>CARRO-CHEFE Nº 1 DO PROJETO MARCÃO
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 28px;">
+        <div style="background: linear-gradient(90deg, #ff8c00, #ff5722); color: #fff; font-size: 0.8rem; font-weight: 900; padding: 8px 18px; border-radius: 12px; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(255,87,34,0.35); display: inline-flex; align-items: center; gap: 6px;">
+          <svg class="neon-icon gold" style="width:14px; height:14px;" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          <span>CARRO-CHEFE Nº 1 DO PROJETO MARCÃO</span>
         </div>
-        <div style="background: rgba(0, 255, 136, 0.15); border: 1px solid var(--neon-green); color: var(--neon-green); font-size: 0.8rem; font-weight: 900; padding: 8px 16px; border-radius: 12px; letter-spacing: 0.5px;">
-          <svg class="neon-icon green" style="width:14px; height:14px; margin-right:6px;" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>PREÇO DIRETO DE FÁBRICA SHOPEE: R$ 34,90 (R$ 0,09/DIA)
+        <div style="background: rgba(0, 255, 136, 0.15); border: 1px solid var(--neon-green); color: var(--neon-green); font-size: 0.8rem; font-weight: 900; padding: 8px 16px; border-radius: 12px; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 6px;">
+          <svg class="neon-icon green" style="width:14px; height:14px;" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          <span>PREÇO DIRETO DE FÁBRICA SHOPEE: R$ 34,90 (R$ 0,09/DIA)</span>
         </div>
       </div>
 
-      <!-- Main Showcase Grid (Texto & 3 Fotos) -->
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 36px; align-items: center;">
+      <!-- PARTE 1: DUAS COLUNAS EQUILIBRADAS (TEXTO À ESQUERDA & SHOWCASE 3 FOTOS À DIREITA) -->
+      <div class="carro-chefe-top-grid">
         
-        <!-- Coluna de Texto & Proposta de Valor -->
-        <div>
-          <div style="background: rgba(0,229,255,0.15); color: var(--neon-cyan); display: inline-block; padding: 6px 14px; border-radius: 14px; font-size: 0.8rem; font-weight: 800; margin-bottom: 12px;">
-            <svg class="neon-icon cyan" style="width:14px; height:14px; margin-right:6px;" viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>SCANNER CORPORAL CLÍNICO BIA + IA NO WHATSAPP
+        <!-- Coluna Esquerda: Proposta de Valor, Diferenciais & Gatilho -->
+        <div class="carro-chefe-info-col">
+          <div>
+            <div style="background: rgba(0,229,255,0.15); color: var(--neon-cyan); display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 14px; font-size: 0.8rem; font-weight: 800; margin-bottom: 12px;">
+              <svg class="neon-icon cyan" style="width:14px; height:14px;" viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+              <span>SCANNER CORPORAL CLÍNICO BIA + IA NO WHATSAPP</span>
+            </div>
+            <h2 style="font-size: clamp(1.8rem, 3.2vw, 2.35rem); font-weight: 900; line-height: 1.2; margin-bottom: 14px; color: #fff;">
+              Balança Inteligente de Bioimpedância Bluetooth BIA
+            </h2>
+            <p style="color: var(--text-muted); font-size: 0.96rem; line-height: 1.65; margin-bottom: 18px;">
+              Esta balança é a <strong>chave mestre que destrava a inteligência do Marcão</strong>. Equipada com 4 eletrodos curvos de aço inoxidável e microcorrente bioelétrica de alta condutividade, ela analisa sua densidade celular e decodifica <strong>13 biomarcadores clínicos</strong> em apenas 3 segundos.
+            </p>
           </div>
-          <h2 style="font-size: clamp(1.8rem, 4vw, 2.5rem); font-weight: 900; line-height: 1.2; margin-bottom: 14px; color: #fff;">
-            Balança Inteligente de Bioimpedância Bluetooth BIA
-          </h2>
-          <p style="color: var(--text-muted); font-size: 1rem; line-height: 1.7; margin-bottom: 18px;">
-            Esta balança é a <strong>chave mestre que destrava a inteligência do Marcão</strong>. Equipada com 4 eletrodos curvos de aço inoxidável e microcorrente bioelétrica de alta condutividade, ela analisa sua densidade celular e decodifica <strong>13 biomarcadores clínicos</strong> em apenas 3 segundos.
-          </p>
 
           <!-- Diferenciação da Balança Comum -->
-          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(0, 229, 255, 0.25); border-radius: 16px; padding: 16px; margin-bottom: 20px;">
+          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(0, 229, 255, 0.25); border-radius: 16px; padding: 18px; margin-bottom: 18px;">
             <div style="color: var(--neon-cyan); font-weight: 900; font-size: 0.95rem; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
-              <svg class="neon-icon cyan" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg> <span>POR QUE NÃO É UMA BALANÇA COMUM DE FARMÁCIA?</span>
+              <svg class="neon-icon cyan" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+              <span>POR QUE NÃO É UMA BALANÇA COMUM DE FARMÁCIA?</span>
             </div>
             <p style="color: var(--text-main); font-size: 0.88rem; line-height: 1.6; margin: 0;">
               Balanças comuns de farmácia são <em>"cegas"</em>: só medem seu peso bruto gravitacional. Se você perder músculo e reter água suja, ela mente que você emagreceu. A <strong>Balança Inteligente BIA</strong> mede a impedância real de cada tecido do seu corpo: ela sabe o peso exato da sua <strong>massa muscular</strong>, da sua <strong>hidratação celular</strong> e da perigosa <strong>gordura visceral</strong> que envolve seus órgãos internos vitais (coração e fígado).
@@ -351,128 +357,157 @@
           </div>
 
           <!-- Gatilho Irresistível 3 Meses Mentoria -->
-          <div style="background: rgba(0, 255, 136, 0.08); border-left: 4px solid var(--neon-green); padding: 16px 20px; border-radius: 0 14px 14px 0; margin-bottom: 22px;">
-            <div style="color: var(--neon-green); font-weight: 900; font-size: 1.05rem; margin-bottom: 6px;">
-              <svg class="neon-icon green" viewBox="0 0 24 24"><path d="m21 2-2 2m-1.5 1.5L14 9l-1.5-1.5-2 2 1.5 1.5-4 4A5 5 0 1 0 10 17l4-4 1.5 1.5 2-2-1.5-1.5 3.5-3.5"></path></svg> <span>O GATILHO IRRESISTÍVEL MARCÃO PERSONAL:</span>
+          <div style="background: rgba(0, 255, 136, 0.08); border-left: 4px solid var(--neon-green); padding: 18px 20px; border-radius: 0 14px 14px 0;">
+            <div style="color: var(--neon-green); font-weight: 900; font-size: 1rem; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
+              <svg class="neon-icon green" viewBox="0 0 24 24"><path d="m21 2-2 2m-1.5 1.5L14 9l-1.5-1.5-2 2 1.5 1.5-4 4A5 5 0 1 0 10 17l4-4 1.5 1.5 2-2-1.5-1.5 3.5-3.5"></path></svg>
+              <span>O GATILHO IRRESISTÍVEL MARCÃO PERSONAL:</span>
             </div>
-            <div style="color: var(--text-main); font-size: 0.92rem; line-height: 1.6;">
+            <div style="color: var(--text-main); font-size: 0.90rem; line-height: 1.6;">
               Garantindo sua balança pelo link oficial da Shopee por apenas <strong>R$ 34,90</strong>, você recebe o equipamento a preço direto de fábrica e destrava a IA do Marcão no seu WhatsApp! Ele recebe seus dados, monta seu treino, avalia suas refeições por foto e acompanha seu plano.
             </div>
           </div>
-
-          <!-- Grid dos 13 Biomarcadores -->
-          <div style="margin-bottom: 22px;">
-            <div style="font-size: 0.85rem; font-weight: 800; color: var(--neon-cyan); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">
-              <svg class="neon-icon cyan" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg> <span>Os 13 Biomarcadores Lidos em 3 Segundos:</span>
-            </div>
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-              <div class="biomarker-pill" style="border-left: 3px solid var(--neon-cyan);">
-                <svg class="neon-icon cyan" viewBox="0 0 24 24"><line x1="19" y1="5" x2="5" y2="19"></line><circle cx="6.5" cy="6.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg>
-                <span>% Gordura Corporal</span>
-              </div>
-              <div class="biomarker-pill" style="border-left: 3px solid var(--neon-green);">
-                <svg class="neon-icon green" viewBox="0 0 24 24"><path d="M6 5v14M18 5v14M2 9v6M22 9v6M6 12h12"></path></svg>
-                <span>Massa Muscular Real</span>
-              </div>
-              <div class="biomarker-pill" style="border-left: 3px solid var(--neon-orange);">
-                <svg class="neon-icon orange" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                <span>Gordura Visceral (Órgãos)</span>
-              </div>
-              <div class="biomarker-pill" style="border-left: 3px solid #38bdf8;">
-                <svg class="neon-icon cyan" viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
-                <span>Água Corporal / Hidratação</span>
-              </div>
-              <div class="biomarker-pill" style="border-left: 3px solid #facc15;">
-                <svg class="neon-icon gold" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-                <span>Taxa Metabólica Basal (TMB)</span>
-              </div>
-              <div class="biomarker-pill" style="border-left: 3px solid #a855f7;">
-                <svg class="neon-icon" style="stroke:#a855f7; filter:drop-shadow(0 0 5px #a855f7);" viewBox="0 0 24 24"><path d="M17 10c.7-.7 1.6-1 2.5-1a3.5 3.5 0 0 1 0 7c-.9 0-1.8-.3-2.5-1l-10 10c-.7.7-1 1.6-1 2.5a3.5 3.5 0 0 1-7 0c0-.9.3-1.8 1-2.5l10-10c-.7-.7-.3-1.6-.3-2.5a3.5 3.5 0 0 1 7 0c0 .9-.3 1.8-1 2.5Z"></path></svg>
-                <span>Massa Óssea Estrutural</span>
-              </div>
-              <div class="biomarker-pill" style="border-left: 3px solid #ec4899;">
-                <svg class="neon-icon" style="stroke:#ec4899; filter:drop-shadow(0 0 5px #ec4899);" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><circle cx="19" cy="5" r="2"></circle><circle cx="5" cy="19" r="2"></circle><circle cx="19" cy="19" r="2"></circle><circle cx="5" cy="5" r="2"></circle><path d="m6.5 6.5 4 4M13.5 13.5l4 4M13.5 10.5l4-4M6.5 17.5l4-4"></path></svg>
-                <span>Proteína Corporal</span>
-              </div>
-              <div class="biomarker-pill" style="border-left: 3px solid var(--neon-cyan);">
-                <svg class="neon-icon cyan" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
-                <span>Idade Biológica / Metabólica</span>
-              </div>
-              <div class="biomarker-pill" style="border-left: 3px solid var(--neon-green);">
-                <svg class="neon-icon green" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                <span>Índice de Massa Corporal (IMC)</span>
-              </div>
-              <div class="biomarker-pill" style="border-left: 3px solid #f97316;">
-                <svg class="neon-icon orange" viewBox="0 0 24 24"><path d="M2 12c2.5-4 5.5-4 8 0s5.5 4 8 0 5.5-4 8 0"></path><path d="M2 17c2.5-4 5.5-4 8 0s5.5 4 8 0 5.5-4 8 0"></path></svg>
-                <span>Gordura Subcutânea</span>
-              </div>
-            </div>
-          </div>
-          </div>
-
-          <!-- Preço & Pitch Diário -->
-          <div style="display: flex; align-items: baseline; gap: 14px; margin-bottom: 20px; flex-wrap: wrap;">
-            <div style="font-size: 2.6rem; font-weight: 900; color: var(--neon-cyan); line-height: 1;">R$ 34,90</div>
-            <div style="color: var(--neon-green); font-weight: 800; font-size: 1.05rem;">Apenas R$ 0,09 por dia no ano! (Preço de Fábrica)</div>
-          </div>
-
-          <!-- Botões de Ação -->
-          <div style="display: flex; gap: 14px; flex-wrap: wrap;">
-            <a href="https://s.shopee.com.br/2BFoInIBeb" target="_blank" class="btn-primary" style="font-size: 1.05rem; padding: 16px 28px; background: linear-gradient(135deg, #ff5722, #ee4d2d); box-shadow: 0 10px 25px rgba(238,77,45,0.4);">
-              <span>GARANTIR NA SHOPEE POR R$ 34,90</span>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-            </a>
-            <a href="https://wa.me/553285066687?text=Ol%C3%A1%2C%20Marc%C3%A3o%21%20Comprei%20minha%20Balan%C3%A7a%20Inteligente%20na%20Shopee%20e%20quero%20ativar%20meu%20acompanhamento%20VIP%21" target="_blank" class="btn-secondary" style="padding: 16px 22px;">
-              <span><svg style="width:16px; height:16px; fill:var(--neon-green); margin-right:6px; vertical-align:middle;" viewBox="0 0 24 24"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2M12.05 3.67C14.25 3.67 16.31 4.53 17.87 6.09C19.42 7.65 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.15 12.04 20.15C10.56 20.15 9.11 19.76 7.85 19L7.55 18.83L4.43 19.65L5.26 16.61L5.06 16.29C4.24 15 3.8 13.47 3.8 11.91C3.81 7.37 7.5 3.67 12.05 3.67M9.53 7.03C9.36 7.03 9.08 7.09 8.84 7.35C8.6 7.61 7.92 8.25 7.92 9.54C7.92 10.83 8.86 12.08 9 12.26C9.13 12.44 10.84 15.08 13.46 16.21C14.09 16.48 14.57 16.64 14.96 16.76C15.58 16.96 16.15 16.93 16.6 16.87C17.1 16.79 18.14 16.24 18.35 15.63C18.57 15.02 18.57 14.5 18.5 14.4C18.43 14.3 18.26 14.24 18 14.11C17.74 13.98 16.46 13.35 16.22 13.27C15.98 13.18 15.82 13.14 15.65 13.39C15.48 13.65 15 14.24 14.85 14.4C14.7 14.57 14.56 14.6 14.3 14.47C14.04 14.34 13.2 14.07 12.21 13.18C11.44 12.49 10.92 11.64 10.77 11.38C10.62 11.13 10.75 11 10.88 10.87C11 10.75 11.14 10.57 11.27 10.42C11.4 10.27 11.45 10.16 11.53 10C11.61 9.83 11.57 9.69 11.51 9.56C11.45 9.43 10.97 8.25 10.77 7.77C10.57 7.29 10.37 7.36 10.22 7.35C10.08 7.35 9.91 7.34 9.74 7.34C9.57 7.34 9.53 7.03 9.53 7.03Z"/></svg>ATIVAR MARCÃO NO WHATSAPP</span>
-            </a>
-          </div>
-          <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 12px;">
-            <svg class="neon-icon cyan" style="width:13px; height:13px; margin-right:4px;" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>Compra 100% segura e garantida com proteção Shopee e cupons de frete. Acompanhamento contínuo opcional por R$ 19,90/mês.
-          </div>
         </div>
 
-        <!-- Coluna Visual: As 3 Fotos Oficiais do Produto -->
-        <div>
-          <div style="display: flex; flex-direction: column; gap: 18px;">
+        <!-- Coluna Direita: O Showcase Visual Oficial que preenche o espaço com perfeição -->
+        <div class="carro-chefe-visual-col">
+          
+          <!-- Foto 1: Balança Preta com Display Digital e 4 Eletrodos (Destaque Principal) -->
+          <div class="balanca-main-showcase">
+            <span class="showcase-tag cyan">
+              <svg class="neon-icon cyan" style="width:12px; height:12px; margin-right:4px;" viewBox="0 0 24 24"><rect width="20" height="20" x="2" y="2" rx="4"></rect><circle cx="12" cy="8" r="2.5"></circle><path d="M7 16h10"></path></svg>
+              DISPLAY LCD AZUL • 4 SENSORES DE PRECISÃO BIA
+            </span>
+            <div style="padding: 16px 0 10px 0;">
+              <img src="images/balanca_shopee_preta.webp" alt="Balança Inteligente Shopee Preta com Display Digital" class="balanca-main-img" loading="lazy" decoding="async">
+            </div>
+            <div style="font-size: 1rem; font-weight: 800; color: #fff;">Design Slim em Vidro Temperado de Alta Resistência</div>
+            <p style="color: var(--text-muted); font-size: 0.82rem; margin: 4px 0 0 0; line-height: 1.45;">4 eletrodos curvos de aço inox que captam a microcorrente bioelétrica corporal em 3s.</p>
+          </div>
+
+          <!-- Fotos 2 e 3 em Grade Lado a Lado (Demonstração Prática) -->
+          <div class="balanca-sub-grid">
             
-            <!-- Foto 1: Balança Preta com Display Digital e 4 Eletrodos -->
-            <div style="background: rgba(255,255,255,0.03); border: 2px solid rgba(0,229,255,0.3); border-radius: 20px; padding: 16px; text-align: center; position: relative;">
-              <span style="position: absolute; top: 12px; left: 16px; background: rgba(0,229,255,0.2); color: var(--neon-cyan); font-size: 0.72rem; font-weight: 800; padding: 4px 10px; border-radius: 8px;">
-                DISPLAY LCD AZUL • 4 SENSORES BIA
-              </span>
-              <img src="images/balanca_shopee_preta.webp" alt="Balança Inteligente Shopee Preta com Display Digital" style="max-height: 220px; object-fit: contain; margin: 20px auto 10px; filter: drop-shadow(0 12px 24px rgba(0,229,255,0.2));" loading="lazy" decoding="async">
-              <div style="font-size: 0.95rem; font-weight: 800; color: #fff;">Design Slim em Vidro Temperado de Alta Resistência</div>
-              <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 4px;">4 eletrodos curvos de aço inox que captam a microcorrente bioelétrica corporal em 3s.</p>
+            <!-- Foto 2: App com os 13 biomarcadores -->
+            <div class="balanca-sub-card">
+              <span class="showcase-tag green">RELATÓRIO DO APP</span>
+              <img src="images/balanca_shopee_app_metricas.webp" alt="App da Balança Inteligente com 13 Métricas" class="balanca-sub-img" loading="lazy" decoding="async">
+              <div style="font-size: 0.82rem; font-weight: 800; color: #fff; margin-top: 6px;">13 Parâmetros Clínicos</div>
+              <div style="font-size: 0.72rem; color: var(--text-muted); line-height: 1.35;">Gordura visceral, TMB, água e massa muscular</div>
             </div>
 
-            <!-- Grid com Foto 2 (App Métricas) e Foto 3 (Pé na Balança em Uso Real) -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-              
-              <!-- Foto 2: App com os 13 biomarcadores -->
-              <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(0,255,136,0.3); border-radius: 16px; padding: 12px; text-align: center;">
-                <span style="display: inline-block; background: rgba(0,255,136,0.15); color: var(--neon-green); font-size: 0.68rem; font-weight: 800; padding: 3px 8px; border-radius: 6px; margin-bottom: 8px;">
-                  RELATÓRIO DO APP
-                </span>
-                <img src="images/balanca_shopee_app_metricas.webp" alt="App da Balança Inteligente com 13 Métricas" style="height: 180px; width: 100%; object-fit: contain; border-radius: 10px;" loading="lazy" decoding="async">
-                <div style="font-size: 0.78rem; font-weight: 700; color: #fff; margin-top: 6px;">13 Parâmetros Clínicos</div>
-                <div style="font-size: 0.70rem; color: var(--text-muted);">Gordura visceral, TMB, água e massa muscular</div>
-              </div>
-
-              <!-- Foto 3: Uso Real pisando na balança com BLE -->
-              <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,122,0,0.3); border-radius: 16px; padding: 12px; text-align: center;">
-                <span style="display: inline-block; background: rgba(255,122,0,0.15); color: var(--neon-orange); font-size: 0.68rem; font-weight: 800; padding: 3px 8px; border-radius: 6px; margin-bottom: 8px;">
-                  SINCRONIZAÇÃO BLE
-                </span>
-                <img src="images/balanca_shopee_uso_real.webp" alt="Pesagem Real descalço com Sincronização Bluetooth" style="height: 180px; width: 100%; object-fit: contain; border-radius: 10px;" loading="lazy" decoding="async">
-                <div style="font-size: 0.78rem; font-weight: 700; color: #fff; margin-top: 6px;">Pesagem Instantânea</div>
-                <div style="font-size: 0.70rem; color: var(--text-muted);">Transmissão sem fios direta para o celular</div>
-              </div>
-
+            <!-- Foto 3: Uso Real pisando na balança com BLE -->
+            <div class="balanca-sub-card">
+              <span class="showcase-tag orange">SINCRONIZAÇÃO BLE</span>
+              <img src="images/balanca_shopee_uso_real.webp" alt="Pesagem Real descalço com Sincronização Bluetooth" class="balanca-sub-img" loading="lazy" decoding="async">
+              <div style="font-size: 0.82rem; font-weight: 800; color: #fff; margin-top: 6px;">Pesagem Instantânea</div>
+              <div style="font-size: 0.72rem; color: var(--text-muted); line-height: 1.35;">Transmissão sem fios direta para o celular</div>
             </div>
 
           </div>
+
         </div>
 
+      </div>
+
+      <!-- PARTE 2: OS 13 BIOMARCADORES CLÍNICOS EM LARGURA TOTAL (SEM ENCAVALAMENTO) -->
+      <div class="biomarkers-full-strip">
+        <div style="text-align: center; margin-bottom: 22px;">
+          <div style="font-size: 0.84rem; font-weight: 900; color: var(--neon-cyan); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; display: inline-flex; align-items: center; gap: 6px;">
+            <svg class="neon-icon cyan" style="width:16px; height:16px;" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            <span>OS 13 BIOMARCADORES CLÍNICOS LIDOS EM 3 SEGUNDOS PELA IA</span>
+          </div>
+          <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0;">A microcorrente BIA percorre cada tecido celular e decodifica seu mapa corporal completo:</p>
+        </div>
+
+        <div class="biomarkers-grid-4col">
+          <div class="biomarker-pill" style="border-left: 3px solid var(--neon-cyan);">
+            <svg class="neon-icon cyan" viewBox="0 0 24 24"><line x1="19" y1="5" x2="5" y2="19"></line><circle cx="6.5" cy="6.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg>
+            <span>% Gordura Corporal</span>
+          </div>
+          <div class="biomarker-pill" style="border-left: 3px solid var(--neon-green);">
+            <svg class="neon-icon green" viewBox="0 0 24 24"><path d="M6 5v14M18 5v14M2 9v6M22 9v6M6 12h12"></path></svg>
+            <span>Massa Muscular Real</span>
+          </div>
+          <div class="biomarker-pill" style="border-left: 3px solid var(--neon-orange);">
+            <svg class="neon-icon orange" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            <span>Gordura Visceral (Órgãos)</span>
+          </div>
+          <div class="biomarker-pill" style="border-left: 3px solid #38bdf8;">
+            <svg class="neon-icon cyan" viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
+            <span>Água Corporal / Hidratação</span>
+          </div>
+          <div class="biomarker-pill" style="border-left: 3px solid #facc15;">
+            <svg class="neon-icon gold" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            <span>Taxa Metabólica Basal (TMB)</span>
+          </div>
+          <div class="biomarker-pill" style="border-left: 3px solid #a855f7;">
+            <svg class="neon-icon" style="stroke:#a855f7; filter:drop-shadow(0 0 5px #a855f7);" viewBox="0 0 24 24"><path d="M17 10c.7-.7 1.6-1 2.5-1a3.5 3.5 0 0 1 0 7c-.9 0-1.8-.3-2.5-1l-10 10c-.7.7-1 1.6-1 2.5a3.5 3.5 0 0 1-7 0c0-.9.3-1.8 1-2.5l10-10c-.7-.7-.3-1.6-.3-2.5a3.5 3.5 0 0 1 7 0c0 .9-.3 1.8-1 2.5Z"></path></svg>
+            <span>Massa Óssea Estrutural</span>
+          </div>
+          <div class="biomarker-pill" style="border-left: 3px solid #ec4899;">
+            <svg class="neon-icon" style="stroke:#ec4899; filter:drop-shadow(0 0 5px #ec4899);" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><circle cx="19" cy="5" r="2"></circle><circle cx="5" cy="19" r="2"></circle><circle cx="19" cy="19" r="2"></circle><circle cx="5" cy="5" r="2"></circle><path d="m6.5 6.5 4 4M13.5 13.5l4 4M13.5 10.5l4-4M6.5 17.5l4-4"></path></svg>
+            <span>Proteína Corporal</span>
+          </div>
+          <div class="biomarker-pill" style="border-left: 3px solid var(--neon-cyan);">
+            <svg class="neon-icon cyan" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+            <span>Idade Biológica / Metabólica</span>
+          </div>
+          <div class="biomarker-pill" style="border-left: 3px solid var(--neon-green);">
+            <svg class="neon-icon green" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            <span>Índice de Massa Corporal (IMC)</span>
+          </div>
+          <div class="biomarker-pill" style="border-left: 3px solid #f97316;">
+            <svg class="neon-icon orange" viewBox="0 0 24 24"><path d="M2 12c2.5-4 5.5-4 8 0s5.5 4 8 0 5.5-4 8 0"></path><path d="M2 17c2.5-4 5.5-4 8 0s5.5 4 8 0 5.5-4 8 0"></path></svg>
+            <span>Gordura Subcutânea</span>
+          </div>
+          <div class="biomarker-pill" style="border-left: 3px solid #06b6d4;">
+            <svg class="neon-icon cyan" viewBox="0 0 24 24"><path d="M6 18h12M6 6h12M9 12h6"></path><circle cx="4" cy="6" r="2"></circle><circle cx="20" cy="6" r="2"></circle><circle cx="4" cy="18" r="2"></circle><circle cx="20" cy="18" r="2"></circle></svg>
+            <span>Músculo Esquelético</span>
+          </div>
+          <div class="biomarker-pill" style="border-left: 3px solid #10b981;">
+            <svg class="neon-icon green" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            <span>Peso Livre de Gordura</span>
+          </div>
+          <div class="biomarker-pill" style="border-left: 3px solid #eab308;">
+            <svg class="neon-icon gold" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            <span>Pontuação Física Global</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PARTE 3: PLACA DE PRECIFICAÇÃO CENTRALIZADA DENTRO DA ÁREA SEGURA (ALTA CONVERSÃO) -->
+      <div class="pricing-central-card">
+        <div class="pricing-badge-top">
+          <svg class="neon-icon green" style="width:14px; height:14px;" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          <span>PREÇO DIRETO DE FÁBRICA SHOPEE • OFERTA HOMOLOGADA MARCÃO</span>
+        </div>
+
+        <div class="pricing-amount">R$ 34,90</div>
+        
+        <div class="pricing-daily-pitch">
+          Apenas <span>R$ 0,09 por dia</span> no ano! (Menos de 10 centavos ao dia)
+        </div>
+
+        <p class="pricing-subtext">
+          Balança Inteligente original na caixa entregue na sua casa + <strong>90 dias de Acompanhamento VIP</strong> com a IA do Marcão no seu WhatsApp (anamnese, macros por foto de comida e ficha de treinos personalizada).
+        </p>
+
+        <!-- Botões de Ação Centralizados Lado a Lado -->
+        <div class="pricing-actions">
+          <a href="https://s.shopee.com.br/2BFoInIBeb" target="_blank" class="btn-primary-shopee" title="Comprar Balança Inteligente na Shopee">
+            <span>GARANTIR NA SHOPEE POR R$ 34,90</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+          <a href="https://wa.me/553285066687?text=Ol%C3%A1%2C%20Marc%C3%A3o%21%20Comprei%20minha%20Balan%C3%A7a%20Inteligente%20na%20Shopee%20e%20quero%20ativar%20meu%20acompanhamento%20VIP%21" target="_blank" class="btn-secondary-wa" title="Ativar Mentoria no WhatsApp">
+            <svg viewBox="0 0 24 24"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2M12.05 3.67C14.25 3.67 16.31 4.53 17.87 6.09C19.42 7.65 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.15 12.04 20.15C10.56 20.15 9.11 19.76 7.85 19L7.55 18.83L4.43 19.65L5.26 16.61L5.06 16.29C4.24 15 3.8 13.47 3.8 11.91C3.81 7.37 7.5 3.67 12.05 3.67M9.53 7.03C9.36 7.03 9.08 7.09 8.84 7.35C8.6 7.61 7.92 8.25 7.92 9.54C7.92 10.83 8.86 12.08 9 12.26C9.13 12.44 10.84 15.08 13.46 16.21C14.09 16.48 14.57 16.64 14.96 16.76C15.58 16.96 16.15 16.93 16.6 16.87C17.1 16.79 18.14 16.24 18.35 15.63C18.57 15.02 18.57 14.5 18.5 14.4C18.43 14.3 18.26 14.24 18 14.11C17.74 13.98 16.46 13.35 16.22 13.27C15.98 13.18 15.82 13.14 15.65 13.39C15.48 13.65 15 14.24 14.85 14.4C14.7 14.57 14.56 14.6 14.3 14.47C14.04 14.34 13.2 14.07 12.21 13.18C11.44 12.49 10.92 11.64 10.77 11.38C10.62 11.13 10.75 11 10.88 10.87C11 10.75 11.14 10.57 11.27 10.42C11.4 10.27 11.45 10.16 11.53 10C11.61 9.83 11.57 9.69 11.51 9.56C11.45 9.43 10.97 8.25 10.77 7.77C10.57 7.29 10.37 7.36 10.22 7.35C10.08 7.35 9.91 7.34 9.74 7.34C9.57 7.34 9.53 7.03 9.53 7.03Z"/></svg>
+            <span>ATIVAR MARCÃO NO WHATSAPP</span>
+          </a>
+        </div>
+
+        <div class="pricing-footer-security">
+          <svg class="neon-icon cyan" style="width:14px; height:14px;" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          <span>Compra 100% segura e garantida com proteção Shopee e cupons de frete. Acompanhamento contínuo opcional por R$ 19,90/mês.</span>
+        </div>
       </div>
 
       <!-- GUIA DIDÁTICO: COMO ATIVAR NO CELULAR E CONECTAR COM O MARCÃO -->

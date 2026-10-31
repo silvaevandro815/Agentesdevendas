@@ -2153,3 +2153,289 @@ header {
     display: block !important;
   }
 }
+
+
+/* ==========================================================================
+   CARRO-CHEFE: LAYOUT REESTRUTURADO (ZERO VACUO, SIMETRIA & PRECO CENTRALIZADO)
+   ========================================================================== */
+.carro-chefe-top-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 36px;
+  align-items: stretch;
+  margin-bottom: 32px;
+}
+
+.carro-chefe-info-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.carro-chefe-visual-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.balanca-main-showcase {
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(0, 229, 255, 0.35);
+  border-radius: 20px;
+  padding: 18px 20px;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0, 229, 255, 0.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.balanca-main-img {
+  max-height: 220px;
+  max-width: 100%;
+  object-fit: contain;
+  margin: 10px auto;
+  filter: drop-shadow(0 14px 28px rgba(0, 229, 255, 0.28));
+  transition: transform 0.3s ease;
+}
+
+.balanca-main-img:hover {
+  transform: scale(1.03);
+}
+
+.showcase-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 8px;
+  letter-spacing: 0.5px;
+}
+
+.showcase-tag.cyan {
+  background: rgba(0, 229, 255, 0.18);
+  color: var(--neon-cyan);
+  border: 1px solid rgba(0, 229, 255, 0.35);
+}
+
+.showcase-tag.green {
+  background: rgba(0, 255, 136, 0.18);
+  color: var(--neon-green);
+  border: 1px solid rgba(0, 255, 136, 0.35);
+}
+
+.showcase-tag.orange {
+  background: rgba(255, 122, 0, 0.18);
+  color: var(--neon-orange);
+  border: 1px solid rgba(255, 122, 0, 0.35);
+}
+
+.balanca-sub-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.balanca-sub-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 14px 12px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: border-color 0.25s, transform 0.25s;
+}
+
+.balanca-sub-card:hover {
+  border-color: var(--neon-cyan);
+  transform: translateY(-2px);
+}
+
+.balanca-sub-img {
+  height: 150px;
+  width: 100%;
+  object-fit: contain;
+  border-radius: 10px;
+  margin: 6px 0;
+}
+
+/* STRIP DE BIOMARCADORES DE LARGURA TOTAL */
+.biomarkers-full-strip {
+  background: rgba(16, 31, 62, 0.5);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  border-radius: 20px;
+  padding: 24px 20px;
+  margin-bottom: 28px;
+}
+
+.biomarkers-grid-4col {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+/* PLACA DE PRECIFICAÇÃO CENTRALIZADA DENTRO DA ÁREA SEGURA */
+.pricing-central-card {
+  max-width: 860px;
+  margin: 0 auto;
+  text-align: center;
+  background: linear-gradient(135deg, rgba(16, 31, 62, 0.95), rgba(6, 13, 27, 0.98));
+  border: 2px solid var(--neon-cyan);
+  box-shadow: 0 12px 45px rgba(0, 229, 255, 0.28);
+  border-radius: 24px;
+  padding: 32px 28px;
+  position: relative;
+}
+
+.pricing-badge-top {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 255, 136, 0.12);
+  border: 1px solid rgba(0, 255, 136, 0.35);
+  color: var(--neon-green);
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 5px 14px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.pricing-amount {
+  font-size: clamp(2.8rem, 5vw, 3.8rem);
+  font-weight: 900;
+  color: var(--neon-cyan);
+  line-height: 1;
+  margin: 4px 0 8px 0;
+  text-shadow: 0 0 25px rgba(0, 229, 255, 0.45);
+}
+
+.pricing-daily-pitch {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 12px;
+}
+
+.pricing-daily-pitch span {
+  color: var(--neon-green);
+  text-shadow: 0 0 12px rgba(0, 255, 136, 0.4);
+}
+
+.pricing-subtext {
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+  max-width: 660px;
+  margin: 0 auto 24px auto;
+}
+
+.pricing-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.btn-primary-shopee {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #ff5722, #ee4d2d);
+  color: #fff !important;
+  font-size: 1.02rem;
+  font-weight: 900;
+  padding: 16px 32px;
+  border-radius: 50px;
+  text-decoration: none;
+  box-shadow: 0 10px 25px rgba(238, 77, 45, 0.45);
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+
+.btn-primary-shopee:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 14px 35px rgba(238, 77, 45, 0.6);
+}
+
+.btn-secondary-wa {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(37, 211, 102, 0.15);
+  border: 1.5px solid #25d366;
+  color: #fff !important;
+  font-size: 1.02rem;
+  font-weight: 800;
+  padding: 16px 28px;
+  border-radius: 50px;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+
+.btn-secondary-wa:hover {
+  background: rgba(37, 211, 102, 0.25);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(37, 211, 102, 0.4);
+}
+
+.btn-secondary-wa svg {
+  width: 18px;
+  height: 18px;
+  fill: #25d366;
+}
+
+.pricing-footer-security {
+  font-size: 0.80rem;
+  color: var(--text-muted);
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+@media (max-width: 1024px) {
+  .carro-chefe-top-grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .biomarkers-grid-4col {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .biomarkers-grid-4col {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .pricing-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  .btn-primary-shopee, .btn-secondary-wa {
+    width: 100%;
+  }
+  .balanca-sub-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .biomarkers-grid-4col {
+    grid-template-columns: 1fr;
+  }
+  .balanca-sub-grid {
+    grid-template-columns: 1fr;
+  }
+}
