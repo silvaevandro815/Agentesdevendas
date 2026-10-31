@@ -43,7 +43,13 @@ const apiLimiter = rateLimit({
 
 app.use(cors());
 // Limite rigoroso de tamanho do payload JSON contra ataques de DoS por estouro de buffer
-app.use(express.json({ limit: '30kb' }));
+// Middleware de body parser dinâmico: permite até 25MB para fotos de perfil do aluno e 50KB para rotas públicas
+app.use((req, res, next) => {
+  if (req.originalUrl && req.originalUrl.includes('/api/aluno/avatar')) {
+    return express.json({ limit: '25mb' })(req, res, next);
+  }
+  return express.json({ limit: '50kb' })(req, res, next);
+});
 app.use(express.static(path.join(__dirname, 'public'), {
   dotfiles: 'ignore', // NUNCA serve arquivos ocultos ou .env estaticamente
   etag: true,
@@ -137,12 +143,13 @@ app.get('/aluno/:id', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'aluno.html'));
 });
 
-// Upload de foto de perfil do aluno (suporta até 10MB) com gravação estática no site
-app.post('/api/aluno/avatar/:id', express.json({ limit: '10mb' }), async (req, res) => {
+// Upload de foto de perfil do aluno com gravação estática no site e relay para a API/Supabase
+app.post('/api/aluno/avatar/:id', async (req, res) => {
   const alunoId = req.params.id || '';
   const idLimpo = (alunoId || '').replace(/\D/g, '') || 'avatar_usuario';
+  let staticUrl = `/uploads/avatars/${idLimpo}.jpg`;
   
-  // Salva localmente no container site para acesso imediato via URL estática
+  // 1. Salva localmente no container site para acesso imediato via URL estática
   try {
     const imgData = (req.body || {}).image || '';
     if (imgData) {
@@ -155,6 +162,7 @@ app.post('/api/aluno/avatar/:id', express.json({ limit: '10mb' }), async (req, r
     console.error('[AVATAR LOCAL WRITE]', errLocal.message);
   }
 
+  // 2. Encaminha para o container da API (FastAPI) para gravar no Supabase
   const candidateUrls = [
     process.env.API_URL,
     'http://api:8000',
@@ -168,14 +176,16 @@ app.post('/api/aluno/avatar/:id', express.json({ limit: '10mb' }), async (req, r
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(req.body)
       });
-      const data = await apiRes.json();
-      return res.status(apiRes.status).json(data);
+      if (apiRes.ok) {
+        const data = await apiRes.json();
+        return res.status(apiRes.status).json(data);
+      }
     } catch (e) {
       // tenta proximo
     }
   }
 
-  return res.json({ sucesso: true, foto_url: `/uploads/avatars/${idLimpo}.jpg` });
+  return res.json({ sucesso: true, foto_url: staticUrl });
 });
 
 // Redirecionamento Strava OAuth direto na plataforma

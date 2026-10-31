@@ -1894,7 +1894,11 @@
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     const pathParts = window.location.pathname.split('/');
-    const alunoId = urlParams.get('id') || (pathParts.length > 2 ? pathParts[2] : '5532988273367');
+    const paramId = urlParams.get('id') || (pathParts.length > 2 && pathParts[2] ? pathParts[2] : null);
+    if (paramId) {
+      try { localStorage.setItem('marcao_aluno_ultimo_id', paramId); } catch(e){}
+    }
+    const alunoId = paramId || localStorage.getItem('marcao_aluno_ultimo_id') || '553284587255';
 
     const API_URL = `/api/aluno/portal/${alunoId}`;
 
@@ -1906,61 +1910,100 @@
     }
 
     function dispararUploadFoto() {
-      document.getElementById('avatarFileInput').click();
+      const input = document.getElementById('avatarFileInput');
+      if (input) {
+        input.value = ''; // Permite selecionar o mesmo arquivo se quiser trocar
+        input.click();
+      }
+    }
+
+    // Comprime a foto no navegador em Canvas para 350x350 JPEG (~25KB)
+    // Garantindo velocidade máxima, sem travar o localStorage e sem estourar limites de payload
+    function otimizarFotoCliente(arquivo) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const targetSize = 350;
+            canvas.width = targetSize;
+            canvas.height = targetSize;
+            const ctx = canvas.getContext('2d');
+            
+            // Recorte centralizado e quadrado (object-fit: cover)
+            const minDim = Math.min(img.width, img.height);
+            const sx = (img.width - minDim) / 2;
+            const sy = (img.height - minDim) / 2;
+            
+            ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, targetSize, targetSize);
+            const dataUrlLeve = canvas.toDataURL('image/jpeg', 0.88);
+            resolve(dataUrlLeve);
+          };
+          img.onerror = () => reject(new Error("Falha ao abrir imagem"));
+          img.src = e.target.result;
+        };
+        reader.onerror = () => reject(new Error("Falha ao ler arquivo"));
+        reader.readAsDataURL(arquivo);
+      });
     }
 
     async function aoSelecionarFoto(event) {
       const file = event.target.files && event.target.files[0];
       if (!file) return;
 
-      // Validação rápida de tamanho (máx 8MB)
-      if (file.size > 8 * 1024 * 1024) {
-        alert("A foto selecionada é muito grande. Escolha uma imagem de até 8MB.");
-        return;
-      }
+      showToast("Otimizando sua foto de perfil...");
 
-      const reader = new FileReader();
-      reader.onload = async function(e) {
-        const dataUrl = e.target.result;
-        // Preview instantâneo
+      try {
+        const dataUrl = await otimizarFotoCliente(file);
+        
+        // 1. Renderiza no mesmo instante no topo da página
         renderizarFotoAvatar(dataUrl);
-        // Salva no cache local
-        localStorage.setItem('aluno_avatar_' + alunoId, dataUrl);
+
+        // 2. Grava no cache do dispositivo com segurança contra quota
+        try {
+          localStorage.setItem('aluno_avatar_' + alunoId, dataUrl);
+          localStorage.setItem('aluno_avatar_global', dataUrl);
+        } catch (eStorage) {
+          console.warn("Storage warning:", eStorage);
+        }
+
         showToast("Salvando foto no seu perfil...");
 
-        try {
-          const res = await fetch(`/api/aluno/avatar/${alunoId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ image: dataUrl })
-          });
-          const ret = await res.json();
-          if (ret.sucesso) {
-            if (ret.foto_url) {
-              renderizarFotoAvatar(ret.foto_url);
-              localStorage.setItem('aluno_avatar_' + alunoId, ret.foto_url);
-            }
-            showToast("Foto de perfil atualizada e salva com sucesso!");
-          } else {
-            console.warn("Aviso upload:", ret.erro);
-          }
-        } catch (err) {
-          console.error("Erro no envio:", err);
+        // 3. Envia para o servidor persistir no Supabase e na nuvem
+        const res = await fetch(`/api/aluno/avatar/${alunoId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: dataUrl })
+        });
+        const ret = await res.json();
+        
+        if (ret && ret.sucesso) {
+          const finalUrl = ret.foto_url || dataUrl;
+          renderizarFotoAvatar(finalUrl);
+          try {
+            localStorage.setItem('aluno_avatar_' + alunoId, finalUrl);
+            localStorage.setItem('aluno_avatar_global', finalUrl);
+          } catch(e){}
+          showToast("Foto de perfil salva com sucesso!");
+        } else {
           showToast("Foto salva no seu dispositivo!");
         }
-      };
-      reader.readAsDataURL(file);
+      } catch (err) {
+        console.error("Erro no upload da foto:", err);
+        showToast("Erro ao processar foto. Tente novamente.");
+      }
     }
 
     function renderizarFotoAvatar(src) {
       const box = document.getElementById('avatarBox');
-      if (!src) return;
-      box.innerHTML = `<img src="${src}" class="avatar-photo-render" alt="Foto de perfil">`;
+      if (!src || !box) return;
+      box.innerHTML = `<img src="${src}" class="avatar-photo-render" alt="Foto de perfil" onerror="this.onerror=null; const f=localStorage.getItem('aluno_avatar_' + alunoId)||localStorage.getItem('aluno_avatar_global'); if(f && this.src!==f){ this.src=f; }">`;
     }
 
     async function carregarPortalAluno() {
       // 0. Carrega foto de perfil do cache local imediatamente se existir
-      const cachedAvatar = localStorage.getItem('aluno_avatar_' + alunoId);
+      const cachedAvatar = localStorage.getItem('aluno_avatar_' + alunoId) || localStorage.getItem('aluno_avatar_global');
       if (cachedAvatar) {
         renderizarFotoAvatar(cachedAvatar);
       }

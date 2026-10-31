@@ -801,7 +801,7 @@ async def obter_dados_portal_aluno(identificador: str) -> Dict[str, Any]:
             "dias_no_protocolo": ficha.get("dias_ativos") or 14,
             "foto_perfil": (
                 (nutri.get("foto_perfil") if isinstance(nutri, dict) and nutri.get("foto_perfil") else None)
-                or (f"/uploads/avatars/{id_limpo}.jpg" if os.path.exists(os.path.join(_base_dir, "..", "site", "public", "uploads", "avatars", f"{id_limpo}.jpg")) else None)
+                or f"/uploads/avatars/{id_limpo}.jpg"
             )
         },
         "matematica_fisica": {

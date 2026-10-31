@@ -1467,6 +1467,15 @@ async def upload_avatar_aluno(identificador: str, payload: dict):
                     json={"metas_nutricionais": metas}
                 )
                 print(f"[AVATAR] Foto de {id_limpo} persistida no Supabase (status {patch_res.status_code})!")
+            else:
+                novo_aluno = {
+                    "nome": "Aluno VIP",
+                    "telefone": id_limpo,
+                    "remote_jid": f"{id_limpo}@s.whatsapp.net",
+                    "metas_nutricionais": {"foto_perfil": data_uri}
+                }
+                c_res = await client.post(f"{SUPABASE_URL}/rest/v1/fichas_alunos", headers=headers, json=novo_aluno)
+                print(f"[AVATAR] Nova ficha criada com foto para {id_limpo} (status {c_res.status_code})!")
                 
         return {"sucesso": True, "foto_url": data_uri}
     except Exception as e:
