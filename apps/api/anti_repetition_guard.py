@@ -18,6 +18,14 @@ from datetime import datetime
 
 urllib3.disable_warnings()
 
+try:
+    from apps.api.matriz_31_dias import MATRIZ_31_DIAS
+except ImportError:
+    try:
+        from matriz_31_dias import MATRIZ_31_DIAS
+    except ImportError:
+        MATRIZ_31_DIAS = None
+
 from dotenv import load_dotenv
 load_dotenv()
 load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))

@@ -53,7 +53,20 @@ app.use((req, res, next) => {
 app.use(express.static(path.join(__dirname, 'public'), {
   dotfiles: 'ignore', // NUNCA serve arquivos ocultos ou .env estaticamente
   etag: true,
-  maxAge: '1h'
+  setHeaders: (res, filePath) => {
+    // 1. Arquivos HTML nunca devem ficar presos no cache do navegador (atualizacoes imediatas)
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    } else if (filePath.match(/\.(css|js)$/i)) {
+      // 2. CSS e JS usam version query string (ex: styles.css?v=...)
+      res.setHeader('Cache-Control', 'public, max-age=300, must-revalidate');
+    } else if (filePath.match(/\.(jpg|jpeg|png|webp|svg|ico)$/i)) {
+      // 3. Imagens de alta performance
+      res.setHeader('Cache-Control', 'public, max-age=86400, immutable');
+    }
+  }
 }));
 
 // Rota de status e saúde

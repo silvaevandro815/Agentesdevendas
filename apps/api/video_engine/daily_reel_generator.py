@@ -61,15 +61,28 @@ try:
 except ImportError:
     from apps.api.video_engine.runpod_gpu_manager import RunPodGPUManager
 try:
+    import runpod_open_engine
+except ImportError:
+    from apps.api.video_engine import runpod_open_engine
+
+# Import da Matriz Oficial de 31 Dias (31 Temas & 31 Cenários Únicos)
+try:
+    from apps.api.matriz_31_dias import MATRIZ_31_DIAS
+except ImportError:
+    try:
+        from matriz_31_dias import MATRIZ_31_DIAS
+    except ImportError:
+        MATRIZ_31_DIAS = None
+try:
     from instagram_skills_engine import ig_caption_writer, ig_hashtag_strategist, ig_humanizer, ig_audience_insights
 except ImportError:
     from apps.api.instagram_skills_engine import ig_caption_writer, ig_hashtag_strategist, ig_humanizer, ig_audience_insights
 
 
 # =============================================================================
-# CATÁLOGO DE 8 TEMAS OFICIAIS COM MÁXIMA FIDELIDADE FACIAL DO EVANDRO
+# CATÁLOGO DE 31 TEMAS & 31 CENÁRIOS ÚNICOS (CICLO OFICIAL DE 31 DIAS SEM REPETIÇÃO)
 # =============================================================================
-TEMAS_FITNESS = [
+TEMAS_FITNESS = MATRIZ_31_DIAS if MATRIZ_31_DIAS else [
     {
         "id": "balanca_ia",
         "titulo": "Não Se Engane Com o Peso da Balança",
@@ -294,15 +307,17 @@ def salvar_historico(historico):
 def selecionar_proximo_tema(tema_id_especifico=None):
     if tema_id_especifico:
         for t in TEMAS_FITNESS:
-            if t["id"] == tema_id_especifico:
+            if t["id"] == tema_id_especifico or str(t.get("dia")) == str(tema_id_especifico):
                 return t
 
     historico = carregar_historico()
-    ids_recentes = [h.get("tema_id") for h in historico[-4:] if h.get("tema_id")]
+    # Ciclo de 31 dias blindado: checa os últimos 30 posts para NUNCA repetir antes de rodar os 31 temas
+    ids_recentes = [h.get("tema_id") for h in historico[-30:] if h.get("tema_id")]
 
-    # Encontra temas que não foram postados recentemente
+    # Encontra temas que ainda não rodaram no ciclo atual de 31 dias
     temas_disponiveis = [t for t in TEMAS_FITNESS if t["id"] not in ids_recentes]
     if not temas_disponiveis:
+        # Ciclo de 31 dias completado com sucesso! Reinicia a rotação pelo dia 1
         temas_disponiveis = TEMAS_FITNESS
 
     # Seleciona o tema mais antigo ou que nunca foi postado
@@ -491,6 +506,34 @@ def produzir_reel_diario(tema_id=None, publicar_agora=False):
     # 3. Composição HD 1080x1920 nativo com movimento real
     out_reel = os.path.join(OUTPUT_DIR, f"reel_{tema['id']}.mp4")
     video_source = tema.get("take_file") or tema.get("image_file")
+
+    # 3.0. Geração de Cenário Único de Alta Definição via RunPod.io GPU (Open-Source Wan 2.1 / FLUX.1)
+    if "prompt_cenario_runpod" in tema:
+        runpod_img_path = os.path.join(TAKES_DIR, f"scene_day_{tema.get('dia', 1)}_{tema['id']}.jpg")
+        if os.path.exists(runpod_img_path):
+            video_source = runpod_img_path
+            print(f"🎬 Cenário do Dia {tema.get('dia')} já gerado e pronto: {runpod_img_path}")
+        else:
+            try:
+                if runpod_open_engine.available():
+                    print(f"🚀 [RUNPOD GPU] Gerando cenário único do Dia {tema.get('dia')} ({tema.get('cenario_nome')})...")
+                    prompt_completo = f"{tema.get('prompt_persona', '')}, {tema.get('prompt_cenario_runpod', '')}, 8k, cinematic, hyperrealistic"
+                    neg_prompt = "blond hair, blonde man, plastic shaker cup, generic stock photo, blurry, bad anatomy, deformed"
+                    ok = runpod_open_engine.flux_image(
+                        prompt=prompt_completo,
+                        out_path=runpod_img_path,
+                        aspect_ratio="9:16",
+                        quality="schnell",
+                        negative_prompt=neg_prompt,
+                        log=print
+                    )
+                    if ok and os.path.exists(runpod_img_path):
+                        video_source = runpod_img_path
+                        print(f"✅ Cenário RunPod gerado com sucesso: {runpod_img_path}")
+                else:
+                    print(f"ℹ️ RunPod GPU não configurado no .env local. Usando fallback de asset local para o cenário: {tema.get('cenario_nome')}")
+            except Exception as rp_err:
+                print(f"⚠️ Aviso RunPod GPU (usando fallback local): {rp_err}")
 
     # 3.1. Gera Gancho Cinético ou Infográfico Dinâmico com HyperFrames (Zero GPU $)
     motion_intro_file = None

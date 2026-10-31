@@ -2417,7 +2417,7 @@ header {
     gap: 28px;
   }
   .biomarkers-grid-4col {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -2444,4 +2444,17 @@ header {
   .balanca-sub-grid {
     grid-template-columns: 1fr;
   }
+}
+
+
+/* BANNER DESTAQUE: PONTUACAO FISICA GLOBAL (LARGURA TOTAL 100% SIMETRICO) */
+.biomarker-pill-global {
+  grid-column: 1 / -1 !important;
+  background: linear-gradient(90deg, rgba(234, 179, 8, 0.12), rgba(0, 229, 255, 0.12)) !important;
+  border: 1px solid rgba(234, 179, 8, 0.45) !important;
+  justify-content: center !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.6px !important;
+  box-shadow: 0 4px 15px rgba(234, 179, 8, 0.15) !important;
 }

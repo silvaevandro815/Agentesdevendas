@@ -386,3 +386,9 @@ unpod_open_engine.py: Gerenciador de GPU Serverless para geração de takes 3D h
   * Segundas, Quartas e Sextas às 18:00 (treinos e pendências).
   * Segundas a Sextas às 12:30 (avaliação de almoço/dieta).
   * Domingos às 19:00 (entrega da plataforma semanal e ranking).
+
+## 16. Matriz de 31 Dias de Conteúdo no Instagram & 31 Cenários Únicos via RUNPOD.IO
+- **Matriz Canônica:** pps/api/matriz_31_dias.py com 31 temas, 31 roteiros, legendas Hormozi, ganchos e 31 cenários visuais únicos.
+- **Janela Anti-Repetição:** Verificação estrita dos últimos 30 posts (historico[-30:]). Nenhum tema ou cenário pode se repetir antes de todos os 30 outros terem sido publicados.
+- **Motor Open-Source RUNPOD.IO GPU:** Renderização via Wan 2.1 (vídeo) e FLUX.1 (imagens cinematográficas 9:16) em GPU serverless.
+- **Repostagem nos Stories:** Reels são postados no Feed e replicados automaticamente nos Stories (postar_stories=True).
