@@ -110,6 +110,7 @@ services:
     restart: always
     environment:
       - PORT=3000
+      - API_URL=http://api:8000
     networks:
       - loja_network
 

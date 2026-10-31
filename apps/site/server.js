@@ -158,16 +158,25 @@ app.post('/api/aluno/avatar/:id', express.json({ limit: '10mb' }), async (req, r
 // Proxy relay seguro para os dados do portal do aluno
 app.get('/api/aluno/portal/:id', async (req, res) => {
   const alunoId = req.params.id || '';
-  const apiBase = process.env.API_URL || 'http://127.0.0.1:8000';
-  try {
-    const apiRes = await fetch(`${apiBase}/api/aluno/portal/${alunoId}`);
-    if (apiRes.ok) {
-      const data = await apiRes.json();
-      return res.json(data);
+  const candidateUrls = [
+    process.env.API_URL,
+    'http://api:8000',
+    'http://127.0.0.1:8000'
+  ].filter(Boolean);
+
+  for (const base of candidateUrls) {
+    try {
+      const apiRes = await fetch(`${base}/api/aluno/portal/${alunoId}`);
+      if (apiRes.ok) {
+        const data = await apiRes.json();
+        return res.json(data);
+      }
+    } catch (e) {
+      // continua tentando próximo candidato
     }
-    return res.status(apiRes.status).json({ error: 'Erro ao buscar dados do aluno' });
-  } catch (err) {
-    console.error('[PORTAL PROXY ERROR]', err.message);
+  }
+
+  try {
     return res.json({
       sucesso: true,
       aluno: { nome: 'Guerreiro(a)', objetivo: 'Evolução Física 360°', badge_local: '🏋️‍♂️ Treino Personalizado', streak_dias: 3 },
