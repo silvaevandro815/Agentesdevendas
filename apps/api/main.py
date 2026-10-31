@@ -1376,13 +1376,30 @@ async def cobranca_refeicao_api(payload: dict = None):
 # PORTAL / LANDING PAGE INDIVIDUAL DO ALUNO (OPENGYM + MARCÃO AI)
 # -------------------------------------------------------------------------
 try:
-    from aluno_portal_engine import obter_dados_portal_aluno
+    from aluno_portal_engine import (
+        obter_dados_portal_aluno,
+        salvar_treino_diario_aluno,
+        reformular_ficha_treino_aluno
+    )
 except ImportError:
-    from apps.api.aluno_portal_engine import obter_dados_portal_aluno
+    from apps.api.aluno_portal_engine import (
+        obter_dados_portal_aluno,
+        salvar_treino_diario_aluno,
+        reformular_ficha_treino_aluno
+    )
 
 @app.get("/api/aluno/portal/{identificador}")
 async def obter_portal_aluno_api(identificador: str):
     return await obter_dados_portal_aluno(identificador)
+
+@app.post("/api/aluno/treino/salvar/{identificador}")
+async def salvar_treino_aluno_api(identificador: str, payload: dict):
+    return await salvar_treino_diario_aluno(identificador, payload or {})
+
+@app.post("/api/aluno/ficha/reformular/{identificador}")
+async def reformular_ficha_aluno_api(identificador: str, payload: dict):
+    instrucao = (payload or {}).get("instrucao", "")
+    return await reformular_ficha_treino_aluno(identificador, instrucao)
 
 @app.post("/api/aluno/avatar/{identificador}")
 async def upload_avatar_aluno(identificador: str, payload: dict):

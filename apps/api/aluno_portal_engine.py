@@ -179,6 +179,305 @@ async def prescrever_produtos_personalizados(ficha: dict, local_treino: str, obj
 
     return produtos
 
+async def salvar_treino_diario_aluno(identificador: str, dados_treino: dict) -> dict:
+    """
+    Registra com precisão cirúrgica na ficha do aluno e na memória do Marcão
+    as atividades e exercícios concluídos hoje, com cargas, repetições, intensidade e streak.
+    """
+    id_limpo = "".join(filter(str.isdigit, str(identificador or "")))
+    last8 = id_limpo[-8:] if len(id_limpo) >= 8 else id_limpo
+    headers = get_supabase_headers()
+    
+    agora = datetime.now()
+    hoje_str = agora.strftime("%Y-%m-%d")
+    hora_str = agora.strftime("%H:%M")
+    
+    ficha_id = None
+    ficha_atual = None
+
+    async with httpx.AsyncClient(verify=False, timeout=12.0) as client:
+        # Busca a ficha do aluno
+        query = f"{SUPABASE_URL}/rest/v1/fichas_alunos?or=(telefone.eq.{id_limpo},remote_jid.ilike.*{id_limpo}*,telefone.ilike.*{last8}*,remote_jid.ilike.*{last8}*)&select=*"
+        res = await client.get(query, headers=headers)
+        if res.status_code == 200 and res.json():
+            ficha_atual = res.json()[0]
+            ficha_id = ficha_atual.get("id")
+
+    if not ficha_id:
+        return {
+            "sucesso": False,
+            "erro": "Ficha do aluno não encontrada para salvar o treino."
+        }
+
+    # Calcula Streak contínuo
+    ultimo_checkin = str(ficha_atual.get("ultimo_checkin_data") or "")
+    streak_atual = int(ficha_atual.get("streak_dias") or 0)
+    if not ultimo_checkin.startswith(hoje_str):
+        novo_streak = streak_atual + 1
+    else:
+        novo_streak = max(1, streak_atual)
+
+    # Monta o objeto de registro do treino
+    treino_cod = dados_treino.get("treino_codigo") or "Treino do Dia"
+    treino_tit = dados_treino.get("treino_titulo") or "Musculação & Hipertrofia"
+    exercicios_feitas = dados_treino.get("exercicios") or []
+    obs = dados_treino.get("observacoes") or ""
+    intensidade = dados_treino.get("intensidade_rpe") or "Pesado (Ideal)"
+    duracao = dados_treino.get("tempo_gasto_min") or 45
+
+    registro_hoje = {
+        "data": hoje_str,
+        "horario": hora_str,
+        "treino_codigo": treino_cod,
+        "treino_titulo": treino_tit,
+        "exercicios_concluidos": exercicios_feitas,
+        "duracao_min": duracao,
+        "observacoes": obs,
+        "intensidade_rpe": intensidade,
+        "streak_no_dia": novo_streak,
+        "salvo_em": agora.isoformat()
+    }
+
+    # Atualiza histórico acumulado nos treinos
+    treino_atual_obj = ficha_atual.get("treino_atual") or {}
+    historico = treino_atual_obj.get("historico_treinos") or []
+    # Remove se já existia registro de hoje e adiciona o mais recente
+    historico = [h for h in historico if not str(h.get("data", "")).startswith(hoje_str)]
+    historico.append(registro_hoje)
+    treino_atual_obj["historico_treinos"] = historico[-30:]
+    treino_atual_obj["ultimo_treino"] = registro_hoje
+    treino_atual_obj["ultimo_treino_registrado"] = registro_hoje
+
+    patch_payload = {
+        "ultimo_treino_registrado": f"{treino_cod} ({hoje_str})"[:50],
+        "ultimo_checkin_data": hoje_str,
+        "streak_dias": novo_streak,
+        "status_acompanhamento": f"Treinou {treino_cod}"[:30],
+        "treino_atual": treino_atual_obj
+    }
+
+    async with httpx.AsyncClient(verify=False, timeout=12.0) as client:
+        patch_res = await client.patch(
+            f"{SUPABASE_URL}/rest/v1/fichas_alunos?id=eq.{ficha_id}",
+            headers=headers,
+            json=patch_payload
+        )
+        if patch_res.status_code in [200, 204]:
+            print(f"[PORTAL_ENGINE] Treino de {identificador} salvo com sucesso no Supabase! Streak: {novo_streak}")
+            return {
+                "sucesso": True,
+                "mensagem": f"Treino {treino_cod} salvo com sucesso na memória do Marcão!",
+                "streak_dias": novo_streak,
+                "registro": registro_hoje
+            }
+        else:
+            print(f"[PORTAL_ENGINE] Erro no patch do treino: {patch_res.status_code} - {patch_res.text}")
+            return {
+                "sucesso": False,
+                "erro": f"Erro ao persistir no banco: {patch_res.status_code}"
+            }
+
+
+async def reformular_ficha_treino_aluno(identificador: str, instrucao_modificacao: str) -> dict:
+    """
+    Habilidade exclusiva do Marcão Personal: reformula a ficha completa do aluno
+    no WhatsApp ou pela plataforma, substituindo exercícios, adaptando para dores articulares
+    ou mudando o foco (ex: Peitoral superior, pernas/glúteos, treino em casa, etc.).
+    """
+    id_limpo = "".join(filter(str.isdigit, str(identificador or "")))
+    last8 = id_limpo[-8:] if len(id_limpo) >= 8 else id_limpo
+    headers = get_supabase_headers()
+    
+    ficha_id = None
+    ficha_atual = None
+
+    async with httpx.AsyncClient(verify=False, timeout=12.0) as client:
+        query = f"{SUPABASE_URL}/rest/v1/fichas_alunos?or=(telefone.eq.{id_limpo},remote_jid.ilike.*{id_limpo}*,telefone.ilike.*{last8}*,remote_jid.ilike.*{last8}*)&select=*"
+        res = await client.get(query, headers=headers)
+        if res.status_code == 200 and res.json():
+            ficha_atual = res.json()[0]
+            ficha_id = ficha_atual.get("id")
+
+    if not ficha_id:
+        return {"sucesso": False, "erro": "Ficha do aluno não localizada."}
+
+    local_treino = str(ficha_atual.get("local_treino") or "academia").lower()
+    instrucao_lower = instrucao_modificacao.lower()
+    
+    if "casa" in instrucao_lower:
+        local_treino = "casa"
+    elif "academia" in instrucao_lower:
+        local_treino = "academia"
+
+    # Geração de Nova Ficha sob Medida (Inteligência Personal Trainer Marcão)
+    if "ombro" in instrucao_lower or "manguito" in instrucao_lower or "dor" in instrucao_lower:
+        # Ficha com Proteção Articular de Ombro / Manguito
+        nova_rotina = [
+            {
+                "codigo": "Treino A",
+                "titulo": "Peitoral & Tríceps (Proteção Articular de Ombro)",
+                "foco": "Hipertrofia com Pegada Neutra & Amplitude Segura",
+                "tempo_estimado": "45 min",
+                "exercicios": [
+                    {"nome": "Supino Reto com Halteres (Pegada Neutra / Cotovelos a 45°)", "series": "4", "reps": "10 a 12", "descanso": "60s", "dica": "Zero estresse no manguito rotador. Desça controlando 3s."},
+                    {"nome": "Crucifixo na Máquina Peck Deck (Cotovelos Levemente Flexionados)", "series": "4", "reps": "12", "descanso": "50s", "dica": "Mantenha as escápulas coladas no encosto do banco."},
+                    {"nome": "Crossover na Polia Média (Foco Miolo e Superior)", "series": "3", "reps": "12 a 15", "descanso": "45s", "dica": "Tensão contínua, aperte o peitoral no pico da contração."},
+                    {"nome": "Tríceps na Polia com Barra V", "series": "4", "reps": "12", "descanso": "45s", "dica": "Cotovelos travados na lateral do tronco."},
+                    {"nome": "Tríceps Francês Unilateral com Halter Leve", "series": "3", "reps": "12", "descanso": "45s", "dica": "Alongamento potente da cabeça longa do tríceps."}
+                ]
+            },
+            {
+                "codigo": "Treino B",
+                "titulo": "Dorsal, Bíceps & Manguito Fortalecido",
+                "foco": "Estabilidade Escapular & Costas Densas",
+                "tempo_estimado": "45 min",
+                "exercicios": [
+                    {"nome": "Puxada Frontal com Triângulo (Pegada Neutra)", "series": "4", "reps": "10 a 12", "descanso": "60s", "dica": "Puxe em direção ao esterno alto sem inclinar o tronco."},
+                    {"nome": "Remada Baixa Sentada no Triângulo", "series": "4", "reps": "10", "descanso": "60s", "dica": "Esmague as escápulas por 1 segundo atrás."},
+                    {"nome": "Rotação Externa de Ombro na Polia (Manguito)", "series": "3", "reps": "15 cada lado", "descanso": "30s", "dica": "Carga levíssima: saúde e blindagem articular dos ombros!"},
+                    {"nome": "Rosca Martelo com Halteres", "series": "4", "reps": "10 a 12", "descanso": "45s", "dica": "Pegada neutra protege o tendão do bíceps e braquial."},
+                    {"nome": "Rosca Concentrada com Apoio", "series": "3", "reps": "12", "descanso": "45s", "dica": "Isolamento cirúrgico do pico do bíceps."}
+                ]
+            },
+            {
+                "codigo": "Treino C",
+                "titulo": "Membros Inferiores & Core Estabilizador",
+                "foco": "Pernas de Aço & Postura Firme",
+                "tempo_estimado": "50 min",
+                "exercicios": [
+                    {"nome": "Leg Press 45° com Pés Médios", "series": "4", "reps": "10 a 12", "descanso": "75s", "dica": "Costas bem apoiadas, não descole o quadril do banco."},
+                    {"nome": "Cadeira Extensora (Com Pico de 1s)", "series": "4", "reps": "12 a 15", "descanso": "45s", "dica": "Fogo puro nos quadríceps com segurança."},
+                    {"nome": "Mesa Flexora Deitada", "series": "4", "reps": "10 a 12", "descanso": "60s", "dica": "Segure a volta lenta, fortalece a cadeia posterior."},
+                    {"nome": "Elevação Pélvica na Máquina / Barra", "series": "4", "reps": "12", "descanso": "60s", "dica": "Ativação potente de glúteos e estabilidade lombar."},
+                    {"nome": "Panturrilha em Pé na Máquina", "series": "4", "reps": "15 a 20", "descanso": "30s", "dica": "Suba até a ponta dos dedos e desça alongando."}
+                ]
+            }
+        ]
+    elif local_treino == "casa" or "casa" in instrucao_lower:
+        # Ficha Especial de Calistenia & Funcional em Casa
+        nova_rotina = [
+            {
+                "codigo": "Treino A",
+                "titulo": "Superior: Peito, Ombros e Tríceps Domiciliar",
+                "foco": "Tônus & Definição Muscular com Peso do Corpo",
+                "tempo_estimado": "40 min",
+                "exercicios": [
+                    {"nome": "Flexão de Braço no Solo (Variação Aberta)", "series": "4", "reps": "10 a 15", "descanso": "60s", "dica": "Corpo em prancha reta, controle a descida."},
+                    {"nome": "Tríceps Mergulho no Banco ou Sofá", "series": "4", "reps": "12 a 15", "descanso": "45s", "dica": "Costas rente ao apoio, amplitude completa."},
+                    {"nome": "Elevação Lateral com Carga Caseira / Elástico", "series": "4", "reps": "15", "descanso": "40s", "dica": "Ombros queimando sem balançar o corpo."},
+                    {"nome": "Flexão Pique (Pike Push Up para Ombros)", "series": "3", "reps": "8 a 10", "descanso": "60s", "dica": "Quadril elevado em V, descendo a cabeça para o solo."}
+                ]
+            },
+            {
+                "codigo": "Treino B",
+                "titulo": "Costas, Bíceps e Postura em Casa",
+                "foco": "Puxada, Escápulas e Densidade Dorsal",
+                "tempo_estimado": "40 min",
+                "exercicios": [
+                    {"nome": "Remada Invertida na Mesa ou com Elástico", "series": "4", "reps": "10 a 12", "descanso": "60s", "dica": "Peito apontado para cima esmagando a dorsal."},
+                    {"nome": "Crucifixo Invertido no Solo (Deltóide Posterior)", "series": "4", "reps": "15", "descanso": "40s", "dica": "Braços em T, eleve as mãos espremendo as costas."},
+                    {"nome": "Rosca Direta com Mochila com Peso / Elástico", "series": "4", "reps": "12 a 15", "descanso": "45s", "dica": "Bíceps contraído no ápice do movimento."},
+                    {"nome": "Superman Isométrico (Fortalecimento Lombar)", "series": "3", "reps": "15 repetições (segura 2s)", "descanso": "45s", "dica": "Fortalece a coluna e postura."}
+                ]
+            },
+            {
+                "codigo": "Treino C",
+                "titulo": "Pernas, Glúteos e Abdômen Forte",
+                "foco": "Queima Calórica Alta & Pernas Firmes",
+                "tempo_estimado": "45 min",
+                "exercicios": [
+                    {"nome": "Agachamento com Salto (Jump Squat)", "series": "4", "reps": "12 a 15", "descanso": "60s", "dica": "Amortecimento suave na descida."},
+                    {"nome": "Afundo Búlgaro com Pé no Sofá", "series": "3", "reps": "10 a 12 cada perna", "descanso": "60s", "dica": "O rei do glúteo e quadríceps em casa."},
+                    {"nome": "Elevação Pélvica Unilateral no Solo", "series": "4", "reps": "12 cada lado", "descanso": "45s", "dica": "Aperte o glúteo no topo com firmeza."},
+                    {"nome": "Prancha Abdominal Dinâmica (Toca Ombro)", "series": "4", "reps": "20 toques", "descanso": "45s", "dica": "Quadril estável sem rebolar."}
+                ]
+            }
+        ]
+    else:
+        # Ficha Avançada de Academia - Hipertrofia Acelerada
+        nova_rotina = [
+            {
+                "codigo": "Treino A",
+                "titulo": "Peito, Ombros e Tríceps de Impacto",
+                "foco": "Hipertrofia e Volume Muscular Máximo",
+                "tempo_estimado": "50 min",
+                "exercicios": [
+                    {"nome": "Supino Reto com Barra Olímpica ou Halteres", "series": "4", "reps": "8 a 10", "descanso": "90s", "dica": "Carga progressiva com técnica impecável."},
+                    {"nome": "Supino Inclinado com Halteres (30 Graus)", "series": "4", "reps": "10", "descanso": "60s", "dica": "Desenha a linha clavicular do peitoral superior."},
+                    {"nome": "Desenvolvimento com Halteres no Banco 80°", "series": "4", "reps": "10", "descanso": "60s", "dica": "Empurre até o teto sem bater os halteres."},
+                    {"nome": "Elevação Lateral na Polia (Cabo por Trás)", "series": "4", "reps": "12 a 15", "descanso": "45s", "dica": "Tensão contínua, ombros largos e arredondados."},
+                    {"nome": "Tríceps Testa com Barra W + Tríceps Corda", "series": "3", "reps": "10 + 12 (Bi-Set)", "descanso": "60s", "dica": "Pump monstro de braço no final do treino."}
+                ]
+            },
+            {
+                "codigo": "Treino B",
+                "titulo": "Dorsal Completa, Bíceps e Trapézio",
+                "foco": "Costas em V, Espessura e Braços Densos",
+                "tempo_estimado": "50 min",
+                "exercicios": [
+                    {"nome": "Puxada Alta Aberta no Pulley", "series": "4", "reps": "10", "descanso": "75s", "dica": "Abra as asas e puxe com as escápulas travadas."},
+                    {"nome": "Remada Curvada com Barra (Pegada Pronada)", "series": "4", "reps": "10", "descanso": "75s", "dica": "Tronco firme a 45°, puxe em direção ao umbigo."},
+                    {"nome": "Remada Unilateral com Halter (Serrote)", "series": "3", "reps": "10 cada lado", "descanso": "60s", "dica": "Alongamento máximo embaixo e contração total em cima."},
+                    {"nome": "Rosca Direta Barra Reta / W", "series": "4", "reps": "10", "descanso": "45s", "dica": "Sem roubar com a lombar; bíceps faz toda a força."},
+                    {"nome": "Rosca Scott na Máquina ou Banco", "series": "3", "reps": "12", "descanso": "45s", "dica": "Isolamento absoluto do bíceps sem alívio de tensão."}
+                ]
+            },
+            {
+                "codigo": "Treino C",
+                "titulo": "Pernas Completas, Posterior e Panturrilhas",
+                "foco": "Cargas Pesadas & Simetria de Membros Inferiores",
+                "tempo_estimado": "55 min",
+                "exercicios": [
+                    {"nome": "Agachamento Livre com Barra", "series": "4", "reps": "8 a 10", "descanso": "90s", "dica": "O exercício rei da musculação: desça controlado e suba potente."},
+                    {"nome": "Leg Press 45° Pesado", "series": "4", "reps": "10 a 12", "descanso": "75s", "dica": "Amplitude completa sem curvar a lombar no banco."},
+                    {"nome": "Cadeira Extensora com Drop-set na última", "series": "4", "reps": "12 a 15", "descanso": "60s", "dica": "Esgote as fibras do quadríceps até a falha técnica."},
+                    {"nome": "Stiff com Barra ou Halteres", "series": "4", "reps": "10 a 12", "descanso": "60s", "dica": "Quadril para trás, alongamento poderoso dos posteriores e glúteos."},
+                    {"nome": "Gêmeos em Pé (Panturrilha Máquina)", "series": "4", "reps": "15 a 20", "descanso": "40s", "dica": "Segure 2s no topo e 2s embaixo."}
+                ]
+            }
+        ]
+
+    # Atualiza no Supabase
+    hoje_str = datetime.now().strftime("%Y-%m-%d")
+    treino_atual_obj = ficha_atual.get("treino_atual") or {}
+    treino_atual_obj["rotina_treinos"] = nova_rotina
+    treino_atual_obj["data_reformulacao"] = hoje_str
+    treino_atual_obj["motivo_reformulacao"] = instrucao_modificacao
+
+    treino_divisao_obj = {
+        "local": local_treino,
+        "estilo": nova_rotina[0]["titulo"],
+        "motivo": instrucao_modificacao,
+        "treino_a": f"{nova_rotina[0]['titulo']}: {', '.join([e['nome'] for e in nova_rotina[0]['exercicios']])}",
+        "treino_b": f"{nova_rotina[1]['titulo']}: {', '.join([e['nome'] for e in nova_rotina[1]['exercicios']])}",
+        "treino_c": f"{nova_rotina[2]['titulo']}: {', '.join([e['nome'] for e in nova_rotina[2]['exercicios']])}"
+    }
+
+    patch_data = {
+        "treino_atual": treino_atual_obj,
+        "treino_divisao": treino_divisao_obj,
+        "local_treino": local_treino,
+        "status_acompanhamento": f"Ficha nova {hoje_str}"[:30]
+    }
+
+    async with httpx.AsyncClient(verify=False, timeout=12.0) as client:
+        patch_res = await client.patch(
+            f"{SUPABASE_URL}/rest/v1/fichas_alunos?id=eq.{ficha_id}",
+            headers=headers,
+            json=patch_data
+        )
+        if patch_res.status_code in [200, 204]:
+            print(f"[PORTAL_ENGINE] Ficha de {identificador} reformulada com sucesso no Supabase!")
+            return {
+                "sucesso": True,
+                "mensagem": "Ficha reformulada e atualizada com sucesso pelo Treinador Marcão!",
+                "rotina_treinos": nova_rotina,
+                "data_atualizacao": hoje_str
+            }
+        else:
+            return {"sucesso": False, "erro": f"Erro atualizando banco: {patch_res.status_code}"}
+
+
 async def obter_dados_portal_aluno(identificador: str) -> Dict[str, Any]:
     """
     Localiza o aluno pelo telefone, ID ou remote_jid e consolida toda a
@@ -271,6 +570,8 @@ async def obter_dados_portal_aluno(identificador: str) -> Dict[str, Any]:
     # -------------------------------------------------------------------------
     # FICHA DE TREINO DINÂMICA (ESTILO OPENGYM - ACADEMIA VS CASA)
     # -------------------------------------------------------------------------
+    treino_atual_db = ficha.get("treino_atual") or {}
+    treino_customizado = treino_atual_db.get("rotina_treinos")
     treino_divisao = ficha.get("treino_divisao") or {}
     
     if local_treino == "casa":
@@ -359,6 +660,12 @@ async def obter_dados_portal_aluno(identificador: str) -> Dict[str, Any]:
                 ]
             }
         ]
+
+    # Se a ficha foi personalizada ou reformulada pelo Marcão, usa a rotina customizada
+    if treino_customizado and isinstance(treino_customizado, list) and len(treino_customizado) > 0:
+        rotina_treinos = treino_customizado
+        badge_local = "✨ Ficha Reformulada pelo Marcão" if local_treino != "casa" else "🏠 Treino em Casa (Ficha Marcão)"
+        tipo_ambiente = "Protocolo Personalizado Exclusivo"
 
     # -------------------------------------------------------------------------
     # MATRIZ DE RECUPERAÇÃO MUSCULAR (INSPIRAÇÃO OPENGYM)
@@ -453,6 +760,30 @@ async def obter_dados_portal_aluno(identificador: str) -> Dict[str, Any]:
     fotos = ficha.get("fotos_criptografadas") or []
     tem_fotos = len(fotos) > 0
 
+    t_obj = ficha.get("treino_atual") or {}
+    ultimo_treino = (
+        t_obj.get("ultimo_treino_registrado")
+        or t_obj.get("ultimo_treino")
+        or (ficha.get("ultimo_treino_registrado") if isinstance(ficha.get("ultimo_treino_registrado"), dict) else {})
+    )
+    hoje_str = datetime.now().strftime("%Y-%m-%d")
+    treinado_hoje = False
+    if str(ultimo_treino.get("data", "")).startswith(hoje_str):
+        treinado_hoje = True
+
+    ultimo_treino_salvo = {
+        "treinado_hoje": treinado_hoje,
+        "data": ultimo_treino.get("data"),
+        "horario": ultimo_treino.get("horario"),
+        "treino_codigo": ultimo_treino.get("treino_codigo"),
+        "treino_titulo": ultimo_treino.get("treino_titulo"),
+        "exercicios_concluidos": ultimo_treino.get("exercicios_concluidos", []),
+        "observacoes": ultimo_treino.get("observacoes", ""),
+        "intensidade_rpe": ultimo_treino.get("intensidade_rpe", ""),
+        "duracao_min": ultimo_treino.get("duracao_min", 45),
+        "streak_no_dia": ultimo_treino.get("streak_no_dia", ficha.get("streak_dias") or 0)
+    }
+
     ranking_top5 = await calcular_ranking_top5(ficha.get('telefone'))
     return {
         "sucesso": True,
@@ -503,6 +834,7 @@ async def obter_dados_portal_aluno(identificador: str) -> Dict[str, Any]:
             )
         },
         "arsenal_produtos": arsenal_produtos,
+        "ultimo_treino_salvo": ultimo_treino_salvo,
         "ranking_top5": ranking_top5,
         "whatsapp_marcao": "https://wa.me/553285066687?text=Fala%20Marc%C3%A3o!%20T%C3%B4%20aqui%20na%20minha%20Landing%20Page%20e%20quero%20tirar%20uma%20d%C3%BAvida!"
     }

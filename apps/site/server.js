@@ -185,6 +185,58 @@ app.get('/api/aluno/portal/:id', async (req, res) => {
   });
 });
 
+// Proxy relay seguro para salvar treino diário do aluno
+app.post('/api/aluno/treino/salvar/:id', express.json(), async (req, res) => {
+  const alunoId = req.params.id || '';
+  const candidateUrls = [
+    process.env.API_URL,
+    'http://api:8000',
+    'http://127.0.0.1:8000'
+  ].filter(Boolean);
+
+  for (const base of candidateUrls) {
+    try {
+      const apiRes = await fetch(`${base}/api/aluno/treino/salvar/${alunoId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(req.body)
+      });
+      const data = await apiRes.json();
+      return res.status(apiRes.status).json(data);
+    } catch (e) {
+      // tenta proximo
+    }
+  }
+
+  return res.status(500).json({ sucesso: false, erro: 'Erro conectando a API Marcao' });
+});
+
+// Proxy relay seguro para reformular ficha de treino
+app.post('/api/aluno/ficha/reformular/:id', express.json(), async (req, res) => {
+  const alunoId = req.params.id || '';
+  const candidateUrls = [
+    process.env.API_URL,
+    'http://api:8000',
+    'http://127.0.0.1:8000'
+  ].filter(Boolean);
+
+  for (const base of candidateUrls) {
+    try {
+      const apiRes = await fetch(`${base}/api/aluno/ficha/reformular/${alunoId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(req.body)
+      });
+      const data = await apiRes.json();
+      return res.status(apiRes.status).json(data);
+    } catch (e) {
+      // tenta proximo
+    }
+  }
+
+  return res.status(500).json({ sucesso: false, erro: 'Erro conectando a API Marcao' });
+});
+
 // Redirecionamento SPA / fallback seguro
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));

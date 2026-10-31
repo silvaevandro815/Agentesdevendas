@@ -58,6 +58,11 @@ except ImportError:
     from apps.api.marcao_voice import gerar_voz_marcao_bytes
 
 try:
+    from aluno_portal_engine import reformular_ficha_treino_aluno
+except ImportError:
+    from apps.api.aluno_portal_engine import reformular_ficha_treino_aluno
+
+try:
     from catalog_service import obter_catalogo_para_prompt
     from autonomous_curator import processar_e_ingerir_afiliado
     from shopee_affiliate_engine import (
@@ -869,6 +874,51 @@ async def processar_mensagem_marcao(payload_webhook: dict) -> dict:
         }
 
     # -------------------------------------------------------------------------
+    # HABILIDADE MARCÃO PERSONAL: REFORMULAÇÃO DINÂMICA DA FICHA DE TREINOS
+    # -------------------------------------------------------------------------
+    termos_reformular_treino = [
+        "muda meu treino", "mudar meu treino", "mude meu treino", "mudar o treino", "muda o treino",
+        "troca meu treino", "trocar meu treino", "troca o treino", "trocar o treino",
+        "muda minha ficha", "mudar minha ficha", "troca minha ficha", "trocar minha ficha", "mude a ficha",
+        "novos exercicios", "novos exercícios", "troca esses exercicios", "trocar exercicios", "trocar exercícios",
+        "exercicios novos", "exercícios novos", "reformular treino", "reformula meu treino",
+        "dor no ombro", "dor no joelho", "dor na lombar", "dor no cotovelo", "dor articular",
+        "muda pra casa", "mudar pra casa", "treinar em casa", "treino em casa", "mudar para academia", "muda pra academia"
+    ]
+    pediu_reformulacao = any(t in texto_lower for t in termos_reformular_treino) and not any(p in texto_lower for p in ["shopee", "comprar", "quanto custa", "preco", "preço"])
+
+    if pediu_reformulacao:
+        try:
+            res_reforma = await reformular_ficha_treino_aluno(target_number, texto_recebido)
+            if res_reforma.get("sucesso"):
+                baloes_reforma = [
+                    f"Show de bola, {primeiro_nome or 'campeão'}! Já peguei o que você me falou e refiz a sua ficha de treinos todinha agora mesmo! 🦁💪",
+                    "Ajustei os exercícios focando 100% no seu objetivo e protegendo suas articulações pra render o máximo! 👊🔥",
+                    f"Sua nova ficha já tá atualizada e liberada na sua plataforma oficial! Acessa aqui: {link_portal_aluno}",
+                    "Dá uma olhada lá, mete bronca no treino de hoje e clica em Salvar na plataforma pra computar seu streak! Tamo junto! 🚀"
+                ]
+                historico_mensagens.append({"role": "user", "content": texto_recebido, "timestamp": datetime.now().isoformat()})
+                resp_reforma_unificada = "\n\n".join(baloes_reforma)
+                historico_mensagens.append({"role": "assistant", "content": resp_reforma_unificada, "timestamp": datetime.now().isoformat()})
+                await salvar_historico_lead(f"{target_number}@s.whatsapp.net", target_number, push_name, historico_mensagens, texto_recebido)
+
+                for i, b in enumerate(baloes_reforma):
+                    await enviar_presenca(target_number, "composing", delay_ms=1600)
+                    await asyncio.sleep(1.2)
+                    await enviar_texto_whatsapp(target_number, b)
+                    if i < len(baloes_reforma) - 1:
+                        await asyncio.sleep(0.8)
+
+                return {
+                    "sucesso": True,
+                    "tipo": "reformulacao_ficha_treino",
+                    "target": target_number,
+                    "resposta": resp_reforma_unificada
+                }
+        except Exception as e_ref:
+            print(f"[MARCAO_ENGINE] Erro ao reformular ficha de treino: {e_ref}")
+
+    # -------------------------------------------------------------------------
     # VALIDAÇÃO ANTIFRAUDE DA BALANÇA SHOPEE & MENTORIA VIP GRATUITA (90 DIAS)
     # -------------------------------------------------------------------------
     termos_comprovante_balanca = [
@@ -1020,6 +1070,11 @@ async def processar_mensagem_marcao(payload_webhook: dict) -> dict:
             f"  * Suplementos Essenciais: {'Em uso' if diag_pend.get('tem_suplementos_essenciais') else 'NÃO TOMA - PRESCREVER CREATINA MICRONIZADA E VITAMINAS/COLÁGENO ESSENCIAIS PARA BLINDAR ARTICULAÇÕES E RECUPERAÇÃO'}\n"
             f"  * Acompanhamento Nutricional: Se oportuno, peça foto do almoço ou da janta para avaliar se tem nutrientes suficientes para vencer dores e atingir a meta!\n"
             f"  * Smartwatch / Strava: {'Já conectado ao Strava' if diag_pend.get('tem_strava') else f'Se treina na academia ou esporte aeróbico, ofereça relógio inteligente ou peça para conectar ao Strava: {link_strava_oauth}'}\n"
+            f"  * MEMÓRIA DO TREINO DE HOJE (MARCÃO AWARENESS): " + (
+                f"ALUNO JÁ TREINOU HOJE! Concluiu o {((ficha_aluno.get('treino_atual') or {}).get('ultimo_treino_registrado') or {}).get('treino_codigo', 'Treino')} às {((ficha_aluno.get('treino_atual') or {}).get('ultimo_treino_registrado') or {}).get('horario', '')}! Obs do aluno: '{((ficha_aluno.get('treino_atual') or {}).get('ultimo_treino_registrado') or {}).get('observacoes', 'Nenhuma')}'. Streak: {ficha_aluno.get('streak_dias', 1)} dias! Parabenize com autoridade!\n"
+                if str(((ficha_aluno.get('treino_atual') or {}).get('ultimo_treino_registrado') or {}).get('data', '')).startswith(datetime.now().strftime("%Y-%m-%d"))
+                else f"ALUNO AINDA NÃO REGISTROU O TREINO DE HOJE! Incentive a treinar e a registrar no portal ({link_portal_aluno})!\n"
+            ) +
             f"- LINK OFICIAL DO PORTAL DO ALUNO: {link_portal_aluno}\n"
             f"  * Se o aluno pedir o link da página, landing page, métricas, dados ou ficha de treino: NUNCA mande marcaopersonal.com#loja! Mande {link_portal_aluno}!\n"
             f"- DIRETRIZ DE COBRANÇA PERSISTENTE: Cobre com carinho, proximidade e autoridade de personal as pendências acima sem deixar nenhum dado em branco!"
