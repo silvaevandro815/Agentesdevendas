@@ -176,15 +176,13 @@ app.get('/api/aluno/portal/:id', async (req, res) => {
     }
   }
 
-  try {
-    return res.json({
-      sucesso: true,
-      aluno: { nome: 'Guerreiro(a)', objetivo: 'Evolução Física 360°', badge_local: '🏋️‍♂️ Treino Personalizado', streak_dias: 3 },
-      matematica_fisica: { agua_ml_diaria: 2800, agua_garrafas_500ml: 5.6, proteina_g_diaria: 150, calorias_alvo_dieta: 1800, tipo_dieta: 'Plano Personalizado Marcão', peso_kg: 70 },
-      rotina_treinos: { dias: [] },
-      arsenal_produtos: []
-    });
-  }
+  return res.json({
+    sucesso: true,
+    aluno: { nome: 'Guerreiro(a)', objetivo: 'Evolução Física 360°', badge_local: 'Treino Personalizado', streak_dias: 3 },
+    matematica_fisica: { agua_ml_diaria: 2800, agua_garrafas_500ml: 5.6, proteina_g_diaria: 150, calorias_alvo_dieta: 1800, tipo_dieta: 'Plano Personalizado Marcão', peso_kg: 70 },
+    rotina_treinos: { dias: [] },
+    arsenal_produtos: []
+  });
 });
 
 // Redirecionamento SPA / fallback seguro
