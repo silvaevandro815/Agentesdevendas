@@ -357,3 +357,8 @@ unpod_open_engine.py: Gerenciador de GPU Serverless para geração de takes 3D h
 - **Exemplo de Execução:**
   * python apps/api/video_engine/daily_reel_generator.py --tema balanca_ia
   * python apps/api/video_engine/daily_reel_generator.py --tema creatina_mito
+
+### [31/10/2026] Reestruturação da Seção Carro-Chefe (Balança Shopee R$ 34,90)
+- **Eliminação Total de Vácuos:** O espaço anteriormente vazio na coluna direita foi 100% preenchido com o showcase visual em alta definição da balança oficial (alanca_shopee_preta.webp), acompanhada das duas imagens de demonstração prática (alanca_shopee_app_metricas.webp e alanca_shopee_uso_real.webp).
+- **Desencavalamento dos 13 Biomarcadores:** As 13 métricas clínicas ganharam uma faixa horizontal dedicada de largura total (.biomarkers-full-strip) em grid simétrico de 4 colunas no Desktop, com ícones vetoriais SVG neon e espaçamento generoso que impede qualquer quebra indevida ou sobreposição.
+- **Centralização da Placa de Precificação na Área Segura:** A placa de precificação (.pricing-central-card) foi centralizada no coração do container, destacando o valor de R$ 34,90 (R$ 0,09/dia), o benefício dos 90 dias de mentoria VIP no WhatsApp e os botões oficiais de conversão Shopee e WhatsApp dispostos lado a lado com harmonia estética.
