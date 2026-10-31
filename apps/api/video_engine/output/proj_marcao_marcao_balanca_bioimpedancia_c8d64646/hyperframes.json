@@ -1,0 +1,7 @@
+{
+  "$schema": "https://hyperframes.heygen.com/hyperframes.schema.json",
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "duration": 3.8
+}

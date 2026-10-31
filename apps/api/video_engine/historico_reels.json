@@ -16,5 +16,32 @@
     "publicado_instagram": false,
     "instagram_reel_id": null,
     "published_at": "2026-10-20T20:53:37.554002"
+  },
+  {
+    "tema_id": "smartwatch_cardio_strava",
+    "titulo": "Treino Sem Métrica É Ilusão",
+    "video_url": "https://qkopgftfrfftoyndhhfj.supabase.co/storage/v1/object/public/creativos/videos/reel_smartwatch_cardio_strava_1792876074.mp4",
+    "video_local": "c:\\Users\\User\\Desktop\\Agentes de venda\\apps\\api\\video_engine\\output\\reel_smartwatch_cardio_strava.mp4",
+    "publicado_instagram": false,
+    "instagram_reel_id": null,
+    "published_at": "2026-10-24T18:07:58.145045"
+  },
+  {
+    "tema_id": "creatina_mito",
+    "titulo": "O Segredo da Saturação da Creatina",
+    "video_url": "https://qkopgftfrfftoyndhhfj.supabase.co/storage/v1/object/public/creativos/videos/reel_creatina_mito_1793189784.mp4",
+    "video_local": "c:\\Users\\User\\Desktop\\Agentes de venda\\apps\\api\\video_engine\\output\\reel_creatina_mito.mp4",
+    "publicado_instagram": false,
+    "instagram_reel_id": null,
+    "published_at": "2026-10-28T09:16:27.930831"
+  },
+  {
+    "tema_id": "creatina_mito",
+    "titulo": "O Segredo da Saturação da Creatina",
+    "video_url": "https://qkopgftfrfftoyndhhfj.supabase.co/storage/v1/object/public/creativos/videos/reel_creatina_mito_1793190022.mp4",
+    "video_local": "c:\\Users\\User\\Desktop\\Agentes de venda\\apps\\api\\video_engine\\output\\reel_creatina_mito.mp4",
+    "publicado_instagram": false,
+    "instagram_reel_id": null,
+    "published_at": "2026-10-28T09:20:26.489954"
   }
 ]

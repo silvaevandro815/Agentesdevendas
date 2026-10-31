@@ -1,0 +1,1932 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Portal do Aluno 360° | Marcão Personal</title>
+  <link rel="icon" type="image/jpeg" href="images/logo_marcao.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #060d1b;
+      --bg-card: rgba(11, 22, 44, 0.80);
+      --bg-card-hover: rgba(16, 31, 62, 0.90);
+      --border-card: rgba(0, 229, 255, 0.15);
+      --neon-cyan: #00e5ff;
+      --neon-cyan-glow: rgba(0, 229, 255, 0.35);
+      --neon-green: #00ff88;
+      --neon-green-glow: rgba(0, 255, 136, 0.35);
+      --neon-orange: #ff7a00;
+      --neon-orange-glow: rgba(255, 122, 0, 0.35);
+      --gold: #facc15;
+      --gold-glow: rgba(250, 204, 21, 0.35);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.5;
+      min-height: 100vh;
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(0, 229, 255, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 85% 50%, rgba(0, 255, 136, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 50% 85%, rgba(255, 122, 0, 0.06) 0%, transparent 45%);
+      background-attachment: fixed;
+    }
+
+    .container {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 14px 14px 110px 14px;
+    }
+
+    /* TOP NAVBAR */
+    .top-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 4px 16px 4px;
+      gap: 12px;
+    }
+
+    .brand-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+
+    .brand-logo-img {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      object-fit: cover;
+      border: 2px solid var(--neon-cyan);
+      box-shadow: 0 0 16px var(--neon-cyan-glow);
+    }
+
+    .brand-text h2 {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #fff;
+    }
+
+    .brand-text span {
+      background: linear-gradient(90deg, var(--neon-cyan), var(--neon-green));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 800;
+    }
+
+    .brand-tag {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--neon-cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.05);
+      color: #f1f5f9;
+    }
+
+    .nav-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .nav-btn.ig {
+      border-color: rgba(225, 48, 108, 0.4);
+      background: linear-gradient(135deg, rgba(225, 48, 108, 0.15), rgba(253, 29, 29, 0.1));
+      color: #ff6584;
+    }
+
+    .nav-btn.ig:hover {
+      box-shadow: 0 0 12px rgba(225, 48, 108, 0.35);
+    }
+
+    .nav-btn.site {
+      border-color: rgba(0, 229, 255, 0.4);
+      background: rgba(0, 229, 255, 0.1);
+      color: var(--neon-cyan);
+    }
+
+    .nav-btn.site:hover {
+      box-shadow: 0 0 12px var(--neon-cyan-glow);
+    }
+
+    /* NEON ICONS SVG */
+    .neon-svg {
+      width: 18px;
+      height: 18px;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+      vertical-align: middle;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    .neon-svg.cyan {
+      stroke: var(--neon-cyan);
+      filter: drop-shadow(0 0 5px var(--neon-cyan));
+    }
+
+    .neon-svg.green {
+      stroke: var(--neon-green);
+      filter: drop-shadow(0 0 5px var(--neon-green));
+    }
+
+    .neon-svg.orange {
+      stroke: var(--neon-orange);
+      filter: drop-shadow(0 0 5px var(--neon-orange));
+    }
+
+    .neon-svg.gold {
+      stroke: var(--gold);
+      filter: drop-shadow(0 0 5px var(--gold));
+    }
+
+    .neon-svg.lg {
+      width: 26px;
+      height: 26px;
+    }
+
+    /* HERO HEADER DO ALUNO */
+    .header-hero {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 24px;
+      padding: 22px 20px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 12px 35px rgba(0,0,0,0.6);
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header-hero::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, #0055ff, var(--neon-cyan), var(--neon-green), var(--neon-orange));
+    }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    /* ÁREA DA FOTO DE PERFIL COM UPLOAD */
+    .avatar-wrapper {
+      position: relative;
+      width: 78px;
+      height: 78px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .avatar-img-box {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 2.5px solid var(--neon-cyan);
+      background: #091326;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 18px var(--neon-cyan-glow);
+      overflow: hidden;
+      position: relative;
+      transition: all 0.25s ease;
+    }
+
+    .avatar-wrapper:hover .avatar-img-box {
+      border-color: var(--neon-green);
+      box-shadow: 0 0 22px var(--neon-green-glow);
+      transform: scale(1.02);
+    }
+
+    .avatar-photo-render {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+
+    .avatar-placeholder-svg {
+      width: 36px;
+      height: 36px;
+      stroke: var(--neon-cyan);
+      filter: drop-shadow(0 0 8px var(--neon-cyan));
+    }
+
+    .avatar-edit-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(6, 13, 27, 0.7);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      color: var(--neon-cyan);
+      font-size: 9px;
+      font-weight: 800;
+      gap: 2px;
+      text-transform: uppercase;
+    }
+
+    .avatar-wrapper:hover .avatar-edit-overlay {
+      opacity: 1;
+    }
+
+    .avatar-cam-badge {
+      position: absolute;
+      bottom: -3px;
+      right: -3px;
+      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-green));
+      color: #060d1b;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.6);
+      border: 2px solid var(--bg-dark);
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .avatar-cam-badge:hover {
+      transform: scale(1.15);
+    }
+
+    .user-details h1 {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #fff;
+    }
+
+    .user-meta {
+      display: inline-block;
+      font-size: 13px;
+      font-weight: 700;
+      background: linear-gradient(90deg, var(--neon-cyan), var(--neon-green));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-top: 2px;
+    }
+
+    .badges-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .badge-pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 5px 12px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .badge-pill.streak {
+      background: rgba(255, 122, 0, 0.15);
+      border-color: rgba(255, 122, 0, 0.4);
+      color: #ff9d42;
+    }
+
+    .badge-pill.location {
+      background: rgba(0, 229, 255, 0.12);
+      border-color: rgba(0, 229, 255, 0.35);
+      color: var(--neon-cyan);
+    }
+
+    /* SECTION TITLE */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 26px 4px 14px 4px;
+    }
+
+    .section-header h2 {
+      font-size: 15px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* BIOMARKERS GRID */
+    .biomarkers-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .bio-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 18px;
+      padding: 16px;
+      backdrop-filter: blur(12px);
+      position: relative;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .bio-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(0, 229, 255, 0.4);
+    }
+
+    .bio-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .bio-card-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .bio-card-value {
+      font-size: 24px;
+      font-weight: 800;
+      color: #fff;
+      font-family: 'Space Grotesk', sans-serif;
+      margin-top: 2px;
+    }
+
+    .bio-card-sub {
+      font-size: 11px;
+      color: var(--neon-cyan);
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    /* CONSELHO MARCÃO */
+    .coach-quote-box {
+      background: linear-gradient(135deg, rgba(0, 229, 255, 0.1) 0%, rgba(0, 255, 136, 0.05) 100%);
+      border: 1px solid rgba(0, 229, 255, 0.3);
+      border-radius: 20px;
+      padding: 18px 20px;
+      margin-top: 20px;
+      position: relative;
+    }
+
+    .coach-quote-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .coach-quote-header img {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      border: 2px solid var(--neon-green);
+      object-fit: cover;
+      box-shadow: 0 0 12px var(--neon-green-glow);
+    }
+
+    .coach-quote-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--neon-green);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .coach-quote-text {
+      font-size: 14px;
+      color: #f1f5f9;
+      font-style: italic;
+      line-height: 1.6;
+    }
+
+    /* RANKING TOP 5 (PODIUM DOS LEÕES) */
+    .ranking-container {
+      background: linear-gradient(135deg, rgba(16, 31, 62, 0.9) 0%, rgba(6, 13, 27, 0.98) 100%);
+      border: 1px solid rgba(0, 229, 255, 0.3);
+      border-radius: 24px;
+      padding: 22px 18px;
+      margin: 22px 0;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 12px 35px rgba(0,0,0,0.6);
+    }
+
+    .ranking-container::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, #facc15, #00e5ff, #00ff88);
+    }
+
+    .ranking-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .ranking-tag-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 800;
+      color: #060d1b;
+      background: linear-gradient(90deg, #facc15, #00e5ff);
+      padding: 4px 14px;
+      border-radius: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 8px;
+    }
+
+    .ranking-header h2 {
+      font-size: 18px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.5px;
+    }
+
+    .ranking-header p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* PODIUM VISUAL (1º, 2º e 3º) */
+    .podium-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.15fr 1fr;
+      gap: 10px;
+      align-items: flex-end;
+      margin-bottom: 18px;
+    }
+
+    .podium-card {
+      background: rgba(11, 22, 44, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 18px;
+      padding: 16px 8px;
+      text-align: center;
+      position: relative;
+      transition: transform 0.2s ease;
+    }
+
+    .podium-card.first {
+      background: linear-gradient(180deg, rgba(250, 204, 21, 0.18) 0%, rgba(11, 22, 44, 0.95) 100%);
+      border: 2px solid #facc15;
+      box-shadow: 0 0 24px rgba(250, 204, 21, 0.35);
+      padding-top: 26px;
+      padding-bottom: 22px;
+      z-index: 2;
+    }
+
+    .podium-card.second {
+      border: 2px solid #00ff88;
+      box-shadow: 0 0 16px rgba(0, 255, 136, 0.25);
+    }
+
+    .podium-card.third {
+      border: 2px solid #ff7a00;
+      box-shadow: 0 0 16px rgba(255, 122, 0, 0.25);
+    }
+
+    .podium-card.is-user {
+      animation: pulse-user-card 2.5s infinite;
+      border-width: 2px;
+    }
+
+    @keyframes pulse-user-card {
+      0% { transform: scale(1); box-shadow: 0 0 15px var(--neon-cyan-glow); }
+      50% { transform: scale(1.03); box-shadow: 0 0 25px var(--neon-cyan); }
+      100% { transform: scale(1); box-shadow: 0 0 15px var(--neon-cyan-glow); }
+    }
+
+    .podium-crown {
+      position: absolute;
+      top: -15px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .podium-icon-box {
+      margin-bottom: 6px;
+    }
+
+    .podium-name {
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding: 0 4px;
+    }
+
+    .podium-score {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--neon-cyan);
+      font-family: 'Space Grotesk', sans-serif;
+      margin-top: 4px;
+    }
+
+    .podium-streak {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--neon-green);
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .podium-user-badge {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 800;
+      color: #060d1b;
+      background: var(--neon-cyan);
+      padding: 2px 7px;
+      border-radius: 8px;
+      margin-top: 6px;
+      box-shadow: 0 0 8px var(--neon-cyan-glow);
+    }
+
+    /* 4º e 5º LUGAR LISTA */
+    .ranking-list-row {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .ranking-item-compact {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .ranking-item-compact.is-user {
+      border-color: var(--neon-cyan);
+      background: rgba(0, 229, 255, 0.08);
+    }
+
+    .ranking-compact-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .ranking-compact-pos {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text-muted);
+      width: 24px;
+    }
+
+    .ranking-compact-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .ranking-compact-score {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--neon-cyan);
+      text-align: right;
+    }
+
+    /* STORY SHARE BOX */
+    .story-share-banner {
+      background: linear-gradient(135deg, rgba(0, 229, 255, 0.15) 0%, rgba(0, 255, 136, 0.1) 100%);
+      border: 1px dashed var(--neon-cyan);
+      border-radius: 16px;
+      padding: 16px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .story-share-banner span {
+      font-size: 12px;
+      color: #cbd5e1;
+      line-height: 1.45;
+    }
+
+    .btn-copy-story {
+      background: linear-gradient(135deg, #00e5ff, #00ff88);
+      color: #060d1b;
+      font-size: 13px;
+      font-weight: 800;
+      border: none;
+      padding: 11px 20px;
+      border-radius: 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 18px rgba(0, 229, 255, 0.35);
+      transition: transform 0.2s ease;
+    }
+
+    .btn-copy-story:hover {
+      transform: scale(1.03);
+    }
+
+    /* STRAVA & SMARTWATCH AUDITORIA NOTURNA */
+    .strava-card {
+      background: linear-gradient(135deg, rgba(252, 76, 2, 0.12) 0%, rgba(11, 22, 44, 0.85) 100%);
+      border: 1px solid rgba(252, 76, 2, 0.35);
+      border-radius: 20px;
+      padding: 20px;
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .strava-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .strava-title-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .strava-icon-badge {
+      background: #fc4c02;
+      color: #fff;
+      font-weight: 900;
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 8px;
+      letter-spacing: 0.5px;
+    }
+
+    .strava-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .strava-tag {
+      font-size: 11px;
+      font-weight: 700;
+      color: #ff9d42;
+      background: rgba(252, 76, 2, 0.18);
+      padding: 3px 8px;
+      border-radius: 8px;
+    }
+
+    .strava-desc {
+      font-size: 13px;
+      color: #cbd5e1;
+      line-height: 1.5;
+    }
+
+    .strava-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--neon-cyan);
+      background: rgba(0, 229, 255, 0.1);
+      padding: 5px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(0, 229, 255, 0.25);
+      width: fit-content;
+    }
+
+    /* WORKOUTS TABS (OPENGYM STYLE) */
+    .workout-tabs-nav {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+
+    .workout-tab-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-card);
+      color: var(--text-muted);
+      padding: 10px 18px;
+      border-radius: 14px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .workout-tab-btn.active {
+      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-green));
+      color: #060d1b;
+      border-color: var(--neon-cyan);
+      box-shadow: 0 4px 16px var(--neon-cyan-glow);
+    }
+
+    .workout-block {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 20px;
+      padding: 18px;
+      margin-bottom: 14px;
+    }
+
+    .workout-block-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding-bottom: 10px;
+    }
+
+    .workout-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .workout-duration {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--neon-green);
+      background: rgba(0, 255, 136, 0.1);
+      padding: 4px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(0, 255, 136, 0.25);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* EXERCISE ITEM */
+    .exercise-item {
+      display: flex;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      align-items: flex-start;
+    }
+
+    .exercise-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .exercise-check {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      margin-top: 2px;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+    }
+
+    .exercise-check.completed {
+      background: var(--neon-green);
+      border-color: var(--neon-green);
+      box-shadow: 0 0 10px var(--neon-green-glow);
+    }
+
+    .exercise-check.completed::after {
+      content: '✓';
+      color: #060d1b;
+      font-size: 15px;
+      font-weight: 900;
+    }
+
+    .exercise-info {
+      flex: 1;
+    }
+
+    .exercise-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .exercise-meta {
+      display: flex;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--neon-cyan);
+      margin-top: 2px;
+    }
+
+    .exercise-dica {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    /* RECOVERY MATRIX */
+    .recovery-list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .recovery-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 14px;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .recovery-group {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .recovery-status {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 10px;
+    }
+
+    /* NUTRITION & MEALS */
+    .meal-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .meal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .meal-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .meal-time {
+      font-size: 11px;
+      color: var(--neon-cyan);
+      font-weight: 600;
+    }
+
+    .meal-items {
+      list-style: none;
+      margin-bottom: 10px;
+    }
+
+    .meal-items li {
+      font-size: 13px;
+      color: #e2e8f0;
+      padding: 4px 0;
+      position: relative;
+      padding-left: 14px;
+    }
+
+    .meal-items li::before {
+      content: '•';
+      position: absolute;
+      left: 0;
+      color: var(--neon-green);
+    }
+
+    .meal-dica {
+      background: rgba(255,255,255,0.03);
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 12px;
+      color: var(--neon-cyan);
+      font-weight: 600;
+    }
+
+    .btn-send-plate {
+      width: 100%;
+      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-green));
+      color: #060d1b;
+      border: none;
+      padding: 15px;
+      border-radius: 16px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 14px;
+      box-shadow: 0 4px 18px var(--neon-cyan-glow);
+      text-decoration: none;
+      transition: transform 0.2s ease;
+    }
+
+    .btn-send-plate:hover {
+      transform: scale(1.02);
+    }
+
+    /* SLEEP */
+    .sleep-card {
+      background: linear-gradient(135deg, rgba(16, 31, 62, 0.9) 0%, rgba(6, 13, 27, 0.95) 100%);
+      border: 1px solid rgba(0, 229, 255, 0.2);
+      border-radius: 20px;
+      padding: 20px;
+    }
+
+    .sleep-timing {
+      display: flex;
+      justify-content: space-around;
+      text-align: center;
+      margin-bottom: 14px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .sleep-hour {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--neon-cyan);
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .sleep-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    /* PHOTOS SECTION */
+    .photos-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 20px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .photos-placeholder-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 16px 0;
+    }
+
+    .photo-slot {
+      background: rgba(255,255,255,0.02);
+      border: 2px dashed rgba(0, 229, 255, 0.25);
+      border-radius: 14px;
+      height: 160px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .coach-feedback-bubble {
+      background: rgba(255, 255, 255, 0.04);
+      border-left: 3px solid var(--neon-cyan);
+      padding: 12px 14px;
+      border-radius: 0 12px 12px 0;
+      text-align: left;
+      font-size: 13px;
+      color: #e2e8f0;
+      margin-top: 10px;
+    }
+
+    /* PRODUCTS GRID */
+    .products-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    .product-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 20px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+    }
+
+    .product-badge {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: rgba(0, 255, 136, 0.15);
+      border: 1px solid rgba(0, 255, 136, 0.35);
+      color: var(--neon-green);
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 8px;
+    }
+
+    .product-origin-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--neon-cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .product-info h3 {
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+      padding-right: 90px;
+    }
+
+    .product-pricing {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .product-price {
+      font-size: 22px;
+      font-weight: 800;
+      color: #fff;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .product-daily {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--neon-cyan);
+      background: rgba(0, 229, 255, 0.1);
+      padding: 3px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(0, 229, 255, 0.25);
+    }
+
+    .product-reason {
+      font-size: 13px;
+      color: #cbd5e1;
+      line-height: 1.45;
+    }
+
+    .btn-buy-product {
+      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-green));
+      color: #060d1b;
+      font-weight: 800;
+      font-size: 14px;
+      text-align: center;
+      padding: 13px;
+      border-radius: 14px;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: transform 0.2s ease;
+      box-shadow: 0 4px 16px var(--neon-cyan-glow);
+    }
+
+    .btn-buy-product:hover {
+      transform: scale(1.02);
+    }
+
+    /* CANAIS OFICIAIS MARCÃO PERSONAL */
+    .official-channels-card {
+      background: linear-gradient(135deg, rgba(16, 31, 62, 0.95) 0%, rgba(6, 13, 27, 0.98) 100%);
+      border: 1px solid rgba(0, 229, 255, 0.3);
+      border-radius: 22px;
+      padding: 22px;
+      margin-top: 30px;
+      text-align: center;
+    }
+
+    .official-channels-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .official-channels-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .channels-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .channel-box {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 14px 10px;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .channel-box:hover {
+      transform: translateY(-2px);
+      border-color: var(--neon-cyan);
+      box-shadow: 0 4px 16px rgba(0, 229, 255, 0.2);
+    }
+
+    .channel-box.ig:hover {
+      border-color: #e1306c;
+      box-shadow: 0 4px 16px rgba(225, 48, 108, 0.3);
+    }
+
+    .channel-box-name {
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .channel-box-handle {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--neon-cyan);
+    }
+
+    .channel-box.ig .channel-box-handle {
+      color: #ff6584;
+    }
+
+    /* FLOATING WHATSAPP BUTTON */
+    .floating-whatsapp {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #25d366;
+      color: #fff;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 24px rgba(37, 211, 102, 0.45);
+      z-index: 100;
+      text-decoration: none;
+      animation: pulse-green 2.5s infinite;
+      transition: transform 0.2s ease;
+    }
+
+    .floating-whatsapp:hover {
+      transform: scale(1.08);
+    }
+
+    .floating-whatsapp svg {
+      width: 32px;
+      height: 32px;
+      fill: #fff;
+    }
+
+    @keyframes pulse-green {
+      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.6); }
+      70% { transform: scale(1.05); box-shadow: 0 0 0 14px rgba(37, 211, 102, 0); }
+      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+    }
+
+    /* TOAST NOTIFICATION */
+    .toast-msg {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: rgba(6, 13, 27, 0.95);
+      border: 1px solid var(--neon-cyan);
+      box-shadow: 0 0 20px var(--neon-cyan-glow);
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 14px;
+      font-size: 13px;
+      font-weight: 700;
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .toast-msg.show {
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOAST FEEDBACK -->
+  <div id="toast" class="toast-msg">
+    <svg class="neon-svg cyan" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>
+    <span id="toastText">Ação realizada com sucesso!</span>
+  </div>
+
+  <!-- INPUT OCULTO PARA UPLOAD DE FOTO -->
+  <input type="file" id="avatarFileInput" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="aoSelecionarFoto(event)">
+
+  <div class="container">
+
+    <!-- TOP NAVBAR COM LINKS OFICIAIS -->
+    <div class="top-nav">
+      <a href="https://marcaopersonal.com" target="_blank" class="brand-header" title="Visitar site oficial">
+        <img src="images/logo_marcao.jpg" alt="Marcão Personal" class="brand-logo-img">
+        <div class="brand-text">
+          <h2>MARCÃO <span>PERSONAL</span></h2>
+          <div class="brand-tag">CENTRO DE COMANDO 360°</div>
+        </div>
+      </a>
+      <div class="nav-actions">
+        <a href="https://instagram.com/marcaopersonalfitness" target="_blank" class="nav-btn ig" title="Seguir Marcão no Instagram">
+          <svg class="neon-svg" viewBox="0 0 24 24" style="stroke: #ff6584;"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"></line></svg>
+          <span>Instagram</span>
+        </a>
+        <a href="https://marcaopersonal.com" target="_blank" class="nav-btn site" title="Acessar marcaopersonal.com">
+          <svg class="neon-svg cyan" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="2" x2="22" y1="12" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+          <span>Site</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- HERO HEADER DO ALUNO (COM ÁREA DE FOTO DE PERFIL) -->
+    <div class="header-hero">
+      <div class="user-profile">
+        
+        <!-- AVATAR COM CLIQUE PARA TROCAR FOTO -->
+        <div class="avatar-wrapper" onclick="dispararUploadFoto()" title="Clique para trocar sua foto de perfil">
+          <div class="avatar-img-box" id="avatarBox">
+            <svg class="avatar-placeholder-svg" id="avatarPlaceholder" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <div class="avatar-edit-overlay">
+            <svg class="neon-svg cyan" viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="3"></circle></svg>
+            <span>Trocar</span>
+          </div>
+          <div class="avatar-cam-badge" title="Trocar foto">
+            <svg style="width:13px; height:13px; stroke:#060d1b; stroke-width:2.5; fill:none;" viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="3"></circle></svg>
+          </div>
+        </div>
+
+        <div class="user-details">
+          <h1 id="userName">Carregando Aluno...</h1>
+          <div class="user-meta" id="userGoal">Protocolo Marcão Personal 360°</div>
+          <div class="badges-row">
+            <span class="badge-pill location" id="userLocation">
+              <svg class="neon-svg cyan" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+              <span>Treino em Casa</span>
+            </span>
+            <span class="badge-pill streak" id="userStreak">
+              <svg class="neon-svg orange" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
+              <span>4 Dias Seguidos</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONSELHO DA SEMANA DO MARCÃO -->
+    <div class="coach-quote-box">
+      <div class="coach-quote-header">
+        <img src="images/logo_marcao.jpg" alt="Marcão Personal" id="coachThumb">
+        <div class="coach-quote-title">Conselho Semanal do Treinador Marcão</div>
+      </div>
+      <div class="coach-quote-text" id="coachMessage">
+        "O shape não espera ninguém! Disciplina é fazer o que tem que ser feito até quando a preguiça bate. Bate a meta de água e segue a planilha!"
+      </div>
+    </div>
+
+    <!-- RANKING TOP 5 DOS LEÕES DA SEMANA (ESTILO PODIUM) -->
+    <div class="ranking-container" id="rankingSection">
+      <div class="ranking-header">
+        <span class="ranking-tag-badge">
+          <svg class="neon-svg" style="stroke:#060d1b; width:14px; height:14px;" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
+          Pódio dos Leões
+        </span>
+        <h2>TOP 5 ALUNOS MAIS DEDICADOS</h2>
+        <p>Ranking semanal de consistência em treinos, hidratação e metas batidas!</p>
+      </div>
+
+      <!-- PODIUM TOP 3 -->
+      <div class="podium-grid" id="podiumTop3">
+        <!-- Inserido dinamicamente via JS (2º, 1º e 3º) -->
+      </div>
+
+      <!-- 4º E 5º LUGAR -->
+      <div class="ranking-list-row" id="rankingBottomList">
+        <!-- Inserido dinamicamente via JS -->
+      </div>
+
+      <!-- BANNER DE COMPARTILHAMENTO NOS STORIES -->
+      <div class="story-share-banner">
+        <span><svg class="neon-icon cyan" style="width:14px; height:14px; margin-right:4px;" viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="3"></circle></svg><strong>Poste nos Stories:</strong> Mostre que você tá no foco! Tire um print deste ranking e marque o Marcão para ser repostado!</span>
+        <button class="btn-copy-story" onclick="compartilharStory()">
+          <svg class="neon-svg" style="stroke:#060d1b;" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg>
+          <span>Copiar Legenda & Marcar @marcaopersonalfitness</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- MATEMÁTICA FÍSICA & METAS DIÁRIAS -->
+    <div class="section-header">
+      <h2>
+        <svg class="neon-svg cyan" viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
+        Matemática Física Diária
+      </h2>
+    </div>
+    <div class="biomarkers-grid">
+      <div class="bio-card">
+        <div class="bio-card-top">
+          <span class="bio-card-title">Meta de Hidratação</span>
+          <svg class="neon-svg cyan" viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
+        </div>
+        <div class="bio-card-value" id="waterVal">2.800 ml</div>
+        <div class="bio-card-sub" id="waterSub">~5.6 garrafas de 500ml</div>
+      </div>
+      <div class="bio-card">
+        <div class="bio-card-top">
+          <span class="bio-card-title">Proteína Alvo</span>
+          <svg class="neon-svg green" viewBox="0 0 24 24"><path d="m6.5 6.5 11 11"></path><path d="m21 21-1-1"></path><path d="m3 3 1 1"></path><path d="m18 22 4-4"></path><path d="m2 6 4-4"></path><path d="m3 10 7-7"></path><path d="m14 21 7-7"></path></svg>
+        </div>
+        <div class="bio-card-value" id="proteinVal">154 g</div>
+        <div class="bio-card-sub" id="proteinSub">~38g por refeição</div>
+      </div>
+      <div class="bio-card">
+        <div class="bio-card-top">
+          <span class="bio-card-title">Calorias da Dieta</span>
+          <svg class="neon-svg orange" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
+        </div>
+        <div class="bio-card-value" id="caloriesVal">1.560 kcal</div>
+        <div class="bio-card-sub" id="caloriesSub">Déficit Estratégico</div>
+      </div>
+      <div class="bio-card">
+        <div class="bio-card-top">
+          <span class="bio-card-title">Peso Monitorado</span>
+          <svg class="neon-svg cyan" viewBox="0 0 24 24"><rect width="20" height="20" x="2" y="2" rx="4"></rect><circle cx="12" cy="8" r="2.5"></circle><path d="M7 16h10"></path><path d="M12 13v6"></path></svg>
+        </div>
+        <div class="bio-card-value" id="weightVal">70.0 kg</div>
+        <div class="bio-card-sub" id="weightSub">Bioimpedância BIA</div>
+      </div>
+    </div>
+
+    <!-- INTEGRAÇÃO STRAVA & AUDITORIA NOTURNA -->
+    <div class="strava-card">
+      <div class="strava-header">
+        <div class="strava-title-box">
+          <span class="strava-icon-badge">STRAVA</span>
+          <span class="strava-title">Consultoria Strava & Smartwatch</span>
+        </div>
+        <span class="strava-tag">Auditoria às 22h</span>
+      </div>
+      <div class="strava-desc">
+        Nos seus dias de treino, o Marcão audita seus batimentos cardíacos, ritmo (pace) e zonas de queima de gordura no Strava pontualmente às 22h. Se treinou com dedicação, ganha conselho de coach; se faltou, toma bronca de personal!
+      </div>
+      <div class="strava-status-pill">
+        <svg class="neon-svg cyan" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"></circle><polyline points="12 9 12 12 13.5 13.5"></polyline><path d="M16.51 17.35l-.35 3.83a2 2 0 0 1-2 1.82H9.83a2 2 0 0 1-2-1.82l-.35-3.83m.01-10.7l.35-3.83A2 2 0 0 1 9.83 1h4.35a2 2 0 0 1 2 1.82l.35 3.83"></path></svg>
+        <span>Status: Monitoramento Noturno Ativo 4x/semana</span>
+      </div>
+    </div>
+
+    <!-- ROTINA DE TREINOS ESTILO OPENGYM -->
+    <div class="section-header">
+      <h2>
+        <svg class="neon-svg cyan" viewBox="0 0 24 24"><path d="M6 5v14M18 5v14M2 9v6M22 9v6M6 12h12"></path></svg>
+        Ficha de Treino Dinâmica (OpenGym)
+      </h2>
+    </div>
+    <div class="workout-tabs-nav" id="workoutTabsNav">
+      <!-- Inserido dinamicamente via JS -->
+    </div>
+    <div id="workoutContainer">
+      <!-- Blocos de treino inseridos dinamicamente -->
+    </div>
+
+    <!-- MATRIZ DE RECUPERAÇÃO MUSCULAR -->
+    <div class="section-header">
+      <h2>
+        <svg class="neon-svg green" viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+        Recuperação Muscular Ativa
+      </h2>
+    </div>
+    <div class="recovery-list" id="recoveryContainer">
+      <!-- Músculos inseridos via JS -->
+    </div>
+
+    <!-- DIETA SUGERIDA PELO MARCÃO -->
+    <div class="section-header">
+      <h2>
+        <svg class="neon-svg green" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 3v18"></path><path d="M12 12h9"></path></svg>
+        Cardápio Sugerido & Nutrição
+      </h2>
+    </div>
+    <div id="mealsContainer">
+      <!-- Refeições inseridas via JS -->
+    </div>
+    <a href="https://wa.me/553285066687?text=Fala%20Marc%C3%A3o!%20T%C3%B4%20te%20mandando%20a%20foto%20do%20meu%20prato%20pra%20voc%C3%AA%20avaliar%20os%20macros!" class="btn-send-plate">
+      <svg class="neon-svg" style="stroke:#060d1b; width:22px; height:22px;" viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="3"></circle></svg>
+      <span>Enviar Foto do Prato para o Marcão Analisar no WhatsApp</span>
+    </a>
+
+    <!-- HORÁRIOS IDEAIS DE SONO -->
+    <div class="section-header">
+      <h2>
+        <svg class="neon-svg cyan" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>
+        Sono Anabólico & Recuperação GH
+      </h2>
+    </div>
+    <div class="sleep-card">
+      <div class="sleep-timing">
+        <div>
+          <div class="sleep-hour" id="sleepBed">22:30</div>
+          <div class="sleep-label">Dormir</div>
+        </div>
+        <div>
+          <div class="sleep-hour" id="sleepWake">06:30</div>
+          <div class="sleep-label">Acordar</div>
+        </div>
+        <div>
+          <div class="sleep-hour" id="sleepDuration">8h</div>
+          <div class="sleep-label">Sono Total</div>
+        </div>
+      </div>
+      <div style="font-size: 13px; color: #94a3b8; line-height: 1.5;">
+        <strong style="color: var(--neon-cyan);">Pico de GH (Hormônio do Crescimento):</strong> <span id="sleepGH">Entre 23h30 e 02h00. É durante o sono profundo que a queima de gordura e o ganho de tônus muscular acontecem!</span>
+      </div>
+    </div>
+
+    <!-- FOTOS DE EVOLUÇÃO FRENTE & COSTAS -->
+    <div class="section-header">
+      <h2>
+        <svg class="neon-svg cyan" viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="3"></circle></svg>
+        Evolução Corporal (Frente & Costas)
+      </h2>
+    </div>
+    <div class="photos-card">
+      <div class="photos-placeholder-grid">
+        <div class="photo-slot">
+          <svg class="neon-svg cyan lg" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          <span>Foto de Frente</span>
+          <span style="font-size: 10px; color: var(--neon-cyan);">Criptografada LGPD</span>
+        </div>
+        <div class="photo-slot">
+          <svg class="neon-svg cyan lg" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          <span>Foto de Costas</span>
+          <span style="font-size: 10px; color: var(--neon-cyan);">Criptografada LGPD</span>
+        </div>
+      </div>
+      <div class="coach-feedback-bubble" id="photoFeedback">
+        <strong>Parecer do Marcão:</strong> Postura em franca melhora e redução de retenção líquida na cintura. Mantendo a disciplina, em 15 dias o contorno muscular fica ainda mais evidente!
+      </div>
+    </div>
+
+    <!-- ARSENAL RECOMENDADO PARA SUA META -->
+    <div class="section-header">
+      <h2>
+        <svg class="neon-svg cyan" viewBox="0 0 24 24"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg>
+        Arsenal Personalizado para sua Meta
+      </h2>
+    </div>
+    <div class="products-grid" id="productsGrid">
+      <!-- Inserido dinamicamente via JS -->
+    </div>
+
+    <!-- CANAIS OFICIAIS DO MARCÃO PERSONAL -->
+    <div class="official-channels-card">
+      <div class="official-channels-title">Canais Oficiais do Treinador Marcão</div>
+      <div class="official-channels-desc">Acompanhe os bastidores, análises de pratos e orientações diárias em todas as plataformas oficiais.</div>
+      <div class="channels-grid">
+        <a href="https://instagram.com/marcaopersonalfitness" target="_blank" class="channel-box ig">
+          <svg class="neon-svg lg" viewBox="0 0 24 24" style="stroke: #ff6584;"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"></line></svg>
+          <div class="channel-box-name">Instagram</div>
+          <div class="channel-box-handle">@marcaopersonalfitness</div>
+        </a>
+        <a href="https://marcaopersonal.com" target="_blank" class="channel-box">
+          <svg class="neon-svg cyan lg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="2" x2="22" y1="12" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10z"></path></svg>
+          <div class="channel-box-name">Site Oficial</div>
+          <div class="channel-box-handle">marcaopersonal.com</div>
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- BOTAO FLUTUANTE WHATSAPP COM SVG OFICIAL -->
+  <a href="https://wa.me/553285066687?text=Fala%20Marc%C3%A3o!%20T%C3%B4%20vendo%20minha%20Landing%20Page%20aqui%20e%20bora%20pra%20cima!" class="floating-whatsapp" target="_blank" title="Falar com o Treinador Marcão">
+    <svg viewBox="0 0 24 24"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2M12.05 3.67C14.25 3.67 16.31 4.53 17.87 6.09C19.42 7.65 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.15 12.04 20.15C10.56 20.15 9.11 19.76 7.85 19L7.55 18.83L4.43 19.65L5.26 16.61L5.06 16.29C4.24 15 3.8 13.47 3.8 11.91C3.81 7.37 7.5 3.67 12.05 3.67M9.53 7.03C9.36 7.03 9.08 7.09 8.84 7.35C8.6 7.61 7.92 8.25 7.92 9.54C7.92 10.83 8.86 12.08 9 12.26C9.13 12.44 10.84 15.08 13.46 16.21C14.09 16.48 14.57 16.64 14.96 16.76C15.58 16.96 16.15 16.93 16.6 16.87C17.1 16.79 18.14 16.24 18.35 15.63C18.57 15.02 18.57 14.5 18.5 14.4C18.43 14.3 18.26 14.24 18 14.11C17.74 13.98 16.46 13.35 16.22 13.27C15.98 13.18 15.82 13.14 15.65 13.39C15.48 13.65 15 14.24 14.85 14.4C14.7 14.57 14.56 14.6 14.3 14.47C14.04 14.34 13.2 14.07 12.21 13.18C11.44 12.49 10.92 11.64 10.77 11.38C10.62 11.13 10.75 11 10.88 10.87C11 10.75 11.14 10.57 11.27 10.42C11.4 10.27 11.45 10.16 11.53 10C11.61 9.83 11.57 9.69 11.51 9.56C11.45 9.43 10.97 8.25 10.77 7.77C10.57 7.29 10.37 7.36 10.22 7.35C10.08 7.35 9.91 7.34 9.74 7.34C9.57 7.34 9.53 7.03 9.53 7.03Z"/></svg>
+  </a>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const pathParts = window.location.pathname.split('/');
+    const alunoId = urlParams.get('id') || (pathParts.length > 2 ? pathParts[2] : '5532988273367');
+
+    const API_URL = `/api/aluno/portal/${alunoId}`;
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toastText').textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+
+    function dispararUploadFoto() {
+      document.getElementById('avatarFileInput').click();
+    }
+
+    async function aoSelecionarFoto(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      // Validação rápida de tamanho (máx 8MB)
+      if (file.size > 8 * 1024 * 1024) {
+        alert("A foto selecionada é muito grande. Escolha uma imagem de até 8MB.");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        const dataUrl = e.target.result;
+        // Preview instantâneo
+        renderizarFotoAvatar(dataUrl);
+        // Salva no cache local
+        localStorage.setItem('aluno_avatar_' + alunoId, dataUrl);
+        showToast("Salvando foto no seu perfil...");
+
+        try {
+          const res = await fetch(`/api/aluno/avatar/${alunoId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: dataUrl })
+          });
+          const ret = await res.json();
+          if (ret.sucesso) {
+            showToast("Foto de perfil atualizada com sucesso!");
+          } else {
+            console.warn("Aviso upload:", ret.erro);
+          }
+        } catch (err) {
+          console.error("Erro no envio:", err);
+          showToast("Foto salva no seu dispositivo!");
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function renderizarFotoAvatar(src) {
+      const box = document.getElementById('avatarBox');
+      if (!src) return;
+      box.innerHTML = `<img src="${src}" class="avatar-photo-render" alt="Foto de perfil">`;
+    }
+
+    async function carregarPortalAluno() {
+      // 0. Carrega foto de perfil do cache local imediatamente se existir
+      const cachedAvatar = localStorage.getItem('aluno_avatar_' + alunoId);
+      if (cachedAvatar) {
+        renderizarFotoAvatar(cachedAvatar);
+      }
+
+      try {
+        const res = await fetch(API_URL);
+        const data = await res.json();
+
+        if (!data || !data.sucesso) {
+          console.warn("Dados não encontrados para o aluno");
+          return;
+        }
+
+        // 1. Header do Aluno
+        document.getElementById('userName').textContent = data.aluno.nome;
+        document.getElementById('userGoal').textContent = data.aluno.objetivo;
+        
+        const locBox = document.getElementById('userLocation');
+        locBox.querySelector('span').textContent = data.aluno.badge_local;
+        
+        const streakBox = document.getElementById('userStreak');
+        streakBox.querySelector('span').textContent = `${data.aluno.streak_dias} Dias Seguidos`;
+
+        // Se veio foto de perfil do servidor e não temos local, renderiza
+        if (data.aluno.foto_perfil && !cachedAvatar) {
+          renderizarFotoAvatar(data.aluno.foto_perfil);
+        }
+
+        // 2. Conselho do Marcão
+        if (data.conselho_semanal) {
+          document.getElementById('coachMessage').textContent = `"${data.conselho_semanal}"`;
+        }
+
+        // 3. Biomarcadores e Matemática Física
+        const m = data.matematica_fisica;
+        document.getElementById('waterVal').textContent = `${m.agua_ml_diaria} ml`;
+        document.getElementById('waterSub').textContent = `~${m.agua_garrafas_500ml} garrafas de 500ml`;
+        document.getElementById('proteinVal').textContent = `${m.proteina_g_diaria} g`;
+        document.getElementById('proteinSub').textContent = `~${Math.round(m.proteina_g_diaria / 4)}g por refeição`;
+        document.getElementById('caloriesVal').textContent = `${m.calorias_alvo_dieta} kcal`;
+        document.getElementById('caloriesSub').textContent = m.tipo_dieta.includes('Déficit') ? 'Déficit p/ Secar' : 'Superávit Anabólico';
+        document.getElementById('weightVal').textContent = `${m.peso_kg} kg`;
+
+        // 4. Treinos (Abas e Exercícios estilo OpenGym)
+        const rotina = data.rotina_treinos.dias || [];
+        const tabsNav = document.getElementById('workoutTabsNav');
+        const container = document.getElementById('workoutContainer');
+        tabsNav.innerHTML = '';
+        container.innerHTML = '';
+
+        rotina.forEach((dia, idx) => {
+          const btn = document.createElement('button');
+          btn.className = `workout-tab-btn ${idx === 0 ? 'active' : ''}`;
+          btn.textContent = dia.codigo;
+          btn.onclick = () => mudarAbaTreino(idx);
+          tabsNav.appendChild(btn);
+
+          const block = document.createElement('div');
+          block.className = `workout-block workout-block-${idx}`;
+          block.style.display = idx === 0 ? 'block' : 'none';
+
+          let exHtml = dia.exercicios.map((ex) => `
+            <div class="exercise-item">
+              <div class="exercise-check" onclick="toggleExercise(this)"></div>
+              <div class="exercise-info">
+                <div class="exercise-name">${ex.nome}</div>
+                <div class="exercise-meta">
+                  <svg class="neon-svg cyan" style="width:13px; height:13px;" viewBox="0 0 24 24"><path d="M6 5v14M18 5v14M2 9v6M22 9v6M6 12h12"></path></svg>
+                  <span>${ex.series} Séries × ${ex.reps} Reps • Descanso: ${ex.descanso}</span>
+                </div>
+                <div class="exercise-dica"><svg class="neon-icon gold" style="width:12px; height:12px; margin-right:4px;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>${ex.dica}</div>
+              </div>
+            </div>
+          `).join('');
+
+          block.innerHTML = `
+            <div class="workout-block-header">
+              <div class="workout-title">${dia.titulo}</div>
+              <div class="workout-duration">
+                <svg class="neon-svg green" style="width:14px; height:14px;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                <span>${dia.tempo_estimado}</span>
+              </div>
+            </div>
+            ${exHtml}
+          `;
+          container.appendChild(block);
+        });
+
+        // 5. Recuperação Muscular
+        const recList = document.getElementById('recoveryContainer');
+        recList.innerHTML = (data.recuperacao_muscular || []).map(r => `
+          <div class="recovery-item">
+            <span class="recovery-group">${r.grupo}</span>
+            <span class="recovery-status" style="background: ${r.cor}22; color: ${r.cor}; border: 1px solid ${r.cor}55;">
+              ● ${r.status}
+            </span>
+          </div>
+        `).join('');
+
+        // 6. Refeições
+        const mealsBox = document.getElementById('mealsContainer');
+        mealsBox.innerHTML = (data.dieta_marcao || []).map(m => `
+          <div class="meal-card">
+            <div class="meal-header">
+              <div class="meal-title">${m.refeicao}</div>
+              <div class="meal-time">${m.horario}</div>
+            </div>
+            <ul class="meal-items">
+              ${m.itens.map(i => `<li>${i}</li>`).join('')}
+            </ul>
+            <div class="meal-dica"><svg class="neon-icon gold" style="width:12px; height:12px; margin-right:4px;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>Marcão: ${m.dica_marcao}</div>
+          </div>
+        `).join('');
+
+        // 7. Produtos Recomendados Personalizados (Shopee & Braip)
+        const prodGrid = document.getElementById('productsGrid');
+        prodGrid.innerHTML = (data.arsenal_produtos || []).map(p => `
+          <div class="product-card">
+            <span class="product-badge">${p.badge}</span>
+            <div class="product-info">
+              <div class="product-origin-tag">
+                <svg class="neon-svg cyan" style="width:12px; height:12px;" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+                <span>${p.origem || 'Recomendação Oficial'}</span>
+              </div>
+              <h3>${p.nome}</h3>
+              <div class="product-pricing">
+                <span class="product-price">${p.preco}</span>
+                <span class="product-daily">Apenas ${p.custo_dia}</span>
+              </div>
+            </div>
+            <div class="product-reason">${p.motivo}</div>
+            <a href="${p.link}" target="_blank" class="btn-buy-product">
+              <svg class="neon-svg" style="stroke:#060d1b; width:16px; height:16px;" viewBox="0 0 24 24"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+              <span>Garantir com Desconto Oficial</span>
+            </a>
+          </div>
+        `).join('');
+
+        // 8. Fotos e Parecer
+        if (data.fotos_evolucao && data.fotos_evolucao.parecer_marcao) {
+          document.getElementById('photoFeedback').innerHTML = `<strong>Parecer do Marcão:</strong> ${data.fotos_evolucao.parecer_marcao}`;
+        }
+
+        // 9. Renderização do Ranking Top 5 (Pódio dos Leões)
+        const ranking = data.ranking_top5 || [];
+        if (ranking.length >= 3) {
+          const first = ranking[0];
+          const second = ranking[1];
+          const third = ranking[2];
+          
+          const podiumBox = document.getElementById('podiumTop3');
+          podiumBox.innerHTML = `
+            <!-- 2º LUGAR -->
+            <div class="podium-card second ${second.is_current_user ? 'is-user' : ''}">
+              <div class="podium-icon-box">
+                <svg class="neon-svg green lg" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"></circle><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"></path></svg>
+              </div>
+              <div class="podium-name">${second.nome}</div>
+              <div class="podium-score">${second.metas_batidas_pct}</div>
+              <div class="podium-streak">
+                <svg class="neon-svg green" style="width:12px; height:12px;" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
+                <span>${second.streak_dias}d seguidos</span>
+              </div>
+              ${second.is_current_user ? '<span class="podium-user-badge">VOCÊ! ★</span>' : ''}
+            </div>
+
+            <!-- 1º LUGAR -->
+            <div class="podium-card first ${first.is_current_user ? 'is-user' : ''}">
+              <div class="podium-crown">
+                <svg class="neon-svg gold lg" viewBox="0 0 24 24"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"></path></svg>
+              </div>
+              <div class="podium-icon-box">
+                <svg class="neon-svg gold lg" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"></circle><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"></path></svg>
+              </div>
+              <div class="podium-name">${first.nome}</div>
+              <div class="podium-score">${first.metas_batidas_pct}</div>
+              <div class="podium-streak">
+                <svg class="neon-svg gold" style="width:12px; height:12px;" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
+                <span>${first.streak_dias}d seguidos</span>
+              </div>
+              ${first.is_current_user ? '<span class="podium-user-badge">VOCÊ! ★</span>' : ''}
+            </div>
+
+            <!-- 3º LUGAR -->
+            <div class="podium-card third ${third.is_current_user ? 'is-user' : ''}">
+              <div class="podium-icon-box">
+                <svg class="neon-svg orange lg" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"></circle><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"></path></svg>
+              </div>
+              <div class="podium-name">${third.nome}</div>
+              <div class="podium-score">${third.metas_batidas_pct}</div>
+              <div class="podium-streak">
+                <svg class="neon-svg orange" style="width:12px; height:12px;" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
+                <span>${third.streak_dias}d seguidos</span>
+              </div>
+              ${third.is_current_user ? '<span class="podium-user-badge">VOCÊ! ★</span>' : ''}
+            </div>
+          `;
+
+          // 4º e 5º Lugares
+          const bottomBox = document.getElementById('rankingBottomList');
+          bottomBox.innerHTML = ranking.slice(3, 5).map(r => `
+            <div class="ranking-item-compact ${r.is_current_user ? 'is-user' : ''}">
+              <div class="ranking-compact-left">
+                <span class="ranking-compact-pos">#${r.posicao}</span>
+                <span class="ranking-compact-name">${r.nome} ${r.is_current_user ? '<strong style="color:var(--neon-cyan);">(Você)</strong>' : ''}</span>
+              </div>
+              <div class="ranking-compact-right">
+                <span class="ranking-compact-score">${r.metas_batidas_pct}</span>
+                <span style="font-size:10px; color:var(--text-muted); display:block;">${r.streak_dias}d seguidos</span>
+              </div>
+            </div>
+          `).join('');
+        }
+
+      } catch (err) {
+        console.error("Erro carregando portal:", err);
+      }
+    }
+
+    function mudarAbaTreino(idx) {
+      document.querySelectorAll('.workout-tab-btn').forEach((b, i) => {
+        b.classList.toggle('active', i === idx);
+      });
+      document.querySelectorAll('.workout-block').forEach((b, i) => {
+        b.style.display = i === idx ? 'block' : 'none';
+      });
+    }
+
+    function toggleExercise(el) {
+      el.classList.toggle('completed');
+    }
+
+    function compartilharStory() {
+      const texto = "Treino pago, água batida e dieta no plano! Subi pro TOP 5 dos alunos mais dedicados do @marcaopersonalfitness essa semana! Quem tem objetivo não arruma desculpa!";
+      navigator.clipboard.writeText(texto).then(() => {
+        showToast("Legenda copiada para os Stories!");
+        alert("Legenda copiada com sucesso!\n\nAgora tire um print deste Ranking na sua tela e poste nos Stories do Instagram marcando @marcaopersonalfitness para o Marcão te repostar!");
+      }).catch(() => {
+        alert("Tire um print deste Ranking e poste nos Stories marcando @marcaopersonalfitness!");
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', carregarPortalAluno);
+  </script>
+</body>
+</html>

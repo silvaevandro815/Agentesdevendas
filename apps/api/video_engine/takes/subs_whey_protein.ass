@@ -1,0 +1,18 @@
+[Script Info]
+Title: Legendas Dinamicas Marcao
+ScriptType: v4.00+
+WrapStyle: 0
+ScaledBorderAndShadow: yes
+YCbCr Matrix: TV.601
+PlayResX: 1080
+PlayResY: 1920
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Hormozi,Arial,52,&H00FFFFFF,&H0000FFFF,&H00000000,&H80000000,-1,0,0,0,100,100,1,0,1,5,3,2,50,50,420,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.30,0:00:04.20,Hormozi,,0,0,0,,DIFICULDADE DE BATER SUA {\c&H00D7FF&}PROTEÍNA{\c&H00FFFFFF&}?
+Dialogue: 0,0:00:04.30,0:00:09.60,Hormozi,,0,0,0,,24G DE PURA {\c&H00D7FF&}PROTEÍNA{\c&H00FFFFFF&} BIOLÓGICA!
+Dialogue: 0,0:00:09.70,0:00:13.90,Hormozi,,0,0,0,,RECONSTRUA O {\c&H00D7FF&}MÚSCULO{\c&H00FFFFFF&} E SEQUE O SHAPE!

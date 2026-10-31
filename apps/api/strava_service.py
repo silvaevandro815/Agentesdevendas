@@ -22,11 +22,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-STRAVA_CLIENT_ID = os.getenv('STRAVA_CLIENT_ID', '187215')
-STRAVA_CLIENT_SECRET = os.getenv('STRAVA_CLIENT_SECRET', 'b04505c55803754e0ad1cac759a0c0cf2a0999a5')
-STRAVA_ACCESS_TOKEN = os.getenv('STRAVA_ACCESS_TOKEN', '530bc8243fa5b064a0949a99d5bc32a257a656ad')
-STRAVA_REFRESH_TOKEN = os.getenv('STRAVA_REFRESH_TOKEN', '895147ad770fff878f08e365bc2c44a63c762a98')
-STRAVA_VERIFY_TOKEN = os.getenv('STRAVA_VERIFY_TOKEN', 'marcao_strava_2026')
+STRAVA_CLIENT_ID = os.getenv('STRAVA_CLIENT_ID', '')
+STRAVA_CLIENT_SECRET = os.getenv('STRAVA_CLIENT_SECRET', '')
+STRAVA_ACCESS_TOKEN = os.getenv('STRAVA_ACCESS_TOKEN', '')
+STRAVA_REFRESH_TOKEN = os.getenv('STRAVA_REFRESH_TOKEN', '')
+STRAVA_VERIFY_TOKEN = os.getenv('STRAVA_VERIFY_TOKEN', '')
 SUPABASE_URL = os.getenv('SUPABASE_URL', 'https://qkopgftfrfftoyndhhfj.supabase.co')
 SUPABASE_KEY = os.getenv('SUPABASE_KEY', '')
 EVOLUTION_API_URL = os.getenv('EVOLUTION_API_URL', 'https://api.marcaopersonal.com')
@@ -177,6 +177,193 @@ def diagnosticar_treino_fisiologico(atividade: dict, nome_aluno: str = 'Guerreir
     ]
 
     return baloes
+
+
+
+
+def buscar_atividades_aluno_strava(access_token: str, start_epoch: int = None) -> list:
+    """
+    Busca as atividades registradas no Strava a partir de um timestamp epoch (ex: início do dia).
+    """
+    if not access_token:
+        return []
+    url = "https://www.strava.com/api/v3/athlete/activities?per_page=10"
+    if start_epoch:
+        url += f"&after={start_epoch}"
+
+    ctx = ssl.create_default_context()
+    req = urllib.request.Request(url, headers={"Authorization": f"Bearer {access_token}"})
+    try:
+        with urllib.request.urlopen(req, context=ctx) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except Exception as e:
+        print("[STRAVA] Erro ao buscar atividades do aluno:", e)
+        return []
+
+
+def gerar_bronca_treino_faltoso(nome_aluno: str, dia_semana: str) -> list:
+    """
+    Gera a bronca construtiva e motivadora de Personal Trainer quando o aluno
+    deveria ter treinado hoje mas NÃO registrou treino no Strava.
+    SOMENTE NOS DIAS DE TREINO DO ALUNO.
+    """
+    primeiro_nome = (nome_aluno or "Guerreiro").strip().split()[0]
+    return [
+        f"Fala, {primeiro_nome}! 🦁 Marcão aqui na ronda das 22h conferindo as planilhas!",
+        f"Passei o olho aqui no seu Strava e cadê o treino de hoje? Hoje é {dia_semana}, dia oficial de treino na sua planilha!",
+        "Não me mata o treino não, guerreiro(a)! Disciplina é o que separa quem tem resultado de quem fica na promessa. Amanhã quero foco total! 👊🦁"
+    ]
+
+
+async def executar_auditoria_strava_noturna_22h(forcar_dia: str = None) -> dict:
+    """
+    Auditoria Noturna às 22h dos Treinos do Strava:
+    - SOMENTE NOS DIAS DE TREINO DO ALUNO!
+    - Se o aluno treinou: analisa frequência cardíaca, pace, intensidade e dá conselhos de personal trainer.
+    - Se o aluno faltou (não registrou treino no dia agendado): DÁ A BRONCA DE PERSONAL!
+    - Se não conectou o Strava e faz academia/esporte: envia lembrete para conectar o relógio ou garantir o smartwatch.
+    """
+    import httpx
+    import asyncio
+    from datetime import datetime, time as dtime
+
+    dias_map = {0: "segunda", 1: "terça", 2: "quarta", 3: "quinta", 4: "sexta", 5: "sábado", 6: "domingo"}
+    agora = datetime.now()
+    dia_hoje = (forcar_dia or dias_map[agora.weekday()]).lower()
+
+    # Normalizador para conferência robusta (sem acentos)
+    def normalizar_dia(d):
+        return str(d).lower().replace("terça", "terca").replace("sábado", "sabado").strip()
+
+    dia_hoje_norm = normalizar_dia(dia_hoje)
+
+    # Início do dia atual em epoch para filtrar treinos de hoje
+    hoje_inicio_epoch = int(datetime.combine(agora.date(), dtime.min).timestamp())
+
+    evo_url = os.getenv("EVOLUTION_API_URL", "https://evolution.marcaopersonal.com")
+    evo_key = os.getenv("EVOLUTION_API_KEY", "")
+    evo_inst = os.getenv("EVOLUTION_INSTANCE", "sofia")
+
+    headers_sb = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    relatorio_execucao = {
+        "data_execucao": agora.isoformat(),
+        "dia_semana": dia_hoje,
+        "alunos_auditados": [],
+        "treinos_elogiados": 0,
+        "broncas_aplicadas": 0,
+        "lembretes_conexao": 0,
+        "alunos_em_descanso_ignorados": 0
+    }
+
+    try:
+        async with httpx.AsyncClient(verify=False, timeout=15.0) as client:
+            res = await client.get(f"{SUPABASE_URL}/rest/v1/fichas_alunos", headers=headers_sb)
+            if res.status_code != 200:
+                return {"sucesso": False, "erro": f"Erro Supabase: {res.status_code}"}
+            alunos = res.json()
+    except Exception as e:
+        return {"sucesso": False, "erro": str(e)}
+
+    for ficha in alunos:
+        nome = (ficha.get("nome") or ficha.get("nome_aluno") or "Aluno").strip()
+        primeiro_nome = nome.split()[0]
+        tel = ficha.get("telefone") or "".join(filter(str.isdigit, ficha.get("remote_jid", "").split("@")[0]))
+        if not tel:
+            continue
+
+        dias_treino_cadastrados = [normalizar_dia(d) for d in (ficha.get("dias_treino") or [])]
+        dias_disp = ficha.get("dias_disponiveis_semana") or 0
+        local_treino = ficha.get("local_treino") or ""
+
+        # REGRA MANDATÓRIA: SOMENTE NOS DIAS DE TREINO DO ALUNO!
+        # Se os dias específicos estiverem cadastrados, checa se hoje é dia de treino dele
+        eh_dia_de_treino = dia_hoje_norm in dias_treino_cadastrados
+
+        # Se não tiver dias específicos fixados na lista, mas o aluno treina 3+ dias na semana e treina hoje:
+        if not dias_treino_cadastrados and dias_disp >= 3:
+            # Padrão clássico: Segunda, Quarta, Sexta (ou Sexta, Sábado, Domingo)
+            dias_padrao = ["segunda", "quarta", "sexta"] if dias_disp == 3 else ["segunda", "terca", "quarta", "quinta", "sexta"]
+            eh_dia_de_treino = dia_hoje_norm in dias_padrao
+
+        if not eh_dia_de_treino:
+            # Descanso do aluno: Marcão NÃO incomoda!
+            relatorio_execucao["alunos_em_descanso_ignorados"] += 1
+            relatorio_execucao["alunos_auditados"].append({
+                "aluno": nome,
+                "status": "dia_de_descanso",
+                "detalhes": f"Hoje ({dia_hoje}) não é dia de treino programado para {nome}. Descanso respeitado!"
+            })
+            continue
+
+        # Hoje É DIA DE TREINO DO ALUNO! Realizar auditoria às 22h
+        metas = ficha.get("metas_nutricionais") or {}
+        strava_token = metas.get("strava_access_token") or os.getenv("STRAVA_ACCESS_TOKEN", "")
+        strava_connected = metas.get("strava_connected", False)
+
+        baloes_disparo = []
+        tipo_acao = ""
+
+        if strava_connected and strava_token:
+            # Busca treinos de hoje no Strava
+            atividades_hoje = buscar_atividades_aluno_strava(strava_token, hoje_inicio_epoch)
+            if atividades_hoje and len(atividades_hoje) > 0:
+                # Treinou! Diagnostica batimentos e esforço
+                atividade_principal = atividades_hoje[0]
+                baloes_disparo = diagnosticar_treino_fisiologico(atividade_principal, primeiro_nome)
+                tipo_acao = "treino_elogiado_com_conselhos"
+                relatorio_execucao["treinos_elogiados"] += 1
+            else:
+                # Não treinou no dia agendado! BRONCA DE PERSONAL!
+                baloes_disparo = gerar_bronca_treino_faltoso(primeiro_nome, dia_semana=dia_hoje)
+                tipo_acao = "bronca_treino_faltoso"
+                relatorio_execucao["broncas_aplicadas"] += 1
+        elif local_treino == "academia" or any(s in str(ficha.get("objetivo", "")).lower() for s in ["corrida", "atleta", "cardio", "esporte"]):
+            # Aluno de academia ou esporte que ainda não conectou Strava
+            link_strava = f"https://api.marcaopersonal.com/api/integracoes/strava/oauth?tel={tel}"
+            baloes_disparo = [
+                f"Fala, {primeiro_nome}! 🦁 Marcão aqui nas 22h conferindo a planilha!",
+                f"Hoje foi dia de treino na academia, né? Como foi a pegada e a carga?",
+                f"Aliás, conecta seu relógio no meu Strava pra eu analisar sua frequência cardíaca e intensidade direto: {link_strava}! Tamo junto! 👊🔥"
+            ]
+            tipo_acao = "lembrete_conexao_strava"
+            relatorio_execucao["lembretes_conexao"] += 1
+        else:
+            # Aluno sem Strava que treina em casa
+            baloes_disparo = [
+                f"Fala, {primeiro_nome}! 🦁 Marcão aqui na ronda das 22h!",
+                f"Hoje é dia de treino na sua rotina em casa! Treino tá pago com foco total?",
+                "Toma água, garante a proteína e descanso anabólico de qualidade hoje! Tamo junto! 👊🔥"
+            ]
+            tipo_acao = "checkin_treino_casa"
+
+        # Dispara os balões via Evolution API com composing
+        if baloes_disparo:
+            try:
+                async with httpx.AsyncClient(verify=False, timeout=20.0) as client:
+                    for i, balao in enumerate(baloes_disparo):
+                        await client.post(
+                            f"{evo_url}/message/sendText/{evo_inst}",
+                            headers={"apikey": evo_key, "Content-Type": "application/json"},
+                            json={"number": tel, "text": balao}
+                        )
+                        if i < len(baloes_disparo) - 1:
+                            await asyncio.sleep(1.2)
+            except Exception as e_send:
+                print(f"[STRAVA AUDIT] Erro ao enviar mensagem para {tel}: {e_send}")
+
+        relatorio_execucao["alunos_auditados"].append({
+            "aluno": nome,
+            "telefone": tel,
+            "acao": tipo_acao,
+            "baloes": baloes_disparo
+        })
+
+    return relatorio_execucao
 
 
 if __name__ == '__main__':

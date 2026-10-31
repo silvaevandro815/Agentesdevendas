@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "historyId": "74b267d2-8cb4-4c89-b92d-028dbd0b98b9",
+  "currentRevision": null,
+  "pendingChanges": false,
+  "files": {
+    "gsap.min.js": {
+      "hash": "28033e449a31ebcc396e5be8b13b63152bf03094288fb5867034321927bce087",
+      "content": "C:\\Users\\User\\.cache\\hyperframes\\history\\74b267d2-8cb4-4c89-b92d-028dbd0b98b9\\blobs\\28\\28033e449a31ebcc396e5be8b13b63152bf03094288fb5867034321927bce087"
+    },
+    "hyperframes.json": {
+      "hash": "b8fb17970b4c95a3423f7d403b82da51f2852ae4e0fce915d5de82bbc9994e0a",
+      "content": "C:\\Users\\User\\.cache\\hyperframes\\history\\74b267d2-8cb4-4c89-b92d-028dbd0b98b9\\blobs\\b8\\b8fb17970b4c95a3423f7d403b82da51f2852ae4e0fce915d5de82bbc9994e0a"
+    },
+    "index.html": {
+      "hash": "9142c0caac0a773504dce1e879885a75dfd8324f8149d7e5ebe33036f5acf117",
+      "content": "C:\\Users\\User\\.cache\\hyperframes\\history\\74b267d2-8cb4-4c89-b92d-028dbd0b98b9\\blobs\\91\\9142c0caac0a773504dce1e879885a75dfd8324f8149d7e5ebe33036f5acf117"
+    },
+    "meta.json": {
+      "hash": "5b107c514276b419842b3351224a172da130dc5841398702dc92753da4cbb147",
+      "content": "C:\\Users\\User\\.cache\\hyperframes\\history\\74b267d2-8cb4-4c89-b92d-028dbd0b98b9\\blobs\\5b\\5b107c514276b419842b3351224a172da130dc5841398702dc92753da4cbb147"
+    }
+  },
+  "revisions": {},
+  "checks": {
+    "latest": null,
+    "revisions": {},
+    "unversioned": []
+  },
+  "snapshots": {
+    "latest": null,
+    "revisions": {},
+    "unversioned": []
+  },
+  "renders": {
+    "latest": {
+      "id": "aa36d29d-b0a3-4620-8276-080ac787fbd5",
+      "completedAt": 1793189891959,
+      "output": "C:\\Users\\User\\Desktop\\Agentes de venda\\apps\\api\\video_engine\\output\\marcao_marcao_creatina_science_63887c54.mp4",
+      "status": "completed",
+      "revision": null
+    },
+    "retainedRevisions": []
+  },
+  "pendingArtifactCleanup": []
+}

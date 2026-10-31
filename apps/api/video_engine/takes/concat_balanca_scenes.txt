@@ -1,0 +1,6 @@
+file 'c:/Users/User/Desktop/Agentes de venda/apps/api/video_engine/takes/dyn_clip_scene1_hook.mp4'
+file 'c:/Users/User/Desktop/Agentes de venda/apps/api/video_engine/takes/dyn_clip_scene2_cells.mp4'
+file 'c:/Users/User/Desktop/Agentes de venda/apps/api/video_engine/takes/dyn_clip_scene3_product360.mp4'
+file 'c:/Users/User/Desktop/Agentes de venda/apps/api/video_engine/takes/dyn_clip_scene4_scale_feet.mp4'
+file 'c:/Users/User/Desktop/Agentes de venda/apps/api/video_engine/takes/dyn_clip_scene5_ai_app.mp4'
+file 'c:/Users/User/Desktop/Agentes de venda/apps/api/video_engine/takes/dyn_clip_scene8_offer.mp4'

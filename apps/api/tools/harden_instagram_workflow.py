@@ -55,7 +55,7 @@ const rawText = (item.choices && item.choices[0] && item.choices[0].message)
   ? item.choices[0].message.content 
   : 'Fala, guerreiro! Marcão na área! Vamos pra cima!';
 
-const igToken = "IGAAXMQcymNdhBZAGIzbTY4RnR5SXE4bklSVFVTdFRSY2g3SDR6Vzg0cmd4aWV2dk9WYUJ0dXJ6bVFORUxra3ZAvQ3lvYWhibGx6cnFRYmdaSkR0TW9YY0t4YnA2aWpmVEoxN1kyQ0FMVXMwaFNuRlBZAVWFB";
+const igToken = $env.INSTAGRAM_ACCESS_TOKEN || process.env.INSTAGRAM_ACCESS_TOKEN || "";
 
 // 1. Isola URLs para manter links intactos
 const urls = [];
@@ -147,7 +147,7 @@ js_code_comment_dm = """
 const item = $('Processar Decisão Comentário e DM').item.json;
 const commentId = item.commentId || '';
 const rawText = item.mensagem_direct || '';
-const igToken = "IGAAXMQcymNdhBZAGIzbTY4RnR5SXE4bklSVFVTdFRSY2g3SDR6Vzg0cmd4aWV2dk9WYUJ0dXJ6bVFORUxra3ZAvQ3lvYWhibGx6cnFRYmdaSkR0TW9YY0t4YnA2aWpmVEoxN1kyQ0FMVXMwaFNuRlBZAVWFB";
+const igToken = $env.INSTAGRAM_ACCESS_TOKEN || process.env.INSTAGRAM_ACCESS_TOKEN || "";
 
 if (!commentId || !rawText) {
   return [{ json: { ...item, skipped: true, reason: 'commentId or rawText empty' } }];

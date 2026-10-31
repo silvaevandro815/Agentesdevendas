@@ -127,3 +127,27 @@ Este documento é lido automaticamente no início de **toda e qualquer nova conv
   3. *Homem Maduro Grisalho Elegante (55 a 65 anos):* Mobilidade articular, longevidade e Caneta Azempika (*proibido rosto de Evandro para produtos de potência sexual*).
   4. *Corredor Urbano / Calistenia:* Monitoramento cardíaco Strava e Smartwatch.
   5. *Renderização Científica e Celular em 3D:* Mitocôndrias, via mTOR, quebra de triglicerídeos e gordura visceral.
+
+
+## 14. Motor Híbrido de Vídeo: HyperFrames + RunPod.io GPU + Auto Viral Pipeline
+- **INTEGRAÇÃO HYPERFRAMES (HEYGEN REPO NO PROJETO MARCÃO):**
+  * Localização do Motor: pps/api/video_engine/marcao_hyperframes_engine.py.
+  * Biblioteca GSAP Local Blindada: pps/api/video_engine/vendor/gsap.min.js (renderização fluida a 60fps sem falhas de CDN externa).
+  * Custo Zero de GPU: Renderiza gráficos em movimento dinâmicos usando Chrome Headless / Chromium local, economizando 100% de créditos de GPU para cenas de motion didático.
+  * Modelos Nativos para o Marcão Personal:
+    1. marcao_kinetic_hook: Tipografia cinética de impacto nos primeiros 3 a 5 segundos (badge, revelação com elástico GSAP, glow amarelo ouro e sound design sync).
+    2. marcao_balanca_bioimpedancia: Holograma analítico de 13 biomarcadores (músculo, gordura visceral, água corporal, idade biológica, taxa metabólica), ilustrando didaticamente o exame da balança Shopee R$ 34,90 com tag de 3 meses de mentoria VIP grátis.
+    3. marcao_creatina_science: Infográfico celular em 3D didático sobre a via da fosfocreatina e ressíntese de ATP, comprovando o ganho de +28% de força real com 5g/dia (R$ 1,68/dia).
+    4. marcao_myth_buster: Comparativo didático de alta retenção 'Mito vs Verdade' com cartões em verde neon e vermelho rubi.
+    5. compose_with_ai: Síntese automática de cenas de motion graphics geradas por LLM (Gemini / OpenRouter) para ilustrar qualquer conceito falado no áudio.
+- **MOTOR RUNPOD.IO GPU SERVERLESS (WAN 2.1 & FLUX.1):**
+  * Localização: pps/api/video_engine/runpod_gpu_manager.py e pps/api/video_engine/runpod_open_engine.py.
+  * Credenciais: RUNPOD_API_KEY e RUNPOD_ENDPOINT_ID lidas do .env central.
+  * Casos de Uso: Ativado quando o roteiro exige cenas 3D cinematográficas realistas (render de contração muscular, atletas em ação de alta fidelidade ou estética de luxo).
+- **ORQUESTRAÇÃO E COMPOSIÇÃO MASTER HD (compose_reel.py & daily_reel_generator.py):**
+  * Resolução: Formato vertical nativo 9:16 (1080x1920) a 30fps.
+  * Gancho Cinético Obrigatório: O gancho HyperFrames é concatenado na cabeça do vídeo (motion_intro_path), garantindo retenção máxima nos 3 primeiros segundos.
+  * Dynamic Punch Zoom: Efeito de corte dinâmico (1.15x a cada 3.5s) intercalando zoom-in e zoom-out para quebrar a monotonia visual com SAR 1:1 travado.
+  * Legendas Hormozi Dinâmicas: Formato .ass com tipografia de alta legibilidade, contorno espesso (5px) e destaque amarelo ouro (#FACC15) sincronizado com palavras-chave.
+  * Mixagem de Áudio: Locução Marcão em português brasileiro com ganho dinâmico (olume=1.35) sobreposta a trilha de fundo esportiva (olume=0.18) com fade-out nos últimos 1.5s.
+  * Comando de Execução: python daily_reel_generator.py --tema balanca_ia ou python daily_reel_generator.py --publish.

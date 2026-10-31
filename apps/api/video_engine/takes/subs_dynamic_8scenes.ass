@@ -1,0 +1,22 @@
+[Script Info]
+Title: Legendas Dinamicas Hormozi
+ScriptType: v4.00+
+WrapStyle: 0
+ScaledBorderAndShadow: yes
+YCbCr Matrix: TV.601
+PlayResX: 1080
+PlayResY: 1920
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Hormozi,Arial,52,&H00FFFFFF,&H0000FFFF,&H00000000,&H80000000,-1,0,0,0,100,100,1,0,1,5,3,2,60,60,430,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.30,0:00:04.80,Hormozi,,0,0,0,,BARRIGA CHAPADA COM {\c&H00D7FF&}GORDURA NO FÍGADO?{\c&H00FFFFFF&}
+Dialogue: 0,0:00:04.90,0:00:09.50,Hormozi,,0,0,0,,A GORDURA VISCERAL {\c&H00D7FF&}SUFOCA SEUS ÓRGÃOS!{\c&H00FFFFFF&}
+Dialogue: 0,0:00:09.60,0:00:14.20,Hormozi,,0,0,0,,A BALANÇA COMUM {\c&H00D7FF&}SÓ MEDE SEU PESO BRUTO!{\c&H00FFFFFF&}
+Dialogue: 0,0:00:14.30,0:00:18.80,Hormozi,,0,0,0,,13 BIOMARCADORES DE {\c&H00D7FF&}PRECISÃO ABSOLUTA!{\c&H00FFFFFF&}
+Dialogue: 0,0:00:18.90,0:00:23.50,Hormozi,,0,0,0,,LEITURA NO APP DO {\c&H00D7FF&}MARCÃO PERSONAL IA!{\c&H00FFFFFF&}
+Dialogue: 0,0:00:23.60,0:00:27.80,Hormozi,,0,0,0,,DIRETO DE FÁBRICA NA SHOPEE: {\c&H00D7FF&}R$ 34,90!{\c&H00FFFFFF&}
+Dialogue: 0,0:00:27.90,0:00:33.00,Hormozi,,0,0,0,,MENOS DE {\c&H00D7FF&}R$ 0,09/DIA!{\c&H00FFFFFF&} LINK NA BIO COM MENTORIA VIP!

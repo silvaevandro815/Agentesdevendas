@@ -1,0 +1,12 @@
+{
+  "saldo_carteira_reais": 117.98,
+  "status_vital": "NORMAL",
+  "fome_comercial_score": 45,
+  "total_gasto_historico": 0.015,
+  "total_receita_historica": 68.0,
+  "lucro_acumulado": 67.98,
+  "ultima_alimentacao": "2026-10-29T20:50:03.304158",
+  "ultimo_batimento": "2026-10-29T20:50:03.304158",
+  "ciclos_sobrevividos": 1,
+  "estrategia_atual": "CONSULTORIA_ACOLHEDORA_E_PRESCRIÇÃO_EQUILIBRADA"
+}

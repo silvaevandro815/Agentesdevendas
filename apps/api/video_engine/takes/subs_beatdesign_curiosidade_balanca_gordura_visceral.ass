@@ -1,0 +1,19 @@
+[Script Info]
+Title: Legendas Dinamicas BeatDesign
+ScriptType: v4.00+
+WrapStyle: 0
+ScaledBorderAndShadow: yes
+YCbCr Matrix: TV.601
+PlayResX: 1080
+PlayResY: 1920
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Hormozi,Arial,52,&H00FFFFFF,&H0000FFFF,&H00000000,&H80000000,-1,0,0,0,100,100,1,0,1,5,3,2,50,50,420,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.30,0:00:05.20,Hormozi,,0,0,0,,BARRIGA CHAPADA COM {\c&H00D7FF&}GORDURA{\c&H00FFFFFF&} NO FÍGADO?
+Dialogue: 0,0:00:05.30,0:00:10.80,Hormozi,,0,0,0,,A BALANÇA COMUM SÓ TE {\c&H00D7FF&}ENGANA{\c&H00FFFFFF&}!
+Dialogue: 0,0:00:10.90,0:00:16.50,Hormozi,,0,0,0,,13 BIOMARCADORES POR APENAS R$ {\c&H00D7FF&}34,90{\c&H00FFFFFF&} NA SHOPEE!
+Dialogue: 0,0:00:16.60,0:00:22.00,Hormozi,,0,0,0,,R$ {\c&H00D7FF&}0,09{\c&H00FFFFFF&}/DIA + MENTORIA VIP NO LINK DA BIO!

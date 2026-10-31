@@ -1,0 +1,45 @@
+[Script Info]
+Title: Legendas Dinâmicas Marcão Personal
+ScriptType: v4.00+
+WrapStyle: 0
+ScaledBorderAndShadow: yes
+YCbCr Matrix: TV.601
+PlayResX: 1080
+PlayResY: 1920
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Hormozi,Arial,52,&H00FFFFFF,&H0000FFFF,&H00000000,&H80000000,-1,0,0,0,100,100,1,0,1,5,3,2,60,60,430,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:01.50,Hormozi,,0,0,0,,Esqueça tudo o que você
+Dialogue: 0,0:00:01.50,0:00:03.40,Hormozi,,0,0,0,,já viu sobre peso na {\c&H00D7FF&}balança{\c&H00FFFFFF&}.
+Dialogue: 0,0:00:03.40,0:00:05.50,Hormozi,,0,0,0,,A {\c&H00D7FF&}balança{\c&H00FFFFFF&} comum de farmácia
+Dialogue: 0,0:00:05.50,0:00:07.60,Hormozi,,0,0,0,,só te mostra um número cego
+Dialogue: 0,0:00:07.60,0:00:09.40,Hormozi,,0,0,0,,que mente sobre o seu corpo.
+Dialogue: 0,0:00:09.40,0:00:12.30,Hormozi,,0,0,0,,A nova {\c&H00D7FF&}balança{\c&H00FFFFFF&} de bioimpedância Xiaomi
+Dialogue: 0,0:00:12.30,0:00:14.70,Hormozi,,0,0,0,,escaneia {\c&H00D7FF&}13 biomarcadores{\c&H00FFFFFF&}
+Dialogue: 0,0:00:14.70,0:00:17.60,Hormozi,,0,0,0,,com sensores de precisão médica:
+Dialogue: 0,0:00:17.60,0:00:19.50,Hormozi,,0,0,0,,massa muscular real,
+Dialogue: 0,0:00:19.50,0:00:21.60,Hormozi,,0,0,0,,{\c&H00D7FF&}gordura visceral{\c&H00FFFFFF&} oculta,
+Dialogue: 0,0:00:21.60,0:00:25.50,Hormozi,,0,0,0,,hidratação celular e {\c&H00D7FF&}metabolismo{\c&H00FFFFFF&} basal.
+Dialogue: 0,0:00:25.50,0:00:27.60,Hormozi,,0,0,0,,E o grande diferencial,
+Dialogue: 0,0:00:27.60,0:00:29.20,Hormozi,,0,0,0,,ao subir nela,
+Dialogue: 0,0:00:29.20,0:00:31.70,Hormozi,,0,0,0,,a minha {\c&H00D7FF&}inteligência artificial{\c&H00FFFFFF&}
+Dialogue: 0,0:00:31.70,0:00:34.00,Hormozi,,0,0,0,,assume o controle no seu {\c&H00D7FF&}WhatsApp{\c&H00FFFFFF&}.
+Dialogue: 0,0:00:34.00,0:00:36.60,Hormozi,,0,0,0,,Eu analiso sua evolução
+Dialogue: 0,0:00:36.60,0:00:38.60,Hormozi,,0,0,0,,em {\c&H00D7FF&}tempo real{\c&H00FFFFFF&},
+Dialogue: 0,0:00:38.60,0:00:40.70,Hormozi,,0,0,0,,calculo as proteínas dos seus pratos
+Dialogue: 0,0:00:40.70,0:00:42.60,Hormozi,,0,0,0,,por foto em {\c&H00D7FF&}3 segundos{\c&H00FFFFFF&}
+Dialogue: 0,0:00:42.60,0:00:44.20,Hormozi,,0,0,0,,e calibro seus treinos
+Dialogue: 0,0:00:44.20,0:00:45.80,Hormozi,,0,0,0,,dia após dia.
+Dialogue: 0,0:00:45.80,0:00:48.00,Hormozi,,0,0,0,,Garantindo a sua {\c&H00D7FF&}balança{\c&H00FFFFFF&} oficial hoje,
+Dialogue: 0,0:00:48.00,0:00:49.70,Hormozi,,0,0,0,,você leva {\c&H00D7FF&}3 meses{\c&H00FFFFFF&}
+Dialogue: 0,0:00:49.70,0:00:51.20,Hormozi,,0,0,0,,de {\c&H00D7FF&}mentoria VIP{\c&H00FFFFFF&}
+Dialogue: 0,0:00:51.20,0:00:53.20,Hormozi,,0,0,0,,inteiramente {\c&H00D7FF&}grátis{\c&H00FFFFFF&} direto
+Dialogue: 0,0:00:53.20,0:00:55.00,Hormozi,,0,0,0,,no meu {\c&H00D7FF&}WhatsApp{\c&H00FFFFFF&}.
+Dialogue: 0,0:00:55.00,0:00:57.20,Hormozi,,0,0,0,,O futuro da sua saúde chegou.
+Dialogue: 0,0:00:57.20,0:00:59.70,Hormozi,,0,0,0,,Acesse marcalpersonal.com
+Dialogue: 0,0:00:59.70,0:01:01.30,Hormozi,,0,0,0,,ou clique no {\c&H00D7FF&}link da bio{\c&H00FFFFFF&}
+Dialogue: 0,0:01:01.30,0:01:02.50,Hormozi,,0,0,0,,agora mesmo.

@@ -258,6 +258,14 @@ LINKS DIRETOS DE VENDAS:
 Regras de Ouro:
 - Chame a pessoa pelo nome uma única vez na saudação. Trate homens no masculino e mulheres no feminino.
 - Mantenha respostas em 2 a 3 balões curtos separados por duas quebras de linha (\n\n)."""
+    # Injeção dinâmica do Motor de Sobrevivência Econômica Marcão
+    try:
+        from marcao_survival_engine import marcao_survival
+        system_prompt = system_prompt + "\n" + marcao_survival.obter_diretrizes_venda_para_prompt()
+        marcao_survival.registrar_gasto_metabolico("whatsapp_mensagem_atendimento")
+    except Exception:
+        pass
+
 
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
@@ -927,6 +935,40 @@ async def cfo_metricas_api():
     return await obter_metricas_cfo_consolidadas()
 
 # -------------------------------------------------------------------------
+# MOTOR DE SOBREVIVÊNCIA ECONÔMICA E FOME COMERCIAL (SURVIVAL ENGINE)
+# -------------------------------------------------------------------------
+try:
+    from marcao_survival_engine import marcao_survival
+except ImportError:
+    from apps.api.marcao_survival_engine import marcao_survival
+
+@app.get("/api/cfo/survival")
+async def cfo_survival_status_api():
+    """Retorna o status vital, saldo de sobrevivência, burn rate e score de fome comercial do Marcão."""
+    return marcao_survival._carregar_estado()
+
+class AlimentarSobrevivenciaRequest(BaseModel):
+    valor: float
+    fonte: str = "recarga_manual"
+    detalhes: Optional[str] = "Combustível injetado pelo Diretor Evandro"
+
+@app.post("/api/cfo/survival/alimentar")
+async def cfo_survival_alimentar_api(req: AlimentarSobrevivenciaRequest):
+    """Injeta saldo de sobrevivência na carteira da IA ou credita comissão faturada."""
+    novo_estado = marcao_survival.registrar_venda_caloria(
+        fonte=req.fonte,
+        valor_comissao=req.valor,
+        detalhes=req.detalhes or ""
+    )
+    return {"sucesso": True, "novo_estado": novo_estado}
+
+@app.post("/api/cfo/survival/auditar")
+async def cfo_survival_auditar_api():
+    """Audita os ciclos vitais e sincroniza métricas de saúde com o ecossistema."""
+    estado = marcao_survival.auditar_batimentos_com_banco()
+    return {"sucesso": True, "estado_vital": estado}
+
+# -------------------------------------------------------------------------
 # 7. MOTOR DE FICHAS DE ALUNO, ANAMNESE E CRIPTOGRAFIA LGPD
 # -------------------------------------------------------------------------
 try:
@@ -1286,3 +1328,200 @@ async def shopee_relatorio_vendas_api(dias: int = 7):
     except ImportError:
         from apps.api.shopee_affiliate_engine import obter_relatorio_vendas_shopee
     return await obter_relatorio_vendas_shopee(dias=dias)
+
+
+@app.post("/api/strava/auditoria-noturna")
+async def strava_auditoria_noturna_api(payload: dict = None):
+    """
+    Executa a auditoria noturna das 22h no Strava:
+    - SOMENTE NOS DIAS DE TREINO DO ALUNO!
+    - Elogios + conselhos se treinou;
+    - Bronca de Personal Trainer se matou o treino;
+    - Lembrete de conexão se faz academia/esporte e ainda não conectou o Strava.
+    """
+    try:
+        from strava_service import executar_auditoria_strava_noturna_22h
+    except ImportError:
+        from apps.api.strava_service import executar_auditoria_strava_noturna_22h
+    
+    forcar_dia = (payload or {}).get("forcar_dia")
+    resultado = await executar_auditoria_strava_noturna_22h(forcar_dia=forcar_dia)
+    return resultado
+
+
+@app.post("/api/fichas/cobranca-refeicao")
+async def cobranca_refeicao_api(payload: dict = None):
+    """
+    Dispara follow-up para cobrança de foto de almoço ou janta
+    para análise de nutrientes via visão multimodal de IA.
+    """
+    try:
+        from fichas_engine import disparar_cobranca_refeicao_aluno, buscar_ficha_existente
+    except ImportError:
+        from apps.api.fichas_engine import disparar_cobranca_refeicao_aluno, buscar_ficha_existente
+
+    tel = (payload or {}).get("telefone") or (payload or {}).get("remote_jid", "")
+    if not tel:
+        return {"sucesso": False, "erro": "Telefone ou remote_jid não informado"}
+
+    ficha = await buscar_ficha_existente(remote_jid=tel, telefone=tel)
+    if not ficha:
+        return {"sucesso": False, "erro": f"Aluno não encontrado para {tel}"}
+
+    resultado = await disparar_cobranca_refeicao_aluno(ficha)
+    return resultado
+
+
+# -------------------------------------------------------------------------
+# PORTAL / LANDING PAGE INDIVIDUAL DO ALUNO (OPENGYM + MARCÃO AI)
+# -------------------------------------------------------------------------
+try:
+    from aluno_portal_engine import obter_dados_portal_aluno
+except ImportError:
+    from apps.api.aluno_portal_engine import obter_dados_portal_aluno
+
+@app.get("/api/aluno/portal/{identificador}")
+async def obter_portal_aluno_api(identificador: str):
+    return await obter_dados_portal_aluno(identificador)
+
+@app.post("/api/aluno/avatar/{identificador}")
+async def upload_avatar_aluno(identificador: str, payload: dict):
+    """
+    Recebe imagem (base64) enviada pelo aluno, salva em apps/site/public/uploads/avatars/{identificador}.jpg
+    e atualiza o registro do aluno no Supabase.
+    """
+    img_data = (payload or {}).get("image", "")
+    if not img_data or not isinstance(img_data, str):
+        return {"sucesso": False, "erro": "Nenhuma imagem enviada"}
+        
+    id_limpo = "".join(filter(str.isdigit, str(identificador)))
+    if not id_limpo:
+        id_limpo = "avatar_usuario"
+        
+    if "base64," in img_data:
+        header, base64_str = img_data.split("base64,", 1)
+    else:
+        base64_str = img_data
+        
+    try:
+        import base64
+        raw_bytes = base64.b64decode(base64_str)
+        
+        avatar_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "site", "public", "uploads", "avatars")
+        os.makedirs(avatar_dir, exist_ok=True)
+        
+        file_path = os.path.join(avatar_dir, f"{id_limpo}.jpg")
+        with open(file_path, "wb") as f:
+            f.write(raw_bytes)
+            
+        rel_url = f"/uploads/avatars/{id_limpo}.jpg"
+        
+        # Atualiza no Supabase
+        headers = {
+            "apikey": SUPABASE_KEY,
+            "Authorization": f"Bearer {SUPABASE_KEY}",
+            "Content-Type": "application/json"
+        }
+        async with httpx.AsyncClient(verify=False, timeout=8.0) as client:
+            r_get = await client.get(
+                f"{SUPABASE_URL}/rest/v1/fichas_alunos?or=(telefone.eq.{id_limpo},id.eq.{id_limpo if id_limpo.isdigit() and len(id_limpo)<6 else 0})&select=id,metas_nutricionais",
+                headers=headers
+            )
+            if r_get.status_code == 200 and r_get.json():
+                row = r_get.json()[0]
+                aluno_id = row.get("id")
+                metas = row.get("metas_nutricionais") or {}
+                metas["foto_perfil"] = rel_url
+                await client.patch(
+                    f"{SUPABASE_URL}/rest/v1/fichas_alunos?id=eq.{aluno_id}",
+                    headers=headers,
+                    json={"metas_nutricionais": metas}
+                )
+        return {"sucesso": True, "foto_url": rel_url}
+    except Exception as e:
+        return {"sucesso": False, "erro": str(e)}
+
+@app.post("/api/fichas/disparar-portal-semanal")
+async def disparar_portal_semanal_api(payload: dict = None):
+    filtro_aluno = (payload or {}).get("filtro_aluno")
+    headers = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "application/json"
+    }
+    resultados = []
+    
+    async with httpx.AsyncClient(verify=False, timeout=15.0) as client:
+        r = await client.get(f"{SUPABASE_URL}/rest/v1/fichas_alunos?select=telefone,nome,local_treino,objetivo", headers=headers)
+        alunos = r.json() if r.status_code == 200 else []
+        
+        for a in alunos:
+            tel = a.get("telefone")
+            nome = a.get("nome") or "Guerreiro(a)"
+            if not tel:
+                continue
+            if filtro_aluno and filtro_aluno not in str(tel) and filtro_aluno.lower() not in nome.lower():
+                continue
+            
+            link_portal = f"https://marcaopersonal.com/aluno?id={tel}"
+            msg = (
+                f"Fala, {nome}! 🦁💪 Passando aqui pra te entregar a sua Landing Page atualizada desta semana!\n\n"
+                f"Lá você tem sua ficha de treino, sua meta de água e proteína na ponta do lápis, e meu parecer das suas fotos.\n\n"
+                f"Clica e dá uma olhada no seu plano de evolução: {link_portal}"
+            )
+            try:
+                from fichas_engine import enviar_mensagem_whatsapp_fichas, enviar_presenca_fichas
+                await enviar_presenca_fichas(tel, "composing", 1500)
+                await enviar_mensagem_whatsapp_fichas(tel, msg)
+                resultados.append({"aluno": nome, "telefone": tel, "status": "enviado", "link": link_portal})
+            except Exception as e:
+                resultados.append({"aluno": nome, "telefone": tel, "status": "erro", "detalhe": str(e)})
+
+    return {"sucesso": True, "total_processados": len(resultados), "detalhes": resultados}
+
+
+# -------------------------------------------------------------------------
+# SISTEMA AUTÔNOMO DE FOLLOW-UP E AUDITORIA STRAVA (APScheduler)
+# -------------------------------------------------------------------------
+try:
+    from marcao_autonomous_cron import marcao_cron
+except ImportError:
+    from apps.api.marcao_autonomous_cron import marcao_cron
+
+@app.on_event("startup")
+async def startup_marcao_autonomous_cron():
+    """Ativa os cron jobs autônomos de follow-up, Strava e almoço na inicialização do servidor."""
+    try:
+        marcao_cron.iniciar()
+        print("[FASTAPI STARTUP] Agendador Autônomo Marcão ativado com sucesso!")
+    except Exception as e:
+        print(f"[FASTAPI STARTUP] Erro iniciando agendador: {e}")
+
+@app.get("/api/cron/status")
+async def cron_status_api():
+    """Retorna o status dos agendamentos autônomos, próximas execuções e histórico de disparos."""
+    return marcao_cron.status()
+
+@app.post("/api/cron/forcar-cobranca-almoco")
+async def cron_forcar_almoco_api(payload: dict = None):
+    """Força a execução da cobrança de almoço / dieta para todos os alunos ou um específico."""
+    filtro = (payload or {}).get("filtro_aluno")
+    return await marcao_cron.rotina_cobranca_almoco(filtro_aluno=filtro)
+
+@app.post("/api/cron/forcar-cobranca-treino")
+async def cron_forcar_treino_api(payload: dict = None):
+    """Força a cobrança de treinos do dia (academia/casa) e de dados/fotos pendentes."""
+    filtro = (payload or {}).get("filtro_aluno")
+    return await marcao_cron.rotina_cobranca_treino_e_pendencias(filtro_aluno=filtro)
+
+@app.post("/api/cron/forcar-auditoria-strava")
+async def cron_forcar_strava_api(payload: dict = None):
+    """Força a auditoria noturna do Strava com conselhos, diagnósticos e broncas."""
+    filtro = (payload or {}).get("filtro_aluno")
+    return await marcao_cron.rotina_auditoria_strava_e_sono(filtro_aluno=filtro)
+
+@app.post("/api/cron/forcar-envio-landing-pages")
+async def cron_forcar_landing_pages_api(payload: dict = None):
+    """Força o envio semanal da Landing Page individual do aluno no WhatsApp."""
+    filtro = (payload or {}).get("filtro_aluno")
+    return await marcao_cron.rotina_disparo_landing_pages_semanais(filtro_aluno=filtro)

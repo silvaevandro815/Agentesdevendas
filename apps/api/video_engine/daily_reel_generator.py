@@ -52,6 +52,18 @@ except ImportError:
     from apps.api.marcao_voice import gerar_voz_marcao
 
 from compose_reel import assemble_master_reel_hd, get_media_duration
+try:
+    from marcao_hyperframes_engine import MarcaoHyperFramesEngine
+except ImportError:
+    from apps.api.video_engine.marcao_hyperframes_engine import MarcaoHyperFramesEngine
+try:
+    from runpod_gpu_manager import RunPodGPUManager
+except ImportError:
+    from apps.api.video_engine.runpod_gpu_manager import RunPodGPUManager
+try:
+    from instagram_skills_engine import ig_caption_writer, ig_hashtag_strategist, ig_humanizer, ig_audience_insights
+except ImportError:
+    from apps.api.instagram_skills_engine import ig_caption_writer, ig_hashtag_strategist, ig_humanizer, ig_audience_insights
 
 
 # =============================================================================
@@ -63,6 +75,8 @@ TEMAS_FITNESS = [
         "titulo": "Não Se Engane Com o Peso da Balança",
         "script": "Parou de emagrecer na balança comum? Cuidado, meu parceiro! Você pode estar perdendo gordura e ganhando massa magra. A nossa balança com inteligência artificial escaneia sua composição real e te dá três meses de mentoria VIP grátis comigo no WhatsApp!",
         "image_file": os.path.join(TAKES_DIR, "evandro_balanca_take.png"),
+        "take_file": os.path.join(TAKES_DIR, "concat_balanca_scenes.txt"),
+        "video_file": os.path.join(OUTPUT_DIR, "reel_balanca_xiaomi_real_hd.mp4"),
         "subtitles": [
             {"start": 0.3, "end": 5.1, "text": "BALANÇA COMUM NÃO MEDE RESULTADO!", "color": "white", "size": 50},
             {"start": 5.2, "end": 10.9, "text": "PERDEU GORDURA E GANHOU MÚSCULO!", "color": "gold", "size": 52},
@@ -89,6 +103,8 @@ Adquirindo a Balança Xiaomi Mi Scale 2 Oficial por apenas R$ 149,90, você ganh
         "titulo": "O Segredo da Saturação da Creatina",
         "script": "Você ainda toma creatina só nos dias de treino com medo de inchar? A creatina funciona por saturação celular contínua! Tome cinco gramas todo santo dia, beba sua água e sinta a explosão de força muscular na última repetição!",
         "image_file": os.path.join(TAKES_DIR, "evandro_creatina_mito_take.png"),
+        "take_file": os.path.join(TAKES_DIR, "concat_creatina_scenes.txt"),
+        "video_file": os.path.join(OUTPUT_DIR, "reel_creatina_mito_real_hd.mp4"),
         "subtitles": [
             {"start": 0.3, "end": 4.8, "text": "CREATINA NÃO É SÓ NO DIA DE TREINO!", "color": "white", "size": 50},
             {"start": 4.9, "end": 10.2, "text": "SATURAÇÃO CELULAR = FORÇA MÁXIMA!", "color": "gold", "size": 52},
@@ -113,6 +129,8 @@ Muitos acham que creatina dá energia instantânea ou param no fim de semana com
         "titulo": "Treino Sem Métrica É Ilusão",
         "script": "Você treina sem monitorar seus batimentos cardíacos? O smartwatch te mostra se você tá na zona real de queima de gordura ou só cansando à toa! Controle seu ritmo, sincronize com o Strava e venha treinar comigo!",
         "image_file": os.path.join(TAKES_DIR, "evandro_smartwatch_cardio_strava_take.png"),
+        "take_file": os.path.join(TAKES_DIR, "concat_smartwatch_scenes.txt"),
+        "video_file": os.path.join(OUTPUT_DIR, "reel_smartwatch_strava_real_hd.mp4"),
         "subtitles": [
             {"start": 0.3, "end": 4.5, "text": "TREINO SEM MÉTRICA É ILUSÃO!", "color": "white", "size": 52},
             {"start": 4.6, "end": 9.8, "text": "ZONA ALVO REAL DE QUEIMA DE GORDURA!", "color": "gold", "size": 50},
@@ -137,6 +155,8 @@ Com o Smartwatch integrado ao Strava e ao app do Marcão Personal:
         "titulo": "Como Bater a Meta de Proteína",
         "script": "Dificuldade de bater proteína na correria do dia a dia? O whey protein é praticidade pura! Vinte e quatro gramas de proteína de altíssimo valor biológico para reconstruir a fibra muscular e acelerar seus ganhos secos!",
         "image_file": os.path.join(TAKES_DIR, "evandro_whey_protein_shape_take.png"),
+        "take_file": os.path.join(TAKES_DIR, "concat_whey_scenes.txt"),
+        "video_file": os.path.join(OUTPUT_DIR, "reel_whey_protein_real_hd.mp4"),
         "subtitles": [
             {"start": 0.3, "end": 4.2, "text": "DIFICULDADE DE BATER SUA PROTEÍNA?", "color": "white", "size": 50},
             {"start": 4.3, "end": 9.6, "text": "24G DE PURA PROTEÍNA BIOLÓGICA!", "color": "gold", "size": 52},
@@ -160,6 +180,7 @@ O Whey Protein oferece:
         "titulo": "O Sono Anabólico e o Pico de GH",
         "script": "O treino na academia apenas destrói a fibra muscular. O shape de verdade cresce enquanto você dorme! Tenha pelo menos sete horas de sono profundo, libere seu pico de GH natural e acorde muito mais denso e recuperado!",
         "image_file": os.path.join(TAKES_DIR, "evandro_sono_gh_take.png"),
+        "take_file": os.path.join(TAKES_DIR, "concat_sono_scenes.txt"),
         "subtitles": [
             {"start": 0.3, "end": 4.5, "text": "O TREINO SÓ ESTIMULA O MÚSCULO...", "color": "white", "size": 50},
             {"start": 4.6, "end": 9.8, "text": "O SHAPE CRESCE ENQUANTO VOCÊ DORME!", "color": "gold", "size": 50},
@@ -185,6 +206,7 @@ Dormir menos de 6 horas aumenta o cortisol, destrói a massa magra e te deixa re
         "titulo": "Blindando Joelhos e Articulações",
         "script": "Joelhos estalando no agachamento ou dor no ombro no supino? Músculo forte com junta inflamada não dura! O ômega 3 ultra concentrado e os biopeptídeos de colágeno blindam suas articulações pro treino pesado sem dor!",
         "image_file": os.path.join(TAKES_DIR, "evandro_articulacoes_omega_colageno_take.png"),
+        "take_file": os.path.join(TAKES_DIR, "concat_articulacoes_scenes.txt"),
         "subtitles": [
             {"start": 0.3, "end": 4.8, "text": "DOR NO JOELHO OU OMBRO ESTALANDO?", "color": "white", "size": 50},
             {"start": 4.9, "end": 10.0, "text": "BLINDE SUAS ARTICULAÇÕES E TENDÕES!", "color": "gold", "size": 50},
@@ -208,6 +230,7 @@ Como blindar o seu corpo:
         "titulo": "A Ciência da Roupa de Compressão",
         "script": "Roupa de compressão não é só visual fitness, é biomecânica pura! Melhora o retorno venoso, diminui a fadiga muscular e acaba de vez com assaduras entre as pernas no treino pesado de perna e na corrida!",
         "image_file": os.path.join(TAKES_DIR, "evandro_roupas_compressao_performance_take.png"),
+        "take_file": os.path.join(TAKES_DIR, "concat_compressao_scenes.txt"),
         "subtitles": [
             {"start": 0.3, "end": 4.5, "text": "ROUPA DE COMPRESSÃO É BIOMECÂNICA!", "color": "white", "size": 50},
             {"start": 4.6, "end": 9.8, "text": "MELHORA O RETORNO VENOSO E A FORÇA!", "color": "gold", "size": 50},
@@ -231,6 +254,7 @@ Benefícios imediatos:
         "titulo": "A Constância Cria o Shape",
         "script": "A motivação te faz começar, meu parceiro, mas é a constância que constrói o seu shape dos sonhos! Coloque sua saúde em primeiro lugar, beba sua água, treine com foco e nunca desista de você!",
         "image_file": os.path.join(TAKES_DIR, "evandro_constancia_shape_take.png"),
+        "take_file": os.path.join(TAKES_DIR, "concat_constancia_scenes.txt"),
         "subtitles": [
             {"start": 0.3, "end": 4.8, "text": "A MOTIVAÇÃO TE FAZ COMEÇAR...", "color": "white", "size": 52},
             {"start": 4.9, "end": 9.8, "text": "MAS É A CONSTÂNCIA QUE CRIA O SHAPE!", "color": "gold", "size": 50},
@@ -464,15 +488,61 @@ def produzir_reel_diario(tema_id=None, publicar_agora=False):
     narr_file = os.path.join(TAKES_DIR, f"narr_{tema['id']}.mp3")
     sintetizar_voz_marcao(tema["script"], narr_file)
 
-    # 3. Composição HD 1080x1920 nativo
+    # 3. Composição HD 1080x1920 nativo com movimento real
     out_reel = os.path.join(OUTPUT_DIR, f"reel_{tema['id']}.mp4")
-    image_take = tema["image_file"]
+    video_source = tema.get("take_file") or tema.get("image_file")
+
+    # 3.1. Gera Gancho Cinético ou Infográfico Dinâmico com HyperFrames (Zero GPU $)
+    motion_intro_file = None
+    try:
+        hf_engine = MarcaoHyperFramesEngine()
+        hook_text = tema["subtitles"][0]["text"] if tema.get("subtitles") else tema["titulo"]
+        
+        # Mapeia modelo específico por tema
+        if tema["id"] == "balanca_ia":
+            tmpl_id = "marcao_balanca_bioimpedancia"
+            params = {
+                "badge": "📊 BIOIMPEDÂNCIA BIA • SHOPEE R$ 34,90",
+                "main_title": "13 BIOMARCADORES DE PRECISÃO",
+                "biomarkers": "Gordura Visceral • Massa Muscular • Idade Metabólica",
+                "offer_price": "APENAS R$ 0,09 POR DIA",
+                "bonus_tag": "🎁 3 MESES DE MENTORIA VIP GRÁTIS",
+                "duration": 3.8
+            }
+        elif tema["id"] == "creatina_mito":
+            tmpl_id = "marcao_creatina_science"
+            params = {
+                "badge": "🔬 BIOHACKING & NUTRIÇÃO CIENTÍFICA",
+                "title": "RESSÍNTESE DE ATP CELULAR",
+                "stat": "+28% DE FORÇA REAL",
+                "note": "Saturação Contínua: 5g Todo Santo Dia!",
+                "duration": 3.8
+            }
+        else:
+            tmpl_id = "marcao_kinetic_hook"
+            first_kw = tema["subtitles"][0]["text"].split()[-1] if tema.get("subtitles") else "SHAPE"
+            params = {
+                "badge": "⚡ METODOLOGIA MARCÃO PERSONAL",
+                "hero_text": hook_text,
+                "highlight_word": first_kw,
+                "subtext": tema["titulo"],
+                "duration": 3.5
+            }
+
+        print(f"✨ Gerando abertura Motion HyperFrames ({tmpl_id})...")
+        motion_intro_file = hf_engine.render_template(tmpl_id, params)
+        print(f"✅ Abertura Motion gerada com sucesso: {motion_intro_file}")
+    except Exception as hf_err:
+        print(f"⚠️ Aviso HyperFrames (prosseguindo com take padrão): {hf_err}")
+        motion_intro_file = None
 
     assemble_master_reel_hd(
-        image_path=image_take,
+        image_path=video_source,
         narration_path=narr_file,
         subtitles=tema["subtitles"],
-        output_path=out_reel
+        output_path=out_reel,
+        motion_intro_path=motion_intro_file,
+        enable_punch_zoom=True
     )
 
     # 4. Upload Supabase Storage

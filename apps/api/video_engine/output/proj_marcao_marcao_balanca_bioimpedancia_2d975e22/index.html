@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1080, height=1920" />
+  <script src="gsap.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background: #030712;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    #root {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 220px 60px;
+      background: radial-gradient(ellipse at bottom, #0f2b48 0%, #030712 100%);
+      color: #ffffff;
+    }
+    .tag-box { width: 100%; display: flex; justify-content: center; }
+    .tag {
+      display: inline-block;
+      padding: 14px 32px;
+      background: rgba(0, 229, 255, 0.15);
+      border: 2px solid #00e5ff;
+      border-radius: 9999px;
+      font-size: 26px;
+      font-weight: 800;
+      color: #00e5ff;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .main-block {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 20px;
+    }
+    .main-title {
+      font-size: 64px;
+      font-weight: 900;
+      color: #ffffff;
+      text-transform: uppercase;
+      letter-spacing: -0.01em;
+      max-width: 900px;
+      line-height: 1.15;
+    }
+    .bio-list {
+      font-size: 32px;
+      font-weight: 600;
+      color: #38bdf8;
+      max-width: 860px;
+      line-height: 1.4;
+      background: rgba(15, 23, 42, 0.7);
+      padding: 16px 28px;
+      border-radius: 16px;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+    .bottom-block {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+    .price-pill {
+      display: inline-block;
+      padding: 12px 28px;
+      background: rgba(34, 197, 94, 0.15);
+      border: 2px solid #22c55e;
+      border-radius: 12px;
+      font-size: 30px;
+      font-weight: 900;
+      color: #22c55e;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .bonus-pill {
+      font-size: 32px;
+      font-weight: 800;
+      color: #facc15;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+  </style>
+</head>
+<body>
+  <div id="root" data-composition-id="main" data-start="0" data-duration="3.8" data-width="1080" data-height="1920">
+    <div class="tag-box">
+      <div id="tg" class="clip tag" data-start="0" data-duration="3.8">📊 BIOIMPEDÂNCIA BIA • SHOPEE R$ 34,90</div>
+    </div>
+
+    <div class="main-block">
+      <div id="mt" class="clip main-title" data-start="0" data-duration="3.8">13 BIOMARCADORES DE PRECISÃO</div>
+      <div id="bl" class="clip bio-list" data-start="0" data-duration="3.8">Gordura Visceral • Massa Muscular • Idade Metabólica</div>
+    </div>
+
+    <div class="bottom-block">
+      <div id="pr" class="clip price-pill" data-start="0" data-duration="3.8">APENAS R$ 0,09 POR DIA</div>
+      <div id="bn" class="clip bonus-pill" data-start="0" data-duration="3.8">🎁 3 MESES DE MENTORIA VIP GRÁTIS</div>
+    </div>
+  </div>
+
+  <script>
+    window.__timelines = window.__timelines || {};
+    const tl = gsap.timeline({ paused: true });
+
+    tl.fromTo('#tg', { opacity: 0.7, scale: 0.95 }, { opacity: 1, scale: 1, duration: 0.35, ease: 'back.out(2)' }, 0);
+    tl.fromTo('#mt', { opacity: 0.6, y: -20 }, { opacity: 1, y: 0, duration: 0.45, ease: 'power2.out' }, 0.15);
+    tl.fromTo('#bl', { opacity: 0, scale: 0.95 }, { opacity: 1, scale: 1, duration: 0.5, ease: 'power3.out' }, 0.45);
+    tl.fromTo('#pr', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' }, 0.8);
+    tl.fromTo('#bn', { opacity: 0, scale: 1.15 }, { opacity: 1, scale: 1, duration: 0.45, ease: 'back.out(1.8)' }, 1.1);
+
+    window.__timelines['main'] = tl;
+    tl.seek(0);
+  </script>
+</body>
+</html>

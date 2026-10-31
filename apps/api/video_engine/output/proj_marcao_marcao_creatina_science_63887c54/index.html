@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1080, height=1920" />
+  <script src="gsap.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background: #021a15;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    #root {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 220px 60px;
+      background: radial-gradient(ellipse at center, #064e3b 0%, #021a15 100%);
+      color: #ffffff;
+    }
+    .tag-box { width: 100%; display: flex; justify-content: center; }
+    .tag {
+      display: inline-block;
+      padding: 14px 34px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 2px solid #10b981;
+      border-radius: 9999px;
+      font-size: 26px;
+      font-weight: 800;
+      color: #34d399;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .main-block {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 24px;
+    }
+    .main-title {
+      font-size: 60px;
+      font-weight: 900;
+      color: #ffffff;
+      text-transform: uppercase;
+      letter-spacing: -0.01em;
+      max-width: 920px;
+      line-height: 1.15;
+    }
+    .science-card {
+      background: rgba(6, 78, 59, 0.4);
+      border: 1px solid rgba(52, 211, 153, 0.4);
+      border-radius: 24px;
+      padding: 30px 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      backdrop-filter: blur(10px);
+    }
+    .stat-number {
+      font-size: 76px;
+      font-weight: 900;
+      color: #facc15;
+      text-shadow: 0 0 25px rgba(250, 204, 21, 0.4);
+      letter-spacing: -0.02em;
+    }
+    .formula-tag {
+      font-size: 26px;
+      font-weight: 700;
+      color: #6ee7b7;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .bottom-block {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .note-pill {
+      display: inline-block;
+      padding: 16px 36px;
+      background: rgba(2, 44, 34, 0.9);
+      border: 2px solid #34d399;
+      border-radius: 16px;
+      font-size: 30px;
+      font-weight: 800;
+      color: #ffffff;
+      text-align: center;
+      max-width: 900px;
+    }
+  </style>
+</head>
+<body>
+  <div id="root" data-composition-id="main" data-start="0" data-duration="3.8" data-width="1080" data-height="1920">
+    <div class="tag-box">
+      <div id="tg" class="clip tag" data-start="0" data-duration="3.8">🔬 BIOHACKING & NUTRIÇÃO CIENTÍFICA</div>
+    </div>
+
+    <div class="main-block">
+      <div id="mt" class="clip main-title" data-start="0" data-duration="3.8">RESSÍNTESE DE ATP CELULAR</div>
+      <div id="sc" class="clip science-card" data-start="0" data-duration="3.8">
+        <div class="stat-number">+28% DE FORÇA REAL</div>
+        <div class="formula-tag">Fosfocreatina ➔ ADP + Pi ➔ ATP Celular</div>
+      </div>
+    </div>
+
+    <div class="bottom-block">
+      <div id="nt" class="clip note-pill" data-start="0" data-duration="3.8">Saturação Contínua: 5g Todo Santo Dia!</div>
+    </div>
+  </div>
+
+  <script>
+    window.__timelines = window.__timelines || {};
+    const tl = gsap.timeline({ paused: true });
+
+    tl.fromTo('#tg', { opacity: 0.7, scale: 0.95 }, { opacity: 1, scale: 1, duration: 0.35, ease: 'back.out(2)' }, 0);
+    tl.fromTo('#mt', { opacity: 0.6, y: -20 }, { opacity: 1, y: 0, duration: 0.45, ease: 'power2.out' }, 0.15);
+    tl.fromTo('#sc', { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(1.6)' }, 0.45);
+    tl.fromTo('#nt', { opacity: 0, y: 25 }, { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' }, 0.85);
+
+    window.__timelines['main'] = tl;
+    tl.seek(0);
+  </script>
+</body>
+</html>

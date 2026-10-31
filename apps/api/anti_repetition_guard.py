@@ -124,8 +124,8 @@ MATRIZ_PERSONAGENS = [
     {
         "id": "evandro_cozinha_nutricao",
         "categoria_persona": "evandro",
-        "descricao": "Evandro Gallina em cozinha gourmet moderna preparando smoothie proteico com frutas frescas e água de coco",
-        "prompt_char": "Warm commercial lifestyle photo of health founder Evandro Gallina in a luxury kitchen with marble countertops, holding a clean protein shaker cup, charismatic friendly smile, casual fitted dark crewneck t-shirt"
+        "descricao": "Evandro Gallina em cozinha gourmet moderna preparando café especial e refeição saudável com frutas frescas e água de coco",
+        "prompt_char": "Warm commercial lifestyle photo of health founder Evandro Gallina in a luxury kitchen with marble countertops, holding a fresh glass of citrus mineral water, charismatic friendly smile, casual fitted dark crewneck t-shirt"
     },
     {
         "id": "evandro_natacao_piscina",
@@ -192,10 +192,10 @@ MATRIZ_PERSONAGENS = [
         "prompt_char": "Cute heroic 3D animated mascot Marcão celebrating happily on a high-tech smart bioimpedance scale, thumbs up, cheerful wink, Pixar style lighting and smooth character design"
     },
     {
-        "id": "mascote_marcao_shake",
+        "id": "mascote_marcao_positivo",
         "categoria_persona": "mascote",
-        "descricao": "Mascote Marcão 3D segurando shakeira com suplemento puro e piscando para a câmera",
-        "prompt_char": "Vibrant 3D animated mascot Marcão holding a sleek supplement shaker cup, charismatic facial expression, sparkling eyes, high-end 3D feature film character render"
+        "descricao": "Mascote Marcão 3D fazendo sinal de positivo com prancheta de treino e piscando para a câmera",
+        "prompt_char": "Vibrant 3D animated mascot Marcão giving an encouraging thumbs-up holding a digital fitness tablet, charismatic facial expression, sparkling eyes, high-end 3D feature film character render"
     },
 
     # 4. Mulheres Jovens (20 a 28 anos - Definição, Energia & Estética)
@@ -600,7 +600,11 @@ def gerar_imagem_inedita_openrouter(prompt_ia: str, nome_arquivo="post_inedito.p
         "clean crisp daylight, high contrast athletic highlights, photorealistic",
         "dramatic stadium rim lighting, hyper-focused gaze, 85mm portrait lens"
     ])
-    prompt_completo = f"{prompt_ia}, {seed_sutil}. CRITICAL: PURE PHOTOGRAPHY ONLY, ABSOLUTELY NO LETTERS, NO WORDS, NO TYPOGRAPHY."
+    prompt_completo = (
+        f"{prompt_ia}, {seed_sutil}. "
+        "CRITICAL: PURE PHOTOGRAPHY ONLY, ABSOLUTELY NO LETTERS, NO WORDS, NO TYPOGRAPHY. "
+        "MANDATORY NEGATIVE CONSTRAINTS: blond hair, blonde man, plastic shaker cup, drinking shaker bottle, generic stock photo, watermark, duplicate."
+    )
 
     payload = {
         "model": "google/gemini-2.5-flash-image",

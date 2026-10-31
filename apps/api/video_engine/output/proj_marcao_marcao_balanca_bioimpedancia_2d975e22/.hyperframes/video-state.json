@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "historyId": "f9d97457-ac17-486e-9a26-249176c5b940",
+  "currentRevision": null,
+  "pendingChanges": false,
+  "files": {
+    "gsap.min.js": {
+      "hash": "28033e449a31ebcc396e5be8b13b63152bf03094288fb5867034321927bce087",
+      "content": "C:\\Users\\User\\.cache\\hyperframes\\history\\f9d97457-ac17-486e-9a26-249176c5b940\\blobs\\28\\28033e449a31ebcc396e5be8b13b63152bf03094288fb5867034321927bce087"
+    },
+    "hyperframes.json": {
+      "hash": "b8fb17970b4c95a3423f7d403b82da51f2852ae4e0fce915d5de82bbc9994e0a",
+      "content": "C:\\Users\\User\\.cache\\hyperframes\\history\\f9d97457-ac17-486e-9a26-249176c5b940\\blobs\\b8\\b8fb17970b4c95a3423f7d403b82da51f2852ae4e0fce915d5de82bbc9994e0a"
+    },
+    "index.html": {
+      "hash": "2549c11b49fd105739fd5e0bd9f502e61cc2e79618c7f44be0ea754c77f9f523",
+      "content": "C:\\Users\\User\\.cache\\hyperframes\\history\\f9d97457-ac17-486e-9a26-249176c5b940\\blobs\\25\\2549c11b49fd105739fd5e0bd9f502e61cc2e79618c7f44be0ea754c77f9f523"
+    },
+    "meta.json": {
+      "hash": "e11bc7e21067ab90b8b28a162d3edcccf37fc5b9cde015e39c1673dd23f300bc",
+      "content": "C:\\Users\\User\\.cache\\hyperframes\\history\\f9d97457-ac17-486e-9a26-249176c5b940\\blobs\\e1\\e11bc7e21067ab90b8b28a162d3edcccf37fc5b9cde015e39c1673dd23f300bc"
+    }
+  },
+  "revisions": {},
+  "checks": {
+    "latest": null,
+    "revisions": {},
+    "unversioned": []
+  },
+  "snapshots": {
+    "latest": null,
+    "revisions": {},
+    "unversioned": []
+  },
+  "renders": {
+    "latest": {
+      "id": "d47b0be0-e53d-4e53-a539-cf71e636b09f",
+      "completedAt": 1793189042638,
+      "output": "C:\\Users\\User\\Desktop\\Agentes de venda\\apps\\api\\video_engine\\output\\marcao_marcao_balanca_bioimpedancia_2d975e22.mp4",
+      "status": "completed",
+      "revision": null
+    },
+    "retainedRevisions": []
+  },
+  "pendingArtifactCleanup": []
+}

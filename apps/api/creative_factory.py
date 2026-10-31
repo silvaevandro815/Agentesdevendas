@@ -268,8 +268,9 @@ TEMAS_CURIOSIDADES = [
             "#marcao #personal #fitness #creatina #treinofeminino #hipertrofia #suplementos #saude #biohacking"
         ),
         "prompt_ia": (
-            "Cinematic 8k photorealistic portrait of athletic Brazilian trainer Marcão in modern fitness gym with neon cyan lighting, "
-            "wearing navy compression shirt, confident friendly smile, holding modern fitness shaker cup, dramatic rim lighting, depth of field"
+            "Cinematic 8k hyper-detailed biological and scientific 3D render of cellular muscle fiber contraction, "
+            "deep turquoise and amber glowing ATP energy synthesis inside human mitochondria, hyper-realistic medical textbook quality, "
+            "photorealistic lighting, macro lens depth of field, ZERO text, NO words, NO humans drinking bottles"
         )
     },
     {
@@ -2148,6 +2149,45 @@ def registrar_no_content_calendar(post_id, legenda, media_url, permalink, format
 # -------------------------------------------------------------------------
 # 7. CICLOS DIÁRIOS DE PRODUÇÃO (MANHÃ 11:30 & NOITE 19:30)
 # -------------------------------------------------------------------------
+
+def obter_topicos_bloqueados_instagram() -> set:
+    """
+    Consulta em tempo real os últimos 10 posts no Instagram Graph API.
+    Identifica quais temas e palavras-chave saíram recentemente para BLOQUEAR repetição.
+    Garante diversidade absoluta de temas, produtos e pessoas.
+    """
+    topicos_bloqueados = set()
+    token = os.getenv("INSTAGRAM_ACCESS_TOKEN", "")
+    acc_id = os.getenv("INSTAGRAM_ACCOUNT_ID", "28570207812599721")
+
+    if not token or not acc_id:
+        return {"creatina"}  # Bloqueio padrão preventivo
+
+    try:
+        url = f"https://graph.instagram.com/v21.0/{acc_id}/media"
+        params = {"fields": "id,caption,media_type,timestamp", "limit": 10, "access_token": token}
+        with httpx.Client(verify=False, timeout=8) as client:
+            resp = client.get(url, params=params)
+            if resp.status_code == 200:
+                posts = resp.json().get("data", [])
+                for p in posts[:4]:  # Bloqueia temas dos últimos 4 posts
+                    cap = (p.get("caption") or "").lower()
+                    if "creatina" in cap: topicos_bloqueados.add("creatina")
+                    if "balan" in cap or "peso" in cap: topicos_bloqueados.add("balanca")
+                    if "colagen" in cap or "pele" in cap or "flacidez" in cap: topicos_bloqueados.add("colageno")
+                    if "suor" in cap: topicos_bloqueados.add("suor")
+                    if "sono" in cap or "dormir" in cap or "gh" in cap: topicos_bloqueados.add("sono")
+                    if "articular" in cap or "joelho" in cap: topicos_bloqueados.add("articulacao")
+                    if "carboidrato" in cap or "noite" in cap: topicos_bloqueados.add("carboidrato")
+                    if "azempika" in cap or "potencia" in cap: topicos_bloqueados.add("azempika")
+    except Exception as e:
+        print(f"[ANTI-REP] Erro ao consultar Instagram API: {e}")
+
+    # TRAVA INVIOLÁVEL: 'creatina' fica estritamente bloqueada após ter saído 4x consecutivas
+    topicos_bloqueados.add("creatina")
+    return topicos_bloqueados
+
+
 def executar_ciclo_manha(indice=None, formato="carrossel", usar_ia=True, dry_run=False, estilo_visual="evandro", postar_story=True):
     """
     Executa o Post da Manhã (11:30): Curiosidade, Ciência & Entretenimento.
@@ -2155,9 +2195,26 @@ def executar_ciclo_manha(indice=None, formato="carrossel", usar_ia=True, dry_run
     e publica automaticamente nos Stories do Instagram.
     """
     temas_ativos = [t for t in TEMAS_CURIOSIDADES if not t.get("desativado")]
+    topicos_bloqueados = obter_topicos_bloqueados_instagram()
+    print(f"[ANTI-REP] Tópicos bloqueados recentemente: {topicos_bloqueados}")
+
+    # Filtrar temas que NÃO batem com tópicos bloqueados
+    temas_elegiveis = []
+    for t in temas_ativos:
+        t_id = t.get("id", "").lower()
+        t_tema = t.get("tema", "").lower()
+        bloqueado = False
+        for bloq in topicos_bloqueados:
+            if bloq in t_id or bloq in t_tema:
+                bloqueado = True
+                break
+        if not bloqueado:
+            temas_elegiveis.append(t)
+
+    temas_finais = temas_elegiveis if temas_elegiveis else temas_ativos
     if indice is None:
-        indice = datetime.now().day % len(temas_ativos)
-    tema = temas_ativos[indice % len(temas_ativos)]
+        indice = (datetime.now().day + datetime.now().hour) % len(temas_finais)
+    tema = temas_finais[indice % len(temas_finais)]
 
     PERSONAS_DIVERSIDADE = [
         "evandro", "marcao", "mascote",

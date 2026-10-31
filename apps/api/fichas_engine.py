@@ -27,7 +27,46 @@ def get_supabase_headers():
         "Prefer": "return=representation"
     }
 
+async def buscar_ficha_existente(remote_jid: str, telefone: str = None) -> dict:
+    """
+    Busca ficha do aluno no Supabase por remote_jid ou pelas variacoes do telefone (com/sem o 9).
+    Retorna a ficha existente ou None se nao existir.
+    """
+    headers = get_supabase_headers()
+    tel_limpo = "".join(filter(str.isdigit, (telefone or remote_jid or "")))
+    try:
+        async with httpx.AsyncClient(verify=False, timeout=10.0) as client:
+            if remote_jid:
+                res = await client.get(
+                    f"{SUPABASE_URL}/rest/v1/fichas_alunos?remote_jid=eq.{remote_jid}",
+                    headers=headers
+                )
+                if res.status_code == 200 and res.json():
+                    return res.json()[0]
+
+            if tel_limpo and len(tel_limpo) >= 8:
+                ultimos8 = tel_limpo[-8:]
+                res_tel = await client.get(
+                    f"{SUPABASE_URL}/rest/v1/fichas_alunos?telefone=ilike.*{ultimos8}*",
+                    headers=headers
+                )
+                if res_tel.status_code == 200 and res_tel.json():
+                    return res_tel.json()[0]
+                res_jid = await client.get(
+                    f"{SUPABASE_URL}/rest/v1/fichas_alunos?remote_jid=ilike.*{ultimos8}*",
+                    headers=headers
+                )
+                if res_jid.status_code == 200 and res_jid.json():
+                    return res_jid.json()[0]
+    except Exception as e:
+        print(f"[FICHAS_ENGINE] Erro buscando ficha existente: {e}")
+    return None
+
 async def buscar_ou_criar_ficha_aluno(remote_jid: str, telefone: str, nome: str) -> dict:
+    existente = await buscar_ficha_existente(remote_jid, telefone)
+    if existente:
+        return existente
+
     headers = get_supabase_headers()
     try:
         async with httpx.AsyncClient(verify=False) as client:
@@ -473,6 +512,34 @@ async def processar_etapa_onboarding(remote_jid: str, telefone: str, nome: str, 
                 pass
         idade_val = int(idade_match.group(1)) if idade_match and int(idade_match.group(1)) in range(12, 95) else None
 
+        # Sanity check para biometria
+        if peso_val and (peso_val < 35.0 or peso_val > 250.0):
+            peso_val = None
+        if altura_val and (altura_val < 110.0 or altura_val > 230.0):
+            altura_val = None
+
+        peso_existente = ficha.get("ultimo_peso") or (ficha.get("metas_nutricionais") or {}).get("peso") or peso_val
+        altura_existente = ficha.get("altura_cm") or (ficha.get("metas_nutricionais") or {}).get("altura_cm") or altura_val
+
+        # AUDITORIA OBRIGATÓRIA: Não permite avançar sem peso e altura válidos!
+        if not peso_existente or not altura_existente:
+            faltas = []
+            if not peso_existente: faltas.append("seu peso aproximado (ou foto da balança)")
+            if not altura_existente: faltas.append("sua altura")
+
+            dados_parciais = {"objetivo": txt}
+            if peso_val: dados_parciais["ultimo_peso"] = peso_val
+            if altura_val: dados_parciais["altura_cm"] = altura_val
+            if idade_val: dados_parciais["idade"] = idade_val
+            await atualizar_campo_ficha(remote_jid, dados_parciais)
+
+            resposta = (
+                f"Show de bola, {primeiro_nome}! Já guardei seu objetivo principal! 🦁\n\n"
+                f"Mas pra eu calcular sua taxa metabólica basal e não errar seus macros, eu preciso que você me passe {', '.join(faltas)}!\n\n"
+                f"Me manda aqui rapidinho pra gente fechar sua avaliação biométrica com precisão cirúrgica! 👊🔥"
+            )
+            return {"onboarding_ativo": True, "resposta": resposta, "bloqueado_auditoria": True}
+
         dados_patch = {
             "objetivo": txt,
             "etapa_onboarding": 2
@@ -482,7 +549,7 @@ async def processar_etapa_onboarding(remote_jid: str, telefone: str, nome: str, 
         if idade_val: dados_patch["idade"] = idade_val
 
         resposta = (
-            f"Perfeito, {primeiro_nome}! Já guardei suas medidas no seu prontuário! 👊\n\n"
+            f"Perfeito, {primeiro_nome}! Suas medidas biométricas oficiais estão salvas no prontuário! 👊\n\n"
             f"Agora uma checagem fundamental de *saúde clínica e segurança física* (pra eu blindar seu corpo e não te passar nada perigoso):\n\n"
             f"👉 *Você tem pressão alta ou baixa? Toma algum remédio contínuo no dia a dia?*\n"
             f"👉 *Tem alguma dor ou lesão no joelho, coluna/lombar, ombro ou cirurgia prévia?*\n\n"
@@ -494,7 +561,7 @@ async def processar_etapa_onboarding(remote_jid: str, telefone: str, nome: str, 
     # =========================================================================
     # ETAPA 2: FISIOLOGIA CIRCADIANA, SONO & CARGA DE ESTRESSE (Metabolismo)
     # =========================================================================
-    elif etapa == 2:
+    
         dados_patch = {
             "restricoes_saude": txt,
             "etapa_onboarding": 3
@@ -849,13 +916,8 @@ async def enviar_mensagem_whatsapp_fichas(target_number: str, texto: str):
     if len(digitos) < 10:
         return None
 
-    # Bloqueio estrito de DDD 11 desconhecido
-    if digitos.startswith("5511") or (len(digitos) in [10, 11] and digitos.startswith("11")):
-        print(f"[BLOQUEIO ANTI-SPAM] Fichas VIP bloqueado para DDD 11: {target_number}")
-        return None
-
-    # Padrões clássicos de mock
-    if any(m in digitos for m in ["99998888", "988887777", "988881111", "988882222", "999990001"]):
+    # Padrões clássicos de mock / números falsos
+    if any(m in digitos for m in ["99998888", "988887777", "988881111", "988882222", "999990001", "11999999999"]):
         print(f"[BLOQUEIO ANTI-SPAM] Fichas VIP bloqueado para número teste: {target_number}")
         return None
 
@@ -1255,6 +1317,18 @@ def identificar_campos_pendentes_ficha(ficha: dict) -> dict:
 
     tem_bioimpedancia = bool(metas.get("dados_bioimpedancia"))
 
+    # Checagem de Creatina e Vitaminas Essenciais (Colágeno / Ômega 3)
+    suplementos = metas.get("suplementos_em_uso") or metas.get("suplementos") or ficha.get("produtos_oferecidos") or []
+    suplementos_str = str(suplementos).lower()
+    tem_creatina = "creatina" in suplementos_str
+    tem_vitaminas = any(v in suplementos_str for v in ["vitamina", "colageno", "colágeno", "omega", "ômega", "multivitaminico", "multivitamínico"])
+    tem_suplementos_essenciais = tem_creatina and tem_vitaminas
+
+    # Checagem de Smartwatch / Strava (para alunos de academia ou esportes/aeróbico)
+    eh_academia_ou_esporte = (local_treino == "academia") or any(s in str(ficha.get("objetivo", "")).lower() for s in ["corrida", "correr", "ciclismo", "pedalar", "atleta", "futebol", "esporte", "cardio"])
+    tem_smartwatch = bool(metas.get("tem_smartwatch") or metas.get("modelo_smartwatch"))
+    tem_strava = bool(metas.get("strava_connected") or metas.get("strava_access_token"))
+
     campos_faltantes = []
     if not tem_idade: campos_faltantes.append("idade_real")
     if not tem_peso: campos_faltantes.append("peso_atual")
@@ -1266,8 +1340,11 @@ def identificar_campos_pendentes_ficha(ficha: dict) -> dict:
     if not tem_restricoes: campos_faltantes.append("dores_restricoes_saude")
     if not tem_fotos: campos_faltantes.append("fotos_avaliacao_espelho")
     if not tem_bioimpedancia: campos_faltantes.append("balanca_bioimpedancia")
+    if not tem_suplementos_essenciais: campos_faltantes.append("creatina_vitaminas")
+    if eh_academia_ou_esporte and not (tem_smartwatch and tem_strava):
+        campos_faltantes.append("smartwatch_strava")
 
-    total_campos = 10 if eh_casa else 9
+    total_campos = 12 if eh_casa else 11
     campos_preenchidos = total_campos - len(campos_faltantes)
     score_completude = max(0, min(100, int((campos_preenchidos / total_campos) * 100)))
 
@@ -1287,7 +1364,10 @@ def identificar_campos_pendentes_ficha(ficha: dict) -> dict:
         "tem_tempo": tem_tempo,
         "tem_restricoes": tem_restricoes,
         "tem_fotos": tem_fotos,
-        "tem_bioimpedancia": tem_bioimpedancia
+        "tem_bioimpedancia": tem_bioimpedancia,
+        "tem_suplementos_essenciais": tem_suplementos_essenciais,
+        "tem_smartwatch": tem_smartwatch,
+        "tem_strava": tem_strava
     }
 
 async def extrair_dados_reais_anamnese(texto_aluno: str, ficha_atual: dict = None) -> dict:
@@ -1499,54 +1579,54 @@ async def cobrar_dados_pendentes_aluno(ficha: dict) -> dict:
 
     baloes = []
 
-    # Balão 1: Saudação amigável personalizada (Regra 5: 80-130 chars)
+    # Balão 1: Acolhimento amigável e propósito de Personal
     if eh_casa:
-        baloes.append(f"Fala, {primeiro_nome}! Tudo na paz? 🦁 Marcão aqui! Como você treina em casa, vou montar seu treino sob medida sem adivinhar nada.")
-    elif diag["local_treino"] == "academia":
-        baloes.append(f"Fala, {primeiro_nome}! Tudo na paz? 🦁 Marcão aqui! Tô montando sua planilha de academia sob medida pra sua rotina.")
+        baloes.append(f"Fala, {primeiro_nome}! Tudo na paz? 🦁 Marcão aqui! Como você treina em casa, tô revisando seu prontuário pra gente calibrar seus resultados!")
+    elif diag.get("local_treino") == "academia":
+        baloes.append(f"Fala, {primeiro_nome}! Tudo na paz? 🦁 Marcão aqui! Tô revisando sua ficha de academia pra você evoluir no máximo potencial!")
     else:
-        baloes.append(f"Fala, {primeiro_nome}! Tudo na paz? 🦁 Marcão aqui! Pra eu montar seu protocolo sob medida, me tira só umas dúvidas rápidas:")
+        baloes.append(f"Fala, {primeiro_nome}! Tudo na paz? 🦁 Marcão aqui! Tô revisando sua ficha pra gente acelerar sua evolução no foco total!")
 
-    # Balão 2: Medidas corporais e rotina (Regra 5: 50-120 chars)
+    # Balão 2: Altura e Medidas pendentes (se faltar)
     perguntas_b2 = []
-    faltas_corpo = []
-    if not diag["tem_idade"]: faltas_corpo.append("sua idade real")
-    if not diag["tem_peso"]: faltas_corpo.append("peso atual")
-    if not diag["tem_altura"]: faltas_corpo.append("altura")
-    if faltas_corpo:
-        perguntas_b2.append(f"Qual {', '.join(faltas_corpo)}?")
-    if not diag["tem_dias"]:
+    if not diag.get("tem_altura"):
+        perguntas_b2.append("Qual a sua altura certinha em centímetros?")
+    if not diag.get("tem_idade"):
+        perguntas_b2.append("Qual a sua idade?")
+    if not diag.get("tem_peso"):
+        perguntas_b2.append("Qual o seu peso atual?")
+    if not diag.get("tem_dias"):
         perguntas_b2.append("Quantos dias na semana consegue treinar?")
     if perguntas_b2:
-        baloes.append(" ".join(perguntas_b2))
+        baloes.append(" ".join(perguntas_b2[:2]))
 
-    # Balão 3: Local/equipamentos em casa e dores (Regra 5: 50-130 chars)
-    perguntas_b3 = []
-    if not diag["local_treino"]:
-        perguntas_b3.append("Você vai treinar em casa ou na academia?")
+    # Balão 3: Fotos de Frente e Costas para Comparação de 30 Dias (MANDATÓRIO SE FALTAR)
+    if not diag.get("tem_fotos"):
+        baloes.append("Preciso de 1 foto sua de frente e 1 de costas no espelho com roupa de treino pra eu arquivar e a gente comparar sua evolução daqui a 30 dias! 📸")
     elif eh_casa and not diag.get("tem_equipamentos"):
-        perguntas_b3.append("Em casa você tem algum halter/elástico ou é só peso do corpo?")
-    if not diag["tem_restricoes"]:
-        perguntas_b3.append("Sente dor no joelho, coluna ou tem restrição médica?")
-    if perguntas_b3:
-        baloes.append(" ".join(perguntas_b3))
+        baloes.append("Em casa você tem algum halter/elástico ou é só peso do corpo?")
+    elif not diag.get("tem_restricoes"):
+        baloes.append("Sente alguma dor no joelho, coluna ou tem restrição médica?")
 
-    # Balão 4: Fotos / Balança / Fechamento acolhedor (Regra 5: 80-120 chars)
-    if not diag["tem_fotos"] or not diag["tem_bioimpedancia"]:
-        baloes.append("Quando der, manda 1 foto no espelho e do visor da balança pro prontuário blindado! Tamo junto! 👊🔥")
+    # Balão 4: Oferta da Balança Shopee ou Suplementação Essencial (Creatina/Vitaminas)
+    if not diag.get("tem_bioimpedancia"):
+        baloes.append("E pra eu acompanhar seus 13 biomarcadores, garante a Balança Inteligente na Shopee (só R$ 34,90 - menos de R$ 0,10/dia!): https://s.shopee.com.br/LoKQwfHy4 👊🔥")
+    elif not diag.get("tem_suplementos_essenciais"):
+        baloes.append("Bora também incluir Creatina Micronizada e vitaminas/colágeno pro seu joelho e recuperação! Tamo junto nessa! 👊🔥")
     else:
         baloes.append("Me manda aqui no seu tempo que assim que responder eu fecho seu treino com todo o carinho! Tamo junto! 👊🔥")
+
+    # Garante no máximo 4 balões curtos (Regra 5)
+    baloes = baloes[:4]
 
     # Envio sequencial dos balões com simulação de presença (composing)
     resultados_envio = []
     try:
         async with httpx.AsyncClient(verify=False, timeout=20.0) as client:
             for i, balao in enumerate(baloes):
-                # 1. Simula digitando
                 await enviar_presenca_fichas(tel, "composing", delay_ms=1800)
                 await asyncio.sleep(1.6)
 
-                # 2. Envia balão
                 resp = await client.post(
                     f"{evo_url}/message/sendText/{evo_inst}",
                     headers={"apikey": evo_key, "Content-Type": "application/json"},
@@ -1554,11 +1634,9 @@ async def cobrar_dados_pendentes_aluno(ficha: dict) -> dict:
                 )
                 resultados_envio.append(resp.status_code in (200, 201))
 
-                # 3. Pequeno delay entre balões
                 if i < len(baloes) - 1:
                     await asyncio.sleep(1.2)
 
-        # Atualiza timestamp de follow-up na ficha
         try:
             await atualizar_campo_ficha(remote_jid, {"ultimo_followup_pendencias_em": datetime.now().isoformat()})
         except Exception:
@@ -1571,7 +1649,64 @@ async def cobrar_dados_pendentes_aluno(ficha: dict) -> dict:
             "aluno": nome,
             "score_completude": diag["score_completude"],
             "campos_faltantes": diag["campos_faltantes"],
-            "baloes_enviados": len(baloes)
+            "baloes_enviados": len(baloes),
+            "mensagens": baloes
+        }
+    except Exception as e:
+        return {"sucesso": False, "erro": str(e)}
+
+async def disparar_cobranca_refeicao_aluno(ficha: dict) -> dict:
+    """
+    Dispara acompanhamento nutricional do Marcão cobrando foto de refeição (almoço ou janta)
+    para avaliar nutrientes com visão multimodal e combater queixas e dores.
+    """
+    import asyncio
+    nome = (ficha.get("nome") or ficha.get("nome_aluno") or "Campeão(ã)").strip()
+    primeiro_nome = nome.split()[0]
+    remote_jid = ficha.get("remote_jid", "")
+    tel = ficha.get("telefone") or "".join(filter(str.isdigit, remote_jid.split("@")[0]))
+    if not tel:
+        return {"sucesso": False, "erro": "Telefone inválido"}
+
+    evo_url = os.getenv("EVOLUTION_API_URL", "https://evolution.marcaopersonal.com")
+    evo_key = os.getenv("EVOLUTION_API_KEY", "")
+    evo_inst = os.getenv("EVOLUTION_INSTANCE", "sofia")
+
+    baloes = [
+        f"Fala, {primeiro_nome}! 🦁 Marcão aqui conferindo seu combustível de hoje!",
+        "Me manda uma foto do seu almoço ou da sua janta agora! Quero checar se tem proteína e nutrientes pra vencer suas dores e acelerar sua meta!",
+        "Manda a foto do prato aqui que eu avalio na hora com a visão de IA! Tamo junto! 👊🔥"
+    ]
+
+    resultados_envio = []
+    try:
+        async with httpx.AsyncClient(verify=False, timeout=20.0) as client:
+            for i, balao in enumerate(baloes):
+                await enviar_presenca_fichas(tel, "composing", delay_ms=1800)
+                await asyncio.sleep(1.5)
+
+                resp = await client.post(
+                    f"{evo_url}/message/sendText/{evo_inst}",
+                    headers={"apikey": evo_key, "Content-Type": "application/json"},
+                    json={"number": tel, "text": balao}
+                )
+                resultados_envio.append(resp.status_code in (200, 201))
+                if i < len(baloes) - 1:
+                    await asyncio.sleep(1.2)
+
+        try:
+            await atualizar_campo_ficha(remote_jid, {"ultimo_checkin_refeicao_cobrado_em": datetime.now().isoformat()})
+        except Exception:
+            pass
+
+        return {
+            "sucesso": all(resultados_envio),
+            "remote_jid": remote_jid,
+            "telefone": tel,
+            "aluno": nome,
+            "tipo": "cobranca_foto_refeicao",
+            "baloes_enviados": len(baloes),
+            "mensagens": baloes
         }
     except Exception as e:
         return {"sucesso": False, "erro": str(e)}
@@ -1617,3 +1752,64 @@ async def verificar_e_cobrar_alunos_com_dados_pendentes(filtro_aluno: str = None
         print(f"[FICHAS_ENGINE] Erro na checagem de dados pendentes: {e}")
     return resultados
 
+
+
+
+async def executar_varredura_onboarding_completa(disparar_whatsapp: bool = False) -> dict:
+    """
+    Executa uma varredura rigorosa em todas as fichas de alunos no Supabase.
+    Identifica quem está com dados incompletos, faltantes ou com onboarding travado.
+    Se disparar_whatsapp=True, dispara cobranças cirúrgicas pelo WhatsApp respeitando a Regra 5.
+    """
+    headers = get_supabase_headers()
+    resultados = {
+        "total_analisados": 0,
+        "total_completos": 0,
+        "total_incompletos": 0,
+        "taxa_conformidade": 100.0,
+        "alunos_pendentes": [],
+        "followups_disparados": 0
+    }
+    try:
+        async with httpx.AsyncClient(verify=False, timeout=25.0) as client:
+            res = await client.get(f"{SUPABASE_URL}/rest/v1/fichas_alunos?select=*", headers=headers)
+            if res.status_code == 200:
+                fichas = res.json()
+                resultados["total_analisados"] = len(fichas)
+                for f in fichas:
+                    diag = identificar_campos_pendentes_ficha(f)
+                    tel = f.get("telefone") or (f.get("remote_jid", "").split("@")[0] if f.get("remote_jid") else "")
+                    nome = f.get("nome") or f.get("nome_aluno") or "Aluno"
+
+                    # Pula o Evandro na cobrança externa
+                    if "84587255" in tel:
+                        resultados["total_completos"] += 1
+                        continue
+
+                    if diag["ficha_completa"]:
+                        resultados["total_completos"] += 1
+                    else:
+                        resultados["total_incompletos"] += 1
+                        item_pendente = {
+                            "id": f.get("id"),
+                            "nome": nome,
+                            "telefone": tel,
+                            "score_completude": diag["score_completude"],
+                            "campos_faltantes": diag["campos_faltantes"],
+                            "etapa_onboarding": f.get("etapa_onboarding", 0)
+                        }
+                        resultados["alunos_pendentes"].append(item_pendente)
+
+                        if disparar_whatsapp:
+                            cob = await cobrar_dados_pendentes_aluno(f)
+                            if cob.get("sucesso"):
+                                resultados["followups_disparados"] += 1
+
+                if resultados["total_analisados"] > 0:
+                    resultados["taxa_conformidade"] = round((resultados["total_completos"] / resultados["total_analisados"]) * 100, 1)
+
+    except Exception as e:
+        print(f"[FICHAS_ENGINE] Erro na varredura geral de onboarding: {e}")
+        resultados["erro"] = str(e)
+
+    return resultados

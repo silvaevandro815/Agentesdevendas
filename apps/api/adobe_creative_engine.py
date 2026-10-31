@@ -313,7 +313,7 @@ class AdobeLayeredCompositor:
     # 4. HIERARQUIA TIPOGRÁFICA EDITORIAL (MONTSERRAT BLACK + EXTRABOLD)
     # ----------------------------------------------------------------------------------
     def draw_hero_headline(self, headline: str, subheadline: str = None, start_y: int = 150, has_seal: bool = False):
-        """Diagrama título editorial com quebra inteligente, dupla tipografia e blindagem anti-colisão."""
+        """Diagrama título editorial com quebra inteligente, dupla tipografia e blindagem anti-colisão absoluta."""
         draw = ImageDraw.Draw(self.canvas)
         palavras = headline.strip().split()
 
@@ -333,9 +333,21 @@ class AdobeLayeredCompositor:
         font_extra = get_font("Montserrat-ExtraBold.ttf", font_size)
         font_black = get_font("Montserrat-Black.ttf", int(font_size * 1.05))
 
-        # ZONA DE COLISÃO DO SELO: Se o título começar na faixa do topo (< 220px),
-        # restringimos a largura para 680px para NUNCA encostar no selo superior direito!
-        max_largura = 680 if start_y < 220 else 940
+        # ZONA DE COLISÃO DO SELO:
+        # Se houver selo no cabeçalho (ou se o título começar no topo), a largura máxima é
+        # rigorosamente contida em 720px para garantir respiro total e folga mínima de 90px
+        # em relação ao selo superior direito (x >= 957)!
+        if has_seal:
+            max_largura = 720
+            # Se for título com palavras longas, reduz a fonte proporcionalmente para layout limpo
+            if font_size > 36:
+                font_size = 36
+                font_extra = get_font("Montserrat-ExtraBold.ttf", font_size)
+                font_black = get_font("Montserrat-Black.ttf", int(font_size * 1.05))
+        elif start_y < 220:
+            max_largura = 660
+        else:
+            max_largura = 900
 
         # Quebra inteligente com blindagem total mesmo se houver quebras manuais de linha (\n)
         raw_linhas = [l.strip().upper() for l in headline.split("\n") if l.strip()]
@@ -370,12 +382,23 @@ class AdobeLayeredCompositor:
             tw = bbox[2] - bbox[0]
             th = bbox[3] - bbox[1]
 
-            # BLINDAGEM LATERAL EXTRA: Se por qualquer motivo a linha estiver na faixa y < 215,
-            # restringe tx para não invadir o selo no canto superior direito (x >= 940)
-            if curr_y < 215:
-                tx = (self.width - 240 - tw) // 2 + 30
+            # BLINDAGEM LATERAL EXTRA:
+            # Se houver selo, a ponta direita da linha NUNCA ultrapassa 850px
+            # (o selo começa em x=957, garantindo mais de 105px de respiro absoluto)
+            if has_seal:
+                tx = min((self.width - tw) // 2, 850 - tw)
+                if tx < 65:
+                    tx = 65
+            elif curr_y <= 215:
+                tx = min(70, (self.width - 240 - tw) // 2 + 30)
+                if tx + tw > 880:
+                    tx = 60
             else:
                 tx = (self.width - tw) // 2
+
+            # Garantia anti-estouro de margens direita e esquerda
+            if tx + tw > self.width - 60:
+                tx = max(50, self.width - 60 - tw)
 
             # Sombra Gaussiana pronunciada
             self._draw_text_shadow(lin, f, (tx, curr_y), blur=10, offset=(0, 5), color=(0, 0, 0, 230))
@@ -1173,14 +1196,17 @@ def renderizar_slide_carrossel_masterpiece(
     pts = pontos or []
 
     if num_slide == 2:
-        # Slide 2: Cards generosos preenchendo o espaço + Banner Dica de Ouro Contextual
+        # Slide 2: Cards generosos preenchendo o espaço + Banner Dica de Ouro Contextual adaptativo
         top_content_y = y_after_head + 25
         card_w = 940
         card_x = (width - card_w) // 2
         num_pts = min(len(pts), 4)
 
+        y_indicador = height - 95
+        espaco_total_util = y_indicador - top_content_y - 25
+
         if num_pts >= 4:
-            avail_for_cards = 590
+            avail_for_cards = int(espaco_total_util * 0.68)
             y_end_cards = compositor.draw_benefit_cards(
                 pontos=pts,
                 start_y=top_content_y,
@@ -1189,10 +1215,10 @@ def renderizar_slide_carrossel_masterpiece(
                 available_height=avail_for_cards,
                 max_points=4
             )
-            callout_y = max(y_end_cards + 22, 1020)
-            callout_h = min(150, height - 110 - callout_y)
+            callout_y = y_end_cards + 20
+            callout_h = max(140, y_indicador - callout_y - 20)
         else:
-            avail_for_cards = 510
+            avail_for_cards = int(espaco_total_util * 0.62)
             y_end_cards = compositor.draw_benefit_cards(
                 pontos=pts,
                 start_y=top_content_y,
@@ -1201,8 +1227,8 @@ def renderizar_slide_carrossel_masterpiece(
                 available_height=avail_for_cards,
                 max_points=3
             )
-            callout_y = max(y_end_cards + 25, 960)
-            callout_h = 165
+            callout_y = y_end_cards + 22
+            callout_h = max(160, y_indicador - callout_y - 20)
 
         # Banner de Destaque Científico / Dica de Ouro 100% contextual (Elimina 100% do vazio inferior)
         texto_dica = _gerar_dica_contextual(titulo, subtitulo, categoria)
@@ -1214,7 +1240,7 @@ def renderizar_slide_carrossel_masterpiece(
             width=940,
             x=card_x
         )
-        compositor.draw_carousel_indicator(cta_slide if cta_slide else "ARRASTE PARA O LADO ››", y=height - 95)
+        compositor.draw_carousel_indicator(cta_slide if cta_slide else "ARRASTE PARA O LADO ››", y=y_indicador)
 
     elif num_slide == total_slides:
         top_content_y = y_after_head + 25
@@ -1222,11 +1248,16 @@ def renderizar_slide_carrossel_masterpiece(
         if preco and ("COMPRE" in final_cta.upper() or "GARANTA" in final_cta.upper()) and preco not in final_cta:
             final_cta = f"{final_cta} POR {preco}"
 
+        y_cta = height - 180
+
         if tem_produto:
             # Slide 3 COM PRODUTO: Split cards à esquerda + Produto Hero 3D à direita + Trust Badges + Botão 3D
             card_w = 540
             card_x = 60
-            avail_for_cards = 550
+            trust_h = 85
+            espaco_disponivel = y_cta - top_content_y - 20 - trust_h - 15
+            avail_for_cards = max(450, min(560, espaco_disponivel))
+
             y_end_cards = compositor.draw_benefit_cards(
                 pontos=pts,
                 start_y=top_content_y,
@@ -1247,10 +1278,10 @@ def renderizar_slide_carrossel_masterpiece(
                 ground_shadow=True
             )
 
-            # Barra de Selos de Confiança (Preenchimento nobre antes do botão)
-            trust_y = 965
-            compositor.draw_trust_badges(y=trust_y, width=960, x=60, height=90)
-            compositor.draw_cta_button_3d(final_cta, y=height - 180)
+            # Barra de Selos de Confiança ancorada sem lacunas entre cards e botão
+            trust_y = max(y_end_cards + 18, y_cta - trust_h - 18)
+            compositor.draw_trust_badges(y=trust_y, width=960, x=60, height=trust_h)
+            compositor.draw_cta_button_3d(final_cta, y=y_cta)
             compositor.draw_brand_footer(y=height - 85)
 
         else:

@@ -1,0 +1,5 @@
+file 'c:/Users/User/Desktop/Agentes de venda/apps/api/video_engine/takes/clip_animated_take1.mp4'
+file 'c:/Users/User/Desktop/Agentes de venda/apps/api/video_engine/takes/clip_animated_take2.mp4'
+file 'c:/Users/User/Desktop/Agentes de venda/apps/api/video_engine/takes/clip_animated_take3.mp4'
+file 'c:/Users/User/Desktop/Agentes de venda/apps/api/video_engine/takes/clip_animated_take4.mp4'
+file 'c:/Users/User/Desktop/Agentes de venda/apps/api/video_engine/takes/clip_animated_take5.mp4'

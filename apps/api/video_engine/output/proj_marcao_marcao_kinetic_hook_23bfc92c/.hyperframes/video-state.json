@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "historyId": "03debada-d74c-47ef-97c0-d1dd6b95f805",
+  "currentRevision": null,
+  "pendingChanges": false,
+  "files": {
+    "gsap.min.js": {
+      "hash": "28033e449a31ebcc396e5be8b13b63152bf03094288fb5867034321927bce087",
+      "content": "C:\\Users\\User\\.cache\\hyperframes\\history\\03debada-d74c-47ef-97c0-d1dd6b95f805\\blobs\\28\\28033e449a31ebcc396e5be8b13b63152bf03094288fb5867034321927bce087"
+    },
+    "hyperframes.json": {
+      "hash": "68c34b36c4ab585cc45eaa7dac37ce0ff5eaa796bd6a3956a27b65d27755cc9a",
+      "content": "C:\\Users\\User\\.cache\\hyperframes\\history\\03debada-d74c-47ef-97c0-d1dd6b95f805\\blobs\\68\\68c34b36c4ab585cc45eaa7dac37ce0ff5eaa796bd6a3956a27b65d27755cc9a"
+    },
+    "index.html": {
+      "hash": "e4040b01a03b74a77e38a3a0f1ec3496efae2d7c5ad98ea4b64aaf190a848984",
+      "content": "C:\\Users\\User\\.cache\\hyperframes\\history\\03debada-d74c-47ef-97c0-d1dd6b95f805\\blobs\\e4\\e4040b01a03b74a77e38a3a0f1ec3496efae2d7c5ad98ea4b64aaf190a848984"
+    },
+    "meta.json": {
+      "hash": "b7b4e2e4dd2a579778c898e6f93c6b9c80d1f73e3681b65041739a49cc6f4023",
+      "content": "C:\\Users\\User\\.cache\\hyperframes\\history\\03debada-d74c-47ef-97c0-d1dd6b95f805\\blobs\\b7\\b7b4e2e4dd2a579778c898e6f93c6b9c80d1f73e3681b65041739a49cc6f4023"
+    }
+  },
+  "revisions": {},
+  "checks": {
+    "latest": null,
+    "revisions": {},
+    "unversioned": []
+  },
+  "snapshots": {
+    "latest": null,
+    "revisions": {},
+    "unversioned": []
+  },
+  "renders": {
+    "latest": {
+      "id": "bd443706-e712-4955-83a5-7caad8a2d769",
+      "completedAt": 1793188850778,
+      "output": "C:\\Users\\User\\Desktop\\Agentes de venda\\apps\\api\\video_engine\\output\\marcao_marcao_kinetic_hook_23bfc92c.mp4",
+      "status": "completed",
+      "revision": null
+    },
+    "retainedRevisions": []
+  },
+  "pendingArtifactCleanup": []
+}

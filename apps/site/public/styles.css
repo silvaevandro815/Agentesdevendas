@@ -1073,50 +1073,125 @@ footer p {
 }
 
 /* 2. TABLETS VERTICAIS, IPAD MINI & SMARTPHONES GRANDES (<= 992px) */
-@media (max-width: 992px) {
+
+/* ==========================================================================
+   OTIMIZAÇÕES EXCLUSIVAS DE ALTA DEFINIÇÃO PARA TABLETS (IPAD / GALAXY TAB)
+   Viewport: 768px a 1024px (Retina Display, Proporção 4:3 e 16:10)
+   ========================================================================== */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .container {
+    max-width: 940px !important;
+    padding: 0 24px !important;
+  }
+
+  /* Header & Navigation */
+  .nav-content {
+    padding: 14px 0 !important;
+  }
+  .brand-title {
+    font-size: 1.25rem !important;
+  }
   .nav-links {
-    display: none;
+    display: flex !important;
+    gap: 14px !important;
+  }
+  .nav-links li a {
+    font-size: 0.82rem !important;
+    padding: 6px 8px !important;
+  }
+  .btn-nav {
+    padding: 8px 14px !important;
+    font-size: 0.82rem !important;
   }
   .mobile-nav-bar {
-    display: block;
+    display: none !important;
   }
+
+  /* Hero Section: 2-Column Balanced Architecture (Investor Ready) */
   .hero {
-    padding: 40px 0 50px;
+    padding: 50px 0 60px !important;
   }
   .hero-grid {
-    grid-template-columns: 1fr;
-    text-align: center;
-    gap: 40px;
+    display: grid !important;
+    grid-template-columns: 1.15fr 0.85fr !important;
+    text-align: left !important;
+    align-items: center !important;
+    gap: 28px !important;
   }
   .hero h1 {
-    font-size: clamp(2rem, 5.5vw, 2.7rem);
+    font-size: 2.15rem !important;
+    line-height: 1.22 !important;
+    margin-bottom: 16px !important;
   }
   .hero-description {
-    margin: 0 auto 28px;
+    font-size: 0.95rem !important;
+    line-height: 1.55 !important;
+    margin: 0 0 24px 0 !important;
   }
   .hero-ctas {
-    justify-content: center;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    align-items: stretch !important;
+  }
+  .hero-ctas .btn-primary,
+  .hero-ctas .btn-secondary {
+    width: 100% !important;
+    text-align: center !important;
+    padding: 14px 18px !important;
+    font-size: 0.92rem !important;
   }
   .hero-stats {
-    justify-content: center;
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 8px !important;
+    margin-top: 24px !important;
   }
-  .protocol-grid {
-    grid-template-columns: 1fr;
-    gap: 28px;
+  .hero-stats .stat-item {
+    padding: 10px 8px !important;
   }
-  .protocol-info h2 {
-    text-align: center;
+  .hero-stats .stat-number {
+    font-size: 1.15rem !important;
   }
-  .protocol-features {
-    text-align: left;
+  .hero-stats .stat-label {
+    font-size: 0.70rem !important;
   }
+
+  /* Mascot Card on Tablet */
+  .hero-card-glow, .mascot-card {
+    max-width: 320px !important;
+    margin: 0 auto !important;
+    padding: 16px !important;
+  }
+  .hero-img-main, .mascot-img {
+    max-height: 320px !important;
+  }
+
+  /* Carro-Chefe Balança Container: Clean 2-Column Split */
+  .product-combo-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 28px !important;
+    align-items: center !important;
+  }
+
+  /* Tech Grid & Trust Grid */
   .tech-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 18px !important;
   }
-  .review-grid {
-    grid-template-columns: 1fr;
+  .trust-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 18px !important;
+  }
+
+  /* Investor Pipeline Card */
+  .investor-pipeline-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 12px !important;
   }
 }
+
 
 /* ==========================================================================
    3. SMARTPHONES EM GERAL (<= 768px - Android, iPhones, telas móveis)
@@ -1735,3 +1810,346 @@ footer p {
   }
 }
 
+
+
+/* ==========================================================================
+   ATUALIZAÇÃO DE DESIGN FUTURISTA & SIMETRIA MARCÃO PERSONAL (V2026.11)
+   ========================================================================== */
+
+/* NEON SVG ICONS GLOBAIS */
+.neon-icon {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+.neon-icon.cyan { stroke: var(--neon-cyan); filter: drop-shadow(0 0 5px var(--neon-cyan)); }
+.neon-icon.green { stroke: var(--neon-green); filter: drop-shadow(0 0 5px var(--neon-green)); }
+.neon-icon.orange { stroke: var(--neon-orange); filter: drop-shadow(0 0 5px var(--neon-orange)); }
+.neon-icon.gold { stroke: var(--gold); filter: drop-shadow(0 0 5px var(--gold)); }
+.neon-icon.lg { width: 26px; height: 26px; }
+
+/* HEADER FIXO BLUR DE ALTA PERFORMANCE */
+header {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 1000 !important;
+  background: rgba(6, 13, 27, 0.94) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-bottom: 1px solid rgba(0, 229, 255, 0.18) !important;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.6) !important;
+  padding: 10px 0 !important;
+}
+
+.nav-content {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  gap: 16px !important;
+  width: 100% !important;
+  max-width: 1240px !important;
+  margin: 0 auto !important;
+  padding: 0 20px !important;
+  box-sizing: border-box !important;
+}
+
+.brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  text-decoration: none !important;
+  flex-shrink: 0 !important;
+}
+
+.brand-logo {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 12px !important;
+  border: 2px solid var(--neon-cyan) !important;
+  box-shadow: 0 0 16px var(--neon-cyan-glow) !important;
+  object-fit: cover !important;
+}
+
+.brand-title {
+  font-size: 1.22rem !important;
+  font-weight: 900 !important;
+  color: #ffffff !important;
+  letter-spacing: -0.5px !important;
+  line-height: 1.1 !important;
+  white-space: nowrap !important;
+}
+
+.brand-sub {
+  font-size: 0.68rem !important;
+  color: var(--neon-cyan) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1.2px !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+}
+
+/* LISTA DE LINKS DO MENU ORGANIZADA */
+.nav-links {
+  display: flex !important;
+  gap: 12px !important;
+  align-items: center !important;
+  list-style: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  flex-wrap: nowrap !important;
+}
+
+.nav-links li {
+  display: flex !important;
+  align-items: center !important;
+  white-space: nowrap !important;
+  margin: 0 !important;
+}
+
+.nav-links a {
+  color: #cbd5e1 !important;
+  text-decoration: none !important;
+  font-size: 0.86rem !important;
+  font-weight: 600 !important;
+  padding: 6px 10px !important;
+  border-radius: 10px !important;
+  transition: all 0.2s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  white-space: nowrap !important;
+}
+
+.nav-links a:hover {
+  color: var(--neon-cyan) !important;
+  background: rgba(0, 229, 255, 0.08) !important;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.5) !important;
+}
+
+/* PILLS DE DESTAQUE NO MENU */
+.nav-pill-cyan {
+  background: rgba(0, 229, 255, 0.12) !important;
+  border: 1px solid rgba(0, 229, 255, 0.35) !important;
+  color: var(--neon-cyan) !important;
+  font-weight: 800 !important;
+  padding: 6px 14px !important;
+  border-radius: 20px !important;
+}
+
+.nav-pill-cyan:hover {
+  background: rgba(0, 229, 255, 0.22) !important;
+  box-shadow: 0 0 16px var(--neon-cyan-glow) !important;
+}
+
+.nav-pill-green {
+  background: rgba(0, 255, 136, 0.12) !important;
+  border: 1px solid rgba(0, 255, 136, 0.35) !important;
+  color: var(--neon-green) !important;
+  font-weight: 800 !important;
+  padding: 6px 14px !important;
+  border-radius: 20px !important;
+}
+
+.nav-pill-green:hover {
+  background: rgba(0, 255, 136, 0.22) !important;
+  box-shadow: 0 0 16px var(--neon-green-glow) !important;
+}
+
+/* BOTÃO FALAR COM MARCÃO (CORRIGIDO: NUNCA QUEBRA, SIMETRIA PERFEITA) */
+.btn-nav {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  height: 42px !important;
+  padding: 0 20px !important;
+  border-radius: 50px !important;
+  background: linear-gradient(135deg, var(--neon-cyan), var(--neon-green)) !important;
+  color: #060d1b !important;
+  font-weight: 900 !important;
+  font-size: 0.88rem !important;
+  box-shadow: 0 4px 18px var(--neon-cyan-glow) !important;
+  border: none !important;
+  text-decoration: none !important;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+  margin-left: 6px !important;
+}
+
+.btn-nav:hover {
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 6px 25px rgba(0, 255, 136, 0.55) !important;
+}
+
+.btn-nav svg {
+  width: 18px !important;
+  height: 18px !important;
+  fill: #060d1b !important;
+  flex-shrink: 0 !important;
+}
+
+/* MOBILE QUICK NAV BAR */
+.mobile-nav-bar {
+  background: rgba(6, 13, 27, 0.95);
+  border-bottom: 1px solid rgba(0, 229, 255, 0.2);
+  padding: 8px 12px;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.mobile-nav-scroll {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.mobile-nav-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  white-space: nowrap;
+}
+
+.mobile-nav-pill.highlight {
+  background: rgba(0, 229, 255, 0.15);
+  border-color: rgba(0, 229, 255, 0.4);
+  color: var(--neon-cyan);
+}
+
+.mobile-nav-pill.wa {
+  background: rgba(37, 211, 102, 0.18);
+  border-color: rgba(37, 211, 102, 0.4);
+  color: #25d366;
+}
+
+/* SIMETRIA DOS 4 PILARES TECNOLÓGICOS (TECH-GRID 4 COLUNAS PERFEITAS) */
+.tech-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 20px !important;
+  margin-bottom: 50px !important;
+}
+
+.tech-card {
+  background: var(--bg-card) !important;
+  border: 1px solid rgba(0, 229, 255, 0.2) !important;
+  border-radius: 22px !important;
+  padding: 28px 20px !important;
+  text-align: center !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 12px !important;
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4) !important;
+}
+
+.tech-card:hover {
+  transform: translateY(-4px) !important;
+  border-color: var(--neon-cyan) !important;
+  box-shadow: 0 12px 35px var(--neon-cyan-glow) !important;
+}
+
+.tech-icon-box {
+  width: 58px !important;
+  height: 58px !important;
+  border-radius: 18px !important;
+  background: rgba(0, 229, 255, 0.08) !important;
+  border: 1.5px solid rgba(0, 229, 255, 0.3) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-bottom: 8px !important;
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.15) !important;
+}
+
+.tech-card h3 {
+  font-size: 1.12rem !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+  line-height: 1.3 !important;
+}
+
+.tech-card p {
+  font-size: 0.86rem !important;
+  color: var(--text-muted) !important;
+  line-height: 1.55 !important;
+}
+
+/* RESPONSIVIDADE DO TECH-GRID */
+@media (max-width: 1024px) {
+  .tech-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 16px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .tech-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+}
+
+/* BIOMARKER ITEM NEON PILL */
+.biomarker-pill {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.2s ease;
+}
+
+.biomarker-pill:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(0, 229, 255, 0.3);
+  transform: translateX(2px);
+}
+
+@media (min-width: 992px) and (max-width: 1180px) {
+  .nav-links {
+    gap: 8px !important;
+  }
+  .nav-links a {
+    font-size: 0.78rem !important;
+    padding: 5px 6px !important;
+  }
+  .nav-pill-cyan, .nav-pill-green {
+    padding: 5px 10px !important;
+  }
+  .btn-nav {
+    padding: 0 12px !important;
+    font-size: 0.80rem !important;
+  }
+}
+
+@media (max-width: 991px) {
+  .nav-links {
+    display: none !important;
+  }
+  .mobile-nav-bar {
+    display: block !important;
+  }
+}

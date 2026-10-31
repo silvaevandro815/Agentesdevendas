@@ -335,3 +335,25 @@
   * `POST /api/shopee/gerar-link`
   * `POST /api/shopee/prescrever`
   * `GET /api/shopee/relatorio-vendas`
+
+
+## 21. Motor Híbrido de Vídeo: HyperFrames + RunPod.io GPU + Auto Viral Pipeline
+- **Problema Anterior Resolvido:**
+  * Anteriormente, a geração de vídeos automáticos no Instagram estava desativada ou restrita (VIDEO_POSTING_CANCELADO = True no build_video_marcao.py) devido ao visual pobre de cartões estáticos feitos com PIL e legendas sem sincronia dinâmica.
+  * O repositório HeyGen HyperFrames (heygen-com/hyperframes, Apache 2.0) foi transferido e integrado com sucesso para transformar a esteira de vídeos do Marcão Personal.
+- **Estrutura Implementada:**
+  * pps/api/video_engine/marcao_hyperframes_engine.py: Motor de templates GSAP em HTML/CSS para renderização a 60fps via Chrome headless em 1080x1920 nativo (Custo zero de GPU).
+  * pps/api/video_engine/vendor/gsap.min.js: Cópia local offline do GreenSock GSAP para imunidade a bloqueios de rede.
+  * pps/api/video_engine/runpod_gpu_manager.py & 
+unpod_open_engine.py: Gerenciador de GPU Serverless para geração de takes 3D hiper-realistas (Wan 2.1 & FLUX.1) sob demanda.
+  * pps/api/video_engine/compose_reel.py: Pipeline FFmpeg com junção da abertura em Motion Design (motion_intro_path), corte dinâmico punch zoom (1.15x) a cada 3.5s sem perda de proporção (SAR 1:1), e legendas Hormozi em amarelo canário queimadas com libass.
+  * pps/api/video_engine/daily_reel_generator.py: Orquestrador completo que escolhe o tema pelo sentinela anti-repetição, gera a voz nativa em português brasileiro do Marcão, cria a introdução motion correspondente (ex: 13 biomarcadores na balança ou ressíntese de ATP na creatina), compõe o master reel e publica no Instagram Reels e Stories.
+- **Modelos Customizados para o Treinador Marcão:**
+  1. marcao_kinetic_hook: Tipografia cinética de impacto nos primeiros segundos com destaque visual e sound design.
+  2. marcao_balanca_bioimpedancia: Scanner de 13 biomarcadores de precisão (massa muscular, gordura visceral, idade metabólica) com oferta Shopee de R$ 0,09/dia e bônus de 3 meses de mentoria VIP.
+  3. marcao_creatina_science: Demonstração científica em 3D da via de ATP mitocondrial e ganho de força com saturação contínua.
+  4. marcao_myth_buster: Desmistificação didática em formato de cartões interativos.
+  5. compose_with_ai: Criação inteligente de animações através de IA para qualquer texto do roteiro.
+- **Exemplo de Execução:**
+  * python apps/api/video_engine/daily_reel_generator.py --tema balanca_ia
+  * python apps/api/video_engine/daily_reel_generator.py --tema creatina_mito

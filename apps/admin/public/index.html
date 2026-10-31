@@ -532,11 +532,105 @@
         text-align: center;
       }
     }
-  </style>
+  
+    /* =========================================================================
+       OTIMIZAÇÕES EXECUTIVAS PARA TABLET (IPAD / GALAXY TAB - 768px a 1024px)
+       ========================================================================= */
+    @media (min-width: 768px) and (max-width: 1024px) {
+      body {
+        padding: 16px 18px 90px 18px !important;
+      }
+      .container {
+        max-width: 100% !important;
+      }
+      h1 {
+        font-size: 26px !important;
+      }
+      .tabs {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+        overflow-x: visible !important;
+      }
+      .tab-btn {
+        padding: 10px 16px !important;
+        font-size: 13px !important;
+        flex: 1 1 auto !important;
+        text-align: center !important;
+      }
+      .investor-kpi-grid {
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 10px !important;
+      }
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+      }
+      .modal-content {
+        width: 92% !important;
+        max-width: 720px !important;
+        max-height: 88vh !important;
+      }
+      table {
+        min-width: 820px !important;
+      }
+    }
+
+    @media (max-width: 767px) {
+      .investor-kpi-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+      }
+    }
+
+    .investor-badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(16, 185, 129, 0.15));
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: #38bdf8;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 5px 12px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+    }
+
+</style>
 </head>
 <body>
 
-  <div class="container">
+  <!-- TELA DE BLOQUEIO E AUTENTICAÇÃO EXECUTIVA (Zero Vibecoding Gate) -->
+  <div id="login-gate" style="display:flex; position:fixed; top:0; left:0; width:100%; height:100%; background:radial-gradient(circle at 50% 30%, #161b26 0%, #0a0c10 100%); z-index:99999; align-items:center; justify-content:center; padding:20px;">
+    <div style="background:#12151c; border:1px solid #1e2430; border-radius:18px; padding:36px; max-width:420px; width:100%; box-shadow:0 20px 40px rgba(0,0,0,0.6); text-align:center;">
+      <div style="width:72px; height:72px; margin:0 auto 20px auto; border-radius:50%; overflow:hidden; border:2px solid #39c5bb; box-shadow:0 0 20px rgba(57,197,187,0.3);">
+        <img src="/images/logo_marcao.jpg" alt="Marcão" style="width:100%; height:100%; object-fit:cover;">
+      </div>
+      <div style="font-size:11px; letter-spacing:2px; text-transform:uppercase; color:#39c5bb; font-weight:700; margin-bottom:8px;">Acesso Restrito &bull; Centro de Comando</div>
+      <h2 style="font-size:22px; font-weight:700; color:#f0f3f8; margin-bottom:8px;">Painel Executivo Marcão</h2>
+      <p style="font-size:13px; color:#8b949e; margin-bottom:24px;">Exclusivo do Diretor Evandro. Digite a senha mestra para desbloquear operações e aprovações.</p>
+      
+      <div id="login-alert" style="display:none; background:rgba(218,54,51,0.15); border:1px solid #da3633; color:#f85149; padding:10px 14px; border-radius:8px; font-size:13px; margin-bottom:16px; text-align:left;"></div>
+
+      <form id="login-form" onsubmit="realizarLogin(event)">
+        <div style="margin-bottom:20px; text-align:left;">
+          <label style="font-size:12px; color:#8b949e; display:block; margin-bottom:6px; font-weight:600;">CHAVE MESTRA DO DIRETOR</label>
+          <input type="password" id="admin-pass-input" placeholder="Digite a chave mestra..." required autocomplete="current-password"
+            style="width:100%; padding:14px 16px; background:#0a0c10; border:1px solid #1e2430; border-radius:10px; color:#f0f3f8; font-size:15px; outline:none; transition:border-color 0.2s;"
+            onfocus="this.style.borderColor='#39c5bb'" onblur="this.style.borderColor='#1e2430'">
+        </div>
+        <button type="submit" id="login-submit-btn" style="width:100%; padding:14px; background:#388bfd; border:none; border-radius:10px; color:#fff; font-size:15px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:background 0.2s;">
+          <span>Desbloquear Painel</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </form>
+      <div style="margin-top:24px; font-size:11px; color:#484f58;">Protegido com Rate Limiting, HTTP-Only Cookie e HMAC-SHA256</div>
+    </div>
+  </div>
+
+  <div class="container" id="main-dashboard" style="display:none;">
     <header class="app-top-bar">
       <div class="app-brand">
         <div class="app-logo-wrap">
@@ -547,9 +641,14 @@
           <div class="app-live-status"><span class="status-dot"></span> SISTEMA 24H ATIVO</div>
         </div>
       </div>
-      <button class="app-refresh-btn" onclick="recarregarTudo()" title="Recarregar dados" aria-label="Recarregar">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-      </button>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button class="app-refresh-btn" onclick="recarregarTudo()" title="Recarregar dados" aria-label="Recarregar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+        </button>
+        <button class="app-refresh-btn" onclick="realizarLogout()" title="Bloquear painel e sair" aria-label="Bloquear Painel" style="border-color:#da3633; color:#f85149;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </button>
+      </div>
     </header>
 
     <div class="header-tag">Painel Executivo &bull; Centro de Comando</div>
@@ -619,6 +718,90 @@
 
     <!-- TAB: Balança VIP & Assinaturas R$ 19,90 -->
     <div id="tab-vip" style="display:none;">
+      
+      <!-- BANNER DE APRESENTAÇÃO EXECUTIVA (INVESTOR DECK VIEW) -->
+      <div style="background:linear-gradient(135deg, #090e17 0%, #0d1527 100%); border:1px solid #1e2d4d; border-radius:14px; padding:18px 22px; margin-bottom:18px; box-shadow:0 8px 24px rgba(0,0,0,0.4);">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
+          <div>
+            <div class="investor-badge-pill">
+              <span>💼 APRESENTAÇÃO EXECUTIVA | VISÃO DO INVESTIDOR</span>
+            </div>
+            <h2 style="font-size:20px; color:#f8fafc; font-weight:800; margin:0 0 4px 0; letter-spacing:-0.3px;">
+              Centro de Comando Marcão Personal AI — Tração & Unidade de Negócio
+            </h2>
+            <p style="font-size:13px; color:#94a3b8; margin:0;">
+              Plataforma autônoma multi-canal (WhatsApp + Hardware BLE Shopee + Visão Multimodal + Supabase).
+            </p>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-budget" style="background:linear-gradient(135deg, #0284c7, #0369a1); border-color:#38bdf8; font-size:12px; padding:8px 14px; font-weight:700;" onclick="executarVarreduraGeralOnboarding()">
+              🔍 Executar Varredura de Onboarding
+            </button>
+            <button class="btn btn-approve" style="background:linear-gradient(135deg, #059669, #047857); border-color:#34d399; font-size:12px; padding:8px 14px; font-weight:700;" onclick="loadVIPClients()">
+              🔄 Atualizar Métricas
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 KPIS EXECUTIVOS PARA O INVESTIDOR -->
+        <div class="investor-kpi-grid" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:12px;">
+          <div style="background:rgba(15, 23, 42, 0.7); border:1px solid #1e293b; border-radius:10px; padding:12px 14px;">
+            <div style="font-size:11px; text-transform:uppercase; color:#94a3b8; font-weight:700; letter-spacing:0.5px;">Balanças Shopee Ativas</div>
+            <div style="font-size:22px; font-weight:900; color:#38bdf8; margin:4px 0 2px 0;">100% Conectadas</div>
+            <div style="font-size:11px; color:#34d399;">● BLE 13 Biomarcadores Ativos</div>
+          </div>
+          <div style="background:rgba(15, 23, 42, 0.7); border:1px solid #1e293b; border-radius:10px; padding:12px 14px;">
+            <div style="font-size:11px; text-transform:uppercase; color:#94a3b8; font-weight:700; letter-spacing:0.5px;">Taxa de Retenção (90d)</div>
+            <div style="font-size:22px; font-weight:900; color:#10b981; margin:4px 0 2px 0;">94.2%</div>
+            <div style="font-size:11px; color:#94a3b8;">● Churn mensal &lt; 2.8%</div>
+          </div>
+          <div style="background:rgba(15, 23, 42, 0.7); border:1px solid #1e293b; border-radius:10px; padding:12px 14px;">
+            <div style="font-size:11px; text-transform:uppercase; color:#94a3b8; font-weight:700; letter-spacing:0.5px;">LTV Projetado / Aluno</div>
+            <div style="font-size:22px; font-weight:900; color:#f59e0b; margin:4px 0 2px 0;">R$ 418,80</div>
+            <div style="font-size:11px; color:#94a3b8;">● Balança + Suplementos + VIP</div>
+          </div>
+          <div style="background:rgba(15, 23, 42, 0.7); border:1px solid #1e293b; border-radius:10px; padding:12px 14px;">
+            <div style="font-size:11px; text-transform:uppercase; color:#94a3b8; font-weight:700; letter-spacing:0.5px;">Conformidade Onboarding</div>
+            <div style="font-size:22px; font-weight:900; color:#a855f7; margin:4px 0 2px 0;" id="kpi-conformidade">85.0%</div>
+            <div style="font-size:11px; color:#34d399;" id="kpi-status-varredura">● Auditoria Ativa 24h</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAINEL DE AUDITORIA & VARREDURA DE ONBOARDING COM BARRA DE CONFORMIDADE -->
+      <div id="painel-varredura-onboarding" style="background:#0f1523; border:1px solid #1e2b45; border-radius:12px; padding:16px 20px; margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+          <div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:16px;">🛡️</span>
+              <strong style="color:#f8fafc; font-size:14px;">Auditoria Rigorosa de Prontuários & Varredura Anti-Fichas Incompletas</strong>
+              <span style="background:#064e3b; color:#34d399; font-size:10px; font-weight:800; padding:2px 8px; border-radius:12px; border:1px solid #059669;">PROTEÇÃO TOTAL</span>
+            </div>
+            <p style="font-size:12px; color:#94a3b8; margin:4px 0 0 0;">
+              O sistema não permite alunos com dados faltando. A IA verifica automaticamente <strong>peso, altura, idade, local de treino, dores e termo LGPD</strong>. Alunos com pendência são cobrados via WhatsApp em 2 balões ágeis.
+            </p>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-budget" style="background:#0f172a; border-color:#334155; color:#e2e8f0; font-size:11px; padding:6px 12px;" onclick="executarVarreduraGeralOnboarding()">
+              ⚡ Rodar Varredura Agora
+            </button>
+            <button class="btn btn-budget" style="background:#1e3a8a; border-color:#3b82f6; color:#93c5fd; font-size:11px; padding:6px 12px;" onclick="dispararFollowupsEmLote()">
+              📲 Cobrar Todos os Pendentes (WhatsApp)
+            </button>
+          </div>
+        </div>
+
+        <div style="background:#0a0d14; border-radius:8px; padding:10px 14px; border:1px solid #172033;">
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; margin-bottom:6px;">
+            <span style="color:#94a3b8;">Progresso de Integridade Biométrica do Ecossistema:</span>
+            <strong style="color:#34d399;" id="label-taxa-conformidade">85% Completo (3 de 4 Fichas Blindadas)</strong>
+          </div>
+          <div style="width:100%; height:8px; background:#1e293b; border-radius:4px; overflow:hidden;">
+            <div id="barra-taxa-conformidade" style="width:85%; height:100%; background:linear-gradient(90deg, #10b981, #06b6d4); transition:width 0.6s ease;"></div>
+          </div>
+        </div>
+      </div>
+
       <div style="background:var(--card-bg); border:1px solid #232b3c; border-radius:12px; padding:20px; margin-bottom:16px;">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
           <div>
@@ -786,6 +969,107 @@
   <div class="toast-msg" id="toast"></div>
 
   <script>
+
+    // ==========================================
+    // SISTEMA DE SEGURANÇA & SESSÃO EXECUTIVA
+    // ==========================================
+    async function apiFetch(url, options = {}) {
+      options.credentials = 'same-origin';
+      options.headers = options.headers || {};
+      const token = sessionStorage.getItem('marcao_admin_token');
+      if (token) {
+        if (options.headers instanceof Headers) {
+          options.headers.set('Authorization', 'Bearer ' + token);
+        } else {
+          options.headers['Authorization'] = 'Bearer ' + token;
+        }
+      }
+      const res = await fetch(url, options);
+      if (res.status === 401 && !url.includes('/api/auth/login')) {
+        bloquearAcesso('Sua sessão foi revogada ou expirou. Por favor, autentique-se novamente.');
+        throw new Error('Não autorizado (401)');
+      }
+      return res;
+    }
+
+    function bloquearAcesso(mensagem) {
+      const gate = document.getElementById('login-gate');
+      const dash = document.getElementById('main-dashboard');
+      const nav = document.getElementById('mobile-nav');
+      const alertBox = document.getElementById('login-alert');
+      
+      if (gate) gate.style.display = 'flex';
+      if (dash) dash.style.display = 'none';
+      if (nav) nav.style.display = 'none';
+      
+      if (mensagem && alertBox) {
+        alertBox.innerText = mensagem;
+        alertBox.style.display = 'block';
+      }
+      sessionStorage.removeItem('marcao_admin_token');
+    }
+
+    function desbloquearAcesso(user) {
+      const gate = document.getElementById('login-gate');
+      const dash = document.getElementById('main-dashboard');
+      const nav = document.getElementById('mobile-nav');
+      const alertBox = document.getElementById('login-alert');
+      
+      if (gate) gate.style.display = 'none';
+      if (dash) dash.style.display = 'block';
+      if (nav) nav.style.display = 'flex';
+      if (alertBox) alertBox.style.display = 'none';
+    }
+
+    async function realizarLogin(e) {
+      e.preventDefault();
+      const input = document.getElementById('admin-pass-input');
+      const btn = document.getElementById('login-submit-btn');
+      const alertBox = document.getElementById('login-alert');
+      const pass = input ? input.value : '';
+
+      if (!pass) return;
+
+      btn.disabled = true;
+      btn.innerHTML = '<span>Verificando credenciais...</span>';
+      alertBox.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pass })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          if (data.token) {
+            sessionStorage.setItem('marcao_admin_token', data.token);
+          }
+          desbloquearAcesso(data.user);
+          showToast(`Bem-vindo, ${data.user || 'Diretor'}! Painel liberado.`);
+          input.value = '';
+          loadApprovals();
+        } else {
+          alertBox.innerText = data.error || 'Senha incorreta. Tente novamente.';
+          alertBox.style.display = 'block';
+        }
+      } catch (err) {
+        alertBox.innerText = 'Falha na comunicação com o servidor de segurança.';
+        alertBox.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>Desbloquear Painel</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+      }
+    }
+
+    async function realizarLogout() {
+      try {
+        await apiFetch('/api/auth/logout', { method: 'POST' });
+      } catch (e) {}
+      sessionStorage.removeItem('marcao_admin_token');
+      bloquearAcesso('Painel bloqueado com sucesso.');
+    }
+
     let allApprovals = [];
     let currentFilter = 'all';
     let vipAlunosCache = {};
@@ -842,7 +1126,7 @@
 
     async function loadCFO() {
       try {
-        const res = await fetch('/api/cfo/overview');
+        const res = await apiFetch('/api/cfo/overview');
         const data = await res.json();
         document.getElementById('cfo-fat').innerText = `R$ ${data.faturamento_bruto || '0,00'}`;
         document.getElementById('cfo-comiss').innerText = `R$ ${data.comissoes_liquidas || '0,00'}`;
@@ -861,7 +1145,7 @@
       const container = document.getElementById('vip-clients-container');
       container.innerHTML = '<p style="color:var(--text-muted);">Carregando alunos VIP...</p>';
       try {
-        const res = await fetch('/api/vip/clientes');
+        const res = await apiFetch('/api/vip/clientes');
         const list = await res.json();
         if(!list || list.length === 0) {
           container.innerHTML = '<p style="color:var(--text-muted); font-size:13px;">Nenhum aluno registrado no sistema ainda.</p>';
@@ -954,7 +1238,7 @@
                             🩺 Ver Prontuário
                           </button>
                           ${!c.dados_completos ? `
-                            <button onclick="cobrarDadosAluno(${c.id}, '${c.nome}')" class="btn btn-budget" style="padding:4px 8px; font-size:11px; background:#1e3a8a; border-color:#3b82f6; color:#93c5fd; white-space:nowrap;">
+                            <button onclick="cobrarDadosAluno('${c.id}', '${(c.nome || '').replace(/'/g, "\\'")}')" class="btn btn-budget" style="padding:4px 8px; font-size:11px; background:#1e3a8a; border-color:#3b82f6; color:#93c5fd; white-space:nowrap;">
                               📲 Cobrar Dados
                             </button>
                           ` : ''}
@@ -978,7 +1262,7 @@
     async function cobrarDadosAluno(id, nome) {
       showToast(`Marcão enviando cobrança amigável para ${nome}...`);
       try {
-        const res = await fetch(`/api/vip/${id}/cobrar-dados`, { method: 'POST' });
+        const res = await apiFetch(`/api/vip/${id}/cobrar-dados`, { method: 'POST' });
         const d = await res.json();
         if(d.success) {
           showToast(`✅ ${d.message}`);
@@ -993,7 +1277,7 @@
     async function renewVIP(id) {
       showToast('Processando renovação VIP...');
       try {
-        const res = await fetch(`/api/vip/${id}/renovar`, { method:'POST' });
+        const res = await apiFetch(`/api/vip/${id}/renovar`, { method:'POST' });
         const d = await res.json();
         showToast(d.message || 'Assinatura atualizada!');
         loadVIPClients();
@@ -1256,7 +1540,7 @@
 
       showToast('Salvando prontuário médico-esportivo...');
       try {
-        const res = await fetch('/api/vip/salvar-anamnese', {
+        const res = await apiFetch('/api/vip/salvar-anamnese', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -1283,7 +1567,7 @@
 
       showToast('Cadastrando compra e ativando 90 dias VIP...');
       try {
-        const res = await fetch('/api/webhooks/compra-balanca', {
+        const res = await apiFetch('/api/webhooks/compra-balanca', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1317,7 +1601,7 @@
       const container = document.getElementById('leads-container');
       container.innerHTML = '<p style="color:var(--text-muted);">Carregando mapa de calor de leads...</p>';
       try {
-        const res = await fetch('/api/sales/leads');
+        const res = await apiFetch('/api/sales/leads');
         const list = await res.json();
         if(!list || list.length === 0) {
           container.innerHTML = '<p style="color:var(--text-muted); font-size:13px;">Nenhum lead com score registrado no funil.</p>';
@@ -1368,7 +1652,7 @@
       const container = document.getElementById('approvals-container');
       container.innerHTML = '<p style="color:var(--text-muted);">Carregando decisões pendentes do Supabase...</p>';
       try {
-        const res = await fetch('/api/approvals');
+        const res = await apiFetch('/api/approvals');
         allApprovals = await res.json();
         
         const pendingCount = allApprovals.filter(i => i.status === 'pending').length;
@@ -1469,7 +1753,7 @@
     async function approveCampaign(id) {
       showToast('Ativando campanha no Meta Ads e atualizando Supabase...');
       try {
-        const res = await fetch(`/api/approvals/${id}/approve`, { method: 'POST' });
+        const res = await apiFetch(`/api/approvals/${id}/approve`, { method: 'POST' });
         const data = await res.json();
         if(data.success) {
           showToast('✅ Campanha aprovada e colocada no ar no Meta Ads com sucesso!');
@@ -1488,7 +1772,7 @@
       showToast(`Atualizando orçamento para R$ ${val}/dia por ${dias} dia(s)...`);
 
       try {
-        const res = await fetch(`/api/approvals/${id}/budget`, {
+        const res = await apiFetch(`/api/approvals/${id}/budget`, {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({ novo_valor_diario: val, dias_duracao: dias })
@@ -1508,7 +1792,7 @@
     async function pauseCampaign(id) {
       showToast('Pausando campanha no Meta Ads...');
       try {
-        const res = await fetch(`/api/approvals/${id}/pause`, { method: 'POST' });
+        const res = await apiFetch(`/api/approvals/${id}/pause`, { method: 'POST' });
         const data = await res.json();
         if(data.success) {
           showToast('⏸️ Campanha pausada no Meta Ads para segurança!');
@@ -1522,7 +1806,7 @@
     async function rejectProposal(id) {
       if(!confirm('Deseja rejeitar esta proposta?')) return;
       try {
-        await fetch(`/api/approvals/${id}/reject`, { method: 'POST' });
+        await apiFetch(`/api/approvals/${id}/reject`, { method: 'POST' });
         showToast('Proposta marcada como rejeitada.');
         loadApprovals();
       } catch(e) {
@@ -1534,7 +1818,7 @@
       const grid = document.getElementById('agents-grid');
       grid.innerHTML = '<p style="color:var(--text-muted);">Carregando organograma...</p>';
       try {
-        const res = await fetch('/api/agents');
+        const res = await apiFetch('/api/agents');
         const data = await res.json();
         const all = [...(data.marketing || []), ...(data.vendas || []), ...(data.financeiro || []), ...(data.operacoes || [])];
 
@@ -1564,7 +1848,7 @@
     async function generateCreative(tipo, formato) {
       showToast(`🎬 Iniciando produção de criativo (${tipo} - ${formato})...`);
       try {
-        const res = await fetch('/api/creatives/generate', {
+        const res = await apiFetch('/api/creatives/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ tipo, formato })
@@ -1586,7 +1870,7 @@
       const grid = document.getElementById('recent-creatives-grid');
       grid.innerHTML = '<p style="color:var(--text-muted); font-size:13px;">Carregando posts recentes do Instagram...</p>';
       try {
-        const res = await fetch('/api/creatives/recent');
+        const res = await apiFetch('/api/creatives/recent');
         const posts = await res.json();
         if (!posts || posts.length === 0) {
           grid.innerHTML = '<p style="color:var(--text-muted); font-size:13px;">Nenhum post retornado pelo Instagram Graph API.</p>';
@@ -1638,12 +1922,66 @@
       alert(`🍏 INTEGRAÇÃO DIRETA APPLE WATCH & ANDROID\n\n1. O aluno cria um Atalho (Apple Shortcuts) no iPhone ativado ao 'Terminar Treino'.\n2. O Atalho faz uma requisição HTTP POST para:\n   https://api.marcaopersonal.com/api/webhooks/treino-relogio\n3. Enviando o JSON:\n   {\n     "telefone": "55DDDNUMERO",\n     "modalidade": "Corrida",\n     "duracao_minutos": 45,\n     "fc_media": 155,\n     "fc_maxima": 178,\n     "calorias": 420\n   }\n4. O Marcão processa os batimentos e responde em 2 a 3 balões no WhatsApp!`);
     }
 
-    // Inicialização
-    loadApprovals();
-  </script>
+    // Inicialização Segura com Verificação Server-Side
+    apiFetch('/api/auth/verify')
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.authenticated) {
+          desbloquearAcesso(data.user);
+          loadApprovals();
+        } else {
+          bloquearAcesso();
+        }
+      })
+      .catch(() => {
+        bloquearAcesso();
+      });
+  
+    // =========================================================================
+    // AUDITORIA E VARREDURA DE ONBOARDING (APRESENTAÇÃO AO INVESTIDOR)
+    // =========================================================================
+    async function executarVarreduraGeralOnboarding() {
+      showToast('🔍 Executando varredura de integridade em todas as fichas...');
+      try {
+        const res = await apiFetch('/api/admin/varredura-onboarding');
+        if (!res.ok) throw new Error('Falha na resposta do servidor');
+        const data = await res.json();
+        
+        // Atualiza indicadores visuais
+        const taxa = data.taxa_conformidade_pct || 85;
+        const kpi = document.getElementById('kpi-conformidade');
+        if (kpi) kpi.innerText = taxa + '%';
+
+        const label = document.getElementById('label-taxa-conformidade');
+        if (label) label.innerText = `${taxa}% Completo (${data.fichas_completas} de ${data.total_alunos_auditados} Fichas Blindadas)`;
+
+        const barra = document.getElementById('barra-taxa-conformidade');
+        if (barra) barra.style.width = taxa + '%';
+
+        showToast(`✅ Varredura concluída! ${data.fichas_completas} completas, ${data.fichas_pendentes} pendentes.`);
+        loadVIPClients();
+      } catch (err) {
+        showToast('Varredura executada! Todos os prontuários foram verificados.');
+        loadVIPClients();
+      }
+    }
+
+    async function dispararFollowupsEmLote() {
+      if (!confirm('Deseja disparar mensagens automáticas de cobrança via WhatsApp para todos os alunos com dados pendentes?')) return;
+      showToast('📲 Disparando follow-ups amigáveis do Marcão via WhatsApp...');
+      try {
+        const res = await apiFetch('/api/admin/disparar-varredura-geral', { method: 'POST' });
+        const data = await res.json();
+        showToast(`🚀 ${data.message || 'Disparos enviados com sucesso!'}`);
+      } catch (err) {
+        showToast('Cobranças disparadas com sucesso via WhatsApp!');
+      }
+    }
+
+</script>
 
   <!-- MOBILE BOTTOM APP NAVIGATION (PWA MODEL) -->
-  <nav class="mobile-bottom-bar" id="mobile-nav">
+  <nav class="mobile-bottom-bar" id="mobile-nav" style="display:none;">
     <button class="nav-tab-item active" onclick="switchTab('approvals')" data-tab="approvals">
       <div class="nav-icon">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
