@@ -1531,10 +1531,20 @@ except ImportError:
 
 @app.on_event("startup")
 async def startup_marcao_autonomous_cron():
-    """Ativa os cron jobs autônomos de follow-up, Strava e almoço na inicialização do servidor."""
+    """Ativa os cron jobs autônomos de follow-up, Strava e almoço apenas no servidor Linux de Produção."""
+    cron_habilitado = os.getenv("MARCAO_CRON_ENABLED", "auto").lower()
+
+    if cron_habilitado in ["false", "0", "disabled", "no"]:
+        print("[FASTAPI STARTUP] Agendador Marcão DESATIVADO via MARCAO_CRON_ENABLED=false.")
+        return
+
+    if cron_habilitado == "auto" and os.name == "nt":
+        print("[FASTAPI STARTUP] Ambiente Windows detectado. Agendador Marcão DESATIVADO localmente para garantir disparo único exclusivo no servidor Linux de produção (VPS).")
+        return
+
     try:
         marcao_cron.iniciar()
-        print("[FASTAPI STARTUP] Agendador Autônomo Marcão ativado com sucesso!")
+        print("[FASTAPI STARTUP] Agendador Autônomo Marcão ativado com sucesso em Produção!")
     except Exception as e:
         print(f"[FASTAPI STARTUP] Erro iniciando agendador: {e}")
 

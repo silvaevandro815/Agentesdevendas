@@ -392,3 +392,5 @@ unpod_open_engine.py: Gerenciador de GPU Serverless para geração de takes 3D h
 - **Janela Anti-Repetição:** Verificação estrita dos últimos 30 posts (historico[-30:]). Nenhum tema ou cenário pode se repetir antes de todos os 30 outros terem sido publicados.
 - **Motor Open-Source RUNPOD.IO GPU:** Renderização via Wan 2.1 (vídeo) e FLUX.1 (imagens cinematográficas 9:16) em GPU serverless.
 - **Repostagem nos Stories:** Reels são postados no Feed e replicados automaticamente nos Stories (postar_stories=True).
+
+- **Blindagem Anti-Duplicação de Follow-ups:** Trava de idempotência diária (`adquirir_trava_deduplicacao`) ativada em `apps/api/marcao_autonomous_cron.py` para impedir qualquer mensagem repetida para o mesmo aluno no mesmo dia. Execução restrita ao container de produção na VPS Linux.
