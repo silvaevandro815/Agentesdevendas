@@ -192,7 +192,7 @@ class MarcaoAutonomousScheduler:
             for a in alunos:
                 tel = a.get("telefone")
                 nome = a.get("nome") or "Guerreiro(a)"
-                if not tel:
+                if not tel or any(b in str(tel) for b in ["85066687", "553285066687"]):
                     continue
                 if filtro_aluno and filtro_aluno not in str(tel) and filtro_aluno.lower() not in nome.lower():
                     continue
@@ -260,7 +260,7 @@ class MarcaoAutonomousScheduler:
                 tel = a.get("telefone")
                 nome = a.get("nome") or "Guerreiro(a)"
                 local = a.get("local_treino") or "academia"
-                if not tel or tel in alunos_com_pendencias:
+                if not tel or tel in alunos_com_pendencias or any(b in str(tel) for b in ["85066687", "553285066687"]):
                     continue
                 if filtro_aluno and filtro_aluno not in str(tel) and filtro_aluno.lower() not in nome.lower():
                     continue
@@ -354,7 +354,7 @@ class MarcaoAutonomousScheduler:
             for a in alunos:
                 tel = a.get("telefone")
                 nome = a.get("nome") or "Guerreiro(a)"
-                if not tel:
+                if not tel or any(b in str(tel) for b in ["85066687", "553285066687"]):
                     continue
                 if filtro_aluno and filtro_aluno not in str(tel) and filtro_aluno.lower() not in nome.lower():
                     continue

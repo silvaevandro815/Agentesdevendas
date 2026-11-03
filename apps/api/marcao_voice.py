@@ -96,6 +96,10 @@ def gerar_voz_marcao_bytes(texto: str, modo: str = 'masculino') -> bytes:
 
 async def gerar_e_enviar_audio_whatsapp(target_number: str, texto: str, modo: str = 'masculino') -> bool:
     """Gera a voz brasileira nativa e envia como nota de voz (PTT) no WhatsApp via Evolution API."""
+    digitos = ''.join(filter(str.isdigit, str(target_number)))
+    if '85066687' in digitos or len(digitos) < 10:
+        print(f'[BLOQUEIO AUTO-MENSAGEM] Abortando envio de áudio para o próprio número do Marcão ({target_number}).')
+        return False
     import httpx
     
     headers_evo = {

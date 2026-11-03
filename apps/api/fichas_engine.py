@@ -63,6 +63,11 @@ async def buscar_ficha_existente(remote_jid: str, telefone: str = None) -> dict:
     return None
 
 async def buscar_ou_criar_ficha_aluno(remote_jid: str, telefone: str, nome: str) -> dict:
+    tel_limpo = ''.join(filter(str.isdigit, (telefone or remote_jid or '')))
+    # BLOQUEIO ABSOLUTO: Nunca criar ficha nem operar para o número do próprio robô Marcão
+    if '85066687' in tel_limpo:
+        return None
+
     existente = await buscar_ficha_existente(remote_jid, telefone)
     if existente:
         return existente
@@ -916,6 +921,11 @@ async def enviar_mensagem_whatsapp_fichas(target_number: str, texto: str):
     if len(digitos) < 10:
         return None
 
+    # BLOQUEIO ABSOLUTO: NUNCA ENVIAR PARA O PRÓPRIO CHIP DO MARCÃO (AUTO-MENSAGEM)
+    if "85066687" in digitos:
+        print(f"[BLOQUEIO AUTO-MENSAGEM] Tentativa de envio para o próprio número do Marcão ({target_number}) abortada.")
+        return None
+
     # Padrões clássicos de mock / números falsos
     if any(m in digitos for m in ["99998888", "988887777", "988881111", "988882222", "999990001", "11999999999"]):
         print(f"[BLOQUEIO ANTI-SPAM] Fichas VIP bloqueado para número teste: {target_number}")
@@ -1262,6 +1272,9 @@ def gerar_orientacao_modo_atleta(ficha: dict, meta_status: dict) -> dict:
 
 
 async def enviar_presenca_fichas(target_number: str, presence: str = "composing", delay_ms: int = 1500):
+    digitos = "".join(filter(str.isdigit, str(target_number)))
+    if "85066687" in digitos or len(digitos) < 10:
+        return
     evo_url = os.getenv("EVOLUTION_API_URL", "https://evolution.marcaopersonal.com")
     evo_key = os.getenv("EVOLUTION_API_KEY", "")
     evo_inst = os.getenv("EVOLUTION_INSTANCE", "sofia")
@@ -1728,6 +1741,10 @@ async def verificar_e_cobrar_alunos_com_dados_pendentes(filtro_aluno: str = None
                 for f in fichas:
                     nome_f = (f.get("nome") or f.get("nome_aluno") or "").lower()
                     tel_f = (f.get("telefone") or "").lower()
+
+                    # BLOQUEIO ABSOLUTO: Pula o número do próprio robô Marcão
+                    if any(b in tel_f or b in (f.get("remote_jid") or "") for b in ["85066687", "553285066687"]):
+                        continue
 
                     # Se houver filtro e não bater, pula
                     if filtro_aluno:

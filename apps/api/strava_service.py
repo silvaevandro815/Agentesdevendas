@@ -215,7 +215,7 @@ def gerar_bronca_treino_faltoso(nome_aluno: str, dia_semana: str) -> list:
     ]
 
 
-async def executar_auditoria_strava_noturna_22h(forcar_dia: str = None) -> dict:
+async def executar_auditoria_strava_noturna_22h(forcar_dia: str = None, filtro_aluno: str = None) -> dict:
     """
     Auditoria Noturna às 22h dos Treinos do Strava:
     - SOMENTE NOS DIAS DE TREINO DO ALUNO!
@@ -273,8 +273,14 @@ async def executar_auditoria_strava_noturna_22h(forcar_dia: str = None) -> dict:
         nome = (ficha.get("nome") or ficha.get("nome_aluno") or "Aluno").strip()
         primeiro_nome = nome.split()[0]
         tel = ficha.get("telefone") or "".join(filter(str.isdigit, ficha.get("remote_jid", "").split("@")[0]))
-        if not tel:
+        if not tel or any(b in str(tel) for b in ["85066687", "553285066687"]):
             continue
+        if filtro_aluno:
+            filtro_low = filtro_aluno.strip().lower()
+            bate_nome = filtro_low in nome.lower()
+            bate_tel = filtro_low in str(tel).lower()
+            if not (bate_nome or bate_tel):
+                continue
 
         dias_treino_cadastrados = [normalizar_dia(d) for d in (ficha.get("dias_treino") or [])]
         dias_disp = ficha.get("dias_disponiveis_semana") or 0

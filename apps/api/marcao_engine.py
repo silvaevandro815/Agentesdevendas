@@ -506,6 +506,12 @@ async def processar_mensagem_marcao(payload_webhook: dict) -> dict:
     if key.get("fromMe") is True:
         return {"ignorado": True, "motivo": "fromMe"}
 
+    # 1.1 Descartar se a mensagem for do próprio chip do Marcão (auto-mensagem)
+    raw_jid = key.get("remoteJid", "")
+    digitos_origem = "".join(filter(str.isdigit, raw_jid))
+    if "85066687" in digitos_origem:
+        return {"ignorado": True, "motivo": "proprio_numero_marcao"}
+
     raw_jid = key.get("remoteJid", "")
 
     # 2. BLOQUEIO DE GRUPOS: NÃO responder em grupos de WhatsApp
