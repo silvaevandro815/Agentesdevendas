@@ -292,6 +292,28 @@ app.post('/api/aluno/ficha/reformular/:id', express.json(), async (req, res) => 
   return res.status(500).json({ sucesso: false, erro: 'Erro conectando a API Marcao' });
 });
 
+// Proxy relay seguro para status do WhatsApp
+app.get('/api/whatsapp/status', async (req, res) => {
+  const bases = [
+    'http://api:8000',
+    'http://8ced6ba01715:8000',
+    'http://172.17.0.1:8000',
+    'https://api.marcaopersonal.com'
+  ];
+
+  for (const base of bases) {
+    try {
+      const apiRes = await fetch(`${base}/api/whatsapp/status`, { signal: AbortSignal.timeout(6000) });
+      const data = await apiRes.json();
+      return res.status(apiRes.status).json(data);
+    } catch (e) {
+      // tenta proximo
+    }
+  }
+
+  return res.status(500).json({ sucesso: false, erro: 'Erro consultando status do WhatsApp' });
+});
+
 // Redirecionamento SPA / fallback seguro
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));

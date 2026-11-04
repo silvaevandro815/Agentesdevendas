@@ -1553,6 +1553,27 @@ async def cron_status_api():
     """Retorna o status dos agendamentos autônomos, próximas execuções e histórico de disparos."""
     return marcao_cron.status()
 
+@app.get("/api/whatsapp/status")
+async def obter_status_whatsapp_api():
+    """Retorna o estado da conexão ao vivo do WhatsApp do Marcão (Evolution API / Baileys)."""
+    return await marcao_cron.rotina_watchdog_evolution_api()
+
+@app.post("/api/whatsapp/reconnect")
+async def forcar_reconexao_whatsapp_api():
+    """Força o reinício e reconexão imediata da instância do WhatsApp do Marcão."""
+    evo_url = (os.getenv("EVOLUTION_API_URL") or "https://evolution.marcaopersonal.com").rstrip("/")
+    evo_key = os.getenv("EVOLUTION_API_KEY", "")
+    evo_inst = os.getenv("EVOLUTION_INSTANCE", "sofia")
+    headers = {"apikey": evo_key, "Content-Type": "application/json"}
+    async with httpx.AsyncClient(verify=False, timeout=12.0) as client:
+        r_restart = await client.post(f"{evo_url}/instance/restart/{evo_inst}", headers=headers)
+        await asyncio.sleep(3.0)
+        r_state = await client.get(f"{evo_url}/instance/connectionState/{evo_inst}", headers=headers)
+        return {
+            "status_code": r_restart.status_code,
+            "estado_atual": r_state.json() if r_state.status_code == 200 else r_state.text
+        }
+
 @app.post("/api/cron/forcar-cobranca-almoco")
 async def cron_forcar_almoco_api(payload: dict = None):
     """Força a execução da cobrança de almoço / dieta para todos os alunos ou um específico."""

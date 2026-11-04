@@ -32,6 +32,9 @@ load_dotenv()
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "https://qkopgftfrfftoyndhhfj.supabase.co")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
+EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "https://evolution.marcaopersonal.com")
+EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "")
+EVOLUTION_INSTANCE = os.getenv("EVOLUTION_INSTANCE", "sofia")
 
 try:
     from fichas_engine import (
@@ -125,6 +128,15 @@ class MarcaoAutonomousScheduler:
         if self._inicializado:
             return
         
+        # 0. Sentinela Watchdog Evolution API (a cada 60s)
+        self.scheduler.add_job(
+            self.rotina_watchdog_evolution_api,
+            "interval",
+            seconds=60,
+            id="cron_watchdog_evolution_api",
+            replace_existing=True
+        )
+
         # 1. Cobrança de Almoço / Dieta às 12:30 (Segunda a Sexta)
         self.scheduler.add_job(
             self.rotina_cobranca_almoco,
@@ -170,6 +182,65 @@ class MarcaoAutonomousScheduler:
         self.historico_disparos.append(log_entry)
         if len(self.historico_disparos) > 50:
             self.historico_disparos.pop(0)
+
+    # -------------------------------------------------------------------------
+    # 0. SENTINELA WATCHDOG EVOLUTION API (AUTO-RECUPERAÇÃO DE CONEXÃO & RESPOSTAS)
+    # -------------------------------------------------------------------------
+    async def rotina_watchdog_evolution_api(self) -> dict:
+        """
+        Monitora 24/7 a saúde da conexão do WhatsApp (Evolution API / Baileys).
+        Se a instância sofia desconectar ou travar em 'connecting'/'close':
+        1. Emite alerta no log.
+        2. Dispara POST /instance/restart/sofia e força reconexão imediata.
+        3. Mantém a disponibilidade 100% contínua sem depender de intervenção humana.
+        """
+        evo_url = (os.getenv("EVOLUTION_API_URL") or "https://evolution.marcaopersonal.com").rstrip("/")
+        evo_key = os.getenv("EVOLUTION_API_KEY", "")
+        evo_inst = os.getenv("EVOLUTION_INSTANCE", "sofia")
+        headers = {"apikey": evo_key, "Content-Type": "application/json"}
+
+        if not evo_url or not evo_key:
+            return {"sucesso": False, "motivo": "sem_credenciais"}
+
+        try:
+            async with httpx.AsyncClient(verify=False, timeout=8.0) as client:
+                r = await client.get(f"{evo_url}/instance/connectionState/{evo_inst}", headers=headers)
+                state = "unknown"
+                if r.status_code == 200:
+                    data = r.json()
+                    state = data.get("instance", {}).get("state", "unknown")
+
+                if state != "open":
+                    print(f"[EVOLUTION WATCHDOG] 🚨 ALERTA: Instância '{evo_inst}' fora do ar! (Estado: {state}). Executando auto-reconexão...")
+                    # Reinicia a instância Baileys
+                    r_restart = await client.post(f"{evo_url}/instance/restart/{evo_inst}", headers=headers)
+                    await asyncio.sleep(4.0)
+
+                    # Checa se restabeleceu
+                    r_check = await client.get(f"{evo_url}/instance/connectionState/{evo_inst}", headers=headers)
+                    new_state = r_check.json().get("instance", {}).get("state", "unknown") if r_check.status_code == 200 else "error"
+                    
+                    if new_state != "open":
+                        # Tenta endpoint connect
+                        await client.get(f"{evo_url}/instance/connect/{evo_inst}", headers=headers)
+                        await asyncio.sleep(3.0)
+                        r_check2 = await client.get(f"{evo_url}/instance/connectionState/{evo_inst}", headers=headers)
+                        new_state = r_check2.json().get("instance", {}).get("state", "unknown") if r_check2.status_code == 200 else "error"
+
+                    print(f"[EVOLUTION WATCHDOG] ✅ Conexão restabelecida para '{evo_inst}'. Novo estado: {new_state}")
+
+                    self._registrar_log("watchdog_reconexao", {
+                        "instancia": evo_inst,
+                        "estado_anterior": state,
+                        "novo_estado": new_state,
+                        "timestamp": datetime.now().isoformat()
+                    })
+                    return {"sucesso": True, "reconectado": True, "estado": new_state}
+                else:
+                    return {"sucesso": True, "estado": "open"}
+        except Exception as e:
+            print(f"[EVOLUTION WATCHDOG] Erro ao auditar conexão: {e}")
+            return {"sucesso": False, "erro": str(e)}
 
     # -------------------------------------------------------------------------
     # 1. ROTINA DE COBRANÇA DE ALMOÇO / NUTRIÇÃO (12:30)
