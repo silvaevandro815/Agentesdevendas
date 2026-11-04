@@ -492,6 +492,12 @@ def publicar_instagram_direto(video_url, caption, postar_stories=True):
 # ORQUESTRADOR PRINCIPAL DO REEL DIÁRIO
 # =============================================================================
 def produzir_reel_diario(tema_id=None, publicar_agora=False):
+    # REGRA INVIOLÁVEL DO DIRETOR EVANDRO GALLINA:
+    # Publicação de vídeos suspensa permanentemente.
+    # O Marcão opera 100% com Carrosséis e Cards estáticos de alta conversão!
+    if publicar_agora:
+        print("[BLOQUEIO DIRETOR EVANDRO] Publicação de vídeos desativada. Marcão posta apenas carrosséis e cards.")
+        publicar_agora = False
     # 1. Seleciona tema por rotação anti-repetição
     tema = selecionar_proximo_tema(tema_id)
 
@@ -629,4 +635,7 @@ if __name__ == "__main__":
     parser.add_argument("--publish", action="store_true", help="Publica no Instagram (Reels + Stories)")
     args = parser.parse_args()
 
-    produzir_reel_diario(tema_id=args.tema, publicar_agora=args.publish)
+    if args.publish:
+        print("[BLOQUEIO DIRETOR EVANDRO] Publicação de vídeos suspensa pelo Diretor Evandro. Marcão posta exclusivamente carrosséis e cards.")
+        sys.exit(0)
+    produzir_reel_diario(tema_id=args.tema, publicar_agora=False)

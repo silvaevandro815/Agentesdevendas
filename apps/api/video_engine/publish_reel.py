@@ -1,3 +1,11 @@
+# =============================================================================
+# REGRA INVIOLÁVEL DO DIRETOR EVANDRO GALLINA: PUBLICAÇÃO DE VÍDEOS DESATIVADA
+# O Marcão Personal posta exclusivamente Carrosséis e Cards no Instagram!
+# =============================================================================
+import sys
+print("[BLOQUEIO DIRETOR EVANDRO] Publicação de vídeos suspensa pelo Diretor Evandro. Marcão posta apenas carrosséis e cards.")
+sys.exit(0)
+
 import os
 import sys
 import time

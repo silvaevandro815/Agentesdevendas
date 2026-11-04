@@ -394,3 +394,10 @@ unpod_open_engine.py: Gerenciador de GPU Serverless para geração de takes 3D h
 - **Repostagem nos Stories:** Reels são postados no Feed e replicados automaticamente nos Stories (postar_stories=True).
 
 - **Blindagem Anti-Duplicação de Follow-ups:** Trava de idempotência diária (`adquirir_trava_deduplicacao`) ativada em `apps/api/marcao_autonomous_cron.py` para impedir qualquer mensagem repetida para o mesmo aluno no mesmo dia. Execução restrita ao container de produção na VPS Linux.
+
+## 23. Decisão Executiva do Diretor Evandro: Desativação de Vídeos no Instagram — 100% Carrosséis e Cards
+- **Suspensão Permanente de Vídeos/Reels:** O workflow `I3 - Publicador de Reels & Stories com IA` foi permanentemente desativado (`active: false`) no N8N na VPS e no repositório. O cron diário de 18:00h para publicação de vídeos foi descarregado da memória.
+- **Publicação Focada em Carrosséis e Cards:** As publicações diárias no Instagram (`@marcaopersonalfitness`) e Stories operam EXCLUSIVAMENTE através do workflow `I2 - Fábrica de Criativos & Publicador Instagram 2x/dia (Marcão)`:
+  * **11:30h (Manhã):** Carrossel de 3 a 5 lâminas com Curiosidades, Fisiologia e Quebra de Mitos (foco na maior alavanca de engajamento do algoritmo: Salvamentos e Compartilhamentos).
+  * **19:30h (Noite):** Carrossel ou Card Estático focado na conversão de produtos (Balança Shopee R$ 34,90, Creatina Micronizada, Whey Protein, Caneta Azempika com modelos grisalhos neutros, Straps e Acessórios).
+- **Travas no Código Python:** `daily_reel_generator.py` e `publish_reel.py` receberam travas executivas automáticas que abortam qualquer tentativa de disparo de vídeo para o Instagram.
