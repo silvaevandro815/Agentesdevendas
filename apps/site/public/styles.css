@@ -2395,9 +2395,15 @@ header {
   box-shadow: 0 6px 25px rgba(37, 211, 102, 0.4);
 }
 
-.btn-secondary-wa svg {
-  width: 18px;
-  height: 18px;
+.btn-secondary-wa svg,
+.pricing-actions svg {
+  width: 18px !important;
+  height: 18px !important;
+  max-width: 18px !important;
+  max-height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
+  flex-shrink: 0 !important;
   fill: #25d366;
 }
 

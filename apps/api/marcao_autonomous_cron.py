@@ -249,9 +249,15 @@ class MarcaoAutonomousScheduler:
             pendencias = await verificar_e_cobrar_alunos_com_dados_pendentes(filtro_aluno=filtro_aluno)
             resultado.extend(pendencias)
 
-            # 2. Para alunos completos, cobra o treino do dia
+            # 2. Para alunos completos, cobra o treino SOMENTE NOS DIAS REAIS DE TREINO DE CADA UM
+            from datetime import timezone, timedelta
+            fuso_br = timezone(timedelta(hours=-3))
+            agora_br = datetime.now(fuso_br)
+            dias_map = {0: "segunda", 1: "terça", 2: "quarta", 3: "quinta", 4: "sexta", 5: "sábado", 6: "domingo"}
+            dia_hoje_norm = dias_map[agora_br.weekday()].lower().replace("terça", "terca").replace("sábado", "sabado")
+
             async with httpx.AsyncClient(verify=False, timeout=12.0) as client:
-                r = await client.get(f"{SUPABASE_URL}/rest/v1/fichas_alunos?select=id,nome,telefone,local_treino,objetivo", headers=headers)
+                r = await client.get(f"{SUPABASE_URL}/rest/v1/fichas_alunos?select=id,nome,telefone,local_treino,objetivo,dias_treino", headers=headers)
                 alunos = r.json() if r.status_code == 200 else []
 
             alunos_com_pendencias = [p.get("telefone") for p in pendencias if p.get("telefone")]
@@ -263,6 +269,12 @@ class MarcaoAutonomousScheduler:
                 if not tel or tel in alunos_com_pendencias or any(b in str(tel) for b in ["85066687", "553285066687"]):
                     continue
                 if filtro_aluno and filtro_aluno not in str(tel) and filtro_aluno.lower() not in nome.lower():
+                    continue
+
+                # REGRA INVIOLÁVEL DO DIRETOR EVANDRO: SOMENTE NOS DIAS REAIS DE TREINO!
+                dias_aluno = [str(d).lower().replace("terça", "terca").replace("sábado", "sabado").strip() for d in (a.get("dias_treino") or [])]
+                if not dias_aluno or dia_hoje_norm not in dias_aluno:
+                    # Hoje NÃO é dia de treino deste aluno. O Marcão respeita o descanso!
                     continue
 
                 # Trava anti-duplicação para cobrança de treino diária

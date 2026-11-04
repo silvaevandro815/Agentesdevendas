@@ -878,6 +878,10 @@ async def obter_dados_portal_aluno(identificador: str) -> Dict[str, Any]:
             "local_treino": local_treino,
             "badge_local": badge_local,
             "restricoes": restricoes,
+            "dias_treino": ficha.get("dias_treino") or [],
+            "dias_treino_display": ", ".join([d.capitalize() for d in (ficha.get("dias_treino") or [])]) if ficha.get("dias_treino") else "A definir com Marcão",
+            "dias_disponiveis_semana": ficha.get("dias_disponiveis_semana") or (len(ficha.get("dias_treino")) if ficha.get("dias_treino") else None),
+            "idade": int(ficha.get("idade")) if ficha.get("idade") else idade,
             "streak_dias": ficha.get("streak_dias") or 1,
             "status_vip": "VIP Ativo",
             "dias_no_protocolo": ficha.get("dias_ativos") or 14,
@@ -912,6 +916,9 @@ async def obter_dados_portal_aluno(identificador: str) -> Dict[str, Any]:
         },
         "rotina_treinos": {
             "tipo_ambiente": tipo_ambiente,
+            "dias_treino": ficha.get("dias_treino") or [],
+            "dias_treino_display": ", ".join([d.capitalize() for d in (ficha.get("dias_treino") or [])]) if ficha.get("dias_treino") else "A definir com Marcão",
+            "dias_disponiveis_semana": ficha.get("dias_disponiveis_semana") or (len(ficha.get("dias_treino")) if ficha.get("dias_treino") else None),
             "dias": rotina_treinos
         },
         "recuperacao_muscular": recuperacao_muscular,

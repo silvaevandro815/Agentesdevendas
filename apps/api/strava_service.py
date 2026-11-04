@@ -225,10 +225,13 @@ async def executar_auditoria_strava_noturna_22h(forcar_dia: str = None, filtro_a
     """
     import httpx
     import asyncio
-    from datetime import datetime, time as dtime
+    from datetime import datetime, timezone, timedelta, time as dtime
+
+    # FUSO HORÁRIO DE BRASÍLIA OBRIGATÓRIO (UTC-3)
+    FUSO_BR = timezone(timedelta(hours=-3))
+    agora = datetime.now(FUSO_BR)
 
     dias_map = {0: "segunda", 1: "terça", 2: "quarta", 3: "quinta", 4: "sexta", 5: "sábado", 6: "domingo"}
-    agora = datetime.now()
     dia_hoje = (forcar_dia or dias_map[agora.weekday()]).lower()
 
     # Normalizador para conferência robusta (sem acentos)
@@ -237,8 +240,8 @@ async def executar_auditoria_strava_noturna_22h(forcar_dia: str = None, filtro_a
 
     dia_hoje_norm = normalizar_dia(dia_hoje)
 
-    # Início do dia atual em epoch para filtrar treinos de hoje
-    hoje_inicio_epoch = int(datetime.combine(agora.date(), dtime.min).timestamp())
+    # Início do dia atual em epoch (Brasília) para filtrar treinos de hoje
+    hoje_inicio_epoch = int(datetime.combine(agora.date(), dtime.min, tzinfo=FUSO_BR).timestamp())
 
     evo_url = os.getenv("EVOLUTION_API_URL", "https://evolution.marcaopersonal.com")
     evo_key = os.getenv("EVOLUTION_API_KEY", "")
@@ -286,15 +289,19 @@ async def executar_auditoria_strava_noturna_22h(forcar_dia: str = None, filtro_a
         dias_disp = ficha.get("dias_disponiveis_semana") or 0
         local_treino = ficha.get("local_treino") or ""
 
-        # REGRA MANDATÓRIA: SOMENTE NOS DIAS DE TREINO DO ALUNO!
-        # Se os dias específicos estiverem cadastrados, checa se hoje é dia de treino dele
-        eh_dia_de_treino = dia_hoje_norm in dias_treino_cadastrados
+        # REGRA INVIOLÁVEL DO DIRETOR EVANDRO: PROIBIDO ADIVINHAR OU INVENTAR DIAS DE TREINO!
+        # Se o aluno não cadastrou explicitamente os dias de treino, eh_dia_de_treino é estritamente False.
+        # Marcão NUNCA cobra ou afirma que o aluno ficou de treinar sem ter os dias confirmados.
+        if not dias_treino_cadastrados:
+            relatorio_execucao["alunos_em_descanso_ignorados"] += 1
+            relatorio_execucao["alunos_auditados"].append({
+                "aluno": nome,
+                "status": "sem_dias_definidos",
+                "detalhes": f"Aluno {nome} ainda não definiu dias exatos de treino. Nenhuma cobrança enviada."
+            })
+            continue
 
-        # Se não tiver dias específicos fixados na lista, mas o aluno treina 3+ dias na semana e treina hoje:
-        if not dias_treino_cadastrados and dias_disp >= 3:
-            # Padrão clássico: Segunda, Quarta, Sexta (ou Sexta, Sábado, Domingo)
-            dias_padrao = ["segunda", "quarta", "sexta"] if dias_disp == 3 else ["segunda", "terca", "quarta", "quinta", "sexta"]
-            eh_dia_de_treino = dia_hoje_norm in dias_padrao
+        eh_dia_de_treino = dia_hoje_norm in dias_treino_cadastrados
 
         if not eh_dia_de_treino:
             # Descanso do aluno: Marcão NÃO incomoda!

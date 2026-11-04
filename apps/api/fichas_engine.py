@@ -15,6 +15,43 @@ load_dotenv(os.path.join(_base_dir, ".env"), override=True)
 load_dotenv(os.path.join(_base_dir, "..", "..", ".env"))
 load_dotenv()
 
+
+def extrair_dias_semana_regex(texto: str) -> list:
+    """Extrai com precisão cirúrgica os dias de treino declarados pelo aluno em português."""
+    if not texto:
+        return []
+    t = texto.lower()
+    
+    # Intervalos explícitos (ex: de segunda a sexta)
+    if re.search(r'segunda\s+a\s+sexta', t):
+        return ['segunda', 'terca', 'quarta', 'quinta', 'sexta']
+    if re.search(r'segunda\s+a\s+s[aá]bado', t):
+        return ['segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado']
+    if re.search(r'segunda\s+a\s+quinta', t):
+        return ['segunda', 'terca', 'quarta', 'quinta']
+    
+    dias = []
+    padroes = [
+        ('segunda', r'\b(?:segunda(?:-feira)?|segundas|seg)\b'),
+        ('terca', r'\b(?:ter[cç]a(?:-feira)?|ter[cç]as|ter)\b'),
+        ('quarta', r'\b(?:quarta(?:-feira)?|quartas|qua)\b'),
+        ('quinta', r'\b(?:quinta(?:-feira)?|quintas|qui)\b'),
+        ('sexta', r'\b(?:sexta(?:-feira)?|sextas|sex)\b'),
+        ('sabado', r'\b(?:s[aá]bado|s[aá]bados|sab)\b'),
+        ('domingo', r'\b(?:domingo|domingos|dom)\b'),
+    ]
+    
+    for dia_nome, pat in padroes:
+        if re.search(pat, t) and dia_nome not in dias:
+            dias.append(dia_nome)
+            
+    if re.search(r'\b(?:fim|final)\s+de\s+semana\b', t):
+        for d in ['sabado', 'domingo']:
+            if d not in dias:
+                dias.append(d)
+                
+    return dias
+
 SUPABASE_URL = os.getenv("SUPABASE_URL", "https://qkopgftfrfftoyndhhfj.supabase.co")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
@@ -1477,8 +1514,12 @@ async def extrair_dados_reais_anamnese(texto_aluno: str, ficha_atual: dict = Non
         elif any(w in txt_low for w in ["na academia", "academia", "gym", "smart fit", "musculação"]):
             dados_extraidos["local_treino"] = "academia"
 
-    # 5. Dias na semana
-    if dados_extraidos.get("dias_disponiveis_semana") is None:
+    # 5. Dias de treino da semana (extração determinística)
+    dias_detectados = extrair_dias_semana_regex(texto_aluno)
+    if dias_detectados:
+        dados_extraidos["dias_treino"] = dias_detectados
+        dados_extraidos["dias_disponiveis_semana"] = len(dias_detectados)
+    elif dados_extraidos.get("dias_disponiveis_semana") is None:
         dias_m = re.search(r'(\d+)\s*(?:dias|x|vezes)\s*(?:na|por|semana)?', txt_low)
         if dias_m and int(dias_m.group(1)) in range(1, 8):
             dados_extraidos["dias_disponiveis_semana"] = int(dias_m.group(1))
@@ -1534,7 +1575,10 @@ async def atualizar_ficha_com_dados_extraidos(remote_jid: str, texto_aluno: str)
                 patch_data["local_treino"] = extraidos["local_treino"]
             if extraidos.get("equipamentos_casa"):
                 metas_patch["equipamentos_casa"] = extraidos["equipamentos_casa"]
-            if extraidos.get("dias_disponiveis_semana"):
+            if extraidos.get("dias_treino"):
+                patch_data["dias_treino"] = extraidos["dias_treino"]
+                patch_data["dias_disponiveis_semana"] = len(extraidos["dias_treino"])
+            elif extraidos.get("dias_disponiveis_semana"):
                 patch_data["dias_disponiveis_semana"] = extraidos["dias_disponiveis_semana"]
             if extraidos.get("tempo_treino_min"):
                 metas_patch["tempo_treino_min"] = extraidos["tempo_treino_min"]

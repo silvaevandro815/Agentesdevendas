@@ -1804,6 +1804,21 @@
         Ficha de Treino Dinâmica (OpenGym)
       </h2>
     </div>
+
+    <!-- BANNER DE DIAS OFICIAIS DE TREINO DO ALUNO -->
+    <div id="workoutScheduleBanner" style="background: rgba(0, 229, 255, 0.08); border: 1.5px solid rgba(0, 229, 255, 0.35); border-radius: 16px; padding: 14px 18px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; box-shadow: 0 4px 20px rgba(0, 229, 255, 0.1);">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 1.4rem;">📅</span>
+        <div>
+          <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--neon-cyan); font-weight: 800; letter-spacing: 0.6px;">Seus Dias Oficiais de Treino na Ficha</div>
+          <div id="workoutScheduleDays" style="font-size: 1.02rem; font-weight: 800; color: #ffffff; margin-top: 2px;">Carregando dias...</div>
+        </div>
+      </div>
+      <div id="workoutScheduleBadge" style="background: rgba(0, 255, 136, 0.15); border: 1px solid rgba(0, 255, 136, 0.4); color: var(--neon-green); font-size: 0.80rem; font-weight: 800; padding: 5px 12px; border-radius: 20px; white-space: nowrap;">
+        3x na Semana
+      </div>
+    </div>
+
     <div class="workout-tabs-nav" id="workoutTabsNav">
       <!-- Inserido dinamicamente via JS -->
     </div>
@@ -2108,6 +2123,19 @@
 
         // 4. Treinos (Abas e Exercícios estilo OpenGym com Registro Diário)
         window.portalData = data;
+
+        // Atualiza banner de dias oficiais de treino
+        const alunoInfo = data.aluno || {};
+        const rotinaObj = data.rotina_treinos || {};
+        const rawDiasTreino = alunoInfo.dias_treino || rotinaObj.dias_treino || [];
+        const diasDisplay = alunoInfo.dias_treino_display || rotinaObj.dias_treino_display || (rawDiasTreino.length > 0 ? rawDiasTreino.map(d => d.charAt(0).toUpperCase() + d.slice(1)).join(', ') : 'A definir com o Marcão');
+        const qtdDiasSemana = alunoInfo.dias_disponiveis_semana || rotinaObj.dias_disponiveis_semana || (rawDiasTreino.length > 0 ? rawDiasTreino.length : null);
+
+        const elSchedDays = document.getElementById('workoutScheduleDays');
+        const elSchedBadge = document.getElementById('workoutScheduleBadge');
+        if (elSchedDays) elSchedDays.textContent = diasDisplay;
+        if (elSchedBadge) elSchedBadge.textContent = qtdDiasSemana ? `${qtdDiasSemana}x na Semana` : 'Frequência Personalizada';
+
         const rotina = data.rotina_treinos.dias || [];
         const tabsNav = document.getElementById('workoutTabsNav');
         const container = document.getElementById('workoutContainer');
