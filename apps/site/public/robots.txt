@@ -1,0 +1,45 @@
+# Robots.txt Oficial — Marcão Personal AI (https://marcaopersonal.com)
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /uploads/avatars/
+
+# Motores de Busca e Rastreadores de IA (Generative Engine Optimization - GEO)
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: FacebookBot
+Allow: /
+
+# Sitemap Oficial Validado (Apenas URLs oficiais do domínio marcaopersonal.com)
+Sitemap: https://marcaopersonal.com/sitemap.xml

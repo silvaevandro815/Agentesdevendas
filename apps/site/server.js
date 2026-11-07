@@ -314,6 +314,31 @@ app.get('/api/whatsapp/status', async (req, res) => {
   return res.status(500).json({ sucesso: false, erro: 'Erro consultando status do WhatsApp' });
 });
 
+// ============================================================================
+// SEO & AI Search Engine (GEO) Endpoints
+// ============================================================================
+
+// Sitemap Oficial para Google Search Console, Bing e Motores de Busca
+app.get('/sitemap.xml', (req, res) => {
+  res.setHeader('Content-Type', 'application/xml; charset=UTF-8');
+  res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600');
+  res.sendFile(path.join(__dirname, 'public', 'sitemap.xml'));
+});
+
+// Robots.txt com liberacao para Googlebot e Rastreadores de IA (GPTBot, ClaudeBot, Perplexity)
+app.get('/robots.txt', (req, res) => {
+  res.setHeader('Content-Type', 'text/plain; charset=UTF-8');
+  res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600');
+  res.sendFile(path.join(__dirname, 'public', 'robots.txt'));
+});
+
+// LLMs.txt para Motores de Busca Generativa (GEO - Generative Engine Optimization)
+app.get(['/llms.txt', '/llms-full.txt'], (req, res) => {
+  res.setHeader('Content-Type', 'text/plain; charset=UTF-8');
+  res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600');
+  res.sendFile(path.join(__dirname, 'public', 'llms.txt'));
+});
+
 // Redirecionamento SPA / fallback seguro
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
