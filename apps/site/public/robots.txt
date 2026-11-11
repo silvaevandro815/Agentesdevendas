@@ -4,11 +4,21 @@ Allow: /
 Disallow: /api/
 Disallow: /uploads/avatars/
 
-# Motores de Busca e Rastreadores de IA (Generative Engine Optimization - GEO)
+# Motores de Busca Tradicionais & Pesquisa com IA (Google, Bing)
 User-agent: Googlebot
 Allow: /
 
+User-agent: Google-Extended
+Allow: /
+
+User-agent: GoogleOther
+Allow: /
+
 User-agent: Bingbot
+Allow: /
+
+# Motores de Busca de IA Conversacional & GEO (OpenAI, ChatGPT, SearchGPT)
+User-agent: OAI-SearchBot
 Allow: /
 
 User-agent: GPTBot
@@ -17,25 +27,29 @@ Allow: /
 User-agent: ChatGPT-User
 Allow: /
 
+# Anthropic (Claude & Claude Search)
 User-agent: ClaudeBot
 Allow: /
 
 User-agent: Claude-Web
 Allow: /
 
+# Perplexity AI Engine
 User-agent: PerplexityBot
 Allow: /
 
-User-agent: Google-Extended
-Allow: /
-
+# Apple Intelligence & Siri AI
 User-agent: Applebot
 Allow: /
 
 User-agent: Applebot-Extended
 Allow: /
 
+# Amazon & Meta AI Agents
 User-agent: Amazonbot
+Allow: /
+
+User-agent: Meta-ExternalAgent
 Allow: /
 
 User-agent: FacebookBot
