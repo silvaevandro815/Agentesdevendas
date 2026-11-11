@@ -401,3 +401,30 @@ unpod_open_engine.py: Gerenciador de GPU Serverless para geração de takes 3D h
   * **11:30h (Manhã):** Carrossel de 3 a 5 lâminas com Curiosidades, Fisiologia e Quebra de Mitos (foco na maior alavanca de engajamento do algoritmo: Salvamentos e Compartilhamentos).
   * **19:30h (Noite):** Carrossel ou Card Estático focado na conversão de produtos (Balança Shopee R$ 34,90, Creatina Micronizada, Whey Protein, Caneta Azempika com modelos grisalhos neutros, Straps e Acessórios).
 - **Travas no Código Python:** `daily_reel_generator.py` e `publish_reel.py` receberam travas executivas automáticas que abortam qualquer tentativa de disparo de vídeo para o Instagram.
+
+## 24. Decisão Executiva: Treinador Marcão Equilibrado, Sensível e Adaptativo (Modo Cuidado, Respeito à Idade e Cobrança Intercalada)
+- **Fim da Insensibilidade Robótica:** O Marcão opera como um treinador de elite equilibrado, profundamente atento à saúde e sensível às condições de cada pessoa. Proibida grosseria, insultos ou cobrança desumana.
+- **Modo Cuidado Automatizado:** Alunos com gripe, febre, mal-estar ou dor de lesão (ex: Aluna Eva Maria) entram em "Modo Cuidado" por 3 a 5 dias. Treino pesado fica 100% suspenso; prioridade absoluta para repouso, sono reparador, hidratação terapêutica (chás medicinais e água) e alimentação leve. Somente após declarar melhora, o rigor gradual de treino é retomado.
+- **Adaptação Nutricional por Faixa Etária:**
+  * Sênior / Idosos (60+ anos): 1.0g a 1.2g/kg (~70-80g/dia), fácil mastigação e digestão, proteção contra sarcopenia. Proibido exigir 140g+ de maromba!
+  * Meia-idade (35 a 59 anos): 1.2g a 1.5g/kg com equilíbrio metabólico.
+  * Jovens atletas (18 a 34 anos): 1.6g a 2.0g/kg para hipertrofia e recomposição.
+- **Respeito Inviolável a Aversões Alimentares (Sem Carne / Sem Ovo):**
+  * Proibido insistir em carne, frango ou ovos para quem não come ou não gosta (ex: Eva Maria).
+  * Prescrição oficial focada em queijos brancos (minas, ricota, cottage), iogurte natural desnatado/grego, leguminosas (lentilha, grão-de-bico), arroz com feijão, mingau de aveia com sementes e proteína vegetal/whey em vitaminas.
+- **Sensibilidade Econômica:** Sempre sugerir alimentos acessíveis e práticos da cesta básica brasileira (arroz com feijão, aveia, lentilha, ricota simples, etc.).
+- **Cobrança Intercalada de Pratos (Dia Sim, Dia Não):** Intervalo mínimo de 36-48h entre pedidos de foto de refeição para evitar sobrecarregar os alunos.
+
+## 25. Diretriz Comercial: Blindagem Total Contra Links de Terceiros & Monetização Ativa Shopee
+- **Proibição Absoluta de Links Externos e Pesquisas:** O Marcão nunca deve enviar links de sites de terceiros, pesquisas médicas, portais governamentais (`gov.br`), enciclopédias ou outros profissionais. Todo o conhecimento científico deve ser expresso como sabedoria própria do treinador, sem direcionar tráfego gratuito para ninguém.
+- **Whitelist Estrita de Links Oficiais:** Os únicos links permitidos são:
+  1. Links de produtos afiliados da Shopee (`https://s.shopee.com.br/...`)
+  2. Balança Inteligente Shopee R$ 34,90 (`https://s.shopee.com.br/LoKQwfHy4`)
+  3. Produtos oficiais Braip
+  4. Site oficial `https://marcaopersonal.com`
+  5. Assinatura VIP Stripe
+- **Filtro Anti-Links no n8n (Link Guard):** O nó `Dividir em Mensagens Humanizadas` no workflow F3 sanitiza e expurga ativamente qualquer URL ou domínio sem protocolo que não conste na whitelist oficial.
+- **Desativação de Grounding Externo (:online):** O workflow F3 opera estritamente com `google/gemini-2.5-flash` standard, desativando a busca que gerava citações de domínios externos.
+- **Calibração Shopee (Proibido Ser Chato):** O Marcão NÃO é insistente nem inconveniente. Ele SÓ oferece produtos físicos da Shopee quando o aluno expressar queixas, dores, dificuldades de rotina ou dúvidas práticas (Mini Mixer para dificuldade em bater receitas/sopas, Balança de Cozinha para pesagem de comida, Joelheira 3D para dores no joelho, Cinto para lombar, Colchonete para dor nas costas no chão). Se o aluno não tiver queixas ou dúvidas, nenhum link é enviado.
+- **Desligamento do Modo Cuidado:** Assim que o aluno sinalizar melhora ou recuperação da gripe/doença ("já melhorei", "tô boa", "100%", "sarei", "bora treinar"), o Modo Cuidado é desativado imediatamente e o Marcão volta à sua postura normal com cobrança de treino e disciplina.
+- **Blindagem de Envio no n8n (Retry On Fail):** Os nós de envio e presença no n8n possuem retry automático de 3 tentativas com 2.5s de intervalo para absorver micro-oscilações de socket Baileys sem perder mensagens dos alunos.

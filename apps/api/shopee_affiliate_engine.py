@@ -205,138 +205,219 @@ async def gerar_link_afiliado_shopee(url_original: str, sub_id: Optional[str] = 
 
 # -----------------------------------------------------------------------------
 # MAPEAMENTO DINÂMICO DE DORES E NECESSIDADES PARA PRODUTOS SHOPEE
+# REGRA DE OURO: ALIASES DEVEM CONTER QUEIXAS, DORES, DIFICULDADES OU DÚVIDAS REAIS!
+# NUNCA USAR TERMOS COMUNS ISOLADOS (ex: "sopa", "graos", "cha", "agua", "ombro", "chao")
 # -----------------------------------------------------------------------------
 MAPA_DORES_SHOPEE = {
-    # 1. Biomecânica & Articulações
+    # 1. Biomecânica, Articulações & Dores Físicas
     "joelho": {
-        "aliases": ["joelho", "patela", "estalando o joelho", "dor no joelho", "menisco"],
-        "termo_busca": "joelheira compressao crossfit",
+        "aliases": ["dor no joelho", "joelho doendo", "joelho estalando", "patela doendo", "dor ao agachar", "menisco doendo", "joelho machucado", "pontada no joelho"],
+        "termo_busca": "joelheira compressao crossfit 3d",
         "motivo": "estabilizar a patela, aquecer a articulação e eliminar o atrito nos agachamentos",
-        "estudo": "a compressão térmica e elástica reduz a sobrecarga tendínea em até 35%"
+        "estudo": "a compressão térmica e elástica reduz a sobrecarga tendínea em até 35%",
+        "gatilhos_a": ["joelho", "patela", "menisco"],
+        "gatilhos_b": ["dor", "doendo", "doi", "dói", "incomod", "machuc", "estala", "agachar"]
     },
     "lombar": {
-        "aliases": ["lombar", "dor na lombar", "coluna", "pinçando a lombar"],
-        "termo_busca": "cinto musculacao lombar",
+        "aliases": ["dor na lombar", "lombar doendo", "coluna doendo", "dor na coluna", "pincando a lombar", "pinçando a lombar", "pesado na lombar", "lombar travada"],
+        "termo_busca": "cinto musculacao lombar couro",
         "motivo": "aumentar a pressão intra-abdominal e blindar a coluna contra hérnias em cargas pesadas",
-        "estudo": "o cinturão reduz em até 40% a compressão dos discos vertebrais no levantamento terra"
-    },
-    "costas": {
-        "aliases": ["costas", "dorsal", "escapula"],
-        "termo_busca": "cinto musculacao agachamento",
-        "motivo": "suporte de sustentação e estabilidade central nos treinos de força",
-        "estudo": "estabilidade postural máxima"
+        "estudo": "o cinturão reduz em até 40% a compressão dos discos vertebrais no levantamento terra",
+        "gatilhos_a": ["lombar", "coluna"],
+        "gatilhos_b": ["dor", "doendo", "doi", "dói", "incomod", "pesad", "travad", "pinc", "pinç", "terra"]
     },
     "ombro": {
-        "aliases": ["ombro", "manguito", "dor no ombro", "supino doendo"],
-        "termo_busca": "faixa elastica manguito",
+        "aliases": ["dor no ombro", "ombro doendo", "manguito doendo", "supino doendo", "dor no supino", "ombro estalando", "pontada no ombro"],
+        "termo_busca": "faixa elastica manguito rotador",
         "motivo": "fortalecimento e aquecimento do manguito rotador antes do supino",
-        "estudo": "ativação preventiva reduz em 80% o risco de impacto subacromial"
+        "estudo": "ativação preventiva reduz em 80% o risco de impacto subacromial",
+        "gatilhos_a": ["ombro", "manguito"],
+        "gatilhos_b": ["dor", "doendo", "doi", "dói", "incomod", "supino", "estala", "pontada"]
     },
     "punho": {
-        "aliases": ["punho", "pulso", "dor no punho", "aberto o punho"],
+        "aliases": ["dor no punho", "punho doendo", "dor no pulso", "pulso doendo", "aberto o punho", "punho aberto", "pulso estalando"],
         "termo_busca": "munhequeira elastica musculacao",
         "motivo": "evitar a hiperextensão do punho no supino reto e desenvolvimento militar",
-        "estudo": "estabilidade articular e transmissão direta de força para a barra"
+        "estudo": "estabilidade articular e transmissão direta de força para a barra",
+        "gatilhos_a": ["punho", "pulso"],
+        "gatilhos_b": ["dor", "doendo", "doi", "dói", "incomod", "abert", "estala"]
     },
     "cotovelo": {
-        "aliases": ["cotovelo", "epicondilite", "triceps doendo"],
+        "aliases": ["dor no cotovelo", "cotovelo doendo", "epicondilite", "triceps doendo o cotovelo"],
         "termo_busca": "cotoveleira compressao musculacao",
         "motivo": "prevenção de epicondilite nos treinos pesados de tríceps e peito",
-        "estudo": "compressão térmica melhora a circulação local e absorve o impacto"
+        "estudo": "compressão térmica melhora a circulação local e absorve o impacto",
+        "gatilhos_a": ["cotovelo", "epicondilite"],
+        "gatilhos_b": ["dor", "doendo", "doi", "dói", "incomod", "triceps", "tríceps"]
     },
     "pegada": {
-        "aliases": ["pegada", "mao abrindo", "antebraço", "antepraco", "falha na pegada", "strap"],
+        "aliases": ["mao abrindo", "mão abrindo", "falha na pegada", "escorregando a barra", "barra escorrega", "barra escorregando", "strap"],
         "termo_busca": "strap musculacao peso",
         "motivo": "eliminar a falha do antebraço para esmagar as dorsais com carga máxima",
-        "estudo": "permite realizar 3 a 5 repetições extras sem abrir a mão"
+        "estudo": "permite realizar 3 a 5 repetições extras sem abrir a mão",
+        "gatilhos_a": ["pegada", "antebraço", "antepraco", "barra"],
+        "gatilhos_b": ["falha", "abrindo", "escorrega", "escorregando", "soltando", "strap"]
     },
     "calos": {
-        "aliases": ["calo", "calos", "mao doendo", "mao machucada", "luva", "caleira"],
-        "termo_busca": "luva musculacao academia",
+        "aliases": ["calo na mao", "calos na mao", "mao calejada", "mão cheia de calo", "rasgando a mao", "machucando a mao"],
+        "termo_busca": "luva musculacao academia com munhequeira",
         "motivo": "proteger as palmas das mãos contra calos e melhorar a aderência na barra",
-        "estudo": "antiderrapante com proteção na palma"
+        "estudo": "antiderrapante com proteção na palma",
+        "gatilhos_a": ["calo", "calos", "calejada"],
+        "gatilhos_b": ["dor", "doendo", "rasg", "machuc", "mao", "mão", "luva"]
     },
 
-    # 2. Treino em Casa, Viagens e Aeróbico
+    # 2. Treino em Casa, Viagens e Aeróbico (Queixas e Dúvidas)
     "elastico": {
-        "aliases": ["elastico", "extensor", "mini band", "treinar em casa", "treino em casa", "viajar", "viagem"],
+        "aliases": ["como treinar em casa", "nao tenho peso em casa", "sem equipamento em casa", "vou viajar e nao quero parar", "treinar no hotel"],
         "termo_busca": "kit elastico extensor musculacao",
         "motivo": "permitir treino com tensão contínua progressiva em qualquer lugar sem depender de academia",
-        "estudo": "a tensão elástica gera hipertrofia mecânica equivalente aos pesos livres"
+        "estudo": "a tensão elástica gera hipertrofia mecânica equivalente aos pesos livres",
+        "gatilhos_a": ["treinar em casa", "sem equipamento", "viajar", "hotel"],
+        "gatilhos_b": ["como", "nao tenho", "não tenho", "qual elastico", "onde comprar"]
     },
     "corda": {
-        "aliases": ["corda", "pular corda", "cardio em casa", "aerobico rapido"],
-        "termo_busca": "corda pular crossfit",
+        "aliases": ["cardio rapido em casa", "como fazer cardio em casa", "pular corda em casa"],
+        "termo_busca": "corda pular crossfit rolamento",
         "motivo": "manter o condicionamento aeróbico e gasto calórico em qualquer hotel ou parque",
-        "estudo": "15 minutos de corda equivalem a 30 minutos de corrida moderada"
+        "estudo": "15 minutos de corda equivalem a 30 minutos de corrida moderada",
+        "gatilhos_a": ["cardio", "pular corda"],
+        "gatilhos_b": ["como fazer", "em casa", "onde comprar", "qual corda"]
     },
 
-    # 3. Performance, Hidratação, Visão e Acessórios
-    "garrafa": {
-        "aliases": ["garrafa", "agua", "hidratacao", "sede", "garrafao"],
-        "termo_busca": "garrafa termica academia",
-        "motivo": "bater a meta hídrica de 35ml a 40ml por kg com água gelada o treino inteiro",
-        "estudo": "desidratação de apenas 2% derruba a força muscular em mais de 15%"
-    },
-    "celular": {
-        "aliases": ["celular", "suporte", "gravar treino", "filmar execucao", "tripe"],
-        "termo_busca": "suporte celular ima academia",
-        "motivo": "gravar a execução dos exercícios para eu analisar a sua biomecânica e corrigir a postura",
-        "estudo": "o feedback visual acelera o aprendizado motor e previne lesões"
-    },
+    # 3. Assaduras, Suor & Acessórios Funcionais
     "roupa_termica": {
-        "aliases": ["suor", "assadura", "segunda pele", "roupa de treino", "termica"],
+        "aliases": ["assadura de suor", "muito suor na roupa", "camisa encharcada incomoda", "assando com o suor"],
         "termo_busca": "camiseta termica compressao dry fit",
         "motivo": "absorção rápida do suor, conforto térmico e suporte muscular sem assaduras",
-        "estudo": "melhora a oxigenação muscular e a dissipação de calor"
+        "estudo": "melhora a oxigenação muscular e a dissipação de calor",
+        "gatilhos_a": ["suor", "assadura"],
+        "gatilhos_b": ["muito", "incomoda", "encharcada", "assando", "onde comprar", "qual"]
     },
     "bermuda": {
-        "aliases": ["bermuda", "coxa assando", "short compressao"],
-        "termo_busca": "bermuda compressao academia",
+        "aliases": ["coxa assando", "coxa roçando", "assadura na virilha", "short machucando a coxa"],
+        "termo_busca": "bermuda compressao academia com bolso",
         "motivo": "evitar o atrito interno das coxas e dar sustentação ao quadríceps",
-        "estudo": "zero fricção na pele e suporte venoso"
+        "estudo": "zero fricção na pele e suporte venoso",
+        "gatilhos_a": ["coxa", "virilha"],
+        "gatilhos_b": ["assando", "rocando", "roçando", "assadura", "machucando", "qual bermuda"]
     },
     "tenis": {
-        "aliases": ["tenis", "calcado", "sapato", "agachamento reto", "pe descalco"],
+        "aliases": ["qual tenis para agachar", "tenis escorregando", "qual calcado para musculacao", "sapato reto para agachar", "qual tênis usar no treino"],
         "termo_busca": "tenis sola reta academia",
         "motivo": "base estável de apoio com sola reta para transmitir força nos agachamentos",
-        "estudo": "sola plana aumenta o torque nos calcanhares em até 22%"
+        "estudo": "sola plana aumenta o torque nos calcanhares em até 22%",
+        "gatilhos_a": ["tenis", "tênis", "calcado", "calçado"],
+        "gatilhos_b": ["qual", "onde comprar", "escorregando", "agachar", "musculacao"]
     },
-    "mochila": {
-        "aliases": ["mochila", "bolsa de treino", "levar marmita", "mala academia"],
-        "termo_busca": "mochila academia impermeavel",
-        "motivo": "organizar marmitas, straps, garrafa e roupa de treino no dia a dia",
-        "estudo": "organização diária elimina faltas nos treinos"
+    "celular": {
+        "aliases": ["onde apoiar o celular", "nao tenho onde por o celular", "dificuldade de filmar a execucao", "suporte de celular academia"],
+        "termo_busca": "suporte celular ima academia",
+        "motivo": "gravar a execução dos exercícios para eu analisar a sua biomecânica e corrigir a postura",
+        "estudo": "o feedback visual acelera o aprendizado motor e previne lesões",
+        "gatilhos_a": ["celular"],
+        "gatilhos_b": ["onde apoiar", "nao tenho onde", "dificuldade de filmar", "suporte", "onde comprar"]
     },
 
-    # 4. Monitoramento & Balança
+    # 4. Monitoramento & Balança de Bioimpedância
     "balanca": {
-        "aliases": ["balanca", "bioimpedancia", "pesar", "gordura corporal", "balanca inteligente"],
+        "aliases": ["qual balanca de bioimpedancia", "quero comprar a balanca", "onde compro a balanca", "link da balanca", "como medir percentual de gordura", "como vejo minha gordura visceral"],
         "termo_busca": "balanca bioimpedancia bluetooth",
         "motivo": "medir 13 biomarcadores clínicos (gordura visceral, massa muscular, água) e ativar a mentoria VIP",
-        "estudo": "o peso isolado mente; o que importa é a composição de gordura visceral e massa magra"
+        "estudo": "o peso isolado mente; o que importa é a composição de gordura visceral e massa magra",
+        "gatilhos_a": ["balanca", "balança", "bioimpedancia", "bioimpedância", "gordura corporal", "gordura visceral"],
+        "gatilhos_b": ["onde comprar", "qual comprar", "link", "quanto custa", "como medir", "como ver minha gordura", "comprar a balanca"]
+    },
+
+    # 5. Cozinha Fit, Receitas & Utensílios de Nutrição (Apenas Dificuldades e Dúvidas Reais)
+    "mixer": {
+        "aliases": ["dificuldade de bater", "como bater a sopa", "nao consigo bater", "empelota tudo", "fica empelotado", "dificil de misturar", "nao tenho liquidificador", "como triturar os graos", "como triturar", "qual mixer comprar", "onde comprar mixer"],
+        "termo_busca": "mini mixer eletrico portatil",
+        "motivo": "triturar grãos, preparar sopas cremosas, bater claras, mingaus e shakes proteicos em segundos sem sujeira",
+        "estudo": "praticidade no preparo aumenta a adesão à dieta em mais de 70%",
+        "gatilhos_a": ["bater", "triturar", "misturar", "mixer", "sopa", "graos", "grãos", "shake", "mingau"],
+        "gatilhos_b": ["dificil", "difícil", "dificuldade", "nao consigo", "não consigo", "empelota", "sem liquidificador", "onde comprar", "qual comprar", "como triturar", "como bater"]
+    },
+    "balanca_cozinha": {
+        "aliases": ["como pesar a comida", "nao sei quantas gramas", "nao tenho balanca de comida", "como sei a quantidade de arroz", "como sei o peso do frango", "duvida no peso da porcao", "qual balanca de cozinha", "onde comprar balanca de cozinha"],
+        "termo_busca": "balanca digital cozinha alta precisao",
+        "motivo": "pesar porções com precisão cirúrgica de gramas para nunca errar nos carboidratos e proteínas",
+        "estudo": "pesar a comida garante 100% de precisão calórica e acelera o resultado metabólico",
+        "gatilhos_a": ["pesar", "balanca", "balança", "gramas", "peso"],
+        "gatilhos_b": ["como", "nao sei", "não sei", "duvida", "dúvida", "qual comprar", "onde comprar", "porcao", "porção", "comida", "alimento", "frango", "arroz"]
+    },
+    "infusor_cha": {
+        "aliases": ["onde comprar infusor", "qual infusor", "como coar o cha", "folhas soltas no cha", "como filtrar o cha", "engolindo folha de cha", "como fazer a infusao"],
+        "termo_busca": "infusor cha inox",
+        "motivo": "preparar seus chás medicinais e infusões terapêuticas sem bagunça e com máxima absorção",
+        "estudo": "infusão correta preserva até 90% dos flavonoides e antioxidantes",
+        "gatilhos_a": ["cha", "chá", "infusao", "infusão", "infusor"],
+        "gatilhos_b": ["coar", "filtrar", "folha", "onde comprar", "qual comprar", "como fazer", "infusor", "engolindo"]
+    },
+    "frigideira_fit": {
+        "aliases": ["grudando na frigideira", "gruda tudo sem oleo", "minha frigideira gruda", "comida grudando", "qual frigideira nao gruda", "onde comprar frigideira antiaderente"],
+        "termo_busca": "frigideira antiaderente ceramica",
+        "motivo": "preparar ovos, panquecas fit e omeletes com zero óleo e sem grudar absolutamente nada",
+        "estudo": "eliminar óleo vegetal reduz até 150 kcal desnecessárias por refeição",
+        "gatilhos_a": ["frigideira", "antiaderente"],
+        "gatilhos_b": ["gruda", "grudando", "oleo", "óleo", "ovo", "panqueca", "onde comprar", "qual comprar", "sem oleo"]
+    },
+    "colchonete": {
+        "aliases": ["chao duro machuca", "machuca as costas no chao", "machuca o coccix", "dor nas costas ao deitar no chao", "chao machuca meu osso", "onde comprar colchonete", "qual colchonete"],
+        "termo_busca": "colchonete academia eva",
+        "motivo": "proteger sua coluna, cóccix e joelhos nos exercícios de solo, prancha e alongamento",
+        "estudo": "o amortecimento articular previne bursites e dores ósseas por pressão direta",
+        "gatilhos_a": ["chao", "chão", "colchonete"],
+        "gatilhos_b": ["duro", "machuca", "dor nas costas", "coccix", "cóccix", "colchonete", "onde comprar", "qual comprar", "ao deitar"]
+    },
+    "rolo_miofascial": {
+        "aliases": ["musculo muito travado", "nodulo muscular", "no muscular", "como fazer liberacao miofascial", "muita dor muscular pos treino", "qual rolo de liberacao", "onde compro rolo"],
+        "termo_busca": "rolo liberacao miofascial eva",
+        "motivo": "soltar os pontos de tensão muscular, melhorar a mobilidade e acelerar a recuperação pós-treino",
+        "estudo": "a liberação miofascial aumenta o fluxo sanguíneo local e reduz a dor tardia em 40%",
+        "gatilhos_a": ["liberacao", "liberação", "miofascial", "rolo", "musculo", "músculo"],
+        "gatilhos_b": ["travado", "travada", "nodulo", "nódulo", "no muscular", "muita dor muscular", "soltar a musculatura", "onde comprar", "qual comprar"]
     }
 }
 
 
 async def prescrever_produto_autonomo(mensagem_aluno: str, sub_id: str = "aluno") -> Optional[Dict[str, Any]]:
     """
-    Analisa a mensagem do aluno e prescreve o produto ideal da Shopee com link de afiliado,
-    pitch personalizado de treinador e decomposição do custo por dia.
+    Analisa a mensagem do aluno e prescreve o produto ideal da Shopee com link de afiliado.
+    REGRA INVIOLÁVEL: O MARCÃO NÃO PODE SER CHATO!
+    SÓ prescreve se o aluno expressar explicitamente:
+    1) Uma dor articular / lesão física real
+    2) Uma dificuldade ou queixa operacional na rotina
+    3) Uma dúvida ou pedido explícito de indicação/compra
+    Se o aluno estiver apenas conversando, listando refeição ou dando bom dia: ZERO PRODUTOS!
     """
     texto_norm = normalizar_texto(mensagem_aluno)
+
+    # 0. Verificação Prévia de Intenção (Filtro Anti-Chatice):
+    # Se não tiver nenhum indicador de dor, dificuldade ou pedido de recomendação, ABORTA IMEDIATAMENTE!
+    t_low = mensagem_aluno.lower()
+    tem_dor = any(w in t_low for w in ['dor', 'doendo', 'doi', 'dói', 'machuc', 'incomod', 'assadur', 'assando', 'travou', 'travad', 'estala', 'estalando'])
+    tem_dificuldade = any(w in t_low for w in ['dificil', 'difícil', 'dificuldade', 'nao consigo', 'não consigo', 'empelota', 'grudando', 'gruda', 'chao duro', 'chão duro'])
+    tem_duvida_rotina = 'como' in t_low and any(w in t_low for w in ['sei', 'faco', 'faço', 'pesar', 'bater', 'triturar', 'coar', 'filtrar', 'medir'])
+    tem_pedido_compra = any(w in t_low for w in ['onde compro', 'onde eu compro', 'onde acho', 'onde encontro', 'qual comprar', 'qual você recomenda', 'qual voce recomenda', 'qual você indica', 'qual voce indica', 'qual você usa', 'qual voce usa', 'qual modelo', 'me passa o link', 'me manda o link', 'tem na shopee', 'quero comprar', 'link da', 'link do'])
+
+    if not (tem_dor or tem_dificuldade or tem_duvida_rotina or tem_pedido_compra or 'link' in t_low or 'shopee' in t_low):
+        return None
     
-    # 1. Procurar nas categorias do mapa de dores
+    # 1. Procurar nas categorias do mapa de dores e necessidades
     dor_detectada = None
     dados_dor = None
     
     for chave, config in MAPA_DORES_SHOPEE.items():
-        for alias in config["aliases"]:
-            if alias in texto_norm:
-                dor_detectada = chave
-                dados_dor = config
-                break
-        if dor_detectada:
+        # Verificação 1: alias exato ou aproximado
+        alias_match = any(normalizar_texto(alias) in texto_norm for alias in config.get("aliases", []))
+        # Verificação 2: correlação semântica (tópico + queixa/dúvida)
+        gatilho_a_match = any(normalizar_texto(a) in texto_norm for a in config.get("gatilhos_a", [chave]))
+        gatilho_b_match = any(normalizar_texto(b) in texto_norm for b in config.get("gatilhos_b", ["dor", "doendo", "dificuldade", "qual"]))
+        
+        if alias_match or (gatilho_a_match and gatilho_b_match):
+            dor_detectada = chave
+            dados_dor = config
             break
             
     termo = dados_dor["termo_busca"] if dados_dor else None

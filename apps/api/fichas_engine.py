@@ -825,7 +825,7 @@ async def armazenar_foto_aluno_criptografada(remote_jid: str, base64_image: str,
         print(f"[FICHAS_ENGINE] Erro ao armazenar foto criptografada: {e}")
     return {"sucesso": False}
 
-async def avaliar_prato_comida(base64_image: str, nome_aluno: str) -> str:
+async def avaliar_prato_comida(base64_image: str, nome_aluno: str, ficha: dict = None) -> str:
     primeiro_nome = nome_aluno.strip().split()[0] if nome_aluno else "Guerreiro"
 
     if not OPENROUTER_API_KEY:
@@ -839,12 +839,50 @@ async def avaliar_prato_comida(base64_image: str, nome_aluno: str) -> str:
         "X-Title": "Marcao Personal Meal Scanner"
     }
 
+    # Contexto adaptativo do aluno (Idade, Modo Cuidado, Aversões Alimentares, Sensibilidade Econômica)
+    idade = ficha.get("idade") if ficha else None
+    metas = (ficha.get("metas_nutricionais") or {}) if ficha else {}
+    modo_cuidado = metas.get("modo_cuidado") or (ficha and ficha.get("status_acompanhamento") == "modo_cuidado")
+    condicao_saude = metas.get("condicao_saude") or (ficha.get("restricoes_saude") if ficha else "")
+    restricoes_alim = metas.get("restricoes_alimentares") or []
+    sem_carne = any("carne" in str(r).lower() or "frango" in str(r).lower() for r in restricoes_alim)
+    sem_ovo = any("ovo" in str(r).lower() for r in restricoes_alim)
+    fontes_indicadas = metas.get("fontes_proteicas_indicadas") or [
+        "queijo minas frescal light", "ricota fresca", "queijo cottage",
+        "iogurte natural desnatado / grego light", "lentilha", "grão-de-bico",
+        "arroz com feijão", "mingau de aveia com chia", "whey ou proteína vegetal"
+    ]
+
+    contexto_linhas = []
+    if idade:
+        if idade >= 60:
+            contexto_linhas.append(f"- FAIXA ETÁRIA SÊNIOR ({idade} anos): Necessidade proteica moderada (1.0g a 1.2g/kg, ~70-80g/dia). NUNCA exija 140g+ de maromba! Foque em digestão suave, densidade de micronutrientes e preservação muscular.")
+        elif idade >= 35:
+            contexto_linhas.append(f"- FAIXA ETÁRIA MEIA-IDADE ({idade} anos): 1.2g a 1.5g/kg com equilíbrio metabólico.")
+        else:
+            contexto_linhas.append(f"- FAIXA ETÁRIA JOVEM ({idade} anos): 1.6g a 2.0g/kg para alta performance e hipertrofia.")
+
+    if modo_cuidado:
+        contexto_linhas.append(f"- MODO CUIDADO ATIVO ({condicao_saude}): Aluno(a) em recuperação de gripe/doença. Priorize refeições confortáveis, sopas, chás, hidratação terapêutica e repouso. ZERO cobrança estressante de dieta pesada!")
+
+    if sem_carne or sem_ovo:
+        rest_txt = "NÃO COME CARNE/FRANGO" if (sem_carne and not sem_ovo) else ("NÃO GOSTA DE OVO" if (sem_ovo and not sem_carne) else "NÃO COME CARNE E NÃO GOSTA DE OVO")
+        contexto_linhas.append(f"- RESTRIÇÃO ALIMENTAR MANDATÓRIA: O aluno {rest_txt}. É TERMINANTEMENTE PROIBIDO SUGERIR FRANGO, CARNE OU OVOS! Sugira opções aceitas pelo aluno: {', '.join(fontes_indicadas)}.")
+
+    contexto_linhas.append("- SENSIBILIDADE ECONÔMICA: Dê opções simples, baratas e acessíveis (arroz com feijão, aveia, lentilha, ricota) caso o aluno não possa gastar muito.")
+
+    bloco_ctx = "\n".join(contexto_linhas)
+
     prompt = (
-        "Você é o Marcão Personal Trainer avaliando a foto do prato de comida do seu aluno VIP no WhatsApp. "
-        "Analise a imagem e identifique: os alimentos presentes, fonte principal de proteína, carboidrato e salada/legumes. "
-        "Dê uma estimativa aproximada de calorias e macros (proteína, carbo, gordura). "
-        "Responda no tom do Marcão: enérgico, direto, encorajador, como um verdadeiro treinador parceiro. "
-        "Máximo de 3 parágrafos curtos com emojis de treino."
+        f"Você é o MARCÃO PERSONAL TRAINER avaliando a foto do prato de comida de {primeiro_nome} no WhatsApp.\n"
+        "Analise a imagem e identifique: os alimentos presentes, fonte principal de proteína, carboidrato e salada/legumes.\n"
+        "Dê uma estimativa aproximada de calorias e macros (proteína, carbo, gordura).\n\n"
+        f"PERFIL INDIVIDUAL DO ALUNO (CRUZE COM AS REAIS NECESSIDADES BIOLÓGICAS):\n{bloco_ctx}\n\n"
+        "POSTURA DO MARCÃO:\n"
+        "- Seja equilibrado, atencioso, motivador e parceiro leal.\n"
+        "- Se faltar nutrientes para a meta da idade, seja firme e esclarecedor, sugerindo trocas práticas e receitas fit fáceis (respeitando se não come carne/ovo!).\n"
+        "- Se estiver em Modo Cuidado, valorize a hidratação, os chás e o repouso com carinho.\n"
+        "- Responda em 2 a 3 balões curtos no WhatsApp separados por quebra dupla de linha (\\n\\n) com emojis de treino."
     )
 
     image_url_str = base64_image if base64_image.startswith("data:") else f"data:image/jpeg;base64,{base64_image}"
@@ -1542,6 +1580,31 @@ async def extrair_dados_reais_anamnese(texto_aluno: str, ficha_atual: dict = Non
         if any(w in txt_low for w in ["halter", "halteres", "elastico", "elástico", "caneleira", "colchonete", "peso do corpo", "peso corporal"]):
             dados_extraidos["equipamentos_casa"] = texto_aluno.strip()
 
+    # 9. Detecção de Recuperação / Desligamento do Modo Cuidado (PRIORIDADE MÁXIMA)
+    termos_recuperacao = [
+        "melhorei", "estou melhor", "to melhor", "tô melhor", "to boa", "tô boa",
+        "to bom", "tô bom", "sarei", "já sarei", "ja sarei", "100%", "recuperei",
+        "recuperada", "recuperado", "bora treinar", "pronto pra treinar", "pronta pra treinar",
+        "ja passou", "já passou", "nao to mais gripada", "não tô mais gripada",
+        "não estou mais gripada", "boa da gripe", "bom da gripe", "voltar a treinar"
+    ]
+    if any(w in txt_low for w in termos_recuperacao):
+        dados_extraidos["recuperado"] = True
+    # 10. Se NÃO for recuperação, aí sim checar se está adoecendo (ativação Modo Cuidado)
+    elif any(w in txt_low for w in ["gripad", "gripe", "febre", "doente", "indispost", "dor de garganta", "mal estar", "crise de dor", "machuquei"]):
+        dados_extraidos["modo_cuidado"] = True
+        dados_extraidos["condicao_saude"] = "Gripe / Recuperação imunológica" if any(k in txt_low for k in ["grip", "febre"]) else "Recuperação / Repouso necessário"
+        dados_extraidos["tempo_recuperacao_dias"] = 4
+
+    # 11. Detecção de Restrições Alimentares / Paladar (Sem Carne / Sem Ovo)
+    restricoes_alim = []
+    if any(w in txt_low for w in ["nao como carne", "não como carne", "nao gosto de carne", "não gosto de carne", "nao como frango", "não como frango", "sem carne", "vegetar", "vegan"]):
+        restricoes_alim.append("Não come carne / frango")
+    if any(w in txt_low for w in ["nao como ovo", "não como ovo", "nao gosto de ovo", "não gosto de ovo", "sem ovo"]):
+        restricoes_alim.append("Não gosta de ovo")
+    if restricoes_alim:
+        dados_extraidos["restricoes_alimentares"] = restricoes_alim
+
     return dados_extraidos
 
 async def atualizar_ficha_com_dados_extraidos(remote_jid: str, texto_aluno: str) -> dict:
@@ -1586,6 +1649,33 @@ async def atualizar_ficha_com_dados_extraidos(remote_jid: str, texto_aluno: str)
                 patch_data["restricoes_saude"] = extraidos["restricoes_saude"]
             if extraidos.get("objetivo") and not ficha.get("objetivo"):
                 patch_data["objetivo"] = extraidos["objetivo"]
+
+            # Modo Cuidado e Recuperação (Recuperação tem prioridade máxima)
+            if extraidos.get("recuperado"):
+                metas_patch["modo_cuidado"] = False
+                metas_patch["condicao_saude"] = "Recuperado(a)"
+                patch_data["status_acompanhamento"] = "ativo"
+            elif extraidos.get("modo_cuidado"):
+                metas_patch["modo_cuidado"] = True
+                metas_patch["condicao_saude"] = extraidos.get("condicao_saude", "Recuperação / Doença")
+                metas_patch["tempo_recuperacao_dias"] = extraidos.get("tempo_recuperacao_dias", 4)
+                metas_patch["data_ativacao_cuidado"] = datetime.now().isoformat()
+                patch_data["status_acompanhamento"] = "modo_cuidado"
+
+            # Restrições Alimentares (Sem Carne / Sem Ovo)
+            if extraidos.get("restricoes_alimentares"):
+                atuais_rest = metas_patch.get("restricoes_alimentares") or []
+                novas_rest = list(dict.fromkeys(atuais_rest + extraidos["restricoes_alimentares"]))
+                metas_patch["restricoes_alimentares"] = novas_rest
+                sem_carne = any("carne" in r.lower() or "frango" in r.lower() for r in novas_rest)
+                sem_ovo = any("ovo" in r.lower() for r in novas_rest)
+                if sem_carne or sem_ovo:
+                    metas_patch["fontes_proteicas_indicadas"] = [
+                        "Queijo minas frescal light", "Ricota fresca", "Queijo cottage",
+                        "Iogurte natural desnatado / grego light", "Lentilha cozida",
+                        "Grão-de-bico", "Arroz com feijão", "Mingau de aveia com chia",
+                        "Proteína vegetal / Whey em vitaminas de frutas"
+                    ]
 
             if metas_patch != ficha.get("metas_nutricionais"):
                 patch_data["metas_nutricionais"] = metas_patch
@@ -1713,7 +1803,8 @@ async def cobrar_dados_pendentes_aluno(ficha: dict) -> dict:
 async def disparar_cobranca_refeicao_aluno(ficha: dict) -> dict:
     """
     Dispara acompanhamento nutricional do Marcão cobrando foto de refeição (almoço ou janta)
-    para avaliar nutrientes com visão multimodal e combater queixas e dores.
+    de forma INTERCALADA (dia sim, dia não - a cada 48h) para não cansar o aluno,
+    com suporte especial ao Modo Cuidado para alunos doentes ou em recuperação.
     """
     import asyncio
     nome = (ficha.get("nome") or ficha.get("nome_aluno") or "Campeão(ã)").strip()
@@ -1723,15 +1814,49 @@ async def disparar_cobranca_refeicao_aluno(ficha: dict) -> dict:
     if not tel:
         return {"sucesso": False, "erro": "Telefone inválido"}
 
+    metas = ficha.get("metas_nutricionais") or {}
+    modo_cuidado = metas.get("modo_cuidado") or (ficha.get("status_acompanhamento") == "modo_cuidado")
+
+    # 1. Regra Inviolável de Cobrança Intercalada (Dia Sim, Dia Não - a cada 48h)
+    ultimo_cobrado_str = (
+        metas.get("ultimo_prato_cobrado_data") or
+        ficha.get("ultimo_checkin_refeicao_cobrado_em") or
+        (ficha.get("ultimo_prato_avaliado") or {}).get("data")
+    )
+    if ultimo_cobrado_str:
+        try:
+            from datetime import datetime, timezone
+            dt_limpa = str(ultimo_cobrado_str).replace("Z", "+00:00")
+            dt_ultimo = datetime.fromisoformat(dt_limpa)
+            dt_agora = datetime.now(timezone.utc)
+            horas_dif = (dt_agora - dt_ultimo).total_seconds() / 3600.0
+            if horas_dif < 36.0:
+                return {
+                    "sucesso": True,
+                    "ignorado": True,
+                    "motivo": f"Cobrança intercalada (dia sim, dia não) ativa. Última cobrança há {horas_dif:.1f}h (< 36h). Aluno não sobrecarregado."
+                }
+        except Exception:
+            pass
+
     evo_url = os.getenv("EVOLUTION_API_URL", "https://evolution.marcaopersonal.com")
     evo_key = os.getenv("EVOLUTION_API_KEY", "")
     evo_inst = os.getenv("EVOLUTION_INSTANCE", "sofia")
 
-    baloes = [
-        f"Fala, {primeiro_nome}! 🦁 Marcão aqui conferindo seu combustível de hoje!",
-        "Me manda uma foto do seu almoço ou da sua janta agora! Quero checar se tem proteína e nutrientes pra vencer suas dores e acelerar sua meta!",
-        "Manda a foto do prato aqui que eu avalio na hora com a visão de IA! Tamo junto! 👊🔥"
-    ]
+    # 2. Se estiver em Modo Cuidado (Gripe / Doença): ZERO cobrança dura! Acolhimento e repouso
+    if modo_cuidado:
+        condicao = metas.get("condicao_saude") or "recuperação"
+        baloes = [
+            f"Fala, {primeiro_nome}! 🦁 Marcão passando pra ver como você tá hoje!",
+            f"Lembrando que você tá no Modo Cuidado ({condicao}): prioridade total pro repouso, hidratação e sono reparador!",
+            "Nada de estresse com treino nem com dieta pesada hoje. Segue tomando bastante água e chás que logo logo você tá 100%! Tamo junto! 👊💙"
+        ]
+    else:
+        baloes = [
+            f"Fala, {primeiro_nome}! 🦁 Marcão aqui no nosso acompanhamento intercalado!",
+            "Me manda uma foto do seu almoço ou da sua janta hoje! Quero conferir os nutrientes pra calibrar seu resultado!",
+            "Manda a foto do prato aqui que eu avalio na hora com a visão de IA! Tamo junto! 👊🔥"
+        ]
 
     resultados_envio = []
     try:
@@ -1750,7 +1875,13 @@ async def disparar_cobranca_refeicao_aluno(ficha: dict) -> dict:
                     await asyncio.sleep(1.2)
 
         try:
-            await atualizar_campo_ficha(remote_jid, {"ultimo_checkin_refeicao_cobrado_em": datetime.now().isoformat()})
+            agora_iso = datetime.now().isoformat()
+            metas_atualizadas = dict(ficha.get("metas_nutricionais") or {})
+            metas_atualizadas["ultimo_prato_cobrado_data"] = agora_iso
+            await atualizar_campo_ficha(remote_jid, {
+                "ultimo_checkin_refeicao_cobrado_em": agora_iso,
+                "metas_nutricionais": metas_atualizadas
+            })
         except Exception:
             pass
 
@@ -1759,7 +1890,8 @@ async def disparar_cobranca_refeicao_aluno(ficha: dict) -> dict:
             "remote_jid": remote_jid,
             "telefone": tel,
             "aluno": nome,
-            "tipo": "cobranca_foto_refeicao",
+            "tipo": "cobranca_foto_refeicao_intercalada",
+            "modo_cuidado": modo_cuidado,
             "baloes_enviados": len(baloes),
             "mensagens": baloes
         }
