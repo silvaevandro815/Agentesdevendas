@@ -202,11 +202,9 @@ header {
     position: sticky;
     top: 55px;
     z-index: 99;
-    scrollbar-width: none;
+    /* scrollbar-width enabled */
   }
-  .mobile-nav-bar::-webkit-scrollbar {
-    display: none;
-  }
+  /* mobile-nav-bar webkit-scrollbar replaced */
   .mobile-nav-scroll {
     display: flex !important;
     gap: 8px !important;
@@ -932,12 +930,10 @@ footer p {
   white-space: nowrap;
   padding: 0 16px;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+  /* scrollbar-width enabled */
 }
 
-.mobile-nav-scroll::-webkit-scrollbar {
-  display: none;
-}
+/* mobile-nav-scroll webkit-scrollbar replaced */
 
 .mobile-nav-pill {
   display: inline-flex;
@@ -2672,4 +2668,125 @@ header {
     justify-content: center;
     padding: 12px 20px;
   }
+}
+
+/* ========================================================
+   BARRA DE ROLAGEM VISÍVEL & NAVEGAÇÃO DO MENU HORIZONTAL
+   ======================================================== */
+
+.mobile-nav-bar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  max-width: 100vw !important;
+  background: rgba(6, 13, 27, 0.98) !important;
+  border-bottom: 1px solid rgba(0, 229, 255, 0.25) !important;
+  padding: 6px 4px 6px 4px !important;
+  position: sticky !important;
+  top: 60px !important;
+  z-index: 99 !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45) !important;
+  box-sizing: border-box !important;
+}
+
+.mobile-nav-scroll {
+  display: flex !important;
+  gap: 10px !important;
+  align-items: center !important;
+  overflow-x: scroll !important;
+  overflow-y: hidden !important;
+  white-space: nowrap !important;
+  padding: 6px 14px 10px 14px !important;
+  -webkit-overflow-scrolling: touch !important;
+  scroll-behavior: smooth !important;
+  flex: 1 1 auto !important;
+  box-sizing: border-box !important;
+  cursor: grab !important;
+  
+  /* Firefox Scrollbar Customization */
+  scrollbar-width: thin !important;
+  scrollbar-color: #00e5ff rgba(11, 22, 44, 0.9) !important;
+}
+
+.mobile-nav-scroll.grabbing {
+  cursor: grabbing !important;
+  user-select: none !important;
+}
+
+/* Custom Visible Scrollbar for WebKit (Chrome, Edge, Safari, Opera) */
+.mobile-nav-scroll::-webkit-scrollbar {
+  display: block !important;
+  height: 6px !important;
+}
+
+.mobile-nav-scroll::-webkit-scrollbar-track {
+  background: rgba(11, 22, 44, 0.9) !important;
+  border-radius: 10px !important;
+  margin: 0 10px !important;
+  border: 1px solid rgba(0, 229, 255, 0.15) !important;
+}
+
+.mobile-nav-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, #00e5ff, #00ff88) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.6) !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.mobile-nav-scroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(90deg, #00ff88, #00e5ff) !important;
+  box-shadow: 0 0 16px rgba(0, 255, 136, 0.9) !important;
+}
+
+/* Botões de Rolagem Esquerda e Direita (Arrows) */
+.mobile-nav-arrow {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  border-radius: 50% !important;
+  background: rgba(11, 22, 44, 0.95) !important;
+  border: 1px solid rgba(0, 229, 255, 0.45) !important;
+  color: var(--neon-cyan, #00e5ff) !important;
+  cursor: pointer !important;
+  z-index: 10 !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.6), 0 0 10px rgba(0, 229, 255, 0.2) !important;
+  user-select: none !important;
+  padding: 0 !important;
+  margin: 0 4px !important;
+  flex-shrink: 0 !important;
+}
+
+.mobile-nav-arrow svg {
+  width: 16px !important;
+  height: 16px !important;
+  stroke: var(--neon-cyan, #00e5ff) !important;
+  transition: transform 0.2s ease !important;
+}
+
+.mobile-nav-arrow:hover {
+  background: rgba(0, 229, 255, 0.2) !important;
+  border-color: var(--neon-cyan, #00e5ff) !important;
+  transform: scale(1.08) !important;
+  box-shadow: 0 0 14px rgba(0, 229, 255, 0.7) !important;
+}
+
+.mobile-nav-arrow:hover svg {
+  stroke: #ffffff !important;
+}
+
+.mobile-nav-arrow:active {
+  transform: scale(0.92) !important;
+}
+
+.mobile-nav-arrow.disabled {
+  opacity: 0.2 !important;
+  cursor: default !important;
+  pointer-events: none !important;
+  box-shadow: none !important;
 }

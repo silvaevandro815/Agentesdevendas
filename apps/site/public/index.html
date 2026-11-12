@@ -200,8 +200,11 @@
   </header>
 
   <!-- Mobile Quick Category Nav Bar -->
-  <nav class="mobile-nav-bar" aria-label="Navegação Rápida Mobile">
-    <div class="mobile-nav-scroll">
+  <nav class="mobile-nav-bar" aria-label="Navegação Rápida de Categorias">
+    <button type="button" class="mobile-nav-arrow prev disabled" id="navScrollLeft" aria-label="Rolar opções para esquerda" title="Opções anteriores">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+    </button>
+    <div class="mobile-nav-scroll" id="mobileNavScroll">
       <a href="#quem-e-marcao" class="mobile-nav-pill active">
         <svg class="neon-icon cyan" style="width:14px; height:14px;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
         <span>O Treinador</span>
@@ -231,6 +234,9 @@
         <span>WhatsApp</span>
       </a>
     </div>
+    <button type="button" class="mobile-nav-arrow next" id="navScrollRight" aria-label="Rolar opções para direita" title="Mais opções">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+    </button>
   </nav>
 
   <!-- HERO SECTION (MANCHETE DE ALTO IMPACTO & CURIOSIDADE TECNOLÓGICA) -->
@@ -1403,5 +1409,93 @@
       });
     })();
   </script>
+
+  <!-- Script Navegação Horizontal do Menu com Rolagem Inteligente -->
+  <script>
+    (function() {
+      const scrollEl = document.getElementById('mobileNavScroll');
+      const btnLeft = document.getElementById('navScrollLeft');
+      const btnRight = document.getElementById('navScrollRight');
+      if (!scrollEl) return;
+
+      function updateNavArrows() {
+        if (!btnLeft || !btnRight) return;
+        const maxScroll = scrollEl.scrollWidth - scrollEl.clientWidth;
+        if (maxScroll <= 5) {
+          btnLeft.style.display = 'none';
+          btnRight.style.display = 'none';
+          return;
+        }
+        btnLeft.style.display = 'flex';
+        btnRight.style.display = 'flex';
+
+        if (scrollEl.scrollLeft <= 10) {
+          btnLeft.classList.add('disabled');
+        } else {
+          btnLeft.classList.remove('disabled');
+        }
+
+        if (scrollEl.scrollLeft >= maxScroll - 10) {
+          btnRight.classList.add('disabled');
+        } else {
+          btnRight.classList.remove('disabled');
+        }
+      }
+
+      if (btnLeft) {
+        btnLeft.addEventListener('click', function(e) {
+          e.preventDefault();
+          scrollEl.scrollBy({ left: -240, behavior: 'smooth' });
+        });
+      }
+
+      if (btnRight) {
+        btnRight.addEventListener('click', function(e) {
+          e.preventDefault();
+          scrollEl.scrollBy({ left: 240, behavior: 'smooth' });
+        });
+      }
+
+      scrollEl.addEventListener('scroll', updateNavArrows, { passive: true });
+      window.addEventListener('resize', updateNavArrows);
+      window.addEventListener('load', updateNavArrows);
+      setTimeout(updateNavArrows, 200);
+      setTimeout(updateNavArrows, 800);
+
+      // Suporte a mouse wheel vertical convertida em rolagem horizontal
+      scrollEl.addEventListener('wheel', function(e) {
+        if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+          e.preventDefault();
+          scrollEl.scrollLeft += e.deltaY;
+        }
+      }, { passive: false });
+
+      // Suporte a arrastar com mouse (drag-to-scroll)
+      let isDown = false;
+      let startX, startScrollLeft;
+      scrollEl.addEventListener('mousedown', function(e) {
+        isDown = true;
+        scrollEl.classList.add('grabbing');
+        startX = e.pageX - scrollEl.offsetLeft;
+        startScrollLeft = scrollEl.scrollLeft;
+      });
+
+      window.addEventListener('mouseup', function() {
+        if (isDown) {
+          isDown = false;
+          scrollEl.classList.remove('grabbing');
+        }
+      });
+
+      scrollEl.addEventListener('mousemove', function(e) {
+        if (!isDown) return;
+        e.preventDefault();
+        const x = e.pageX - scrollEl.offsetLeft;
+        const walk = (x - startX) * 1.6;
+        scrollEl.scrollLeft = startScrollLeft - walk;
+      });
+    })();
+  </script>
+
 </body>
 </html>
