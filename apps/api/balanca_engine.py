@@ -124,7 +124,14 @@ NÃO adicione nenhum texto explicativo antes ou depois do JSON. Retorne apenas o
     elif visceral <= 9:
         alerta_visceral = "Gordura visceral MODERADA. Vamos secar essa gordura profunda para desinchar o abdômen!"
     else:
-        alerta_visceral = "ATENÇÃO: Gordura visceral ELEVADA. Foco total em cortar açúcar e bater os cardios diários!"
+        alerta_visceral = "🚨 ALERTA CRÍTICO: Gordura visceral ELEVADA e inflamatória! Desleixo alimentar evidente! Foco total em cortar açúcar e bater cardios diários!"
+
+    if visceral > 9 or gordura > 25:
+        fechamento_marcao = f"""⚠️ *REPREENSÃO DO TREINADOR MARCÃO:*
+{nome}, para de se enganar! Esse resultado da balança mostra desleixo e indisciplina com a dieta! A balança não mente, parceiro(a)!
+A partir de hoje acabou a moleza: corta o açúcar, álcool e ultraprocessados 100%, sobe a água pra {agua_diaria_l}L e amanhã o treino é até a falha real! Quero ver postura e disciplina! 👊🔥"""
+    else:
+        fechamento_marcao = f"""Vamos pra cima, {nome}! Sobe na balança 2x na semana pra gente manter essa evolução no topo! Tamo junto! 🔥💪"""
 
     relatorio_texto = f"""🦁 *RELATÓRIO 360° DE BIOIMPEDÂNCIA — MARCÃO PERSONAL*
 Aluno(a): {nome} | Peso: {peso}kg
@@ -149,7 +156,7 @@ Aluno(a): {nome} | Peso: {peso}kg
 {supl_nome}
 👉 Link direto: {supl_link}
 
-Vamos pra cima, {nome}! Sobe na balança 2x na semana pra gente atualizar sua evolução! Tamo junto! 🔥💪"""
+{fechamento_marcao}"""
 
     return {
         "sucesso": True,

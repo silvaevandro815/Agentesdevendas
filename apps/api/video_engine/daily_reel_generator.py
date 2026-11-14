@@ -1,3 +1,11 @@
+# =============================================================================
+# REGRA INVIOLÁVEL Nº 9 DO DIRETOR EVANDRO GALLINA (GEMINI.md)
+# PROIBIÇÃO PERMANENTE DE VÍDEOS / REELS:
+# O Marcão Personal NÃO deve postar vídeos no Instagram. Foco 100% em carrosséis e cards!
+# =============================================================================
+import sys
+raise RuntimeError("[BLOQUEIO PERMANENTE REGRA 9] Geração e publicação de vídeos desativada pelo Diretor Evandro. Marcão posta apenas carrosséis e cards.")
+
 """
 =============================================================================
 GERADOR DIÁRIO AUTOMATIZADO DE REELS & STORIES COM IA — MARCÃO PERSONAL
