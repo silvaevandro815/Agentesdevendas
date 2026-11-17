@@ -2547,14 +2547,32 @@ header {
   box-sizing: border-box !important;
   cursor: grab !important;
   
-  /* Esconde a barra nativa do navegador para dar destaque total a barra neon interativa abaixo */
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
+  /* Barra de Rolagem Visivel & Intuitiva com Efeito Neon */
+  scrollbar-width: thin !important;
+  scrollbar-color: #00e5ff rgba(11, 22, 44, 0.95) !important;
 }
 
 .mobile-nav-scroll::-webkit-scrollbar {
-  display: none !important;
-  height: 0px !important;
+  display: block !important;
+  height: 6px !important;
+}
+
+.mobile-nav-scroll::-webkit-scrollbar-track {
+  background: rgba(11, 22, 44, 0.9) !important;
+  border-radius: 6px !important;
+  border: 1px solid rgba(0, 229, 255, 0.25) !important;
+  margin: 0 4px !important;
+}
+
+.mobile-nav-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, #00e5ff, #00ff88) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.8) !important;
+}
+
+.mobile-nav-scroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(90deg, #00ff88, #00e5ff) !important;
+  box-shadow: 0 0 14px rgba(0, 255, 136, 1) !important;
 }
 
 .mobile-nav-scroll.grabbing {
