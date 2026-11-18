@@ -10,7 +10,9 @@ from collections import defaultdict
 from datetime import datetime
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=True)
+
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 
 app = FastAPI(
     title="Marcão Personal Protocol AI Engine",
@@ -94,6 +96,32 @@ async def health():
         "timestamp": datetime.now().isoformat(),
         "service": "Marcão Protocol AI Engine 360°"
     }
+
+@app.post("/api/llm/completions")
+async def llm_completions(req: Request):
+    """
+    Relay seguro server-side para LLMs (OpenRouter).
+    Impede vazamento de credenciais no frontend/workflows e blinda requisições de IA.
+    """
+    try:
+        key = os.getenv("OPENROUTER_API_KEY", "")
+        if not key:
+            load_dotenv("/app/.env", override=True)
+            load_dotenv(override=True)
+            key = os.getenv("OPENROUTER_API_KEY", "")
+        payload = await req.json()
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            res = await client.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {key}",
+                    "Content-Type": "application/json"
+                },
+                json=payload
+            )
+            return JSONResponse(status_code=res.status_code, content=res.json())
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
 @app.post("/api/protocolo/gerar")
 async def gerar_protocolo(req: ProtocoloRequest):

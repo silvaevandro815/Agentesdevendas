@@ -278,14 +278,10 @@
       ],
       "parameters": {
         "method": "POST",
-        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "url": "http://api:8000/api/llm/completions",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "Authorization",
-              "value": "Bearer {{ $env.OPENROUTER_API_KEY }}"
-            },
             {
               "name": "Content-Type",
               "value": "application/json"
@@ -379,14 +375,10 @@
       ],
       "parameters": {
         "method": "POST",
-        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "url": "http://api:8000/api/llm/completions",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "Authorization",
-              "value": "Bearer {{ $env.OPENROUTER_API_KEY }}"
-            },
             {
               "name": "Content-Type",
               "value": "application/json"
