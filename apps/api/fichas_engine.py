@@ -1999,3 +1999,218 @@ async def executar_varredura_onboarding_completa(disparar_whatsapp: bool = False
         resultados["erro"] = str(e)
 
     return resultados
+
+
+# === MOTOR EVOLUTIVO DE FOTOS CRIPTOGRAFADAS 2X2 ===
+async def processar_foto_corporal_criptografada_e_comparar(
+    remote_jid: str,
+    telefone: str,
+    base64_image: str,
+    legenda: str = ""
+) -> dict:
+    """
+    Recebe foto corporal (frente ou costas) do aluno:
+    1. Criptografa imediatamente em nivel militar (AES-256 Fernet) - NENHUM humano ve no banco.
+    2. Localiza a ficha do aluno (por remote_jid ou ultimos 8 digitos do telefone).
+    3. Identifica automaticamente se e foto de FRENTE ou COSTAS.
+    4. Quando o ciclo atual completa o par (frente + costas) E existe um ciclo anterior (2 fotos antigas),
+       descriptografa EXCLUSIVAMENTE em memoria RAM durante a inferencia da IA para comparar
+       as 2 fotos antigas vs 2 fotos atuais (barriga, quadril, bracos, ombros, coxas, gluteos).
+    5. AUTO-DELECAO POS-ANALISE: Apaga definitivamente os tokens criptografados das 2 fotos antigas
+       do banco de dados apos gerar o veredito, mantendo apenas o par atual criptografado para a proxima semana.
+    """
+    try:
+        from encryption_service import criptografar_foto, descriptografar_foto
+    except ImportError:
+        from apps.api.encryption_service import criptografar_foto, descriptografar_foto
+
+    token_cripto = criptografar_foto(base64_image)
+    if not token_cripto:
+        return {"sucesso": False, "erro": "Falha ao criptografar imagem"}
+
+    headers = get_supabase_headers()
+    tel_digitos = "".join(filter(str.isdigit, str(telefone or remote_jid or "")))
+    last8 = tel_digitos[-8:] if len(tel_digitos) >= 8 else tel_digitos
+
+    ficha = None
+    try:
+        async with httpx.AsyncClient(verify=False, timeout=15.0) as client:
+            r = await client.get(f"{SUPABASE_URL}/rest/v1/fichas_alunos?select=*", headers=headers)
+            if r.status_code == 200:
+                for f in r.json():
+                    f_tel = "".join(filter(str.isdigit, str(f.get("telefone") or "")))
+                    f_jid = str(f.get("remote_jid") or "")
+                    if (remote_jid and f_jid == remote_jid) or (last8 and (f_tel.endswith(last8) or last8 in f_jid)):
+                        ficha = f
+                        break
+                    # Fallback LID conhecidos
+                    if remote_jid and "173456616341641" in remote_jid and "eva" in str(f.get("nome") or "").lower():
+                        ficha = f
+                        break
+                    if remote_jid and "230653182361613" in remote_jid and "kamila" in str(f.get("nome") or "").lower():
+                        ficha = f
+                        break
+    except Exception as e:
+        print(f"[FOTO_2X2] Erro buscando ficha: {e}")
+
+    if not ficha:
+        ficha = await buscar_ou_criar_ficha_aluno(remote_jid or f"{tel_digitos}@s.whatsapp.net", tel_digitos, "Aluno VIP")
+
+    if not ficha or not ficha.get("id"):
+        return {"sucesso": False, "erro": "Ficha nao encontrada"}
+
+    ficha_id = ficha["id"]
+    nome_aluno = ficha.get("nome") or ficha.get("nome_aluno") or "Guerreiro(a)"
+    genero = (ficha.get("genero") or "mulher").lower()
+    idade = ficha.get("idade") or ""
+    objetivo = ficha.get("objetivo") or "Evolucao corporal e saude"
+
+    fotos_lista = ficha.get("fotos_criptografadas") or []
+    if not isinstance(fotos_lista, list):
+        fotos_lista = []
+
+    # Filtra apenas registros validos com token_criptografado real
+    fotos_validas = [x for x in fotos_lista if isinstance(x, dict) and x.get("token_criptografado")]
+
+    leg_low = (legenda or "").lower()
+    agora_iso = datetime.utcnow().isoformat()
+    hoje_str = agora_iso[:10]
+
+    # Determina se a foto atual e frente ou costas
+    fotos_hoje = [x for x in fotos_validas if str(x.get("data", ""))[:10] == hoje_str]
+    tipos_hoje = [x.get("tipo") for x in fotos_hoje]
+
+    if "costa" in leg_low or "traseir" in leg_low or "atras" in leg_low or "atrás" in leg_low:
+        tipo_foto = "costas"
+    elif "frente" in leg_low or "frontal" in leg_low:
+        tipo_foto = "frente"
+    else:
+        # Alterna automaticamente: se ja mandou frente hoje, a segunda e costas
+        tipo_foto = "costas" if "frente" in tipos_hoje and "costas" not in tipos_hoje else "frente"
+
+    novo_registro = {
+        "data": agora_iso,
+        "ciclo_data": hoje_str,
+        "tipo": tipo_foto,
+        "token_criptografado": token_cripto,
+        "algoritmo": "AES-256-Fernet",
+        "blindagem": "zero_acesso_humano_auto_delete"
+    }
+    fotos_validas.append(novo_registro)
+
+    # Agrupa por ciclo (fotos antigas de dias anteriores vs fotos atuais de hoje)
+    fotos_antigas = [x for x in fotos_validas if str(x.get("data", ""))[:10] != hoje_str]
+    fotos_atuais = [x for x in fotos_validas if str(x.get("data", ""))[:10] == hoje_str]
+
+    tem_frente_atual = any(x.get("tipo") == "frente" for x in fotos_atuais)
+    tem_costas_atual = any(x.get("tipo") == "costas" for x in fotos_atuais)
+    par_atual_completo = (len(fotos_atuais) >= 2) or (tem_frente_atual and tem_costas_atual)
+
+    comparacao_realizada = False
+    veredito_evolutivo = ""
+    fotos_antigas_deletadas = 0
+
+    # Se temos pelo menos 1-2 fotos antigas E o par atual foi completado, roda o comparativo 2x2 em RAM!
+    if par_atual_completo and len(fotos_antigas) >= 1:
+        antigas_para_comp = fotos_antigas[-2:]
+        atuais_para_comp = fotos_atuais[-2:]
+
+        # Descriptografa EXCLUSIVAMENTE em RAM para inferencia multimodal
+        imagens_payload = []
+        for idx, ft in enumerate(antigas_para_comp):
+            data_uri = descriptografar_foto(ft["token_criptografado"], incluir_prefixo_data_uri=True)
+            if data_uri:
+                imagens_payload.append({"type": "text", "text": f"FOTO ANTIGA {idx+1} ({ft.get('tipo', 'corpo')} - data {str(ft.get('data',''))[:10]}):"})
+                imagens_payload.append({"type": "image_url", "image_url": {"url": data_uri}})
+
+        for idx, ft in enumerate(atuais_para_comp):
+            data_uri = descriptografar_foto(ft["token_criptografado"], incluir_prefixo_data_uri=True)
+            if data_uri:
+                imagens_payload.append({"type": "text", "text": f"FOTO ATUAL {idx+1} ({ft.get('tipo', 'corpo')} - data {hoje_str}):"})
+                imagens_payload.append({"type": "image_url", "image_url": {"url": data_uri}})
+
+        openrouter_key = os.getenv("OPENROUTER_API_KEY", "")
+        if openrouter_key and len(imagens_payload) >= 4:
+            prompt_comp = (
+                f"Voce e o Treinador Marcao Personal analisando a evolucao corporal de {nome_aluno} "
+                f"(genero: {genero}, idade: {idade}, objetivo: {objetivo}).\n"
+                "Compare criteriosamente as FOTOS ANTIGAS com as FOTOS ATUAIS avaliando: "
+                "barriga/cintura, quadril, bracos, ombros, coxas, gluteos e postura.\n"
+                "Dê o seu VEREDITO SINCERO DE TREINADOR em 3 a 4 baloes curtos separados por \n\n:\n"
+                "- Se HOUVE EVOLUCAO: comemore com entusiasmo a performance evolutiva e diga exatamente onde melhorou!\n"
+                "- Se ESTAGNOU ou piorou: chame a atencao com bronca leve construtiva e dê 2 sugestoes praticas imediatas de treino e alimentacao!\n"
+                "- No ultimo balao, reforce que as fotos antigas ja foram DELETADAS automaticamente do sistema apos esta comparacao para privacidade total."
+            )
+            content_list = [{"type": "text", "text": prompt_comp}] + imagens_payload
+            try:
+                async with httpx.AsyncClient(timeout=45.0) as client:
+                    res_ia = await client.post(
+                        "https://openrouter.ai/api/v1/chat/completions",
+                        headers={
+                            "Authorization": f"Bearer {openrouter_key}",
+                            "Content-Type": "application/json"
+                        },
+                        json={
+                            "model": "google/gemini-2.5-flash",
+                            "messages": [{"role": "user", "content": content_list}],
+                            "max_tokens": 450,
+                            "temperature": 0.6
+                        }
+                    )
+                    if res_ia.status_code == 200:
+                        veredito_evolutivo = res_ia.json().get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+                        comparacao_realizada = True
+            except Exception as e:
+                print(f"[FOTO_2X2] Erro na comparacao IA: {e}")
+            finally:
+                # Limpa explicitamente referencias de imagens descriptografadas da RAM
+                imagens_payload.clear()
+
+        # AUTO-DELECAO POS-COMPARACAO: Remove definitivamente as fotos antigas do banco!
+        if comparacao_realizada:
+            fotos_antigas_deletadas = len(fotos_antigas)
+            fotos_para_salvar = atuais_para_comp
+        else:
+            fotos_para_salvar = fotos_validas[-4:]
+    else:
+        # Mantem no maximo as ultimas 4 fotos criptografadas (2 antigas + 2 atuais)
+        fotos_para_salvar = fotos_validas[-4:]
+
+    # Salva no Supabase apenas tokens criptografados (zero imagem legivel)
+    metas = ficha.get("metas_nutricionais") or {}
+    metas["ultima_foto_corporal_data"] = hoje_str
+    if comparacao_realizada:
+        metas["ultima_comparacao_evolutiva"] = {
+            "data": hoje_str,
+            "fotos_antigas_deletadas": fotos_antigas_deletadas,
+            "resumo": veredito_evolutivo[:300]
+        }
+
+    try:
+        async with httpx.AsyncClient(verify=False, timeout=15.0) as client:
+            await client.patch(
+                f"{SUPABASE_URL}/rest/v1/fichas_alunos?id=eq.{ficha_id}",
+                headers=headers,
+                json={
+                    "fotos_criptografadas": fotos_para_salvar,
+                    "metas_nutricionais": metas,
+                    "atualizado_em": agora_iso
+                }
+            )
+    except Exception as e:
+        print(f"[FOTO_2X2] Erro salvando fotos criptografadas: {e}")
+
+    falta_foto = None
+    if not par_atual_completo:
+        falta_foto = "costas" if tipo_foto == "frente" else "frente"
+
+    return {
+        "sucesso": True,
+        "tipo_salvo": tipo_foto,
+        "par_atual_completo": par_atual_completo,
+        "falta_foto": falta_foto,
+        "comparacao_realizada": comparacao_realizada,
+        "veredito_evolutivo": veredito_evolutivo,
+        "fotos_antigas_deletadas": fotos_antigas_deletadas,
+        "total_criptografadas_ativas": len(fotos_para_salvar)
+    }

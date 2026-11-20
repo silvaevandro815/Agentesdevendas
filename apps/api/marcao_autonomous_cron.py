@@ -1,621 +1,1387 @@
-"""
-=============================================================================
-MOTOR AUTÔNOMO DE FOLLOW-UP, COBRANÇAS E AUDITORIA STRAVA — MARCÃO PERSONAL
-Executa o agendador interno (cron) de alta confiabilidade:
-1. 12:30 (Seg-Sex) - Cobrança de foto de almoço / dieta
-2. 18:00 (Seg, Qua, Sex) - Cobrança de treinos (academia/casa) e dados pendentes
-3. 22:00 (Diário) - Auditoria Noturna Strava (conselhos/broncas) & Sono Anabólico GH
-4. 19:00 (Domingos) - Envio semanal da Landing Page individual do aluno
-
-BLINDAGEM ANTI-DUPLICAÇÃO & HUMANIZAÇÃO (REGRA INVIOLÁVEL):
-- Trava de Idempotência persistente (Memória + Disco JSON + Redis) para que
-  NENHUM aluno receba mensagens repetidas no mesmo dia.
-- Balões curtos e ágeis (30 a 70 caracteres cada) com pausas naturais de digitação (composing).
-=============================================================================
-"""
-
-import os
-import json
-import time
-import asyncio
-import httpx
-from datetime import datetime
-from typing import Dict, Any, List, Optional
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.cron import CronTrigger
-from dotenv import load_dotenv
-
-_base_dir = os.path.dirname(os.path.abspath(__file__))
-load_dotenv(os.path.join(_base_dir, ".env"), override=True)
-load_dotenv(os.path.join(_base_dir, "..", "..", ".env"))
-load_dotenv()
-
-SUPABASE_URL = os.getenv("SUPABASE_URL", "https://qkopgftfrfftoyndhhfj.supabase.co")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
-EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "https://evolution.marcaopersonal.com")
-EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "")
-EVOLUTION_INSTANCE = os.getenv("EVOLUTION_INSTANCE", "sofia")
-
-try:
-    from fichas_engine import (
-        enviar_mensagem_whatsapp_fichas,
-        enviar_presenca_fichas,
-        buscar_ficha_existente,
-        verificar_e_cobrar_alunos_com_dados_pendentes,
-        get_supabase_headers
-    )
-except ImportError:
-    from apps.api.fichas_engine import (
-        enviar_mensagem_whatsapp_fichas,
-        enviar_presenca_fichas,
-        buscar_ficha_existente,
-        verificar_e_cobrar_alunos_com_dados_pendentes,
-        get_supabase_headers
-    )
-
-try:
-    from strava_service import executar_auditoria_strava_noturna_22h
-except ImportError:
-    from apps.api.strava_service import executar_auditoria_strava_noturna_22h
-
-# Arquivo de persistência local das travas de deduplicação
-DEDUP_LOCK_FILE = os.path.join(_base_dir, "data", "cron_dedup_locks.json")
-os.makedirs(os.path.dirname(DEDUP_LOCK_FILE), exist_ok=True)
-
-
-def _carregar_locks_disco() -> dict:
-    try:
-        if os.path.exists(DEDUP_LOCK_FILE):
-            with open(DEDUP_LOCK_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-    except Exception:
-        pass
-    return {}
-
-
-def _salvar_lock_disco(chave: str, ts: float):
-    try:
-        dados = _carregar_locks_disco()
-        agora = time.time()
-        # Expira locks com mais de 48 horas
-        dados = {k: v for k, v in dados.items() if agora - v < 172800}
-        dados[chave] = ts
-        with open(DEDUP_LOCK_FILE, "w", encoding="utf-8") as f:
-            json.dump(dados, f, ensure_ascii=False)
-    except Exception as e:
-        print(f"[DEDUP LOCK] Erro salvando lock em disco: {e}")
-
-
-class MarcaoAutonomousScheduler:
-    def __init__(self):
-        self.scheduler = AsyncIOScheduler(timezone="America/Sao_Paulo")
-        self.historico_disparos: List[Dict[str, Any]] = []
-        self._inicializado = False
-        self._locks_memoria: Dict[str, float] = {}
-
-    def adquirir_trava_deduplicacao(self, tipo: str, telefone: str, ttl_segundos: int = 43200) -> bool:
-        """
-        Garante que NENHUM follow-up repetido seja disparado para o mesmo aluno no mesmo dia.
-        Retorna True se o disparo for inédito e a trava for adquirida.
-        Retorna False se o disparo já foi realizado hoje por qualquer processo (VPS ou Local).
-        """
-        tel_digitos = "".join(filter(str.isdigit, str(telefone)))
-        hoje_str = datetime.now().strftime("%Y-%m-%d")
-        chave = f"lock:{tipo}:{tel_digitos}:{hoje_str}"
-        agora = time.time()
-
-        # 1. Checa memória interna
-        if chave in self._locks_memoria:
-            if agora - self._locks_memoria[chave] < ttl_segundos:
-                print(f"[DEDUPLICACAO MEMÓRIA] {tipo} para {tel_digitos} já enviado hoje. Ignorando duplicata!")
-                return False
-
-        # 2. Checa persistência em disco
-        locks_disco = _carregar_locks_disco()
-        if chave in locks_disco:
-            if agora - locks_disco[chave] < ttl_segundos:
-                self._locks_memoria[chave] = locks_disco[chave]
-                print(f"[DEDUPLICACAO DISCO] {tipo} para {tel_digitos} já enviado hoje. Ignorando duplicata!")
-                return False
-
-        # 3. Adquire a trava de idempotência com sucesso
-        self._locks_memoria[chave] = agora
-        _salvar_lock_disco(chave, agora)
-        return True
-
-    def iniciar(self):
-        """Inicia os agendamentos automáticos em segundo plano."""
-        if self._inicializado:
-            return
-        
-        # 0. Sentinela Watchdog Evolution API (a cada 60s)
-        self.scheduler.add_job(
-            self.rotina_watchdog_evolution_api,
-            "interval",
-            seconds=60,
-            id="cron_watchdog_evolution_api",
-            replace_existing=True
-        )
-
-        # 0.1 Sentinela Anti-Mensagens Sem Resposta (a cada 60s)
-        self.scheduler.add_job(
-            self.rotina_watchdog_mensagens_sem_resposta,
-            "interval",
-            seconds=60,
-            id="cron_watchdog_mensagens_sem_resposta",
-            replace_existing=True
-        )
-
-        # 1. Cobrança de Almoço / Dieta às 12:30 (Segunda a Sexta)
-        self.scheduler.add_job(
-            self.rotina_cobranca_almoco,
-            CronTrigger(hour=12, minute=30, day_of_week="mon-fri", timezone="America/Sao_Paulo"),
-            id="cron_cobranca_almoco",
-            replace_existing=True
-        )
-
-        # 2. Cobrança de Treino & Dados Pendentes às 18:00 (Segunda, Quarta e Sexta)
-        self.scheduler.add_job(
-            self.rotina_cobranca_treino_e_pendencias,
-            CronTrigger(hour=18, minute=0, day_of_week="mon,wed,fri", timezone="America/Sao_Paulo"),
-            id="cron_cobranca_treino_pendencias",
-            replace_existing=True
-        )
-
-        # 3. Auditoria Noturna Strava & Sono Anabólico GH às 22:00 (Todos os dias)
-        self.scheduler.add_job(
-            self.rotina_auditoria_strava_e_sono,
-            CronTrigger(hour=22, minute=0, timezone="America/Sao_Paulo"),
-            id="cron_strava_auditoria_noturna",
-            replace_existing=True
-        )
-
-        # 4. Disparo Semanal da Landing Page do Aluno aos Domingos às 19:00
-        self.scheduler.add_job(
-            self.rotina_disparo_landing_pages_semanais,
-            CronTrigger(hour=19, minute=0, day_of_week="sun", timezone="America/Sao_Paulo"),
-            id="cron_landing_page_semanal",
-            replace_existing=True
-        )
-
-        self.scheduler.start()
-        self._inicializado = True
-        print("[MARCAO AUTONOMOUS CRON] Agendador de Follow-ups do Marcão INICIADO com sucesso!")
-
-    def _registrar_log(self, tipo: str, detalhes: Any):
-        log_entry = {
-            "timestamp": datetime.now().isoformat(),
-            "tipo": tipo,
-            "detalhes": detalhes
-        }
-        self.historico_disparos.append(log_entry)
-        if len(self.historico_disparos) > 50:
-            self.historico_disparos.pop(0)
-
-    # -------------------------------------------------------------------------
-    # 0. SENTINELA WATCHDOG EVOLUTION API (AUTO-RECUPERAÇÃO DE CONEXÃO & RESPOSTAS)
-    # -------------------------------------------------------------------------
-    async def rotina_watchdog_evolution_api(self) -> dict:
-        """
-        Monitora 24/7 a saúde da conexão do WhatsApp (Evolution API / Baileys).
-        Se a instância sofia desconectar ou travar em 'connecting'/'close':
-        1. Emite alerta no log.
-        2. Dispara POST /instance/restart/sofia e força reconexão imediata.
-        3. Mantém a disponibilidade 100% contínua sem depender de intervenção humana.
-        """
-        evo_url = (os.getenv("EVOLUTION_API_URL") or "https://evolution.marcaopersonal.com").rstrip("/")
-        evo_key = os.getenv("EVOLUTION_API_KEY", "")
-        evo_inst = os.getenv("EVOLUTION_INSTANCE", "sofia")
-        headers = {"apikey": evo_key, "Content-Type": "application/json"}
-
-        if not evo_url or not evo_key:
-            return {"sucesso": False, "motivo": "sem_credenciais"}
-
-        try:
-            async with httpx.AsyncClient(verify=False, timeout=8.0) as client:
-                r = await client.get(f"{evo_url}/instance/connectionState/{evo_inst}", headers=headers)
-                state = "unknown"
-                if r.status_code == 200:
-                    data = r.json()
-                    state = data.get("instance", {}).get("state", "unknown")
-
-                if state != "open":
-                    print(f"[EVOLUTION WATCHDOG] 🚨 ALERTA: Instância '{evo_inst}' fora do ar! (Estado: {state}). Executando auto-reconexão...")
-                    # Reinicia a instância Baileys
-                    r_restart = await client.post(f"{evo_url}/instance/restart/{evo_inst}", headers=headers)
-                    await asyncio.sleep(4.0)
-
-                    # Checa se restabeleceu
-                    r_check = await client.get(f"{evo_url}/instance/connectionState/{evo_inst}", headers=headers)
-                    new_state = r_check.json().get("instance", {}).get("state", "unknown") if r_check.status_code == 200 else "error"
-                    
-                    if new_state != "open":
-                        # Tenta endpoint connect
-                        await client.get(f"{evo_url}/instance/connect/{evo_inst}", headers=headers)
-                        await asyncio.sleep(3.0)
-                        r_check2 = await client.get(f"{evo_url}/instance/connectionState/{evo_inst}", headers=headers)
-                        new_state = r_check2.json().get("instance", {}).get("state", "unknown") if r_check2.status_code == 200 else "error"
-
-                    print(f"[EVOLUTION WATCHDOG] ✅ Conexão restabelecida para '{evo_inst}'. Novo estado: {new_state}")
-
-                    self._registrar_log("watchdog_reconexao", {
-                        "instancia": evo_inst,
-                        "estado_anterior": state,
-                        "novo_estado": new_state,
-                        "timestamp": datetime.now().isoformat()
-                    })
-                    return {"sucesso": True, "reconectado": True, "estado": new_state}
-                else:
-                    return {"sucesso": True, "estado": "open"}
-        except Exception as e:
-            print(f"[EVOLUTION WATCHDOG] Erro ao auditar conexão: {e}")
-            return {"sucesso": False, "erro": str(e)}
-
-    # -------------------------------------------------------------------------
-    # 0.1 SENTINELA WATCHDOG: RESGATE DE MENSAGENS SEM RESPOSTA (A CADA 60s)
-    # -------------------------------------------------------------------------
-    async def rotina_watchdog_mensagens_sem_resposta(self) -> dict:
-        """
-        Audita 24/7 todas as conversas 1-a-1 do WhatsApp.
-        Se qualquer aluno ou lead enviou mensagem há mais de 75 segundos e ainda
-        não recebeu resposta do Marcão:
-        1. Limpa travas de pausa antigas ou conflitantes no Supabase (n8n_controle_pausa).
-        2. Dispara o webhook n8n com o payload original e idempotência rigorosa.
-        3. Garante que NUNCA um aluno fique sem resposta por falha de webhook ou rede.
-        """
-        evo_url = (os.getenv("EVOLUTION_API_URL") or "https://evolution.marcaopersonal.com").rstrip("/")
-        evo_key = os.getenv("EVOLUTION_API_KEY", "")
-        headers_evo = {"apikey": evo_key, "Content-Type": "application/json"}
-        headers_sup = get_supabase_headers()
-
-        if not evo_url or not evo_key:
-            return {"sucesso": False, "motivo": "sem_credenciais"}
-
-        try:
-            agora = int(time.time())
-            resgatados = []
-
-            async with httpx.AsyncClient(verify=False, timeout=12.0) as client:
-                r = await client.post(
-                    f"{evo_url}/chat/findMessages/sofia",
-                    headers=headers_evo,
-                    json={"where": {}, "limit": 40}
-                )
-                if r.status_code != 200:
-                    return {"sucesso": False, "motivo": f"status_{r.status_code}"}
-                
-                messages = r.json().get("messages", {}).get("records", [])
-
-            # Agrupa por remoteJid (ignorando grupos @g.us)
-            chats = {}
-            for m in messages:
-                k = m.get("key", {})
-                jid = k.get("remoteJid", "")
-                if not jid or "@g.us" in jid:
-                    continue
-                if jid not in chats:
-                    chats[jid] = []
-                chats[jid].append(m)
-
-            for jid, msg_list in chats.items():
-                msg_list.sort(key=lambda x: int(x.get("messageTimestamp") or 0), reverse=True)
-                latest = msg_list[0]
-                k = latest.get("key", {})
-                from_me = k.get("fromMe", False)
-                ts = int(latest.get("messageTimestamp") or 0)
-                msg_id = k.get("id", "")
-                idade_segundos = agora - ts
-
-                # Se o cliente falou por último e já se passaram entre 75s e 43200s (12h)
-                if not from_me and 75 <= idade_segundos <= 43200 and msg_id:
-                    # Trava de Idempotência: não resgatar a mesma mensagem duas vezes
-                    if not self.adquirir_trava_deduplicacao("sentinel_rescue", msg_id, ttl_segundos=86400):
-                        continue
-
-                    print(f"[SENTINEL WATCHDOG] 🚨 Mensagem sem resposta detectada em {jid} (esperando {idade_segundos}s)! Resgatando...")
-
-                    # 1. Limpa eventual trava presa no Supabase n8n_controle_pausa
-                    try:
-                        async with httpx.AsyncClient(verify=False, timeout=8.0) as client:
-                            await client.delete(
-                                f"{SUPABASE_URL}/rest/v1/n8n_controle_pausa?user_id=eq.{msg_id}",
-                                headers=headers_sup
-                            )
-                    except Exception as e_del:
-                        print(f"[SENTINEL WATCHDOG] Erro ao limpar trava de pausa: {e_del}")
-
-                    # 2. Re-injeta no Webhook do n8n F3
-                    webhook_url = "https://n8n.marcaopersonal.com/webhook/marcao-whatsapp"
-                    webhook_payload = {
-                        "event": "messages.upsert",
-                        "instance": "sofia",
-                        "data": latest,
-                        "destination": f"{evo_url}/webhook/marcao-whatsapp",
-                        "date_time": datetime.now().isoformat(),
-                        "sender": jid
-                    }
-
-                    try:
-                        async with httpx.AsyncClient(verify=False, timeout=20.0) as client:
-                            r_n8n = await client.post(webhook_url, json=webhook_payload)
-                            print(f"[SENTINEL WATCHDOG] Webhook n8n reenviado com status: {r_n8n.status_code}")
-                            resgatados.append({"jid": jid, "msg_id": msg_id, "status_n8n": r_n8n.status_code})
-                    except Exception as e_hook:
-                        print(f"[SENTINEL WATCHDOG] Erro ao chamar n8n webhook: {e_hook}")
-
-            if resgatados:
-                self._registrar_log("sentinel_resgates", {
-                    "total": len(resgatados),
-                    "resgatados": resgatados,
-                    "timestamp": datetime.now().isoformat()
-                })
-
-            return {"sucesso": True, "total_resgatados": len(resgatados), "detalhes": resgatados}
-        except Exception as e:
-            print(f"[SENTINEL WATCHDOG] Erro geral na rotina: {e}")
-            return {"sucesso": False, "erro": str(e)}
-
-    # -------------------------------------------------------------------------
-    # 1. ROTINA DE COBRANÇA DE ALMOÇO / NUTRIÇÃO (12:30)
-    # -------------------------------------------------------------------------
-    async def rotina_cobranca_almoco(self, filtro_aluno: str = None) -> dict:
-        """
-        Pede foto do prato para os alunos avaliarem os macronutrientes.
-        Regra Inviolável: 3 balões ultracurtos (30-70 caracteres cada),
-        digitação humana (composing) e trava anti-duplicação absoluta.
-        """
-        headers = get_supabase_headers()
-        enviados = []
-        bloqueados_dedup = []
-
-        try:
-            async with httpx.AsyncClient(verify=False, timeout=12.0) as client:
-                r = await client.get(f"{SUPABASE_URL}/rest/v1/fichas_alunos?select=id,nome,telefone,local_treino", headers=headers)
-                alunos = r.json() if r.status_code == 200 else []
-
-            for a in alunos:
-                tel = a.get("telefone")
-                nome = a.get("nome") or "Guerreiro(a)"
-                if not tel or any(b in str(tel) for b in ["85066687", "553285066687"]):
-                    continue
-                if filtro_aluno and filtro_aluno not in str(tel) and filtro_aluno.lower() not in nome.lower():
-                    continue
-
-                # Trava anti-duplicação: se já enviou hoje para este telefone, pula sem repetir
-                if not self.adquirir_trava_deduplicacao("cobranca_almoco", tel):
-                    bloqueados_dedup.append({"aluno": nome, "telefone": tel, "motivo": "ja_enviado_hoje"})
-                    continue
-
-                # Primeiro nome para máxima humanização e tom próximo de Personal Trainer
-                primeiro_nome = nome.strip().split()[0] if nome else "Guerreiro"
-
-                # 3 balões curtos e ágeis (30 a 65 caracteres cada)
-                baloes = [
-                    f"Fala, {primeiro_nome}! 🦁 Tudo na paz por aí?",
-                    "Marcão passando na ronda do almoço! 👊🔥",
-                    "Manda a foto do seu prato pra eu checar os macros e a proteína! 📸🥗"
-                ]
-
-                for b in baloes:
-                    await enviar_presenca_fichas(tel, "composing", 1500)
-                    await asyncio.sleep(1.4)
-                    await enviar_mensagem_whatsapp_fichas(tel, b)
-                    await asyncio.sleep(1.0)
-
-                enviados.append({"aluno": nome, "telefone": tel, "status": "cobranca_refeicao_enviada"})
-
-            self._registrar_log("cobranca_almoco", {
-                "total_enviados": len(enviados),
-                "total_bloqueados_dedup": len(bloqueados_dedup),
-                "enviados": enviados,
-                "bloqueados": bloqueados_dedup
-            })
-            return {"sucesso": True, "total": len(enviados), "detalhes": enviados, "bloqueados_dedup": bloqueados_dedup}
-        except Exception as e:
-            print(f"[CRON COBRANCA ALMOCO] Erro: {e}")
-            return {"sucesso": False, "erro": str(e)}
-
-    # -------------------------------------------------------------------------
-    # 2. ROTINA DE COBRANÇA DE TREINO & DADOS PENDENTES (18:00)
-    # -------------------------------------------------------------------------
-    async def rotina_cobranca_treino_e_pendencias(self, filtro_aluno: str = None) -> dict:
-        """
-        1. Se o aluno tiver dados incompletos (fotos, balança, altura): cobra as pendências.
-        2. Se estiver completo: cobra o treino do dia (Academia vs Casa).
-        Regra Inviolável: múltiplos balões curtos (35-70 caracteres) e trava anti-duplicação.
-        """
-        headers = get_supabase_headers()
-        resultado = []
-        bloqueados_dedup = []
-
-        try:
-            # 1. Dispara cobrança de pendências para quem está incompleto
-            pendencias = await verificar_e_cobrar_alunos_com_dados_pendentes(filtro_aluno=filtro_aluno)
-            resultado.extend(pendencias)
-
-            # 2. Para alunos completos, cobra o treino SOMENTE NOS DIAS REAIS DE TREINO DE CADA UM
-            from datetime import timezone, timedelta
-            fuso_br = timezone(timedelta(hours=-3))
-            agora_br = datetime.now(fuso_br)
-            dias_map = {0: "segunda", 1: "terça", 2: "quarta", 3: "quinta", 4: "sexta", 5: "sábado", 6: "domingo"}
-            dia_hoje_norm = dias_map[agora_br.weekday()].lower().replace("terça", "terca").replace("sábado", "sabado")
-
-            async with httpx.AsyncClient(verify=False, timeout=12.0) as client:
-                r = await client.get(f"{SUPABASE_URL}/rest/v1/fichas_alunos?select=id,nome,telefone,local_treino,objetivo,dias_treino", headers=headers)
-                alunos = r.json() if r.status_code == 200 else []
-
-            alunos_com_pendencias = [p.get("telefone") for p in pendencias if p.get("telefone")]
-
-            for a in alunos:
-                tel = a.get("telefone")
-                nome = a.get("nome") or "Guerreiro(a)"
-                local = a.get("local_treino") or "academia"
-                if not tel or tel in alunos_com_pendencias or any(b in str(tel) for b in ["85066687", "553285066687"]):
-                    continue
-                if filtro_aluno and filtro_aluno not in str(tel) and filtro_aluno.lower() not in nome.lower():
-                    continue
-
-                # REGRA INVIOLÁVEL DO DIRETOR EVANDRO: SOMENTE NOS DIAS REAIS DE TREINO!
-                dias_aluno = [str(d).lower().replace("terça", "terca").replace("sábado", "sabado").strip() for d in (a.get("dias_treino") or [])]
-                if not dias_aluno or dia_hoje_norm not in dias_aluno:
-                    # Hoje NÃO é dia de treino deste aluno. O Marcão respeita o descanso!
-                    continue
-
-                # Trava anti-duplicação para cobrança de treino diária
-                if not self.adquirir_trava_deduplicacao("cobranca_treino", tel):
-                    bloqueados_dedup.append({"aluno": nome, "telefone": tel, "motivo": "ja_enviado_hoje"})
-                    continue
-
-                primeiro_nome = nome.strip().split()[0] if nome else "Guerreiro"
-
-                if local == "casa":
-                    baloes = [
-                        f"Fala, {primeiro_nome}! 🦁💪 Treinão funcional em casa de hoje tá pago?",
-                        "Não pula o treino por nada! São 40 minutinhos que aceleram o resultado! 🔥",
-                        "Me avisa aqui quando terminar pra eu computar no ranking! 👊"
-                    ]
-                else:
-                    baloes = [
-                        f"Fala, {primeiro_nome}! 🦁💪 Já foi pra academia mandar o treino pra conta?",
-                        "Foco na execução, carga progressiva e nada de enrolar! 🔥",
-                        "Me conta aqui como foi a pegada do treino de hoje! 👊"
-                    ]
-
-                for b in baloes:
-                    await enviar_presenca_fichas(tel, "composing", 1500)
-                    await asyncio.sleep(1.4)
-                    await enviar_mensagem_whatsapp_fichas(tel, b)
-                    await asyncio.sleep(1.0)
-
-                resultado.append({"aluno": nome, "telefone": tel, "status": "treino_cobrado", "local": local})
-
-            self._registrar_log("cobranca_treino_pendencias", {
-                "total_enviados": len(resultado),
-                "total_bloqueados_dedup": len(bloqueados_dedup),
-                "resultado": resultado,
-                "bloqueados": bloqueados_dedup
-            })
-            return {"sucesso": True, "total": len(resultado), "detalhes": resultado, "bloqueados_dedup": bloqueados_dedup}
-        except Exception as e:
-            print(f"[CRON COBRANCA TREINO] Erro: {e}")
-            return {"sucesso": False, "erro": str(e)}
-
-    # -------------------------------------------------------------------------
-    # 3. ROTINA DE AUDITORIA STRAVA & SONO ANABÓLICO GH (22:00)
-    # -------------------------------------------------------------------------
-    async def rotina_auditoria_strava_e_sono(self, filtro_aluno: str = None) -> dict:
-        """
-        Dispara a auditoria noturna de treinos conectados ao Strava.
-        Se treinou: avalia frequência cardíaca e parabeniza.
-        Se faltou no dia de treino: dá uma bronca técnica, puxa a orelha e prescreve sono anabólico.
-        Se não tem Strava: envia o link direto de conexão OAuth para vincular relógio/app.
-        """
-        try:
-            # Trava anti-duplicação global para a auditoria noturna
-            if filtro_aluno:
-                chave_filtro = f"strava_auditoria_{filtro_aluno}"
-            else:
-                chave_filtro = "strava_auditoria_global"
-
-            if not self.adquirir_trava_deduplicacao(chave_filtro, "todos_alunos"):
-                print("[DEDUPLICACAO] Auditoria noturna Strava já realizada hoje. Ignorando repetição!")
-                return {"sucesso": True, "aviso": "Auditoria já realizada hoje", "bloqueado_dedup": True}
-
-            resultado = await executar_auditoria_strava_noturna_22h(filtro_aluno=filtro_aluno)
-            self._registrar_log("auditoria_strava_sono", resultado)
-            return {"sucesso": True, "resultado": resultado}
-        except Exception as e:
-            print(f"[CRON AUDITORIA STRAVA] Erro: {e}")
-            return {"sucesso": False, "erro": str(e)}
-
-    # -------------------------------------------------------------------------
-    # 4. ROTINA DE DISPARO DAS LANDING PAGES SEMANAIS AOS DOMINGOS (19:00)
-    # -------------------------------------------------------------------------
-    async def rotina_disparo_landing_pages_semanais(self, filtro_aluno: str = None) -> dict:
-        """
-        Envia a landing page exclusiva de cada aluno no domingo à noite:
-        - Link dinâmico: https://marcaopersonal.com/aluno?id={tel}
-        - Ficha de treinos e ranking da semana
-        - Instruções de PWA (fixar como app na tela inicial do celular)
-        """
-        headers = get_supabase_headers()
-        enviados = []
-        bloqueados_dedup = []
-
-        try:
-            async with httpx.AsyncClient(verify=False, timeout=12.0) as client:
-                r = await client.get(f"{SUPABASE_URL}/rest/v1/fichas_alunos?select=id,nome,telefone", headers=headers)
-                alunos = r.json() if r.status_code == 200 else []
-
-            for a in alunos:
-                tel = a.get("telefone")
-                nome = a.get("nome") or "Guerreiro(a)"
-                if not tel or any(b in str(tel) for b in ["85066687", "553285066687"]):
-                    continue
-                if filtro_aluno and filtro_aluno not in str(tel) and filtro_aluno.lower() not in nome.lower():
-                    continue
-
-                if not self.adquirir_trava_deduplicacao("landing_page_semanal", tel, ttl_segundos=86400):
-                    bloqueados_dedup.append({"aluno": nome, "telefone": tel, "motivo": "ja_enviado_hoje"})
-                    continue
-
-                primeiro_nome = nome.strip().split()[0] if nome else "Guerreiro"
-                link_portal = f"https://marcaopersonal.com/aluno?id={tel}"
-
-                baloes = [
-                    f"Fala, {primeiro_nome}! 🦁💪 Passando pra te entregar sua Landing Page atualizada da semana!",
-                    f"Abre aqui e confere sua evolução e treinos: {link_portal} 👊🔥",
-                    "Lá tá sua ficha completa, meta de água e proteína e o ranking Top 5 da semana!",
-                    "Dica de ouro: clica em Compartilhar e Adicionar à Tela de Início pra virar um app no seu celular! 📲👊"
-                ]
-
-                for b in baloes:
-                    await enviar_presenca_fichas(tel, "composing", 1500)
-                    await asyncio.sleep(1.4)
-                    await enviar_mensagem_whatsapp_fichas(tel, b)
-                    await asyncio.sleep(1.0)
-
-                enviados.append({"aluno": nome, "telefone": tel, "link": link_portal})
-
-            self._registrar_log("landing_pages_semanais", {
-                "total": len(enviados),
-                "total_bloqueados_dedup": len(bloqueados_dedup),
-                "enviados": enviados
-            })
-            return {"sucesso": True, "total": len(enviados), "detalhes": enviados, "bloqueados_dedup": bloqueados_dedup}
-        except Exception as e:
-            print(f"[CRON LANDING PAGES] Erro: {e}")
-            return {"sucesso": False, "erro": str(e)}
-
-    # -------------------------------------------------------------------------
-    # PAINEL DE STATUS & TELEMETRIA DO AGENDADOR
-    # -------------------------------------------------------------------------
-    def status(self) -> dict:
-        """Retorna o status atual dos jobs agendados e os últimos disparos executados."""
-        jobs_info = []
-        if self._inicializado and self.scheduler.running:
-            for job in self.scheduler.get_jobs():
-                jobs_info.append({
-                    "id": job.id,
-                    "proxima_execucao": job.next_run_time.isoformat() if job.next_run_time else None
-                })
-
-        return {
-            "ativo": self._inicializado and self.scheduler.running,
-            "jobs_agendados": jobs_info,
-            "total_historico_logs": len(self.historico_disparos),
-            "ultimos_logs": self.historico_disparos[-10:] if self.historico_disparos else []
-        }
-
-
-# Instância Singleton do Agendador Autônomo Marcão
-marcao_cron = MarcaoAutonomousScheduler()
-
-
-if __name__ == "__main__":
-    async def testar():
-        print("Testando inicialização do Agendador Marcão...")
-        marcao_cron.iniciar()
-        print(json.dumps(marcao_cron.status(), indent=2, ensure_ascii=False))
-
-    asyncio.run(testar())
+"""
+
+=============================================================================
+
+MOTOR AUTÔNOMO DE FOLLOW-UP, COBRANÇAS E AUDITORIA STRAVA — MARCÃO PERSONAL
+
+Executa o agendador interno (cron) de alta confiabilidade:
+
+1. 12:30 (Seg-Sex) - Cobrança de foto de almoço / dieta
+
+2. 18:00 (Seg, Qua, Sex) - Cobrança de treinos (academia/casa) e dados pendentes
+
+3. 22:00 (Diário) - Auditoria Noturna Strava (conselhos/broncas) & Sono Anabólico GH
+
+4. 19:00 (Domingos) - Envio semanal da Landing Page individual do aluno
+
+
+
+BLINDAGEM ANTI-DUPLICAÇÃO & HUMANIZAÇÃO (REGRA INVIOLÁVEL):
+
+- Trava de Idempotência persistente (Memória + Disco JSON + Redis) para que
+
+  NENHUM aluno receba mensagens repetidas no mesmo dia.
+
+- Balões curtos e ágeis (30 a 70 caracteres cada) com pausas naturais de digitação (composing).
+
+=============================================================================
+
+"""
+
+
+
+import os
+
+import json
+
+import time
+
+import asyncio
+
+import httpx
+
+from datetime import datetime, timedelta
+
+from typing import Dict, Any, List, Optional
+
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
+from apscheduler.triggers.cron import CronTrigger
+
+from dotenv import load_dotenv
+
+
+
+_base_dir = os.path.dirname(os.path.abspath(__file__))
+
+load_dotenv(os.path.join(_base_dir, ".env"), override=True)
+
+load_dotenv(os.path.join(_base_dir, "..", "..", ".env"))
+
+load_dotenv()
+
+
+
+SUPABASE_URL = os.getenv("SUPABASE_URL", "https://qkopgftfrfftoyndhhfj.supabase.co")
+
+SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
+
+EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "https://evolution.marcaopersonal.com")
+
+EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "")
+
+EVOLUTION_INSTANCE = os.getenv("EVOLUTION_INSTANCE", "sofia")
+
+
+
+try:
+
+    from fichas_engine import (
+
+        enviar_mensagem_whatsapp_fichas,
+
+        enviar_presenca_fichas,
+
+        buscar_ficha_existente,
+
+        verificar_e_cobrar_alunos_com_dados_pendentes,
+
+        get_supabase_headers
+
+    )
+
+except ImportError:
+
+    from apps.api.fichas_engine import (
+
+        enviar_mensagem_whatsapp_fichas,
+
+        enviar_presenca_fichas,
+
+        buscar_ficha_existente,
+
+        verificar_e_cobrar_alunos_com_dados_pendentes,
+
+        get_supabase_headers
+
+    )
+
+
+
+try:
+
+    from strava_service import executar_auditoria_strava_noturna_22h
+
+except ImportError:
+
+    from apps.api.strava_service import executar_auditoria_strava_noturna_22h
+
+
+
+# Arquivo de persistência local das travas de deduplicação
+
+DEDUP_LOCK_FILE = os.path.join(_base_dir, "data", "cron_dedup_locks.json")
+
+os.makedirs(os.path.dirname(DEDUP_LOCK_FILE), exist_ok=True)
+
+
+
+
+
+def _carregar_locks_disco() -> dict:
+
+    try:
+
+        if os.path.exists(DEDUP_LOCK_FILE):
+
+            with open(DEDUP_LOCK_FILE, "r", encoding="utf-8") as f:
+
+                return json.load(f)
+
+    except Exception:
+
+        pass
+
+    return {}
+
+
+
+
+
+def _salvar_lock_disco(chave: str, ts: float):
+
+    try:
+
+        dados = _carregar_locks_disco()
+
+        agora = time.time()
+
+        # Expira locks com mais de 48 horas
+
+        dados = {k: v for k, v in dados.items() if agora - v < 172800}
+
+        dados[chave] = ts
+
+        with open(DEDUP_LOCK_FILE, "w", encoding="utf-8") as f:
+
+            json.dump(dados, f, ensure_ascii=False)
+
+    except Exception as e:
+
+        print(f"[DEDUP LOCK] Erro salvando lock em disco: {e}")
+
+
+
+
+
+class MarcaoAutonomousScheduler:
+
+    def __init__(self):
+
+        self.scheduler = AsyncIOScheduler(timezone="America/Sao_Paulo")
+
+        self.historico_disparos: List[Dict[str, Any]] = []
+
+        self._inicializado = False
+
+        self._locks_memoria: Dict[str, float] = {}
+
+
+
+    def adquirir_trava_deduplicacao(self, tipo: str, telefone: str, ttl_segundos: int = 43200) -> bool:
+
+        """
+
+        Garante que NENHUM follow-up repetido seja disparado para o mesmo aluno no mesmo dia.
+
+        Retorna True se o disparo for inédito e a trava for adquirida.
+
+        Retorna False se o disparo já foi realizado hoje por qualquer processo (VPS ou Local).
+
+        """
+
+        tel_digitos = "".join(filter(str.isdigit, str(telefone)))
+
+        hoje_str = datetime.now().strftime("%Y-%m-%d")
+
+        chave = f"lock:{tipo}:{tel_digitos}:{hoje_str}"
+
+        agora = time.time()
+
+
+
+        # 1. Checa memória interna
+
+        if chave in self._locks_memoria:
+
+            if agora - self._locks_memoria[chave] < ttl_segundos:
+
+                print(f"[DEDUPLICACAO MEMÓRIA] {tipo} para {tel_digitos} já enviado hoje. Ignorando duplicata!")
+
+                return False
+
+
+
+        # 2. Checa persistência em disco
+
+        locks_disco = _carregar_locks_disco()
+
+        if chave in locks_disco:
+
+            if agora - locks_disco[chave] < ttl_segundos:
+
+                self._locks_memoria[chave] = locks_disco[chave]
+
+                print(f"[DEDUPLICACAO DISCO] {tipo} para {tel_digitos} já enviado hoje. Ignorando duplicata!")
+
+                return False
+
+
+
+        # 3. Adquire a trava de idempotência com sucesso
+
+        self._locks_memoria[chave] = agora
+
+        _salvar_lock_disco(chave, agora)
+
+        return True
+
+
+
+    def iniciar(self):
+
+        """Inicia os agendamentos automáticos em segundo plano."""
+
+        if self._inicializado:
+
+            return
+
+        
+
+        # 0. Sentinela Watchdog Evolution API (a cada 60s)
+
+        self.scheduler.add_job(
+
+            self.rotina_watchdog_evolution_api,
+
+            "interval",
+
+            seconds=60,
+
+            id="cron_watchdog_evolution_api",
+
+            replace_existing=True
+
+        )
+
+
+
+        # 0.1 Sentinela Anti-Mensagens Sem Resposta (a cada 60s)
+
+        self.scheduler.add_job(
+
+            self.rotina_watchdog_mensagens_sem_resposta,
+
+            "interval",
+
+            seconds=60,
+
+            id="cron_watchdog_mensagens_sem_resposta",
+
+            replace_existing=True
+
+        )
+
+
+
+        # 1. Cobrança de Almoço / Dieta às 12:30 (Segunda a Sexta)
+
+        self.scheduler.add_job(
+
+            self.rotina_cobranca_almoco,
+
+            CronTrigger(hour=12, minute=30, day_of_week="mon-fri", timezone="America/Sao_Paulo"),
+
+            id="cron_cobranca_almoco",
+
+            replace_existing=True
+
+        )
+
+
+
+        # 2. Cobrança de Treino & Dados Pendentes às 18:00 (Segunda, Quarta e Sexta)
+
+        self.scheduler.add_job(
+
+            self.rotina_cobranca_treino_e_pendencias,
+
+            CronTrigger(hour=18, minute=0, day_of_week="mon,wed,fri", timezone="America/Sao_Paulo"),
+
+            id="cron_cobranca_treino_pendencias",
+
+            replace_existing=True
+
+        )
+
+
+
+        # 3. Auditoria Noturna Strava & Sono Anabólico GH às 22:00 (Todos os dias)
+
+        self.scheduler.add_job(
+
+            self.rotina_auditoria_strava_e_sono,
+
+            CronTrigger(hour=22, minute=0, timezone="America/Sao_Paulo"),
+
+            id="cron_strava_auditoria_noturna",
+
+            replace_existing=True
+
+        )
+
+
+
+        # 4. Disparo Semanal da Landing Page do Aluno aos Domingos às 19:00
+
+        self.scheduler.add_job(
+
+            self.rotina_disparo_landing_pages_semanais,
+
+            CronTrigger(hour=19, minute=0, day_of_week="sun", timezone="America/Sao_Paulo"),
+
+            id="cron_landing_page_semanal",
+
+            replace_existing=True
+
+        )
+
+
+
+                # 5. Cobrança Semanal de Fotos Corporais Criptografadas (Frente e Costas) às Sextas 14:30
+        self.scheduler.add_job(
+            self.rotina_cobranca_fotos_corporais_semanal,
+            CronTrigger(hour=14, minute=30, day_of_week="fri", timezone="America/Sao_Paulo"),
+            id="cron_cobranca_fotos_semanal",
+            replace_existing=True
+        )
+
+        # 6. Auditoria & Renovação Trimestral de Ficha de Treino (a cada 3 meses / 90 dias) aos Domingos 10:00
+        self.scheduler.add_job(
+            self.rotina_renovacao_fichas_trimestral,
+            CronTrigger(hour=10, minute=0, day_of_week="sun", timezone="America/Sao_Paulo"),
+            id="cron_renovacao_ficha_trimestral",
+            replace_existing=True
+        )
+
+        self.scheduler.start()
+
+        self._inicializado = True
+
+        print("[MARCAO AUTONOMOUS CRON] Agendador de Follow-ups do Marcão INICIADO com sucesso!")
+
+
+
+    def _registrar_log(self, tipo: str, detalhes: Any):
+
+        log_entry = {
+
+            "timestamp": datetime.now().isoformat(),
+
+            "tipo": tipo,
+
+            "detalhes": detalhes
+
+        }
+
+        self.historico_disparos.append(log_entry)
+
+        if len(self.historico_disparos) > 50:
+
+            self.historico_disparos.pop(0)
+
+
+
+    # -------------------------------------------------------------------------
+
+    # 0. SENTINELA WATCHDOG EVOLUTION API (AUTO-RECUPERAÇÃO DE CONEXÃO & RESPOSTAS)
+
+    # -------------------------------------------------------------------------
+
+    async def rotina_watchdog_evolution_api(self) -> dict:
+
+        """
+
+        Monitora 24/7 a saúde da conexão do WhatsApp (Evolution API / Baileys).
+
+        Se a instância sofia desconectar ou travar em 'connecting'/'close':
+
+        1. Emite alerta no log.
+
+        2. Dispara POST /instance/restart/sofia e força reconexão imediata.
+
+        3. Mantém a disponibilidade 100% contínua sem depender de intervenção humana.
+
+        """
+
+        evo_url = (os.getenv("EVOLUTION_API_URL") or "https://evolution.marcaopersonal.com").rstrip("/")
+
+        evo_key = os.getenv("EVOLUTION_API_KEY", "")
+
+        evo_inst = os.getenv("EVOLUTION_INSTANCE", "sofia")
+
+        headers = {"apikey": evo_key, "Content-Type": "application/json"}
+
+
+
+        if not evo_url or not evo_key:
+
+            return {"sucesso": False, "motivo": "sem_credenciais"}
+
+
+
+        try:
+
+            async with httpx.AsyncClient(verify=False, timeout=8.0) as client:
+
+                r = await client.get(f"{evo_url}/instance/connectionState/{evo_inst}", headers=headers)
+
+                state = "unknown"
+
+                if r.status_code == 200:
+
+                    data = r.json()
+
+                    state = data.get("instance", {}).get("state", "unknown")
+
+
+
+                if state != "open":
+
+                    print(f"[EVOLUTION WATCHDOG] 🚨 ALERTA: Instância '{evo_inst}' fora do ar! (Estado: {state}). Executando auto-reconexão...")
+
+                    # Reinicia a instância Baileys
+
+                    r_restart = await client.post(f"{evo_url}/instance/restart/{evo_inst}", headers=headers)
+
+                    await asyncio.sleep(4.0)
+
+
+
+                    # Checa se restabeleceu
+
+                    r_check = await client.get(f"{evo_url}/instance/connectionState/{evo_inst}", headers=headers)
+
+                    new_state = r_check.json().get("instance", {}).get("state", "unknown") if r_check.status_code == 200 else "error"
+
+                    
+
+                    if new_state != "open":
+
+                        # Tenta endpoint connect
+
+                        await client.get(f"{evo_url}/instance/connect/{evo_inst}", headers=headers)
+
+                        await asyncio.sleep(3.0)
+
+                        r_check2 = await client.get(f"{evo_url}/instance/connectionState/{evo_inst}", headers=headers)
+
+                        new_state = r_check2.json().get("instance", {}).get("state", "unknown") if r_check2.status_code == 200 else "error"
+
+
+
+                    print(f"[EVOLUTION WATCHDOG] ✅ Conexão restabelecida para '{evo_inst}'. Novo estado: {new_state}")
+
+
+
+                    self._registrar_log("watchdog_reconexao", {
+
+                        "instancia": evo_inst,
+
+                        "estado_anterior": state,
+
+                        "novo_estado": new_state,
+
+                        "timestamp": datetime.now().isoformat()
+
+                    })
+
+                    return {"sucesso": True, "reconectado": True, "estado": new_state}
+
+                else:
+
+                    return {"sucesso": True, "estado": "open"}
+
+        except Exception as e:
+
+            print(f"[EVOLUTION WATCHDOG] Erro ao auditar conexão: {e}")
+
+            return {"sucesso": False, "erro": str(e)}
+
+
+
+    # -------------------------------------------------------------------------
+
+    # 0.1 SENTINELA WATCHDOG: RESGATE DE MENSAGENS SEM RESPOSTA (A CADA 60s)
+
+    # -------------------------------------------------------------------------
+
+    async def rotina_watchdog_mensagens_sem_resposta(self) -> dict:
+
+        """
+
+        Audita 24/7 todas as conversas 1-a-1 do WhatsApp.
+
+        Se qualquer aluno ou lead enviou mensagem há mais de 75 segundos e ainda
+
+        não recebeu resposta do Marcão:
+
+        1. Limpa travas de pausa antigas ou conflitantes no Supabase (n8n_controle_pausa).
+
+        2. Dispara o webhook n8n com o payload original e idempotência rigorosa.
+
+        3. Garante que NUNCA um aluno fique sem resposta por falha de webhook ou rede.
+
+        """
+
+        evo_url = (os.getenv("EVOLUTION_API_URL") or "https://evolution.marcaopersonal.com").rstrip("/")
+
+        evo_key = os.getenv("EVOLUTION_API_KEY", "")
+
+        headers_evo = {"apikey": evo_key, "Content-Type": "application/json"}
+
+        headers_sup = get_supabase_headers()
+
+
+
+        if not evo_url or not evo_key:
+
+            return {"sucesso": False, "motivo": "sem_credenciais"}
+
+
+
+        try:
+
+            agora = int(time.time())
+
+            resgatados = []
+
+
+
+            async with httpx.AsyncClient(verify=False, timeout=12.0) as client:
+
+                r = await client.post(
+
+                    f"{evo_url}/chat/findMessages/sofia",
+
+                    headers=headers_evo,
+
+                    json={"where": {}, "limit": 40}
+
+                )
+
+                if r.status_code != 200:
+
+                    return {"sucesso": False, "motivo": f"status_{r.status_code}"}
+
+                
+
+                messages = r.json().get("messages", {}).get("records", [])
+
+
+
+            # Agrupa por remoteJid (ignorando grupos @g.us)
+
+            chats = {}
+
+            for m in messages:
+
+                k = m.get("key", {})
+
+                jid = k.get("remoteJid", "")
+
+                if not jid or "@g.us" in jid:
+
+                    continue
+
+                if jid not in chats:
+
+                    chats[jid] = []
+
+                chats[jid].append(m)
+
+
+
+            for jid, msg_list in chats.items():
+
+                msg_list.sort(key=lambda x: int(x.get("messageTimestamp") or 0), reverse=True)
+
+                latest = msg_list[0]
+
+                k = latest.get("key", {})
+
+                from_me = k.get("fromMe", False)
+
+                ts = int(latest.get("messageTimestamp") or 0)
+
+                msg_id = k.get("id", "")
+
+                idade_segundos = agora - ts
+
+
+
+                # Se o cliente falou por último e já se passaram entre 75s e 43200s (12h)
+
+                if not from_me and 75 <= idade_segundos <= 43200 and msg_id:
+
+                    # Trava de Idempotência: não resgatar a mesma mensagem duas vezes
+
+                    if not self.adquirir_trava_deduplicacao("sentinel_rescue", msg_id, ttl_segundos=86400):
+
+                        continue
+
+
+
+                    print(f"[SENTINEL WATCHDOG] 🚨 Mensagem sem resposta detectada em {jid} (esperando {idade_segundos}s)! Resgatando...")
+
+
+
+                    # 1. Limpa eventual trava presa no Supabase n8n_controle_pausa
+
+                    try:
+
+                        async with httpx.AsyncClient(verify=False, timeout=8.0) as client:
+
+                            await client.delete(
+
+                                f"{SUPABASE_URL}/rest/v1/n8n_controle_pausa?user_id=eq.{msg_id}",
+
+                                headers=headers_sup
+
+                            )
+
+                    except Exception as e_del:
+
+                        print(f"[SENTINEL WATCHDOG] Erro ao limpar trava de pausa: {e_del}")
+
+
+
+                    # 2. Re-injeta no Webhook do n8n F3
+
+                    webhook_url = "https://n8n.marcaopersonal.com/webhook/marcao-whatsapp"
+
+                    webhook_payload = {
+
+                        "event": "messages.upsert",
+
+                        "instance": "sofia",
+
+                        "data": latest,
+
+                        "destination": f"{evo_url}/webhook/marcao-whatsapp",
+
+                        "date_time": datetime.now().isoformat(),
+
+                        "sender": jid
+
+                    }
+
+
+
+                    try:
+
+                        async with httpx.AsyncClient(verify=False, timeout=20.0) as client:
+
+                            r_n8n = await client.post(webhook_url, json=webhook_payload)
+
+                            print(f"[SENTINEL WATCHDOG] Webhook n8n reenviado com status: {r_n8n.status_code}")
+
+                            resgatados.append({"jid": jid, "msg_id": msg_id, "status_n8n": r_n8n.status_code})
+
+                    except Exception as e_hook:
+
+                        print(f"[SENTINEL WATCHDOG] Erro ao chamar n8n webhook: {e_hook}")
+
+
+
+            if resgatados:
+
+                self._registrar_log("sentinel_resgates", {
+
+                    "total": len(resgatados),
+
+                    "resgatados": resgatados,
+
+                    "timestamp": datetime.now().isoformat()
+
+                })
+
+
+
+            return {"sucesso": True, "total_resgatados": len(resgatados), "detalhes": resgatados}
+
+        except Exception as e:
+
+            print(f"[SENTINEL WATCHDOG] Erro geral na rotina: {e}")
+
+            return {"sucesso": False, "erro": str(e)}
+
+
+
+    # -------------------------------------------------------------------------
+
+    # 1. ROTINA DE COBRANÇA DE ALMOÇO / NUTRIÇÃO (12:30)
+
+    # -------------------------------------------------------------------------
+
+    async def rotina_cobranca_almoco(self, filtro_aluno: str = None) -> dict:
+
+        """
+
+        Pede foto do prato para os alunos avaliarem os macronutrientes.
+
+        Regra Inviolável: 3 balões ultracurtos (30-70 caracteres cada),
+
+        digitação humana (composing) e trava anti-duplicação absoluta.
+
+        """
+
+        headers = get_supabase_headers()
+
+        enviados = []
+
+        bloqueados_dedup = []
+
+
+
+        try:
+
+            async with httpx.AsyncClient(verify=False, timeout=12.0) as client:
+
+                r = await client.get(f"{SUPABASE_URL}/rest/v1/fichas_alunos?select=id,nome,telefone,local_treino", headers=headers)
+
+                alunos = r.json() if r.status_code == 200 else []
+
+
+
+            for a in alunos:
+
+                tel = a.get("telefone")
+
+                nome = a.get("nome") or "Guerreiro(a)"
+
+                if not tel or any(b in str(tel) for b in ["85066687", "553285066687"]):
+
+                    continue
+
+                if filtro_aluno and filtro_aluno not in str(tel) and filtro_aluno.lower() not in nome.lower():
+
+                    continue
+
+
+
+                # Trava anti-duplicação: se já enviou hoje para este telefone, pula sem repetir
+
+                if not self.adquirir_trava_deduplicacao("cobranca_almoco", tel):
+
+                    bloqueados_dedup.append({"aluno": nome, "telefone": tel, "motivo": "ja_enviado_hoje"})
+
+                    continue
+
+
+
+                # Primeiro nome para máxima humanização e tom próximo de Personal Trainer
+
+                primeiro_nome = nome.strip().split()[0] if nome else "Guerreiro"
+
+
+
+                # 3 balões curtos e ágeis (30 a 65 caracteres cada)
+
+                baloes = [
+
+                    f"Fala, {primeiro_nome}! 🦁 Tudo na paz por aí?",
+
+                    "Marcão passando na ronda do almoço! 👊🔥",
+
+                    "Manda a foto do seu prato pra eu checar os macros e a proteína! 📸🥗"
+
+                ]
+
+
+
+                for b in baloes:
+
+                    await enviar_presenca_fichas(tel, "composing", 1500)
+
+                    await asyncio.sleep(1.4)
+
+                    await enviar_mensagem_whatsapp_fichas(tel, b)
+
+                    await asyncio.sleep(1.0)
+
+
+
+                enviados.append({"aluno": nome, "telefone": tel, "status": "cobranca_refeicao_enviada"})
+
+
+
+            self._registrar_log("cobranca_almoco", {
+
+                "total_enviados": len(enviados),
+
+                "total_bloqueados_dedup": len(bloqueados_dedup),
+
+                "enviados": enviados,
+
+                "bloqueados": bloqueados_dedup
+
+            })
+
+            return {"sucesso": True, "total": len(enviados), "detalhes": enviados, "bloqueados_dedup": bloqueados_dedup}
+
+        except Exception as e:
+
+            print(f"[CRON COBRANCA ALMOCO] Erro: {e}")
+
+            return {"sucesso": False, "erro": str(e)}
+
+
+
+    # -------------------------------------------------------------------------
+
+    # 2. ROTINA DE COBRANÇA DE TREINO & DADOS PENDENTES (18:00)
+
+    # -------------------------------------------------------------------------
+
+    async def rotina_cobranca_treino_e_pendencias(self, filtro_aluno: str = None) -> dict:
+
+        """
+
+        1. Se o aluno tiver dados incompletos (fotos, balança, altura): cobra as pendências.
+
+        2. Se estiver completo: cobra o treino do dia (Academia vs Casa).
+
+        Regra Inviolável: múltiplos balões curtos (35-70 caracteres) e trava anti-duplicação.
+
+        """
+
+        headers = get_supabase_headers()
+
+        resultado = []
+
+        bloqueados_dedup = []
+
+
+
+        try:
+
+            # 1. Dispara cobrança de pendências para quem está incompleto
+
+            pendencias = await verificar_e_cobrar_alunos_com_dados_pendentes(filtro_aluno=filtro_aluno)
+
+            resultado.extend(pendencias)
+
+
+
+            # 2. Para alunos completos, cobra o treino SOMENTE NOS DIAS REAIS DE TREINO DE CADA UM
+
+            from datetime import timezone, timedelta
+
+            fuso_br = timezone(timedelta(hours=-3))
+
+            agora_br = datetime.now(fuso_br)
+
+            dias_map = {0: "segunda", 1: "terça", 2: "quarta", 3: "quinta", 4: "sexta", 5: "sábado", 6: "domingo"}
+
+            dia_hoje_norm = dias_map[agora_br.weekday()].lower().replace("terça", "terca").replace("sábado", "sabado")
+
+
+
+            async with httpx.AsyncClient(verify=False, timeout=12.0) as client:
+
+                r = await client.get(f"{SUPABASE_URL}/rest/v1/fichas_alunos?select=id,nome,telefone,local_treino,objetivo,dias_treino", headers=headers)
+
+                alunos = r.json() if r.status_code == 200 else []
+
+
+
+            alunos_com_pendencias = [p.get("telefone") for p in pendencias if p.get("telefone")]
+
+
+
+            for a in alunos:
+
+                tel = a.get("telefone")
+
+                nome = a.get("nome") or "Guerreiro(a)"
+
+                local = a.get("local_treino") or "academia"
+
+                if not tel or tel in alunos_com_pendencias or any(b in str(tel) for b in ["85066687", "553285066687"]):
+
+                    continue
+
+                if filtro_aluno and filtro_aluno not in str(tel) and filtro_aluno.lower() not in nome.lower():
+
+                    continue
+
+
+
+                # REGRA INVIOLÁVEL DO DIRETOR EVANDRO: SOMENTE NOS DIAS REAIS DE TREINO!
+
+                dias_aluno = [str(d).lower().replace("terça", "terca").replace("sábado", "sabado").strip() for d in (a.get("dias_treino") or [])]
+
+                if not dias_aluno or dia_hoje_norm not in dias_aluno:
+
+                    # Hoje NÃO é dia de treino deste aluno. O Marcão respeita o descanso!
+
+                    continue
+
+
+
+                # Trava anti-duplicação para cobrança de treino diária
+
+                if not self.adquirir_trava_deduplicacao("cobranca_treino", tel):
+
+                    bloqueados_dedup.append({"aluno": nome, "telefone": tel, "motivo": "ja_enviado_hoje"})
+
+                    continue
+
+
+
+                primeiro_nome = nome.strip().split()[0] if nome else "Guerreiro"
+
+
+
+                if local == "casa":
+
+                    baloes = [
+
+                        f"Fala, {primeiro_nome}! 🦁💪 Treinão funcional em casa de hoje tá pago?",
+
+                        "Não pula o treino por nada! São 40 minutinhos que aceleram o resultado! 🔥",
+
+                        "Me avisa aqui quando terminar pra eu computar no ranking! 👊"
+
+                    ]
+
+                else:
+
+                    baloes = [
+
+                        f"Fala, {primeiro_nome}! 🦁💪 Já foi pra academia mandar o treino pra conta?",
+
+                        "Foco na execução, carga progressiva e nada de enrolar! 🔥",
+
+                        "Me conta aqui como foi a pegada do treino de hoje! 👊"
+
+                    ]
+
+
+
+                for b in baloes:
+
+                    await enviar_presenca_fichas(tel, "composing", 1500)
+
+                    await asyncio.sleep(1.4)
+
+                    await enviar_mensagem_whatsapp_fichas(tel, b)
+
+                    await asyncio.sleep(1.0)
+
+
+
+                resultado.append({"aluno": nome, "telefone": tel, "status": "treino_cobrado", "local": local})
+
+
+
+            self._registrar_log("cobranca_treino_pendencias", {
+
+                "total_enviados": len(resultado),
+
+                "total_bloqueados_dedup": len(bloqueados_dedup),
+
+                "resultado": resultado,
+
+                "bloqueados": bloqueados_dedup
+
+            })
+
+            return {"sucesso": True, "total": len(resultado), "detalhes": resultado, "bloqueados_dedup": bloqueados_dedup}
+
+        except Exception as e:
+
+            print(f"[CRON COBRANCA TREINO] Erro: {e}")
+
+            return {"sucesso": False, "erro": str(e)}
+
+
+
+    # -------------------------------------------------------------------------
+
+    # 3. ROTINA DE AUDITORIA STRAVA & SONO ANABÓLICO GH (22:00)
+
+    # -------------------------------------------------------------------------
+
+    async def rotina_auditoria_strava_e_sono(self, filtro_aluno: str = None) -> dict:
+
+        """
+
+        Dispara a auditoria noturna de treinos conectados ao Strava.
+
+        Se treinou: avalia frequência cardíaca e parabeniza.
+
+        Se faltou no dia de treino: dá uma bronca técnica, puxa a orelha e prescreve sono anabólico.
+
+        Se não tem Strava: envia o link direto de conexão OAuth para vincular relógio/app.
+
+        """
+
+        try:
+
+            # Trava anti-duplicação global para a auditoria noturna
+
+            if filtro_aluno:
+
+                chave_filtro = f"strava_auditoria_{filtro_aluno}"
+
+            else:
+
+                chave_filtro = "strava_auditoria_global"
+
+
+
+            if not self.adquirir_trava_deduplicacao(chave_filtro, "todos_alunos"):
+
+                print("[DEDUPLICACAO] Auditoria noturna Strava já realizada hoje. Ignorando repetição!")
+
+                return {"sucesso": True, "aviso": "Auditoria já realizada hoje", "bloqueado_dedup": True}
+
+
+
+            resultado = await executar_auditoria_strava_noturna_22h(filtro_aluno=filtro_aluno)
+
+            self._registrar_log("auditoria_strava_sono", resultado)
+
+            return {"sucesso": True, "resultado": resultado}
+
+        except Exception as e:
+
+            print(f"[CRON AUDITORIA STRAVA] Erro: {e}")
+
+            return {"sucesso": False, "erro": str(e)}
+
+
+
+    # -------------------------------------------------------------------------
+
+    # 4. ROTINA DE DISPARO DAS LANDING PAGES SEMANAIS AOS DOMINGOS (19:00)
+
+    # -------------------------------------------------------------------------
+
+    async def rotina_disparo_landing_pages_semanais(self, filtro_aluno: str = None) -> dict:
+
+        """
+
+        Envia a landing page exclusiva de cada aluno no domingo à noite:
+
+        - Link dinâmico: https://marcaopersonal.com/aluno?id={tel}
+
+        - Ficha de treinos e ranking da semana
+
+        - Instruções de PWA (fixar como app na tela inicial do celular)
+
+        """
+
+        headers = get_supabase_headers()
+
+        enviados = []
+
+        bloqueados_dedup = []
+
+
+
+        try:
+
+            async with httpx.AsyncClient(verify=False, timeout=12.0) as client:
+
+                r = await client.get(f"{SUPABASE_URL}/rest/v1/fichas_alunos?select=id,nome,telefone", headers=headers)
+
+                alunos = r.json() if r.status_code == 200 else []
+
+
+
+            for a in alunos:
+
+                tel = a.get("telefone")
+
+                nome = a.get("nome") or "Guerreiro(a)"
+
+                if not tel or any(b in str(tel) for b in ["85066687", "553285066687"]):
+
+                    continue
+
+                if filtro_aluno and filtro_aluno not in str(tel) and filtro_aluno.lower() not in nome.lower():
+
+                    continue
+
+
+
+                if not self.adquirir_trava_deduplicacao("landing_page_semanal", tel, ttl_segundos=86400):
+
+                    bloqueados_dedup.append({"aluno": nome, "telefone": tel, "motivo": "ja_enviado_hoje"})
+
+                    continue
+
+
+
+                primeiro_nome = nome.strip().split()[0] if nome else "Guerreiro"
+
+                link_portal = f"https://marcaopersonal.com/aluno?id={tel}"
+
+
+
+                baloes = [
+
+                    f"Fala, {primeiro_nome}! 🦁💪 Passando pra te entregar sua Landing Page atualizada da semana!",
+
+                    f"Abre aqui e confere sua evolução e treinos: {link_portal} 👊🔥",
+
+                    "Lá tá sua ficha completa, meta de água e proteína e o ranking Top 5 da semana!",
+
+                    "Pra salvar como app: no iPhone clica em Compartilhar (quadradinho com seta) > Adicionar à Tela de Início; no Android clica nos 3 pontinhos > Adicionar à tela inicial! 📲👊"
+
+                ]
+
+
+
+                for b in baloes:
+
+                    await enviar_presenca_fichas(tel, "composing", 1500)
+
+                    await asyncio.sleep(1.4)
+
+                    await enviar_mensagem_whatsapp_fichas(tel, b)
+
+                    await asyncio.sleep(1.0)
+
+
+
+                enviados.append({"aluno": nome, "telefone": tel, "link": link_portal})
+
+
+
+            self._registrar_log("landing_pages_semanais", {
+
+                "total": len(enviados),
+
+                "total_bloqueados_dedup": len(bloqueados_dedup),
+
+                "enviados": enviados
+
+            })
+
+            return {"sucesso": True, "total": len(enviados), "detalhes": enviados, "bloqueados_dedup": bloqueados_dedup}
+
+        except Exception as e:
+
+            print(f"[CRON LANDING PAGES] Erro: {e}")
+
+            return {"sucesso": False, "erro": str(e)}
+
+
+
+    # -------------------------------------------------------------------------
+
+    # PAINEL DE STATUS & TELEMETRIA DO AGENDADOR
+
+    # -------------------------------------------------------------------------
+
+    # -------------------------------------------------------------------------
+    # 5. ROTINA SEMANAL DE COBRANÇA DE FOTOS CORPORAIS CRIPTOGRAFADAS (SEXTAS 14:30)
+    # -------------------------------------------------------------------------
+    async def rotina_cobranca_fotos_corporais_semanal(self, filtro_aluno: str = None) -> dict:
+        """
+        Cobra 1x por semana fotos corporais (frente e costas) dos alunos ativos:
+        - Explica finalidade (comparar evolucao de dieta, treinos e saude).
+        - Garante privacidade real: criptografia militar AES-256 + auto-delecao (nem o criador tem acesso).
+        - Ensina como tirar: frente para a luz, corpo inteiro, menos roupa possivel, dica do timer 5s na janela.
+        """
+        headers = get_supabase_headers()
+        enviados = []
+        bloqueados_dedup = []
+
+        try:
+            async with httpx.AsyncClient(verify=False, timeout=15.0) as client:
+                r = await client.get(f"{SUPABASE_URL}/rest/v1/fichas_alunos?select=*", headers=headers)
+                alunos = r.json() if r.status_code == 200 else []
+
+            for a in alunos:
+                tel = str(a.get("telefone") or "")
+                nome = a.get("nome") or "Guerreiro(a)"
+                if not tel or any(b in tel for b in ["84587255", "85066687", "553285066687"]):
+                    continue
+                if filtro_aluno and filtro_aluno not in tel and filtro_aluno.lower() not in nome.lower():
+                    continue
+
+                if not self.adquirir_trava_deduplicacao("fotos_corporais_semanal", tel, ttl_segundos=86400):
+                    bloqueados_dedup.append({"aluno": nome, "telefone": tel, "motivo": "ja_enviado_hoje"})
+                    continue
+
+                primeiro_nome = nome.strip().split()[0] if nome else "Guerreiro(a)"
+                genero = (a.get("genero") or "").lower()
+                vocativo = "guerreira" if genero in ["mulher", "feminino"] or primeiro_nome.lower() in ["eva", "kamila", "camila"] else "campeão"
+                remote_jid = a.get("remote_jid") or tel
+                destino_envio = remote_jid if "@lid" in str(remote_jid) else tel
+                destino_presenca = tel
+
+                baloes = [
+                    f"Fala, {primeiro_nome}! 🦁📸 Chegou o dia do nosso Check-in Semanal de Evolução por Fotos!",
+                    "Eu uso essas fotos pra comparar seu antes e depois e ver na prática se nossa dieta, treinos e cuidados de saúde estão dando resultado real na barriga, quadril, braços, ombros, coxas e glúteos!",
+                    "Pode ficar 100% tranquila com privacidade: 🔒 suas fotos passam por criptografia de nível militar no meu sistema e são DELETADAS automaticamente após a comparação — nem mesmo o criador do sistema consegue ter acesso visual a elas!",
+                    f"Como tirar certinho: 1 foto de FRENTE e 1 de COSTAS, corpo inteiro, de frente pra LUZ e com o menos roupa possível (top/shorts ou roupa de banho). Sem tripé? Apoia o celular de frente pra janela, coloca o temporizador de 5 segundos e se posiciona — ou pede pra alguém tirar! Manda aqui quando puder, {vocativo}! 💪🔥"
+                ]
+
+                for b in baloes:
+                    await enviar_presenca_fichas(destino_presenca, "composing", 2200)
+                    await asyncio.sleep(2.2)
+                    await enviar_mensagem_whatsapp_fichas(destino_envio, b)
+                    await asyncio.sleep(1.2)
+
+                enviados.append({"aluno": nome, "telefone": tel})
+
+            self._registrar_log("cobranca_fotos_semanal", {
+                "total": len(enviados),
+                "bloqueados_dedup": len(bloqueados_dedup),
+                "enviados": enviados
+            })
+            return {"sucesso": True, "total": len(enviados), "detalhes": enviados, "bloqueados_dedup": bloqueados_dedup}
+        except Exception as e:
+            print(f"[CRON FOTOS SEMANAL] Erro: {e}")
+            return {"sucesso": False, "erro": str(e)}
+
+    # -------------------------------------------------------------------------
+    # 6. ROTINA TRIMESTRAL DE RENOVAÇÃO DE FICHA DE TREINO (A CADA 90 DIAS)
+    # -------------------------------------------------------------------------
+    async def rotina_renovacao_fichas_trimestral(self) -> dict:
+        """
+        Verifica se a ficha de treino de algum aluno completou 90 dias (3 meses).
+        Quando vence, notifica o aluno e atualiza o ciclo trimestral para evitar plato muscular.
+        """
+        headers = get_supabase_headers()
+        renovados = []
+        hoje = datetime.now().date()
+
+        try:
+            async with httpx.AsyncClient(verify=False, timeout=15.0) as client:
+                r = await client.get(f"{SUPABASE_URL}/rest/v1/fichas_alunos?select=*", headers=headers)
+                alunos = r.json() if r.status_code == 200 else []
+
+                for a in alunos:
+                    tel = str(a.get("telefone") or "")
+                    nome = a.get("nome") or "Guerreiro(a)"
+                    if not tel or any(b in tel for b in ["84587255", "85066687"]):
+                        continue
+                    metas = a.get("metas_nutricionais") or {}
+                    prox_troca = metas.get("proxima_troca_ficha")
+                    if not prox_troca:
+                        continue
+                    try:
+                        data_troca = datetime.strptime(str(prox_troca)[:10], "%Y-%m-%d").date()
+                    except Exception:
+                        continue
+
+                    if hoje >= data_troca:
+                        if not self.adquirir_trava_deduplicacao("renovacao_trimestral", tel, ttl_segundos=86400 * 7):
+                            continue
+                        primeiro_nome = nome.strip().split()[0]
+                        nova_data_inicio = hoje.isoformat()
+                        nova_data_troca = (hoje + timedelta(days=90)).isoformat()
+                        metas["data_inicio_ficha_treino"] = nova_data_inicio
+                        metas["proxima_troca_ficha"] = nova_data_troca
+                        metas["renovacoes_trimestrais"] = int(metas.get("renovacoes_trimestrais") or 0) + 1
+
+                        await client.patch(
+                            f"{SUPABASE_URL}/rest/v1/fichas_alunos?id=eq.{a['id']}",
+                            headers=headers,
+                            json={"metas_nutricionais": metas}
+                        )
+
+                        link_portal = f"https://marcaopersonal.com/aluno?id={tel}"
+                        baloes = [
+                            f"Fala, {primeiro_nome}! 🏆🔥 Completamos 3 MESES da sua ficha de treinos atual!",
+                            "Pra o seu corpo não acostumar e continuar evoluindo forte, chegou a hora de trocar sua periodização de exercícios!",
+                            f"Me chama aqui me dizendo se você quer manter o mesmo local de treino ({a.get('local_treino') or 'atual'}) que eu já atualizo sua ficha nova no seu painel: {link_portal} 💪🦁"
+                        ]
+                        destino_envio = a.get("remote_jid") if "@lid" in str(a.get("remote_jid") or "") else tel
+                        for b in baloes:
+                            await enviar_presenca_fichas(tel, "composing", 2000)
+                            await asyncio.sleep(2.0)
+                            await enviar_mensagem_whatsapp_fichas(destino_envio, b)
+                            await asyncio.sleep(1.0)
+                        renovados.append({"aluno": nome, "telefone": tel, "proxima_troca": nova_data_troca})
+
+            return {"sucesso": True, "renovados": renovados}
+        except Exception as e:
+            print(f"[CRON RENOVACAO TRIMESTRAL] Erro: {e}")
+            return {"sucesso": False, "erro": str(e)}
+
+    def status(self) -> dict:
+
+        """Retorna o status atual dos jobs agendados e os últimos disparos executados."""
+
+        jobs_info = []
+
+        if self._inicializado and self.scheduler.running:
+
+            for job in self.scheduler.get_jobs():
+
+                jobs_info.append({
+
+                    "id": job.id,
+
+                    "proxima_execucao": job.next_run_time.isoformat() if job.next_run_time else None
+
+                })
+
+
+
+        return {
+
+            "ativo": self._inicializado and self.scheduler.running,
+
+            "jobs_agendados": jobs_info,
+
+            "total_historico_logs": len(self.historico_disparos),
+
+            "ultimos_logs": self.historico_disparos[-10:] if self.historico_disparos else []
+
+        }
+
+
+
+
+
+# Instância Singleton do Agendador Autônomo Marcão
+
+marcao_cron = MarcaoAutonomousScheduler()
+
+
+
+
+
+if __name__ == "__main__":
+
+    async def testar():
+
+        print("Testando inicialização do Agendador Marcão...")
+
+        marcao_cron.iniciar()
+
+        print(json.dumps(marcao_cron.status(), indent=2, ensure_ascii=False))
+
+
+
+    asyncio.run(testar())
+

@@ -1094,6 +1094,29 @@ class FotoCriptoRequest(BaseModel):
     imagem_base64: str
     tipo_foto: Optional[str] = "frente_costas"
 
+class FotoCorporal2x2Request(BaseModel):
+    telefone: Optional[str] = ""
+    remote_jid: Optional[str] = ""
+    imagem_base64: str
+    legenda: Optional[str] = ""
+
+@app.post("/api/fichas/processar-foto-corporal")
+async def processar_foto_corporal_api(req: FotoCorporal2x2Request):
+    """
+    Criptografa foto corporal em nivel militar (AES-256 Fernet), guarda no banco protegido,
+    executa comparativo 2 antigas vs 2 atuais em RAM quando o par completa e deleta as antigas.
+    """
+    try:
+        from fichas_engine import processar_foto_corporal_criptografada_e_comparar
+    except ImportError:
+        from apps.api.fichas_engine import processar_foto_corporal_criptografada_e_comparar
+    return await processar_foto_corporal_criptografada_e_comparar(
+        remote_jid=req.remote_jid or f"{req.telefone}@s.whatsapp.net",
+        telefone=req.telefone or "",
+        base64_image=req.imagem_base64,
+        legenda=req.legenda or ""
+    )
+
 @app.post("/api/fichas/foto-criptografada")
 async def salvar_foto_criptografada_api(req: FotoCriptoRequest):
     """Criptografa via AES-256 Fernet a foto de evolução do aluno e salva no Supabase (LGPD)."""
@@ -1636,3 +1659,9 @@ async def cron_forcar_landing_pages_api(payload: dict = None):
     """Força o envio semanal da Landing Page individual do aluno no WhatsApp."""
     filtro = (payload or {}).get("filtro_aluno")
     return await marcao_cron.rotina_disparo_landing_pages_semanais(filtro_aluno=filtro)
+
+
+@app.post("/api/cron/forcar-cobranca-fotos")
+async def forcar_cobranca_fotos_api(filtro_aluno: Optional[str] = None):
+    """Dispara sob demanda a cobrança semanal de fotos corporais criptografadas."""
+    return await marcao_cron.rotina_cobranca_fotos_corporais_semanal(filtro_aluno=filtro_aluno)

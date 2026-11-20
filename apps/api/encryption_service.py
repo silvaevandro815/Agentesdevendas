@@ -6,14 +6,14 @@ import httpx
 from cryptography.fernet import Fernet
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=True)
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "https://qkopgftfrfftoyndhhfj.supabase.co")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
 
 # Chave de criptografia AES-256 (Fernet) derivada de forma segura e determinística
 def obter_fernet():
-    secret = os.getenv("ENCRYPTION_SECRET") or SUPABASE_KEY or "Marcao_Encryption_Key_2026_Secure!"
+    secret = os.getenv("ENCRYPTION_SECRET") or os.getenv("SUPABASE_SERVICE_ROLE_KEY") or SUPABASE_KEY or "Marcao_Encryption_Key_2026_Secure!"
     key = base64.urlsafe_b64encode(hashlib.sha256(secret.encode()).digest())
     return Fernet(key)
 

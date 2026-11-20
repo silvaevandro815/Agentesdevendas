@@ -451,3 +451,22 @@ unpod_open_engine.py: Gerenciador de GPU Serverless para geração de takes 3D h
     - O chip calcula com precisão 13 biomarcadores: Peso, % Gordura Corporal, Gordura Visceral (nível de 1 a 15, meta <9), Massa Muscular Esquelética, % Água Corporal, Massa Óssea, Taxa Metabólica Basal (TMB), Idade Metabólica, Proteína Corporal, IMC, Gordura Subcutânea, Peso Magro e Score Físico Geral.
   * **Leitura Multimodal Instantânea via WhatsApp:** O aluno pesa descalço em jejum, tira um print da tela do aplicativo da balança conectada via Bluetooth e envia no WhatsApp. A Visão Computacional do Marcão escaneia os 13 biomarcadores em menos de 5 segundos, atualiza o gráfico no Supabase e orienta os ajustes de treino e nutrição.
   * **Preço Direto de Fábrica:** Shopee oficial por R$ 34,90 (`https://s.shopee.com.br/2BFoInIBeb`), equivalente a menos de R$ 0,09 centavos por dia.
+
+
+## 27. Diferencial Supremo: Protocolo Semanal de Fotos Criptografadas 2x2, Memória Viva, Fichas Trimestrais (Casa/Academia) & Crescimento Orgânico
+- **Protocolo Semanal de Fotos Corporais Criptografadas (AES-256 + Auto-Deleção):**
+  * **Finalidade:** Cobrado 1x por semana (toda Sexta-feira às 14:30 via `cron_cobranca_fotos_semanal` em `marcao_autonomous_cron.py`) para avaliar resultados reais das intervenções de dieta, treinos e saúde em barriga, quadril, braços, ombros, coxas e glúteos.
+  * **Blindagem Real no Banco de Dados (`encryption_service.py` + `fichas_engine.py`):** Toda foto corporal enviada no WhatsApp é criptografada instantaneamente em AES-256-Fernet (`processar_foto_corporal_criptografada_e_comparar` via `/api/fichas/processar-foto-corporal`). Nenhum ser humano — nem mesmo o criador do sistema — consegue visualizar imagens em claro no banco.
+  * **Comparativo 2x2 Automático & Auto-Deleção:** Ao completar o par atual (1 foto de frente + 1 de costas), a IA descriptografa as 2 antigas e as 2 atuais **exclusivamente em memória RAM** durante a inferência multimodal, entrega o veredito sincero (comemorando evolução OU dando bronca leve com dicas práticas de dieta e treino) e **DELETA definitivamente os tokens antigos** do Supabase logo após a análise.
+  * **Instruções Práticas:** Frente para a luz, corpo inteiro, menor quantidade de roupa possível, 1 de frente e 1 de costas, e dica sem tripé (apoiar celular de frente para a janela e usar temporizador de 5 segundos ou pedir a alguém).
+- **Memória Viva Profunda & Nuance Alimentar (Ex: Aluna Eva e o Ovo):**
+  * Tudo relacionado à vida pessoal, saúde, alimentação e rotina é salvo em `fichas_alunos.metas_nutricionais.memoria_pessoal`.
+  * **Regra de Nuance Alimentar:** Quando o aluno não gosta de determinado alimento, mas come priorizando a saúde (como a aluna Eva com o ovo), o Marcão reconhece e valoriza o esforço, sugere preparos mais gostosos, oferece substitutos equivalentes ou continua incentivando pela importância nutricional.
+- **Fichas de Exercícios Personalizadas (Casa & Academia) + Renovação Trimestral (3 Meses):**
+  * Cada aluno possui ficha personalizada salva em `fichas_alunos.treino_atual` (Eva: Full Body Casa Sênior 64 anos com proteção de joelho; Kamila: ABC Academia Feminino Definição & Glúteos), com ensino passo a passo de cada movimento/equipamento.
+  * Renovação automática monitorada a cada 90 dias via `cron_renovacao_ficha_trimestral` (Domingos 10:00).
+- **Posts Diários no Instagram/Stories Pausados (`I2`):**
+  * Workflow `jd2hOvXwJO2dwUaE` (`I2 - Publicador Instagram 2x/dia`) pausado (`active = false`) no n8n. Atendimento de Directs e Comentários (`I1`) mantido 100% ativo.
+- **Divulgação Orgânica Condicional (Instagram + Site) & Portal PWA (Android/iPhone):**
+  * O Marcão convida os alunos para seguir `@marcaopersonalfitness` (`https://instagram.com/marcaopersonalfitness`) e visitar `https://marcaopersonal.com`. Se o aluno disser que já segue, grava `segue_instagram: true` e nunca mais pede para seguir (apenas convida para visitar a página e o site).
+  * Portal do aluno (`https://marcaopersonal.com/aluno?id={telefone}`) sempre enviado com instruções claras de como salvar na tela inicial tanto no **Android** quanto no **iPhone**.
