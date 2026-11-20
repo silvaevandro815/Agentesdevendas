@@ -374,6 +374,14 @@ class MarcaoAutonomousScheduler:
             replace_existing=True
         )
 
+                # 7. Cobrança Mensal de Peso + Print da Balança ou Venda Consultiva (Dia 1 de cada mês às 09:30)
+        self.scheduler.add_job(
+            self.rotina_cobranca_peso_mensal,
+            CronTrigger(day=1, hour=9, minute=30, timezone="America/Sao_Paulo"),
+            id="cron_cobranca_peso_mensal",
+            replace_existing=True
+        )
+
         self.scheduler.start()
 
         self._inicializado = True
@@ -1220,7 +1228,7 @@ class MarcaoAutonomousScheduler:
             for a in alunos:
                 tel = str(a.get("telefone") or "")
                 nome = a.get("nome") or "Guerreiro(a)"
-                if not tel or any(b in tel for b in ["84587255", "85066687", "553285066687"]):
+                if not tel or any(b in tel for b in ["85066687", "553285066687"]):
                     continue
                 if filtro_aluno and filtro_aluno not in tel and filtro_aluno.lower() not in nome.lower():
                     continue
@@ -1325,6 +1333,72 @@ class MarcaoAutonomousScheduler:
             return {"sucesso": True, "renovados": renovados}
         except Exception as e:
             print(f"[CRON RENOVACAO TRIMESTRAL] Erro: {e}")
+            return {"sucesso": False, "erro": str(e)}
+
+    # -------------------------------------------------------------------------
+    # 7. ROTINA MENSAL DE ATUALIZAÇÃO DE PESO & VENDA DA BALANÇA BIOIMPEDÂNCIA
+    # -------------------------------------------------------------------------
+    async def rotina_cobranca_peso_mensal(self, filtro_aluno: str = None) -> dict:
+        """
+        Todo mês (dia 1 às 09:30) pergunta o peso atualizado de TODOS os alunos (incluindo o dono Evandro):
+        - Se tem balança de bioimpedância: pede o PRINT da tela do app para atualizar os 13 biomarcadores.
+        - Se não tem balança: explica a tecnologia BIA (diferencia músculo, gordura e até peso de água/fezes)
+          e envia o link oficial com comissão da Shopee (R$ 34,90).
+        """
+        headers = get_supabase_headers()
+        enviados = []
+        bloqueados_dedup = []
+
+        try:
+            async with httpx.AsyncClient(verify=False, timeout=15.0) as client:
+                r = await client.get(f"{SUPABASE_URL}/rest/v1/fichas_alunos?select=*", headers=headers)
+                alunos = r.json() if r.status_code == 200 else []
+
+            for a in alunos:
+                tel = str(a.get("telefone") or "")
+                nome = a.get("nome") or "Guerreiro(a)"
+                if not tel or any(b in tel for b in ["85066687", "553285066687"]):
+                    continue
+                if filtro_aluno and filtro_aluno not in tel and filtro_aluno.lower() not in nome.lower():
+                    continue
+
+                if not self.adquirir_trava_deduplicacao("cobranca_peso_mensal", tel, ttl_segundos=86400 * 25):
+                    bloqueados_dedup.append({"aluno": nome, "telefone": tel, "motivo": "ja_cobrado_este_mes"})
+                    continue
+
+                primeiro_nome = nome.strip().split()[0] if nome else "Guerreiro(a)"
+                is_evandro = "84587255" in tel
+                metas = a.get("metas_nutricionais") or {}
+                tem_balanca = bool(metas.get("tem_balanca_bioimpedancia") or is_evandro)
+                remote_jid = a.get("remote_jid") or tel
+                destino_envio = remote_jid if "@lid" in str(remote_jid) else tel
+
+                if tem_balanca:
+                    baloes = [
+                        f"Fala, {primeiro_nome}! ⚖️🔥 Chegou o dia da nossa atualização mensal de peso e composição corporal!",
+                        "Sobe na sua Balança Inteligente de Bioimpedância em jejum, abre o aplicativo no celular e me manda aqui 1 PRINT da tela!",
+                        "Assim eu leio os seus 13 biomarcadores na hora e atualizo sua ficha pra gente ver quanto ganhou de músculo e quanto secou de gordura! Bora pra cima! 💪🦁"
+                    ]
+                else:
+                    baloes = [
+                        f"Fala, {primeiro_nome}! ⚖️🔥 Chegou a hora da nossa atualização mensal de peso na sua ficha! Como tá o seu peso hoje?",
+                        "Olha só que importante: a balança comum de banheiro engana muito porque junta tudo num número só — músculo, gordura, água retida e até o peso de fezes no intestino!",
+                        "Já a nossa Balança Inteligente de Bioimpedância usa tecnologia avançada BIA (4 eletrodos com microcorrente imperceptível) que diferencia exatamente o que é massa muscular pura, gordura visceral/corporal e água/conteúdo intestinal em 13 biomarcadores!",
+                        "E o melhor: tá saindo por apenas R$ 34,90 direto na Shopee (menos de 9 centavos por dia!). Garante a sua aqui e já me manda o print todo mês: https://s.shopee.com.br/2BFoInIBeb 👊🔥"
+                    ]
+
+                for b in baloes:
+                    await enviar_presenca_fichas(tel, "composing", 2200)
+                    await asyncio.sleep(2.2)
+                    await enviar_mensagem_whatsapp_fichas(destino_envio, b)
+                    await asyncio.sleep(1.2)
+
+                enviados.append({"aluno": nome, "telefone": tel, "tem_balanca": tem_balanca})
+
+            self._registrar_log("cobranca_peso_mensal", {"total": len(enviados), "enviados": enviados})
+            return {"sucesso": True, "total": len(enviados), "detalhes": enviados, "bloqueados_dedup": bloqueados_dedup}
+        except Exception as e:
+            print(f"[CRON PESO MENSAL] Erro: {e}")
             return {"sucesso": False, "erro": str(e)}
 
     def status(self) -> dict:

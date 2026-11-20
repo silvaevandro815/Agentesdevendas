@@ -464,42 +464,79 @@ class AudioTranscreverRequest(BaseModel):
 
 @app.post("/api/audio/transcrever")
 async def transcrever_audio(req: AudioTranscreverRequest):
+    """
+    Transcreve áudios do WhatsApp (OGG/Opus, MP3, WAV, M4A):
+    1. Motor Primário: ElevenLabs Scribe v1 STT (suporte nativo OGG/Opus/MP3 em pt-BR).
+    2. Motor Secundário: Google Gemini Direct Multimodal (gemini-flash-latest / gemini-2.5-flash-lite).
+    """
     import base64
-    import io
-    import soundfile as sf
-    import speech_recognition as sr
+    raw_b64 = req.audio_base64 or ""
+    ext = "ogg"
+    mime = "audio/ogg"
+    if "base64," in raw_b64:
+        header_part, raw_b64 = raw_b64.split("base64,", 1)
+        if "mp3" in header_part or "mpeg" in header_part:
+            ext, mime = "mp3", "audio/mpeg"
+        elif "wav" in header_part:
+            ext, mime = "wav", "audio/wav"
+        elif "mp4" in header_part or "m4a" in header_part:
+            ext, mime = "m4a", "audio/mp4"
 
-    try:
-        raw_b64 = req.audio_base64
-        if "base64," in raw_b64:
-            raw_b64 = raw_b64.split("base64,")[1]
-        audio_bytes = base64.b64decode(raw_b64)
-        
-        # Leitura com soundfile (suporta OGG, MP3, WAV, etc.)
-        audio_stream = io.BytesIO(audio_bytes)
-        data, samplerate = sf.read(audio_stream)
-        
-        # Converte para WAV na memória
-        wav_buf = io.BytesIO()
-        sf.write(wav_buf, data, samplerate, format='WAV')
-        wav_buf.seek(0)
-        
-        # Transcrição via SpeechRecognition
-        recognizer = sr.Recognizer()
-        with sr.AudioFile(wav_buf) as source:
-            recorded = recognizer.record(source)
-            texto = recognizer.recognize_google(recorded, language=req.idioma)
-            
-        return {
-            "sucesso": True,
-            "texto": texto
-        }
-    except Exception as e:
-        return {
-            "sucesso": False,
-            "erro": str(e),
-            "texto": ""
-        }
+    if not raw_b64:
+        return {"sucesso": False, "erro": "audio_base64 vazio", "texto": ""}
+
+    audio_bytes = base64.b64decode(raw_b64)
+
+    el_key = os.getenv("ELEVENLABS_API_KEY", "")
+    gem_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or ""
+    if not el_key:
+        load_dotenv("/app/.env", override=True)
+        el_key = os.getenv("ELEVENLABS_API_KEY", "")
+        gem_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or ""
+
+    # 1. Motor Primário: ElevenLabs Speech-to-Text (Scribe v1)
+    if el_key:
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                r_stt = await client.post(
+                    "https://api.elevenlabs.io/v1/speech-to-text",
+                    headers={"xi-api-key": el_key},
+                    data={"model_id": "scribe_v1", "language_code": "por"},
+                    files={"file": (f"audio.{ext}", audio_bytes, mime)}
+                )
+                if r_stt.status_code == 200:
+                    txt = (r_stt.json().get("text") or "").strip()
+                    if txt:
+                        return {"sucesso": True, "motor": "elevenlabs_scribe_v1", "texto": txt}
+        except Exception as e:
+            print(f"[TRANSCREVER_AUDIO] Erro ElevenLabs STT: {e}")
+
+    # 2. Motor Secundário: Google Gemini Direct API (gemini-flash-latest / gemini-2.5-flash-lite)
+    if gem_key:
+        for gem_model in ["gemini-flash-latest", "gemini-2.5-flash-lite"]:
+            try:
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    r_gem = await client.post(
+                        f"https://generativelanguage.googleapis.com/v1beta/models/{gem_model}:generateContent?key={gem_key}",
+                        json={
+                            "contents": [{
+                                "parts": [
+                                    {"text": "Transcreva fielmente em português do Brasil apenas o texto falado neste áudio, sem comentários."},
+                                    {"inline_data": {"mime_type": mime, "data": raw_b64}}
+                                ]
+                            }]
+                        }
+                    )
+                    if r_gem.status_code == 200:
+                        cands = r_gem.json().get("candidates", [])
+                        if cands:
+                            txt = cands[0].get("content", {}).get("parts", [{}])[0].get("text", "").strip()
+                            if txt:
+                                return {"sucesso": True, "motor": gem_model, "texto": txt}
+            except Exception as e:
+                print(f"[TRANSCREVER_AUDIO] Erro {gem_model}: {e}")
+
+    return {"sucesso": False, "erro": "Todos os motores de transcricao falharam", "texto": ""}
 
 # -------------------------------------------------------------------------
 # 2. ANÁLISE DE DOCUMENTOS & PDFS (BIOIMPEDÂNCIA, EXAMES, LAUDOS)
@@ -1665,3 +1702,9 @@ async def cron_forcar_landing_pages_api(payload: dict = None):
 async def forcar_cobranca_fotos_api(filtro_aluno: Optional[str] = None):
     """Dispara sob demanda a cobrança semanal de fotos corporais criptografadas."""
     return await marcao_cron.rotina_cobranca_fotos_corporais_semanal(filtro_aluno=filtro_aluno)
+
+
+@app.post("/api/cron/forcar-cobranca-peso-mensal")
+async def forcar_cobranca_peso_mensal_api(filtro_aluno: Optional[str] = None):
+    """Dispara sob demanda a cobrança mensal de peso + oferta da balança de bioimpedância."""
+    return await marcao_cron.rotina_cobranca_peso_mensal(filtro_aluno=filtro_aluno)
