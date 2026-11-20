@@ -772,7 +772,7 @@ async def processar_etapa_onboarding(remote_jid: str, telefone: str, nome: str, 
             f"• *Treino A:* {treino['treino_a']}\n\n"
             f"• *Treino B:* {treino['treino_b']}\n\n"
             f"• *Treino C:* {treino['treino_c']}\n\n"
-            f"📸 Pra calibrarmos sua evolução visual: não precisa de espelho! Você pode apoiar o celular numa estante ou mesa de frente pra luz de uma janela (sempre a favor da luz natural, nunca contra), colocar o timer de 10 segundos e tirar a foto de corpo inteiro de frente e de costas. Ou pedir pra alguém em casa tirar pra você! Vou guardar essas fotos com sigilo militar no seu prontuário pra daqui a alguns dias compararmos lado a lado os resultados! Tamo junto nessa jornada! 🔥"
+            f"📸 Pra calibrarmos sua evolução visual: não precisa de espelho! Você pode apoiar o celular numa estante ou mesa de frente pra luz de uma janela (sempre a favor da luz natural, nunca contra), colocar o timer de 10 segundos e tirar a foto de corpo inteiro de frente e de costas. Ou pedir pra alguém em casa tirar pra você! Vou guardar essas fotos com sigilo militar no seu prontuário pra daqui a 30 dias compararmos lado a lado os resultados! Tamo junto nessa jornada! 🔥"
         )
         return {"onboarding_ativo": False, "resposta": resposta, "treino": treino}
 
@@ -1318,7 +1318,7 @@ def gerar_orientacao_modo_atleta(ficha: dict, meta_status: dict) -> dict:
     1. Treino & Cargas
     2. Timing de Alimentação & Macros
     3. Sono Anabólico (dormir no horário certo)
-    4. Fotos do Espelho & Refeições
+    4. Fotos Corporais Mensais & Refeições
     """
     nome = (ficha.get("nome_aluno") or "Atleta").strip().split()[0]
     dias_rest = meta_status.get("dias_restantes", 30)
@@ -1329,7 +1329,7 @@ def gerar_orientacao_modo_atleta(ficha: dict, meta_status: dict) -> dict:
         "🏋️ TREINO DO DIA: Executar cada repetição com cadência perfeita (2s descida, 1s contração máxima). Carga anotada no papel!",
         "🥩 NUTRIÇÃO MILITAR: Bater 2.0g a 2.2g de proteína/kg rigorosamente. Refeição pré-treino 1h30 antes e pós-treino imediato.",
         "💤 SONO ANABÓLICO: Na cama impreterivelmente às 22h30/23h00! É no sono profundo que o GH faz o trabalho pesado de hipertrofia.",
-        "📸 MONITORAMENTO VISUAL: Enviar foto do prato principal e foto no espelho semanalmente para calibrarmos a retenção e densidade muscular."
+        "📸 MONITORAMENTO VISUAL: Enviar foto do prato principal e fotos corporais (frente e costas, a favor da luz, sem espelho) a cada 30 dias para calibrarmos a retenção e densidade muscular."
     ]
 
     return {
@@ -1426,7 +1426,7 @@ def identificar_campos_pendentes_ficha(ficha: dict) -> dict:
     if not tem_dias: campos_faltantes.append("dias_semana")
     if not tem_tempo: campos_faltantes.append("tempo_por_treino")
     if not tem_restricoes: campos_faltantes.append("dores_restricoes_saude")
-    if not tem_fotos: campos_faltantes.append("fotos_avaliacao_espelho")
+    if not tem_fotos: campos_faltantes.append("fotos_avaliacao_corporal")
     if not tem_bioimpedancia: campos_faltantes.append("balanca_bioimpedancia")
     if not tem_suplementos_essenciais: campos_faltantes.append("creatina_vitaminas")
     if eh_academia_ou_esporte and not (tem_smartwatch and tem_strava):
@@ -1747,7 +1747,7 @@ async def cobrar_dados_pendentes_aluno(ficha: dict) -> dict:
 
     # Balão 3: Fotos de Frente e Costas para Comparação de 30 Dias (MANDATÓRIO SE FALTAR)
     if not diag.get("tem_fotos"):
-        baloes.append("Preciso de 1 foto sua de frente e 1 de costas no espelho com roupa de treino pra eu arquivar e a gente comparar sua evolução daqui a 30 dias! 📸")
+        baloes.append("Preciso de 1 foto sua de frente e 1 de costas (sem espelho, de frente pra luz) com roupa de treino pra eu arquivar e a gente comparar sua evolução daqui a 30 dias! 📸")
     elif eh_casa and not diag.get("tem_equipamentos"):
         baloes.append("Em casa você tem algum halter/elástico ou é só peso do corpo?")
     elif not diag.get("tem_restricoes"):

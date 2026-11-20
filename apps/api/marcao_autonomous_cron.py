@@ -358,11 +358,11 @@ class MarcaoAutonomousScheduler:
 
 
 
-                # 5. Cobrança Semanal de Fotos Corporais Criptografadas (Frente e Costas) às Sextas 14:30
+                # 5. Cobrança Mensal de Fotos Corporais Criptografadas (A Cada 30 Dias) às Sextas 14:30
         self.scheduler.add_job(
-            self.rotina_cobranca_fotos_corporais_semanal,
+            self.rotina_cobranca_fotos_corporais_mensal,
             CronTrigger(hour=14, minute=30, day_of_week="fri", timezone="America/Sao_Paulo"),
-            id="cron_cobranca_fotos_semanal",
+            id="cron_cobranca_fotos_mensal",
             replace_existing=True
         )
 
@@ -1207,14 +1207,17 @@ class MarcaoAutonomousScheduler:
     # -------------------------------------------------------------------------
 
     # -------------------------------------------------------------------------
-    # 5. ROTINA SEMANAL DE COBRANÇA DE FOTOS CORPORAIS CRIPTOGRAFADAS (SEXTAS 14:30)
+    # 5. ROTINA MENSAL DE COBRANÇA DE FOTOS CORPORAIS CRIPTOGRAFADAS (A CADA 30 DIAS)
     # -------------------------------------------------------------------------
-    async def rotina_cobranca_fotos_corporais_semanal(self, filtro_aluno: str = None) -> dict:
+    async def rotina_cobranca_fotos_corporais_mensal(self, filtro_aluno: str = None) -> dict:
         """
-        Cobra 1x por semana fotos corporais (frente e costas) dos alunos ativos:
-        - Explica finalidade (comparar evolucao de dieta, treinos e saude).
-        - Garante privacidade real: criptografia militar AES-256 + auto-delecao (nem o criador tem acesso).
-        - Ensina como tirar: frente para a luz, corpo inteiro, menos roupa possivel, dica do timer 5s na janela.
+        Cobra fotos corporais a cada 30 dias (frente e costas) dos alunos ativos:
+        - Explica que NÃO precisa de espelho (espelho distorce e dá reflexo errado).
+        - A foto precisa ser A FAVOR DA LUZ (luz de frente em direção ao aluno para máxima nitidez).
+        - 1 foto de FRENTE e 1 de COSTAS, corpo inteiro, menos roupa possível.
+        - Timer de 5 a 10s no celular apoiado na janela/mesa, ou outra pessoa tirando.
+        - Salva no cofre militar com AES-256 e só depois de 30 dias cobra novas para comparar.
+        - Múltiplos balões curtos (50-135 caracteres) com presença composing e pausas naturais contra ban da Meta.
         """
         headers = get_supabase_headers()
         enviados = []
@@ -1233,9 +1236,23 @@ class MarcaoAutonomousScheduler:
                 if filtro_aluno and filtro_aluno not in tel and filtro_aluno.lower() not in nome.lower():
                     continue
 
-                if not self.adquirir_trava_deduplicacao("fotos_corporais_semanal", tel, ttl_segundos=86400):
-                    bloqueados_dedup.append({"aluno": nome, "telefone": tel, "motivo": "ja_enviado_hoje"})
+                if not self.adquirir_trava_deduplicacao("fotos_corporais_mensal", tel, ttl_segundos=86400 * 25):
+                    bloqueados_dedup.append({"aluno": nome, "telefone": tel, "motivo": "ja_cobrado_este_mes"})
                     continue
+
+                # Se o aluno já tem fotos registradas, checar se faz menos de 30 dias da última
+                fotos = a.get("fotos_criptografadas") or []
+                if isinstance(fotos, list) and len(fotos) >= 2:
+                    ultima_data_str = fotos[-1].get("data") if isinstance(fotos[-1], dict) else None
+                    if ultima_data_str:
+                        try:
+                            data_ult = datetime.fromisoformat(str(ultima_data_str).replace("Z", "+00:00"))
+                            dias_passados = (datetime.now(timezone.utc) - data_ult).days
+                            if dias_passados < 30:
+                                bloqueados_dedup.append({"aluno": nome, "telefone": tel, "motivo": f"fotos_recentes_{dias_passados}d"})
+                                continue
+                        except Exception:
+                            pass
 
                 primeiro_nome = nome.strip().split()[0] if nome else "Guerreiro(a)"
                 genero = (a.get("genero") or "").lower()
@@ -1245,29 +1262,35 @@ class MarcaoAutonomousScheduler:
                 destino_presenca = tel
 
                 baloes = [
-                    f"Fala, {primeiro_nome}! 🦁📸 Chegou o dia do nosso Check-in Semanal de Evolução por Fotos!",
-                    "Eu uso essas fotos pra comparar seu antes e depois e ver na prática se nossa dieta, treinos e cuidados de saúde estão dando resultado real na barriga, quadril, braços, ombros, coxas e glúteos!",
-                    "Pode ficar 100% tranquila com privacidade: 🔒 suas fotos passam por criptografia de nível militar no meu sistema e são DELETADAS automaticamente após a comparação — nem mesmo o criador do sistema consegue ter acesso visual a elas!",
-                    f"Como tirar certinho: 1 foto de FRENTE e 1 de COSTAS, corpo inteiro, de frente pra LUZ e com o menos roupa possível (top/shorts ou roupa de banho). Sem tripé? Apoia o celular de frente pra janela, coloca o temporizador de 5 segundos e se posiciona — ou pede pra alguém tirar! Manda aqui quando puder, {vocativo}! 💪🔥"
+                    f"Fala, {primeiro_nome}! 🦁📸 Chegou o momento do nosso Check-in Mensal de Evolução por Fotos!",
+                    "Não precisa de espelho! Espelho reflete luz errada e distorce a silhueta.",
+                    "A foto precisa ser A FAVOR DA LUZ: luz natural vindo de frente em direção a você pra máxima nitidez!",
+                    "1 foto de FRENTE e 1 de COSTAS, corpo inteiro, com menos roupa possível pra eu avaliar tudo.",
+                    "Dica: apoia o celular na janela de frente pra luz com timer de 5 a 10s, ou pede pra alguém tirar!",
+                    "Fica tudo em cofre militar criptografado. Daqui a 30 dias peço novas pra comparar antes e depois! Tamo junto! 👊🔥"
                 ]
 
                 for b in baloes:
                     await enviar_presenca_fichas(destino_presenca, "composing", 2200)
                     await asyncio.sleep(2.2)
                     await enviar_mensagem_whatsapp_fichas(destino_envio, b)
-                    await asyncio.sleep(1.2)
+                    await asyncio.sleep(1.5)
 
                 enviados.append({"aluno": nome, "telefone": tel})
 
-            self._registrar_log("cobranca_fotos_semanal", {
+            self._registrar_log("cobranca_fotos_mensal", {
                 "total": len(enviados),
                 "bloqueados_dedup": len(bloqueados_dedup),
                 "enviados": enviados
             })
             return {"sucesso": True, "total": len(enviados), "detalhes": enviados, "bloqueados_dedup": bloqueados_dedup}
         except Exception as e:
-            print(f"[CRON FOTOS SEMANAL] Erro: {e}")
+            print(f"[CRON FOTOS MENSAL] Erro: {e}")
             return {"sucesso": False, "erro": str(e)}
+
+    # Alias para retrocompatibilidade
+    async def rotina_cobranca_fotos_corporais_semanal(self, filtro_aluno: str = None) -> dict:
+        return await self.rotina_cobranca_fotos_corporais_mensal(filtro_aluno)
 
     # -------------------------------------------------------------------------
     # 6. ROTINA TRIMESTRAL DE RENOVAÇÃO DE FICHA DE TREINO (A CADA 90 DIAS)

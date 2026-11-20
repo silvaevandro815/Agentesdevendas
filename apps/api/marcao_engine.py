@@ -1132,7 +1132,7 @@ async def processar_mensagem_marcao(payload_webhook: dict) -> dict:
             f"  * Rotina de Treino: {dias_ficha} dias na semana ({loc_ficha}) | Dias fixos: {dias_treino_lista or 'Ainda não fixados'}\n"
             f"  * Estrutura de Treino Prescrita: {treino_resumo}\n"
             f"  * Balança de Bioimpedância: {'JÁ POSSUI' if tem_balanca else 'NÃO TEM AINDA - OFERECER A BALANÇA SHOPEE R$ 34,90 (https://s.shopee.com.br/LoKQwfHy4)'}\n"
-            f"  * Fotos Frente e Costas: {'Enviadas' if diag_pend.get('tem_fotos') else 'PENDENTE - COBRAR 1 FOTO DE FRENTE E 1 DE COSTAS NO ESPELHO PARA COMPARAR A EVOLUÇÃO DE 30 DIAS'}\n"
+            f"  * Fotos Frente e Costas: {'Enviadas' if diag_pend.get('tem_fotos') else 'PENDENTE - COBRAR 1 FOTO DE FRENTE E 1 DE COSTAS (SEM ESPELHO, A FAVOR DA LUZ) PARA GUARDAR E COMPARAR A EVOLUÇÃO DE 30 DIAS'}\n"
             f"  * Suplementos Essenciais: {'Em uso' if diag_pend.get('tem_suplementos_essenciais') else 'NÃO TOMA - PRESCREVER CREATINA MICRONIZADA E VITAMINAS/COLÁGENO ESSENCIAIS PARA BLINDAR ARTICULAÇÕES E RECUPERAÇÃO'}\n"
             f"  * Acompanhamento Nutricional: Se oportuno, peça foto do almoço ou da janta para avaliar se tem nutrientes suficientes para vencer dores e atingir a meta!\n"
             f"  * Smartwatch / Strava: {'Já conectado ao Strava' if diag_pend.get('tem_strava') else f'Se treina na academia ou esporte aeróbico, ofereça relógio inteligente ou peça para conectar ao Strava: {link_strava_oauth}'}\n"
@@ -1328,7 +1328,7 @@ MODO ATLETA / COMPETIÇÃO ESPORTIVA & HIPERTROFIA SEVERA:
     1. Execução do treino e anotação de cargas e séries.
     2. Timing de alimentação e proteína batida no grama (2.0 a 2.2g/kg).
     3. Sono anabólico na cama impreterivelmente às 22h30/23h00.
-    4. Envio periódico de fotos do prato de comida e fotos do corpo no espelho (frente, costas, pernas) para alimentar a memória visual da ficha!
+    4. Envio periódico de fotos do prato de comida e fotos corporais (frente e costas, a favor da luz, sem espelho) para alimentar a memória visual da ficha a cada 30 dias!
 
 DIRETRIZ DE AUTORIDADE CIENTÍFICA & PROIBIÇÃO ABSOLUTA DE LINKS EXTERNOS:
 - Você possui conhecimento factual profundo e atualizado sobre anatomia, fisiologia do exercício, biomecânica, ortopedia, farmacologia esportiva, fitoterapia e nutrição clínica.
@@ -1447,7 +1447,7 @@ REGRAS OBRIGATÓRIAS DE CONVERSAÇÃO HUMANA:
         user_content = [
             {
                 "type": "text",
-                "text": f"O interlocutor enviou esta imagem. AVALIAÇÃO COM RIGOR MÁXIMO DO MARCÃO: Se for PRATO DE COMIDA: analise com rigor os nutrientes para a meta dele; se faltar proteína ou tiver calorias vazias/deficiência, seja duro e firme apontando exatamente onde errou sem xingar ou falar palavrão, e dê a correção imediata prescrevendo opções de alimentos melhores e receitas fit práticas para corrigir! Se for BALANÇA: analise o resultado e se for ruim/estagnado, seja duro e rigoroso cobrando a adesão ao plano e dando a correção de treino e dieta imediata! Se for CORPO/ESPELHO: se não evoluiu, cobrança firme e sem massagem com fala de correção; se evoluiu, reconheça com autoridade de treinador de elite!{' ' + texto_recebido if not texto_recebido.startswith('[') else ''}"
+                "text": f"O interlocutor enviou esta imagem. AVALIAÇÃO COM RIGOR MÁXIMO DO MARCÃO: Se for PRATO DE COMIDA: analise com rigor os nutrientes para a meta dele; se faltar proteína ou tiver calorias vazias/deficiência, seja duro e firme apontando exatamente onde errou sem xingar ou falar palavrão, e dê a correção imediata prescrevendo opções de alimentos melhores e receitas fit práticas para corrigir! Se for BALANÇA: analise o resultado e se for ruim/estagnado, seja duro e rigoroso cobrando a adesão ao plano e dando a correção de treino e dieta imediata! Se for CORPO/AVALIAÇÃO FÍSICA: se não evoluiu, cobrança firme e sem massagem com fala de correção; se evoluiu, reconheça com autoridade de treinador de elite!{' ' + texto_recebido if not texto_recebido.startswith('[') else ''}"
             },
             {
                 "type": "image_url",
