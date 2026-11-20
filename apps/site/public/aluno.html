@@ -1695,7 +1695,7 @@
           Pódio dos Leões
         </span>
         <h2>TOP 5 ALUNOS MAIS DEDICADOS</h2>
-        <p>Ranking semanal de consistência em treinos, hidratação e metas batidas!</p>
+        <p>Ranking oficial de obediência aos treinos, refeições, hidratação e disciplina diária!</p>
       </div>
 
       <!-- PODIUM TOP 3 -->
@@ -2353,15 +2353,16 @@
 
           // 4º e 5º Lugares
           const bottomBox = document.getElementById('rankingBottomList');
-          bottomBox.innerHTML = ranking.slice(3, 5).map(r => `
+          // Exibe os 3 Alunos Reais sinalizando obediência
+          bottomBox.innerHTML = ranking.slice(0, 3).map(r => `
             <div class="ranking-item-compact ${r.is_current_user ? 'is-user' : ''}">
               <div class="ranking-compact-left">
                 <span class="ranking-compact-pos">#${r.posicao}</span>
                 <span class="ranking-compact-name">${r.nome} ${r.is_current_user ? '<strong style="color:var(--neon-cyan);">(Você)</strong>' : ''}</span>
               </div>
-              <div class="ranking-compact-right">
+              <div class="ranking-compact-right" style="display:flex; flex-direction:column; align-items:flex-end;">
                 <span class="ranking-compact-score">${r.metas_batidas_pct}</span>
-                <span style="font-size:10px; color:var(--text-muted); display:block;">${r.streak_dias}d seguidos</span>
+                <span style="font-size:10px; color:var(--neon-green); font-weight:700;">${r.sinalizador || 'Obedecendo'}</span>
               </div>
             </div>
           `).join('');

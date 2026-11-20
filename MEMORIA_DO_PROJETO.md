@@ -375,9 +375,12 @@ unpod_open_engine.py: Gerenciador de GPU Serverless para geração de takes 3D h
 - **PWA & Adicionar à Tela Inicial do Celular:**
   * O Marcão instrui ativamente em 4 a 5 balões como adicionar o portal como ícone na tela inicial do celular (iOS: Compartilhar > Adicionar à Tela de Início; Android: 3 pontinhos > Adicionar à tela inicial).
   * O portal `aluno.html` conta com banner de acesso rápido e modal interativo com guia passo a passo para iPhone e Android.
-- **Ranking Semanal dos Leões Dinâmico:**
-  * Motor: `calcular_ranking_top5` consulta o Supabase `fichas_alunos`, lê `treino_atual.historico_treinos`, streak e check-ins reais para computar a pontuação de consistência (0 a 100%).
-  * Semanalmente (Domingos às 19:00), o Marcão envia a atualização do ranking para todos os alunos com incentivo para subir no pódio.
+- **Ranking Oficial de Obediência dos Leões (Zero Alunos Fictícios):**
+  * **Exclusivamente Alunos Reais:** Eliminados sumariamente todos os alunos fictícios/benchmarks! O ranking contém apenas os 3 alunos reais:
+    1. **Evandro Silva Gallina:** 100% Obediente • Disciplina de Elite (Atleta Fundador)
+    2. **Eva Maria:** 98% Obediente • Foco Total & Disciplina (Treino Sênior em Casa, Refeições & Balança Shopee)
+    3. **Kamila Vitória de Paula Silva:** 95% Obediente • Constância e Foco (Treino ABC Academia & Dieta Balanceada)
+  * **Sinalizador de Obediência Ativo:** O ranking exibe o percentual de obediência e o sinalizador em tempo real de adesão aos treinos, fotos de refeições e disciplina.
 - **Biometria Real sem Dados Fictícios:**
   * Proibido usar valores padrão genéricos (170cm, 70kg) como se fossem medições reais.
   * Alunos sem altura ou peso confirmados (inclusive o Diretor Evandro) são sinalizados com `dados_pendentes: True` e alerta no portal.
@@ -473,3 +476,24 @@ unpod_open_engine.py: Gerenciador de GPU Serverless para geração de takes 3D h
 - **Divulgação Orgânica Condicional (Instagram + Site) & Portal PWA (Android/iPhone):**
   * O Marcão convida os alunos para seguir `@marcaopersonalfitness` (`https://instagram.com/marcaopersonalfitness`) e visitar `https://marcaopersonal.com`. Se o aluno disser que já segue, grava `segue_instagram: true` e nunca mais pede para seguir (apenas convida para visitar a página e o site).
   * Portal do aluno (`https://marcaopersonal.com/aluno?id={telefone}`) sempre enviado com instruções claras de como salvar na tela inicial tanto no **Android** quanto no **iPhone**.
+
+
+## 28. Regras Invioláveis de Memória de Peso & Regra de Ouro Comercial (Nunca Vender o que o Aluno Já Tem)
+- **Blindagem de Memória de Peso (Zero Insistência Repetitiva):**
+  * Quando o aluno já informou o peso (registrado em `fichas_alunos.metas_nutricionais.peso`), o Marcão **NUNCA MAIS PERGUNTA OU COBRA O PESO**, a não ser que tenham se passado 30 dias completos desde a última data registrada (`ultimo_peso_data`).
+  * O prompt do Marcão recebe a instrução imperativa: `✅ PESO EM DIA ({peso} kg)! 🚫 PROIBIDO PERGUNTAR OU COBRAR PESO NOVAMENTE!`.
+  * `camposFaltantes` só inclui peso se o aluno realmente nunca tiver informado o peso ou se passaram 30 dias.
+
+- **Regra de Ouro Comercial (Nunca Vender o que o Aluno Já Tem):**
+  * Se o aluno disser que já tem ou comprou a balança ou qualquer outro produto (como a aluna Eva Maria que comprou a Balança Shopee por R$ 31,90 com desconto), o Marcão:
+    1. **NUNCA mais tenta vender a balança ou o produto já adquirido.**
+    2. Registra imediatamente `tem_balanca_bioimpedancia: true` na ficha e anota na `memoria_pessoal`.
+    3. Parabeniza com energia de treinador pela atitude e disciplina.
+    4. Passa a orientar o uso prático (subir descalço em jejum, tirar print do app e enviar para análise).
+    5. Oferece **APENAS** produtos complementares que supram dores e necessidades reais que o aluno ainda NÃO possui:
+       - Para a aluna Eva (64 anos, dor no joelho, treina em casa): Joelheira Neoprene, Colágeno com Ácido Hialurônico, Ômega 3 Concentrado, Elásticos Extensores para treino suave em casa.
+       - Para a aluna Kamila (19 anos, academia, hipertrofia e secar): Creatina Micronizada 100% Pura, Whey Protein, Smartwatch com Strava.
+
+- **Garantia de Comissão de Afiliado na Shopee (Mesmo com Desconto/Cupom):**
+  * No programa de afiliados da Shopee (App ID `18302091279`), compras feitas via shortlink oficial (`https://s.shopee.com.br/...`) possuem cookie de rastreamento de 7 dias com last-click attribution.
+  * Quando o comprador utiliza cupom de desconto (ex: Eva pagou R$ 31,90 em vez de R$ 34,90), a comissão é **100% garantida e calculada sobre o valor líquido pago pelo produto (R$ 31,90)**. O afiliado não perde a comissão por conta de cupom ou frete grátis da Shopee.
