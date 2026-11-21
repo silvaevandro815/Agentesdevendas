@@ -220,31 +220,43 @@ async def llm_completions(req: Request):
                         "parts": [{"text": system_instruction.strip()}]
                     }
 
-                url_gemini = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent"
                 headers_gemini = {
                     "x-goog-api-key": gemini_key,
                     "Content-Type": "application/json"
                 }
 
-                async with httpx.AsyncClient(timeout=30.0) as g_client:
-                    g_res = await g_client.post(url_gemini, headers=headers_gemini, json=gemini_payload)
-                    if g_res.status_code == 200:
-                        g_data = g_res.json()
-                        cand = g_data.get("candidates", [{}])[0]
-                        txt_resposta = cand.get("content", {}).get("parts", [{}])[0].get("text", "")
-                        return JSONResponse(status_code=200, content={
-                            "choices": [
-                                {
-                                    "message": {
-                                        "role": "assistant",
-                                        "content": txt_resposta
-                                    }
-                                }
-                            ],
-                            "provider": "google_gemini_native_fallback"
-                        })
-                    else:
-                        print(f"[LLM RELAY] Gemini API nativa retornou status {g_res.status_code}: {g_res.text[:200]}")
+                modelos_cascata = [
+                    "gemini-3.5-flash-lite",
+                    "gemini-3.1-flash-lite",
+                    "gemini-flash-lite-latest",
+                    "gemini-3.5-flash"
+                ]
+
+                async with httpx.AsyncClient(timeout=25.0) as g_client:
+                    for mod in modelos_cascata:
+                        try:
+                            url_gemini = f"https://generativelanguage.googleapis.com/v1beta/models/{mod}:generateContent"
+                            g_res = await g_client.post(url_gemini, headers=headers_gemini, json=gemini_payload)
+                            if g_res.status_code == 200:
+                                g_data = g_res.json()
+                                cand = g_data.get("candidates", [{}])[0]
+                                txt_resposta = cand.get("content", {}).get("parts", [{}])[0].get("text", "")
+                                if txt_resposta:
+                                    return JSONResponse(status_code=200, content={
+                                        "choices": [
+                                            {
+                                                "message": {
+                                                    "role": "assistant",
+                                                    "content": txt_resposta
+                                                }
+                                            }
+                                        ],
+                                        "provider": f"google_gemini_{mod}"
+                                    })
+                            else:
+                                print(f"[LLM RELAY] Gemini {mod} retornou {g_res.status_code}. Tentando próximo modelo...")
+                        except Exception as e_mod:
+                            print(f"[LLM RELAY] Exceção no modelo {mod}: {e_mod}. Tentando próximo...")
             except Exception as err_gemini:
                 print(f"[LLM RELAY] Erro no fallback Gemini: {err_gemini}")
 
