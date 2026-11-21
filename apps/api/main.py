@@ -886,6 +886,10 @@ async def gerar_e_publicar_criativo(req: InstagramPostRequest):
     Gera criativo ultra-realista com copy persuasiva, temas do Google Trends Brasil,
     e publica automaticamente no Instagram (@marcaopersonalfitness).
     """
+    # TRAVA EXECUTIVA INVIOLÁVEL: PUBLICAÇÃO NO INSTAGRAM PAUSADA PELO DIRETOR EVANDRO
+    print("[INSTAGRAM KILLSWITCH] Endpoint /api/instagram/gerar-e-publicar acionado, mas publicações estão suspensas pelo Diretor Evandro.")
+    return {"sucesso": False, "pausado": True, "mensagem": "Publicações automáticas no Instagram temporariamente suspensas pelo Diretor Evandro."}
+
     from creative_factory import executar_ciclo_manha, executar_ciclo_noite
     if req.tipo.lower() in ["manha", "curiosidade", "entretenimento"]:
         res = executar_ciclo_manha(indice=req.indice, formato=req.formato, usar_ia=req.usar_ia, dry_run=req.dry_run)
@@ -1273,6 +1277,10 @@ class CreativeTriggerRequest(BaseModel):
 @app.post("/api/creatives/ciclo-manha")
 async def ciclo_manha_api(req: CreativeTriggerRequest = CreativeTriggerRequest()):
     """Executa o ciclo matinal (11:30) com Carrossel de 3 slides e Story (estilo Evandro ou Marcão)."""
+    # TRAVA EXECUTIVA INVIOLÁVEL: PUBLICAÇÃO NO INSTAGRAM PAUSADA PELO DIRETOR EVANDRO
+    print("[INSTAGRAM KILLSWITCH] Endpoint /api/creatives/ciclo-manha acionado, mas publicações estão suspensas pelo Diretor Evandro.")
+    return {"sucesso": False, "pausado": True, "mensagem": "Publicações automáticas no Instagram temporariamente suspensas pelo Diretor Evandro."}
+
     return executar_ciclo_manha(
         indice=req.indice,
         formato=req.formato,
@@ -1285,6 +1293,10 @@ async def ciclo_manha_api(req: CreativeTriggerRequest = CreativeTriggerRequest()
 @app.post("/api/creatives/ciclo-noite")
 async def ciclo_noite_api(req: CreativeTriggerRequest = CreativeTriggerRequest()):
     """Executa o ciclo noturno (19:30) focado em conversão de produto com Carrossel e Story."""
+    # TRAVA EXECUTIVA INVIOLÁVEL: PUBLICAÇÃO NO INSTAGRAM PAUSADA PELO DIRETOR EVANDRO
+    print("[INSTAGRAM KILLSWITCH] Endpoint /api/creatives/ciclo-noite acionado, mas publicações estão suspensas pelo Diretor Evandro.")
+    return {"sucesso": False, "pausado": True, "mensagem": "Publicações automáticas no Instagram temporariamente suspensas pelo Diretor Evandro."}
+
     return executar_ciclo_noite(
         indice=req.indice,
         formato=req.formato,

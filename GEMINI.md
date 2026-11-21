@@ -78,9 +78,9 @@ Este documento é lido automaticamente no início de **toda e qualquer nova conv
 - **ZERO INTERRUPÇÃO POR CAIXAS DE DIÁLOGO DE URL/REDE:** É terminantemente proibido utilizar ferramentas ou comandos que disparem modais de segurança pedindo permissão de URL na interface do Antigravity. Para qualquer scraping, download de imagens, buscas web ou requisições HTTP, utilize exclusivamente scripts Python via terminal (`requests`/`httpx`), que rodam diretamente no ambiente sem disparar popups de autorização.
 - **PROIBIDO USAR FERRAMENTAS DE INTERROGAÇÃO (`ask_question`):** Decisões de arquitetura, parâmetros de execução e ajustes devem ser resolvidos com inteligência técnica, bom senso comercial e alinhamento às diretrizes deste documento sem transferir a carga decisória operacional para o usuário.
 
-## 9. Regra Inviolável de Publicação no Instagram: 100% Carrosséis e Cards (Vídeos Desativados)
+## 9. Regra Inviolável de Publicação no Instagram: Publicações Pausadas (Directs e Comentários 100% Ativos)
 - **PROIBIÇÃO PERMANENTE DE VÍDEOS / REELS:** Por determinação executiva expressa do Diretor Evandro Gallina, o Marcão Personal **NÃO** deve postar vídeos no Instagram. Toda a esteira de publicação automática de vídeos/Reels (`I3 - Publicador de Reels`) está permanentemente desativada.
-- **FOCO EXCLUSIVO EM CARROSSÉIS E CARDS ESTÁTICOS DE ALTA CONVERSÃO:** Todas as publicações no feed e stories do Instagram operam 100% através de:
+- **SUSPENSÃO TEMPORÁRIA DE CARROSSÉIS, CARDS E STORIES:** Por determinação expressa do Diretor Evandro, postagens diárias de carrosséis e cards estão temporariamente suspensas com Killswitches ativos no n8n (I2) e Python (creative_factory). Quando reativado, opera 100% através de:
   * **Carrosséis Multi-Lâminas (3 a 10 lâminas):** Focados em máxima alavanca de salvamento (Saves) e compartilhamento (Shares), com capa/gancho de curiosidade, lâminas didáticas de quebra de mitos/fisiologia, e lâmina final com CTA oficial.
   * **Cards Estáticos & Stories:** Imagens cinematográficas com headline de impacto e tipografia profissional, acompanhadas de stories com artes visuais complementares.
 - **MATRIZ DE PERSONAS SEGMENTADAS POR PRODUTO NOS CARDS/CARROSSÉIS:**

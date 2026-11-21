@@ -1947,6 +1947,10 @@ def publicar_card_instagram(image_url, legenda):
     """
     Publica um Card Único de imagem no Instagram (@marcaopersonalfitness).
     """
+    # TRAVA EXECUTIVA INVIOLÁVEL: PUBLICAÇÃO DE CARROSSÉIS E CARDS NO INSTAGRAM DESATIVADA PELO DIRETOR EVANDRO
+    print("[INSTAGRAM KILLSWITCH] Publicação de cards pausada pelo Diretor Evandro. Abortando execução.")
+    return {"sucesso": False, "pausado": True, "motivo": "publicacoes_pausadas_pelo_diretor"}
+
     if not INSTAGRAM_ACCESS_TOKEN or not INSTAGRAM_ACCOUNT_ID:
         return {"sucesso": False, "erro": "Credenciais do Instagram ausentes"}
 
@@ -2002,6 +2006,10 @@ def publicar_carrossel_instagram(image_urls, legenda):
     """
     Publica um Álbum Carrossel de 2 a 10 imagens no Instagram (@marcaopersonalfitness).
     """
+    # TRAVA EXECUTIVA INVIOLÁVEL: PUBLICAÇÃO DE CARROSSÉIS E CARDS NO INSTAGRAM DESATIVADA PELO DIRETOR EVANDRO
+    print("[INSTAGRAM KILLSWITCH] Publicação de carrosséis pausada pelo Diretor Evandro. Abortando execução.")
+    return {"sucesso": False, "pausado": True, "motivo": "publicacoes_pausadas_pelo_diretor"}
+
     if not INSTAGRAM_ACCESS_TOKEN or not INSTAGRAM_ACCOUNT_ID:
         return {"sucesso": False, "erro": "Credenciais do Instagram ausentes"}
 
@@ -2083,6 +2091,10 @@ def publicar_story_instagram(image_url):
     Publica uma imagem no Instagram Stories (@marcaopersonalfitness).
     Requer imagem na proporção 9:16 (1080x1920).
     """
+    # TRAVA EXECUTIVA INVIOLÁVEL: PUBLICAÇÃO DE STORIES NO INSTAGRAM DESATIVADA PELO DIRETOR EVANDRO
+    print("[INSTAGRAM KILLSWITCH] Publicação de stories pausada pelo Diretor Evandro. Abortando execução.")
+    return {"sucesso": False, "pausado": True, "motivo": "publicacoes_pausadas_pelo_diretor"}
+
     if not INSTAGRAM_ACCESS_TOKEN or not INSTAGRAM_ACCOUNT_ID:
         return {"sucesso": False, "erro": "Credenciais do Instagram ausentes"}
 
@@ -2194,6 +2206,10 @@ def executar_ciclo_manha(indice=None, formato="carrossel", usar_ia=True, dry_run
     Por padrão utiliza o rosto de Evandro Gallina em cenários de alta autoridade científica
     e publica automaticamente nos Stories do Instagram.
     """
+    # TRAVA EXECUTIVA INVIOLÁVEL: PUBLICAÇÃO DE CARROSSÉIS E CARDS NO INSTAGRAM DESATIVADA PELO DIRETOR EVANDRO
+    print("[INSTAGRAM KILLSWITCH] Ciclo Manhã pausado pelo Diretor Evandro. Nenhuma publicação realizada.")
+    return {"sucesso": False, "pausado": True, "motivo": "publicacoes_pausadas_pelo_diretor"}
+
     temas_ativos = [t for t in TEMAS_CURIOSIDADES if not t.get("desativado")]
     topicos_bloqueados = obter_topicos_bloqueados_instagram()
     print(f"[ANTI-REP] Tópicos bloqueados recentemente: {topicos_bloqueados}")
@@ -2354,6 +2370,10 @@ def executar_ciclo_noite(indice=None, formato="carrossel", usar_ia=True, dry_run
     utiliza o rosto de Evandro Gallina para máxima autoridade e publica nos Stories.
     Este post fica automaticamente elegível para o Rui impulsionar no Meta Ads!
     """
+    # TRAVA EXECUTIVA INVIOLÁVEL: PUBLICAÇÃO DE CARROSSÉIS E CARDS NO INSTAGRAM DESATIVADA PELO DIRETOR EVANDRO
+    print("[INSTAGRAM KILLSWITCH] Ciclo Noite pausado pelo Diretor Evandro. Nenhuma publicação realizada.")
+    return {"sucesso": False, "pausado": True, "motivo": "publicacoes_pausadas_pelo_diretor"}
+
     produtos_ativos = [p for p in PRODUTOS_CATALOGO if not p.get("desativado")]
     if indice is None:
         indice = (datetime.now().day + datetime.now().hour) % len(produtos_ativos)
