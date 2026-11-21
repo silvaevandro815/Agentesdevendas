@@ -136,6 +136,63 @@ async def llm_completions(req: Request):
         # 2. Fallback Resiliente Automático via Google Gemini API Nativa
         if gemini_key:
             try:
+                def _extrair_texto_puro(c):
+                    if isinstance(c, str): return c
+                    if isinstance(c, list):
+                        res = []
+                        for i in c:
+                            if isinstance(i, dict):
+                                res.append(i.get('text', ''))
+                            elif isinstance(i, str):
+                                res.append(i)
+                        return "\n".join(res)
+                    return str(c or '')
+
+                def _extrair_partes_gemini(content):
+                    parts = []
+                    if isinstance(content, str):
+                        if content.strip():
+                            parts.append({"text": content.strip()})
+                    elif isinstance(content, list):
+                        for item in content:
+                            if isinstance(item, dict):
+                                t = item.get("type")
+                                if t == "text":
+                                    txt = item.get("text", "").strip()
+                                    if txt:
+                                        parts.append({"text": txt})
+                                elif t == "image_url":
+                                    img_url = item.get("image_url", {}).get("url", "")
+                                    if ";base64," in img_url:
+                                        header, b64 = img_url.split(";base64,", 1)
+                                        mime = header.replace("data:", "")
+                                        parts.append({
+                                            "inline_data": {
+                                                "mime_type": mime,
+                                                "data": b64
+                                            }
+                                        })
+                                    elif img_url.startswith("http"):
+                                        parts.append({"text": f"[Imagem: {img_url}]"})
+                                elif t == "input_audio":
+                                    audio_obj = item.get("input_audio", {})
+                                    b64 = audio_obj.get("data", "")
+                                    fmt = audio_obj.get("format", "ogg")
+                                    mime = "audio/ogg" if fmt == "ogg" else f"audio/{fmt}"
+                                    if b64:
+                                        parts.append({
+                                            "inline_data": {
+                                                "mime_type": mime,
+                                                "data": b64
+                                            }
+                                        })
+                            elif isinstance(item, str):
+                                if item.strip():
+                                    parts.append({"text": item.strip()})
+                    elif content:
+                        parts.append({"text": str(content)})
+                    return parts
+
                 msgs = payload.get("messages", [])
                 system_instruction = ""
                 contents = []
@@ -144,11 +201,15 @@ async def llm_completions(req: Request):
                     role = m.get("role", "user")
                     content = m.get("content", "")
                     if role == "system":
-                        system_instruction += content + "\n\n"
-                    elif role == "user":
-                        contents.append({"role": "user", "parts": [{"text": content}]})
-                    elif role == "assistant":
-                        contents.append({"role": "model", "parts": [{"text": content}]})
+                        system_instruction += _extrair_texto_puro(content) + "\n\n"
+                    else:
+                        gemini_role = "model" if role == "assistant" else "user"
+                        parts = _extrair_partes_gemini(content)
+                        if parts:
+                            if contents and contents[-1]["role"] == gemini_role:
+                                contents[-1]["parts"].extend(parts)
+                            else:
+                                contents.append({"role": gemini_role, "parts": parts})
 
                 if not contents:
                     contents = [{"role": "user", "parts": [{"text": "Olá Marcão!"}]}]
