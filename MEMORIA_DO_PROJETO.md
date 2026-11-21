@@ -507,6 +507,7 @@ unpod_open_engine.py: Gerenciador de GPU Serverless para geração de takes 3D h
   * `style: 0.20`: arfar e cadência de áudio real de WhatsApp.
   * `use_speaker_boost: True`: clareza e reforço de frequências graves.
 - **Fallback Automático Resiliente:** Integrado em `marcao_voice.py` e `marcao_engine.py` como motor primário. Se a cota mensal da ElevenLabs atingir o limite ou houver instabilidade de rede, comuta instantaneamente para o fallback nativo sem interrupção de serviço aos alunos.
+- **Homologação em Todos os Workflows & Motores:** Chave de API oficial ativa (`sk_f56f7b1dfcca48a8ec71091cd5d32bc851523fb1e1c8f715`) e Voice ID Clayton Friendly (`s7EZmcmeY0PaadjMDC6H`) aplicados nos nós do n8n `F3` (WhatsApp), `I1` (Instagram) e na esteira de vídeo (`daily_reel_generator.py`).
 
 ## 30. Resolução Definitiva Strava Hub, Blindagem da Kamila & Smartwatch Shopee Homologado
 - **Arquitetura Strava OAuth & Callback 100% Funcional no Domínio Oficial:**
@@ -525,3 +526,15 @@ unpod_open_engine.py: Gerenciador de GPU Serverless para geração de takes 3D h
   * **Habilidade Autônoma Integrada:** Se o aluno disser que não tem relógio inteligente ("não tenho relógio", "sem smartwatch", "qual relógio comprar?"), o Marcão apresenta duas opções:
     1. *Imediata e 100% gratuita:* Usar o app oficial do Strava direto no smartphone (apertar "Gravar" e colocar no bolso).
     2. *Relógio no pulso:* Adquirir o Smartwatch Esportivo D20 Pro na Shopee por apenas R$ 0,70/dia com o link oficial.
+
+## 31. Blindagem de Gênero Feminino (Apelidos Fitness) & Resiliência Dupla LLM (Gemini 3.5 Flash)
+- **Tratamento Mandatório de Alunas Mulheres no Feminino:**
+  * **Regra Inviolável:** Toda e qualquer aluna mulher (Eva Maria, Kamila, alunas detectadas) DEVE ser tratada obrigatoriamente no feminino com apelidos autênticos do universo fitness: `'minha atleta'`, `'minha guerreira'`, `'campeã'`, `'guerreira'`, `'parceira de treino'`, `'minha aluna querida'` ou pelo primeiro nome.
+  * **Proibição Absoluta de Termos Neutros/Genéricos:** Fica terminantemente proibido o uso de termos com barras parentéticas (`guerreiro(a)`, `campeão(ã)`, `aluno(a)`) ou vocativos masculinos (`irmão`, `mano`, `chefe`).
+  * **Obrigatoriedade de Resposta Direta:** Toda dúvida, pergunta sobre horários (ex: "lanche às 16h?"), trocas alimentares ou exercícios DEVE ser respondida no primeiro balão com atenção total, carinho e clareza técnica de treinador.
+- **Resiliência Dupla de LLM no Relay `/api/llm/completions`:**
+  * **Causa Raiz do Erro da Eva (14:06):** O OpenRouter retornou status 402 (`Prompt tokens limit exceeded: 12124 > 8207`) devido ao acúmulo irrestrito de histórico, caindo no fallback genérico frio.
+  * **Blindagem Implementada:**
+    1. *Poda Automática de Histórico:* Limitado às últimas 8 mensagens no n8n F3, reduzindo o payload de 12.000 para ~1.500 tokens.
+    2. *Fallback Automático para Gemini 3.5 Flash:* Em `apps/api/main.py`, se o OpenRouter retornar status != 200 (402, 429, timeout), a chamada comuta instantaneamente para a Google Gemini API oficial (`gemini-3.5-flash`), retornando HTTP 200 com a resposta do personal.
+    3. *Fallback Local Humanizado no Feminino:* Em `Processar Despacho do Chefe`, o fallback de contingência foi reprogramado para reconhecer mulheres e responder dúvidas de rotina no feminino ("Pode sim, minha guerreira! 🥣💪").

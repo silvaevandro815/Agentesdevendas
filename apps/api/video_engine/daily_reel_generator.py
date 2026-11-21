@@ -354,7 +354,7 @@ def sintetizar_voz_marcao(texto, out_file):
     except Exception as e:
         print(f"⚠️ Erro no motor primário ({e}), acionando ElevenLabs com voz brasileira...")
 
-    url = "https://api.elevenlabs.io/v1/text-to-speech/pNInz6obpgDQGcFmaJgB"
+    url = "https://api.elevenlabs.io/v1/text-to-speech/s7EZmcmeY0PaadjMDC6H"
     headers = {"xi-api-key": ELEVENLABS_API_KEY, "Content-Type": "application/json"}
     payload = {
         "text": texto,

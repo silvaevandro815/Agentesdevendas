@@ -15,7 +15,7 @@ if not key:
     sys.exit(1)
 
 # Voice: Adam (Dominant, Firm, social_media)
-voice_id = "pNInz6obpgDQGcFmaJgB"
+voice_id = "s7EZmcmeY0PaadjMDC6H"
 url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
 
 texto_narracao = "A motivação te faz começar... mas é a constância que constrói o seu melhor shape. Treine pesado, cuide da sua saúde e nunca desista de você!"

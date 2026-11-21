@@ -100,26 +100,94 @@ async def health():
 @app.post("/api/llm/completions")
 async def llm_completions(req: Request):
     """
-    Relay seguro server-side para LLMs (OpenRouter).
-    Impede vazamento de credenciais no frontend/workflows e blinda requisições de IA.
+    Relay seguro server-side para LLMs com blindagem de alta disponibilidade (OpenRouter + Google Gemini Nativo).
+    Se o OpenRouter falhar por quota (402), timeout ou rate-limit, comuta instantaneamente para a Gemini API oficial.
     """
     try:
         key = os.getenv("OPENROUTER_API_KEY", "")
-        if not key:
+        gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or ""
+        if not key or not gemini_key:
             load_dotenv("/app/.env", override=True)
             load_dotenv(override=True)
-            key = os.getenv("OPENROUTER_API_KEY", "")
+            key = os.getenv("OPENROUTER_API_KEY", key)
+            gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or gemini_key
+
         payload = await req.json()
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            res = await client.post(
-                "https://openrouter.ai/api/v1/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {key}",
+
+        # 1. Tentativa primária via OpenRouter
+        if key:
+            try:
+                async with httpx.AsyncClient(timeout=45.0) as client:
+                    res = await client.post(
+                        "https://openrouter.ai/api/v1/chat/completions",
+                        headers={
+                            "Authorization": f"Bearer {key}",
+                            "Content-Type": "application/json"
+                        },
+                        json=payload
+                    )
+                    if res.status_code == 200:
+                        return JSONResponse(status_code=200, content=res.json())
+                    else:
+                        print(f"[LLM RELAY] OpenRouter retornou status {res.status_code}. Acionando Fallback Gemini Nativo...")
+            except Exception as err_or:
+                print(f"[LLM RELAY] Falha de conexão OpenRouter: {err_or}. Acionando Fallback Gemini Nativo...")
+
+        # 2. Fallback Resiliente Automático via Google Gemini API Nativa
+        if gemini_key:
+            try:
+                msgs = payload.get("messages", [])
+                system_instruction = ""
+                contents = []
+
+                for m in msgs:
+                    role = m.get("role", "user")
+                    content = m.get("content", "")
+                    if role == "system":
+                        system_instruction += content + "\n\n"
+                    elif role == "user":
+                        contents.append({"role": "user", "parts": [{"text": content}]})
+                    elif role == "assistant":
+                        contents.append({"role": "model", "parts": [{"text": content}]})
+
+                if not contents:
+                    contents = [{"role": "user", "parts": [{"text": "Olá Marcão!"}]}]
+
+                gemini_payload = {"contents": contents}
+                if system_instruction.strip():
+                    gemini_payload["system_instruction"] = {
+                        "parts": [{"text": system_instruction.strip()}]
+                    }
+
+                url_gemini = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent"
+                headers_gemini = {
+                    "x-goog-api-key": gemini_key,
                     "Content-Type": "application/json"
-                },
-                json=payload
-            )
-            return JSONResponse(status_code=res.status_code, content=res.json())
+                }
+
+                async with httpx.AsyncClient(timeout=30.0) as g_client:
+                    g_res = await g_client.post(url_gemini, headers=headers_gemini, json=gemini_payload)
+                    if g_res.status_code == 200:
+                        g_data = g_res.json()
+                        cand = g_data.get("candidates", [{}])[0]
+                        txt_resposta = cand.get("content", {}).get("parts", [{}])[0].get("text", "")
+                        return JSONResponse(status_code=200, content={
+                            "choices": [
+                                {
+                                    "message": {
+                                        "role": "assistant",
+                                        "content": txt_resposta
+                                    }
+                                }
+                            ],
+                            "provider": "google_gemini_native_fallback"
+                        })
+                    else:
+                        print(f"[LLM RELAY] Gemini API nativa retornou status {g_res.status_code}: {g_res.text[:200]}")
+            except Exception as err_gemini:
+                print(f"[LLM RELAY] Erro no fallback Gemini: {err_gemini}")
+
+        return JSONResponse(status_code=500, content={"error": "Todos os provedores de LLM falharam"})
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
 
