@@ -415,17 +415,20 @@ async def gerar_e_enviar_audio_elevenlabs(target_number: str, texto: str):
                 "xi-api-key": ELEVENLABS_API_KEY,
                 "Content-Type": "application/json"
             }
+            voice_id_marcao = os.getenv("ELEVENLABS_VOICE_ID", "bpFr0ep1yP9FdMNAdMvO")
             payload_eleven = {
                 "text": texto,
                 "model_id": "eleven_multilingual_v2",
                 "voice_settings": {
-                    "stability": 0.45,
-                    "similarity_boost": 0.85
+                    "stability": 0.42,
+                    "similarity_boost": 0.82,
+                    "style": 0.20,
+                    "use_speaker_boost": True
                 }
             }
             async with httpx.AsyncClient(timeout=35.0, verify=False) as client:
                 res = await client.post(
-                    "https://api.elevenlabs.io/v1/text-to-speech/pNInz6obpgDQGcFmaJgB",
+                    f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id_marcao}",
                     headers=headers_eleven,
                     json=payload_eleven
                 )

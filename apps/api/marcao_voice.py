@@ -32,6 +32,7 @@ load_dotenv()
 EVOLUTION_API_URL = os.getenv('EVOLUTION_API_URL', 'https://evolution.marcaopersonal.com')
 EVOLUTION_API_KEY = os.getenv('EVOLUTION_API_KEY', '')
 ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY', '')
+ELEVENLABS_VOICE_ID = os.getenv('ELEVENLABS_VOICE_ID', 'bpFr0ep1yP9FdMNAdMvO')
 
 VOZ_MARCAO_DEFAULT = 'pt-BR-AntonioNeural'
 VOZ_FEMININA_DEFAULT = 'pt-BR-FranciscaNeural'
@@ -60,23 +61,60 @@ async def _gerar_voz_edge_async(texto: str, out_file: str, voz: str = VOZ_MARCAO
 
 def gerar_voz_marcao(texto: str, out_file: str = None, modo: str = 'masculino') -> str:
     """
-    Gera voz em Português Brasileiro Nativo (100% sem sotaque estrangeiro).
-    modo: 'masculino' (Marcão) | 'feminino' (Atleta/Colágeno)
+    Gera voz do Marcão Personal.
+    Prioridade 1: ElevenLabs (Clonagem Real Humana com respiração e sotaque brasileiro natural).
+    Prioridade 2: Fallback Ilimitado Edge-TTS (pt-BR-AntonioNeural / pt-BR-FranciscaNeural).
     """
     t0 = time.time()
-    voz_escolhida = VOZ_MARCAO_DEFAULT if modo != 'feminino' else VOZ_FEMININA_DEFAULT
-    pitch_ajustado = "-1Hz" if modo != 'feminino' else "+0Hz"
-    rate_ajustado = "+6%" if modo != 'feminino' else "+4%"
-    
     if not out_file:
         fd, out_file = tempfile.mkstemp(suffix='.mp3')
         os.close(fd)
-        
+
+    # 1. Tentativa Primária com ElevenLabs (Áudio Ultra-Humano com Respiração)
+    if modo != 'feminino' and ELEVENLABS_API_KEY:
+        try:
+            print(f"[MARCAO VOZ] Gerando voz humana hiper-realista no ElevenLabs (Voz: {ELEVENLABS_VOICE_ID})...")
+            headers = {
+                "xi-api-key": ELEVENLABS_API_KEY,
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "text": texto,
+                "model_id": "eleven_multilingual_v2",
+                "voice_settings": {
+                    "stability": 0.42,
+                    "similarity_boost": 0.82,
+                    "style": 0.20,
+                    "use_speaker_boost": True
+                }
+            }
+            r = requests.post(
+                f"https://api.elevenlabs.io/v1/text-to-speech/{ELEVENLABS_VOICE_ID}",
+                headers=headers,
+                json=payload,
+                timeout=30
+            )
+            if r.status_code == 200 and len(r.content) > 1000:
+                with open(out_file, "wb") as f:
+                    f.write(r.content)
+                duracao = time.time() - t0
+                print(f"[MARCAO VOZ] Áudio ElevenLabs gerado com sucesso em {duracao:.2f}s! ({os.path.getsize(out_file)} bytes)")
+                return out_file
+            else:
+                print(f"[MARCAO VOZ] ElevenLabs respondeu {r.status_code} ({r.text[:120]}), ativando fallback nativo...")
+        except Exception as e_elev:
+            print(f"[MARCAO VOZ] Falha no ElevenLabs ({e_elev}), acionando fallback nativo...")
+
+    # 2. Fallback Nativo (Edge-TTS Ilimitado)
+    voz_escolhida = VOZ_MARCAO_DEFAULT if modo != 'feminino' else VOZ_FEMININA_DEFAULT
+    pitch_ajustado = "-1Hz" if modo != 'feminino' else "+0Hz"
+    rate_ajustado = "+6%" if modo != 'feminino' else "+4%"
+
     try:
-        print(f"[MARCAO VOZ] Gerando fala 100% Brasileira Nativa ({voz_escolhida})...")
+        print(f"[MARCAO VOZ] Gerando fala nativa fallback ({voz_escolhida})...")
         asyncio.run(_gerar_voz_edge_async(texto, out_file, voz_escolhida, rate=rate_ajustado, pitch=pitch_ajustado))
         duracao = time.time() - t0
-        print(f"[MARCAO VOZ] Voz brasileira gerada em {duracao:.2f}s! ({os.path.getsize(out_file)} bytes)")
+        print(f"[MARCAO VOZ] Voz brasileira fallback gerada em {duracao:.2f}s! ({os.path.getsize(out_file)} bytes)")
         return out_file
     except Exception as e:
         print(f"[MARCAO VOZ] Erro na síntese nativa ({e}).")

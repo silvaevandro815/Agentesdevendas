@@ -42,3 +42,6 @@ yarn-error.log*
 *.log
 .DS_Store
 Thumbs.db
+
+plano elevenlabs*.txt
+*.mpeg
