@@ -396,9 +396,9 @@ async def api_gerar_voz_marcao(req: MarcaoVozRequest):
 
 class ElevenLabsRequest(BaseModel):
     texto: str
-    voice_id: Optional[str] = "pNInz6obpgDQGcFmaJgB"  # Adam (Marcão Personal)
-    stability: Optional[float] = 0.45
-    similarity_boost: Optional[float] = 0.85
+    voice_id: Optional[str] = "s7EZmcmeY0PaadjMDC6H"  # Clayton (Marcão Personal - Oficial)
+    stability: Optional[float] = 0.42
+    similarity_boost: Optional[float] = 0.82
 
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
 

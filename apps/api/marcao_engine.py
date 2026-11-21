@@ -415,7 +415,7 @@ async def gerar_e_enviar_audio_elevenlabs(target_number: str, texto: str):
                 "xi-api-key": ELEVENLABS_API_KEY,
                 "Content-Type": "application/json"
             }
-            voice_id_marcao = os.getenv("ELEVENLABS_VOICE_ID", "bpFr0ep1yP9FdMNAdMvO")
+            voice_id_marcao = os.getenv("ELEVENLABS_VOICE_ID", "s7EZmcmeY0PaadjMDC6H")
             payload_eleven = {
                 "text": texto,
                 "model_id": "eleven_multilingual_v2",

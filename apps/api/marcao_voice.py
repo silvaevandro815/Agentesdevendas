@@ -32,7 +32,7 @@ load_dotenv()
 EVOLUTION_API_URL = os.getenv('EVOLUTION_API_URL', 'https://evolution.marcaopersonal.com')
 EVOLUTION_API_KEY = os.getenv('EVOLUTION_API_KEY', '')
 ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY', '')
-ELEVENLABS_VOICE_ID = os.getenv('ELEVENLABS_VOICE_ID', 'bpFr0ep1yP9FdMNAdMvO')
+ELEVENLABS_VOICE_ID = os.getenv('ELEVENLABS_VOICE_ID', 's7EZmcmeY0PaadjMDC6H')
 
 VOZ_MARCAO_DEFAULT = 'pt-BR-AntonioNeural'
 VOZ_FEMININA_DEFAULT = 'pt-BR-FranciscaNeural'

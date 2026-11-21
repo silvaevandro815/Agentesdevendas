@@ -497,3 +497,13 @@ unpod_open_engine.py: Gerenciador de GPU Serverless para geração de takes 3D h
 - **Garantia de Comissão de Afiliado na Shopee (Mesmo com Desconto/Cupom):**
   * No programa de afiliados da Shopee (App ID `18302091279`), compras feitas via shortlink oficial (`https://s.shopee.com.br/...`) possuem cookie de rastreamento de 7 dias com last-click attribution.
   * Quando o comprador utiliza cupom de desconto (ex: Eva pagou R$ 31,90 em vez de R$ 34,90), a comissão é **100% garantida e calculada sobre o valor líquido pago pelo produto (R$ 31,90)**. O afiliado não perde a comissão por conta de cupom ou frete grátis da Shopee.
+
+## 29. Voz Oficial do Marcão Personal no WhatsApp (ElevenLabs — Clayton Friendly)
+- **Voz Homologada pelo Diretor Evandro:** "Marcão Personal - Clayton" (Voice ID: `s7EZmcmeY0PaadjMDC6H`), adicionada diretamente à conta oficial da ElevenLabs via Shared Voice Library.
+- **Perfil Vocal:** Masculino, brasileiro nativo, faixa dos 30 anos, timbre encorpado de médio-grave, energia motivadora de personal trainer, com micro-respirações e presença autêntica de microfone de celular.
+- **Parâmetros Neurais (`eleven_multilingual_v2`):**
+  * `stability: 0.42`: introduz as micro-variações e respirações humanas naturais entre as frases.
+  * `similarity_boost: 0.82`: fidelidade e presença de proximidade.
+  * `style: 0.20`: arfar e cadência de áudio real de WhatsApp.
+  * `use_speaker_boost: True`: clareza e reforço de frequências graves.
+- **Fallback Automático Resiliente:** Integrado em `marcao_voice.py` e `marcao_engine.py` como motor primário. Se a cota mensal da ElevenLabs atingir o limite ou houver instabilidade de rede, comuta instantaneamente para o fallback nativo sem interrupção de serviço aos alunos.
