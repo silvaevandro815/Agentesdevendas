@@ -1,11 +1,16 @@
 {
-  "updatedAt": "2026-10-27T13:12:02.934Z",
-  "createdAt": "2026-10-12T22:29:05.634Z",
   "id": "jlG1OPBCsaAx75zQ",
   "name": "I1 - Atendimento Instagram (Directs & Comentarios) - Marcao Personal",
   "description": null,
   "active": true,
+  "activeVersionId": "abd1ca79-91fc-400c-bb0e-9e3fa74dfa7b",
+  "createdAt": "2026-10-12T22:29:05.634Z",
+  "updatedAt": "2026-11-21T23:24:09.355Z",
   "isArchived": false,
+  "versionId": "abd1ca79-91fc-400c-bb0e-9e3fa74dfa7b",
+  "versionCounter": 42,
+  "sourceWorkflowId": null,
+  "triggerCount": 2,
   "nodes": [
     {
       "id": "node-webhook-ig-get",
@@ -250,7 +255,7 @@
         300
       ],
       "parameters": {
-        "jsCode": "\nconst item = $('Processar Evento Instagram').item.json;\nconst profile = $('Buscar Perfil IG (Nome)').item.json || {};\nconst memData = $('Buscar Memória Contexto (Supabase)').first() ? $('Buscar Memória Contexto (Supabase)').first().json : {};\nlet historico = [];\nif (Array.isArray(memData) && memData[0] && Array.isArray(memData[0].historico_mensagens)) {\n  historico = memData[0].historico_mensagens;\n} else if (memData && Array.isArray(memData.historico_mensagens)) {\n  historico = memData.historico_mensagens;\n}\n\nlet audioB64 = \"\";\ntry {\n  const buffer = await this.helpers.getBinaryDataBuffer(0, 'data');\n  audioB64 = buffer.toString('base64');\n} catch (e) {\n  try {\n    const binaryData = $input.first().binary;\n    audioB64 = (binaryData && binaryData.data && binaryData.data.data !== 'filesystem-v2') ? binaryData.data.data : '';\n  } catch (err) {\n    audioB64 = \"\";\n  }\n}\n\nconst nameRaw = (profile.name || '').trim();\nconst username = (profile.username || '').toLowerCase();\nconst isEvandro = username.includes('evandro') || nameRaw.toLowerCase().includes('evandro') || item.senderId === '1074518592075534';\nconst nomeUsuario = isEvandro ? 'Evandro' : (nameRaw ? nameRaw.split(/\\s+/)[0] : 'campeão');\n\n\n   // PERSISTÊNCIA SUAVE PARA PREENCHER FICHA E ONBOARDING (INSTAGRAM DIRECT):\n   // - Se o seguidor falar que quer começar a treinar, quer consultoria, dieta, ficha de treino ou avaliação corporal:\n   // - No primeiro balão, responda com energia acolhedora e brother maromba ('Show de bola, tamo junto nessa!').\n   // - No segundo balão, faça a cobrança amigável de onboarding dos dados faltantes para montar a ficha:\n   //   * 'Pra eu já abrir sua ficha oficial aqui, me manda quando puder: seu peso, altura, idade e se você tem alguma dorzinha no joelho/coluna! Ou se preferir me passa seu WhatsApp que te chamo por lá!'\n   // - Se ele já garantiu a Balança ou Creatina, reforce o onboarding: peça o print da balança ou peso em jejum para calcular a meta hídrica (35ml/kg) e os macros exatos.\n\n\n// 🚨 REGRA SUPREMA DE FORMATAÇÃO E HUMANIZAÇÃO:\n// - NUNCA ENVIE UM TEXTÃO CONTÍNUO EM UM ÚNICO BLOCO!\n// - Responda SEMPRE em 2 a 3 balões curtos e ágeis (cada balão com 50 a 120 caracteres, no máximo 140 caracteres).\n// - Separe CADA balão OBRIGATORIAMENTE por DUAS quebras de linha (\\n\\n) para que o sistema fatie e envie balões separados com tempo de digitação natural!\n// - Use emojis naturais de brother maromba (👊, 🦁, 💪, 🔥) em cada balão.\n\nconst promptSistema = `\nDISTINCAO CRITICA ENTRE CONVERSACAO HUMANA VS CONSULTA TECNICA:\n- PROIBIDO PESQUISAR OU DEFINIR PALAVRAS COMUNS, GIRIAS OU CONFIRMACOES: Se o seguidor disser apenas 'ok', 'show', 'beleza', 'blz', 'valeu', 'combinado', 'sim', 'entendi', 'ta bom', 'obrigado', etc., NUNCA defina a palavra nem busque no dicionario! Isso e conversa humana informal no Direct.\n- Responda de forma rapida, amiga e parceira em 1 ou 2 baloes curtos (Ex: 'Fechado, campeao! Tamo junto! Qualquer duvida no treino ou shape e so me chamar aqui!').\n\nREGRA SUPREMA DE LINKS (WHITELIST EXCLUSIVA DE LINKS):\n- E TERMINANTEMENTE PROIBIDO enviar links de sites de busca, enciclopedias, artigos externos ou blogs no Direct ou Comentarios!\n- Os UNICOS links autorizados no seu vocabulario sao:\n  1. Site Oficial & Balanca: https://marcaopersonal.com (e ancoras como #balanca)\n  2. Catalogo Oficial de Produtos Braip (Creatina, Colageno, Azempika, IArmonize, Vision Prime)\n  3. Assinatura VIP Stripe (https://buy.stripe.com/7sYfZgbmtgaI5dncwrfMA01)\n- NUNCA envie nenhuma outra URL.\n\nVocê é o MARCÃO PERSONAL (@marcaopersonalfitness), personal trainer de 35 anos de Muriaé-MG.\nO seguidor enviou um ÁUDIO de voz no Direct do Instagram.\nOuça o áudio com atenção total e responda com carinho e energia de educador físico!\nMÁXIMA HUMANIZAÇÃO:\n1. Responda em 2 balões curtos separados por \\n\\n.\n2. POUCOS CARACTERES POR BALÃO (12 a 20 palavras por balão).\n3. Seja super humano, cortês e direto.\n${isEvandro ? 'Trate com lealdade de braço direito: \"Fala meu chefe!\".' : 'Chame pelo nome (' + nomeUsuario + ') e tire a dúvida na lata!'}`;\n\nlet messages = [{ role: 'system', content: promptSistema }];\n\nif (historico && historico.length > 0) {\n  for (const h of historico.slice(-4)) {\n    if (h.role && h.content) {\n      messages.push({ role: h.role, content: typeof h.content === 'string' ? h.content : JSON.stringify(h.content) });\n    }\n  }\n}\n\nif (audioB64) {\n  messages.push({\n    role: 'user',\n    content: [\n      { type: 'text', text: 'Ouça atentamente este áudio do seguidor e responda no seu estilo Marcão Personal:' },\n      { type: 'image_url', image_url: { url: 'data:audio/mp4;base64,' + audioB64 } }\n    ]\n  });\n} else {\n  messages.push({ role: 'user', content: '[O seguidor enviou um áudio no direct]' });\n}\n\nconst payload = {\n  model: 'google/gemini-2.5-flash',\n  messages: messages,\n  max_tokens: 220,\n  temperature: 0.7\n};\n\nreturn [{ json: { ...item, nomeUsuario, isEvandro, historico, openrouterPayload: payload } }];\n"
+        "jsCode": "\nconst item = $('Processar Evento Instagram').item.json;\nconst profile = $('Buscar Perfil IG (Nome)').item.json || {};\nconst memData = $('Buscar Memória Contexto (Supabase)').first() ? $('Buscar Memória Contexto (Supabase)').first().json : {};\nlet historico = [];\nif (Array.isArray(memData) && memData[0] && Array.isArray(memData[0].historico_mensagens)) {\n  historico = memData[0].historico_mensagens;\n} else if (memData && Array.isArray(memData.historico_mensagens)) {\n  historico = memData.historico_mensagens;\n}\n\nlet audioB64 = \"\";\ntry {\n  const buffer = await this.helpers.getBinaryDataBuffer(0, 'data');\n  audioB64 = buffer.toString('base64');\n} catch (e) {\n  try {\n    const binaryData = $input.first().binary;\n    audioB64 = (binaryData && binaryData.data && binaryData.data.data !== 'filesystem-v2') ? binaryData.data.data : '';\n  } catch (err) {\n    audioB64 = \"\";\n  }\n}\n\n// Reconhecimento de alunos no Supabase\nlet alunoVinculado = null;\ntry {\n  const supabaseUrl = 'https://qkopgftfrfftoyndhhfj.supabase.co';\n  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrb3BnZnRmcmZmdG95bmRoaGZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MTgwMTU4MywiZXhwIjoyMTA3Mzc3NTgzfQ.S_RRdnI6SZTVR1UH7jryDVHf316YmnMOVEBuoedyKv8';\n  \n  const rFichas = await this.helpers.httpRequest({\n    method: 'GET',\n    url: `${supabaseUrl}/rest/v1/fichas_alunos?select=*`,\n    headers: { 'apikey': supabaseKey, 'Authorization': `Bearer ${supabaseKey}` },\n    json: true\n  });\n\n  if (Array.isArray(rFichas)) {\n    const userHandle = (profile.username || '').toLowerCase().replace('@', '');\n    const userNomeLower = (profile.name || '').toLowerCase();\n\n    if (userHandle) {\n      alunoVinculado = rFichas.find(f => {\n        const metaInsta = ((f.metas_nutricionais && f.metas_nutricionais.instagram_username) || '').toLowerCase().replace('@', '');\n        return metaInsta && (metaInsta === userHandle || userHandle.includes(metaInsta));\n      });\n    }\n\n    if (!alunoVinculado) {\n      alunoVinculado = rFichas.find(f => {\n        const fnLower = (f.nome || f.nome_aluno || '').toLowerCase();\n        return fnLower && (userHandle.includes(fnLower) || (userNomeLower && userNomeLower.includes(fnLower)));\n      });\n    }\n  }\n} catch(err) {}\n\nconst nameRaw = (profile.name || '').trim();\nconst username = (profile.username || '').toLowerCase();\nconst isEvandro = username.includes('evandro') || nameRaw.toLowerCase().includes('evandro') || item.senderId === '1074518592075534';\nconst nomeUsuario = isEvandro ? 'Evandro' : (alunoVinculado ? (alunoVinculado.nome || nameRaw) : (nameRaw ? nameRaw.split(/\\s+/)[0] : 'campeão'));\n\n// Consciência Temporal\nconst agoraUtc = new Date();\nconst agoraBsb = new Date(agoraUtc.getTime() - (3 * 60 * 60 * 1000));\nconst horaFormatada = `${agoraBsb.getUTCHours()}:${String(agoraBsb.getUTCMinutes()).padStart(2, '0')}`;\n\nconst promptSistema = `Você é o MARCÃO PERSONAL (@marcaopersonalfitness), personal trainer de Muriaé-MG.\nO seguidor enviou um ÁUDIO de voz no Direct do Instagram às ${horaFormatada} (Horário de Brasília).\nOuça o áudio com máxima atenção e responda no seu estilo vigoroso e acolhedor de treinador!\n\n${isEvandro ? 'O INTERLOCUTOR É O SEU CHEFE EVANDRO GALLINA! Trate com lealdade de braço direito: \"Fala meu Chefe!\", \"Comandante\". NUNCA tente vender nada!' : ''}\n${alunoVinculado ? 'O INTERLOCUTOR É SEU ALUNO(A) OFICIAL CADASTRADO (' + nomeUsuario + ')! Reconheça-o imediatamente com energia e acompanhe a evolução dele!' : ''}\n\n🔥 DIRETRIZ SUPREMA DE VENDAS & CONSULTORIA NO WHATSAPP:\n- Se ele perguntar sobre dor, treino, emagrecimento, balança ou creatina, prescreva o protocolo ideal e CONVIDE PARA A CONSULTORIA VIP NO WHATSAPP:\n  \"Comprando a Balança Shopee (R$ 34,90 - https://s.shopee.com.br/2BFoInIBeb) ou a Creatina 100% Pura, você GANHA minha consultoria no WhatsApp!\"\n  \"Me chama lá pra eu montar sua ficha e dieta: https://wa.me/553284587255 👊🦁\"\n\nREGRAS DE FORMATAÇÃO:\n1. Responda em 2 balões curtos separados por \\\\n\\\\n (50 a 120 caracteres por balão).\n2. Use emojis autênticos (👊, 💪, 🔥, 🦁).\n3. Seja super humano, direto e inspirador!`;\n\nlet messages = [{ role: 'system', content: promptSistema }];\n\nif (historico && historico.length > 0) {\n  for (const h of historico.slice(-4)) {\n    if (h.role && h.content) {\n      messages.push({ role: h.role, content: typeof h.content === 'string' ? h.content : JSON.stringify(h.content) });\n    }\n  }\n}\n\nif (audioB64) {\n  messages.push({\n    role: 'user',\n    content: [\n      { type: 'text', text: 'Ouça atentamente este áudio do seguidor e responda no seu estilo Marcão Personal:' },\n      { type: 'input_audio', input_audio: { data: audioB64, format: 'mp4' } }\n    ]\n  });\n} else {\n  messages.push({ role: 'user', content: '[O seguidor enviou um áudio no direct]' });\n}\n\nconst payload = {\n  model: 'google/gemini-2.5-flash',\n  messages: messages,\n  max_tokens: 250,\n  temperature: 0.7\n};\n\nreturn [{ json: { ...item, nomeUsuario, isEvandro, historico, openrouterPayload: payload } }];\n"
       }
     },
     {
@@ -263,7 +268,7 @@
         520
       ],
       "parameters": {
-        "jsCode": "\nfunction devePesquisarNaWeb(texto) {\n  if (!texto) return false;\n  let t = texto.trim().toLowerCase();\n\n  t = t.replace(/[!?,;.]+/g, ' ').replace(/\\s+/g, ' ').trim();\n\n  const tokensCasuais = new Set([\n    'ok', 'tudo', 'bem', 'bom', 'td', 'certo', 'cima', 'beleza', 'blz', 'tranquilo', \n    'como', 'vai', 'voce', 'você', 'esta', 'está', 'e', 'ai', 'aí', 'opa', 'oi', \n    'ola', 'olá', 'bom', 'dia', 'boa', 'tarde', 'noite', 'valeu', 'obrigado', \n    'obrigada', 'combinado', 'fechado', 'sim', 'ta', 'tá', 'show', 'top', 'tmj', \n    'marcao', 'marcão', 'fala', 'irmão', 'irmao', 'parceiro', 'campeão', 'campeao'\n  ]);\n\n  const palavras = t.split(' ').filter(w => w.length > 0);\n  const todasSaoCasuais = palavras.length > 0 && palavras.every(w => tokensCasuais.has(w));\n  if (todasSaoCasuais) return false;\n\n  if (/^(treinei|treino pago|t[aá] pago|fui treinar|acabei o treino|hoje tem|cansei|pesando|estou com|tenho \\d+|concordo|fechado)/i.test(t)) {\n    return false;\n  }\n\n  const temInterrogacao = texto.includes('?');\n  const termosPergunta = /\\b(o que|oq|qual|quais|como|por que|pq|quanto|quantos|quem|onde|quando|pesquisa|pesquise|busca|busque|explica|explique|sabe me dizer|me tira uma d[uú]vida|d[uú]vida|voc[eê] conhece|voce conhece|indica|recomenda|vale a pena|funciona|estudo|pesquisa recente)\\b/i.test(t);\n\n  return termosPergunta || (temInterrogacao && palavras.length >= 3);\n}\n\nconst item = $('Processar Evento Instagram').item.json;\nconst profile = $('Buscar Perfil IG (Nome)').item.json || {};\nconst memData = $('Buscar Memória Contexto (Supabase)').first() ? $('Buscar Memória Contexto (Supabase)').first().json : {};\nlet historico = [];\nif (Array.isArray(memData) && memData[0] && Array.isArray(memData[0].historico_mensagens)) {\n  historico = memData[0].historico_mensagens;\n} else if (memData && Array.isArray(memData.historico_mensagens)) {\n  historico = memData.historico_mensagens;\n}\n\nlet produtosSb = [];\ntry {\n  produtosSb = $('Consultar Produtos Atualizados (Supabase)').all().map(i => i.json);\n} catch (e) {\n  produtosSb = [];\n}\n\nlet catalogoFormatado = \"\";\nif (produtosSb && produtosSb.length > 0 && produtosSb[0].name) {\n  catalogoFormatado = produtosSb.map(p => `- ${p.name}: R$ ${p.price || ''} | Link: ${p.affiliate_url}`).join(\"\\n\");\n} else {\n  catalogoFormatado = `\n- Balança de Bioimpedância Bluetooth com App IA: R$ 89,90 | Link: https://marcaopersonal.com#balanca\n- Creatina Micronizada 100% Pura 300g Nature's Prime: R$ 169,90 | Link: https://ev.braip.com/ref?pl=pla1x6xn&ck=chen80rq&af=afimeno621\n- Caneta Peniana Azempika Original (Potência Masculina, Ereções Firmes & Homens Maduros 40+): R$ 99,00 | Link: https://ev.braip.com/ref?pl=plaljlxy&ck=che6vnvr&af=afine5z3yv\n  * MODO DE USO: Aplicar diretamente na haste peniana 10 a 15 min antes da relação íntima e massagear suavemente por 1 a 2 minutos até total absorção. Dilatação imediata dos vasos cavernosos e rigidez na hora H!\n- Colágeno Hidrolisado + Ácido Hialurônico 300g (Pele Firme): R$ 164,90 | Link: https://ev.braip.com/ref?pl=plawdmnw&ck=chen80pq&af=afi659l8pg\n- KIT IArmonize Capilar (Queda de Cabelo): R$ 1.256,00 | Link: https://ev.braip.com/ref?pl=plav449r&ck=cheq89gn&af=afilx3y72p\n- Vision Prime 60 Cápsulas (Telas e Visão): R$ 199,00 | Link: https://ev.braip.com/ref?pl=pla2nz6n&ck=che76kmo&af=afi3vmxeod\n- Assinatura VIP Stripe (R$ 19,90/mês): https://buy.stripe.com/7sYfZgbmtgaI5dncwrfMA01\n- Loja e Site Oficial Geral: https://marcaopersonal.com\n`;\n}\n\n\n// =========================================================================\n// CRUZAMENTO INTELIGENTE DE DADOS: INSTAGRAM DIRECT <-> WHATSAPP (SUPABASE)\n// =========================================================================\nlet alunoVinculado = null;\ntry {\n  const supabaseUrl = 'https://qkopgftfrfftoyndhhfj.supabase.co';\n  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrb3BnZnRmcmZmdG95bmRoaGZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MTgwMTU4MywiZXhwIjoyMTA3Mzc3NTgzfQ.S_RRdnI6SZTVR1UH7jryDVHf316YmnMOVEBuoedyKv8';\n  \n  const rFichas = await this.helpers.httpRequest({\n    method: 'GET',\n    url: `${supabaseUrl}/rest/v1/fichas_alunos?select=*`,\n    headers: {\n      'apikey': supabaseKey,\n      'Authorization': `Bearer ${supabaseKey}`\n    },\n    json: true\n  });\n\n  if (Array.isArray(rFichas)) {\n    const rawMsg = item.texto || '';\n    const cleanDigits = rawMsg.replace(/\\D/g, '');\n    const userHandle = (profile.username || '').toLowerCase().replace('@', '');\n    const userNomeLower = (profile.name || '').toLowerCase();\n\n    // 1. Tenta casar por telefone se o seguidor enviou o número no Direct\n    if (cleanDigits.length >= 8) {\n      alunoVinculado = rFichas.find(f => {\n        const fTel = (f.telefone || '').replace(/\\D/g, '');\n        return fTel && (cleanDigits.includes(fTel) || fTel.includes(cleanDigits) || (fTel.slice(-8) === cleanDigits.slice(-8)));\n      });\n      // Se encontrou por telefone enviado agora, vincula o instagram_username na ficha dele no Supabase!\n      if (alunoVinculado && userHandle) {\n        try {\n          await this.helpers.httpRequest({\n            method: 'PATCH',\n            url: `${supabaseUrl}/rest/v1/fichas_alunos?id=eq.${alunoVinculado.id}`,\n            headers: {\n              'apikey': supabaseKey,\n              'Authorization': `Bearer ${supabaseKey}`,\n              'Content-Type': 'application/json'\n            },\n            body: {\n              metas_nutricionais: {\n                ...(alunoVinculado.metas_nutricionais || {}),\n                instagram_username: '@' + userHandle,\n                instagram_id: item.senderId\n              }\n            },\n            json: true\n          });\n        } catch(e) {}\n      }\n    }\n\n    // 2. Se não casou por telefone, tenta casar por instagram_username já salvo na ficha\n    if (!alunoVinculado && userHandle) {\n      alunoVinculado = rFichas.find(f => {\n        const metaInsta = ((f.metas_nutricionais && f.metas_nutricionais.instagram_username) || '').toLowerCase().replace('@', '');\n        return metaInsta && (metaInsta === userHandle || userHandle.includes(metaInsta));\n      });\n    }\n\n    // 3. Se não casou, tenta casar por nome (ex: Kamila, Eva Maria, etc.)\n    if (!alunoVinculado) {\n      alunoVinculado = rFichas.find(f => {\n        const fnLower = (f.nome || f.nome_aluno || '').toLowerCase();\n        if (fnLower && (userHandle.includes(fnLower) || (userNomeLower && userNomeLower.includes(fnLower)))) {\n          return true;\n        }\n        return false;\n      });\n    }\n  }\n} catch(err) {\n  console.log('Erro cruzamento IG-WhatsApp:', err);\n}\n\n// 1. Identificar se é o Diretor Evandro\nconst username = (profile.username || '').toLowerCase();\nconst nameRaw = (profile.name || '').trim();\nconst nameLower = nameRaw.toLowerCase().replace(/\\s+/g, ' ');\nconst isEvaVip = (\n  username.includes('eva') ||\n  nameLower.includes('eva') ||\n  item.senderId === '1386287843682266'\n);\n\nconst isEvandro = (\n  username.includes('evandro') ||\n  nameLower.includes('evandro') ||\n  item.senderId === '1074518592075534'\n);\n\nlet nomeUsuario = \"\";\nif (isEvaVip) {\n  instrucaoPersonalidade = `O INTERLOCUTOR É A ALUNA VIP Nº 1 DO MARCÃO — EVA MARIA!\n- Ela tem acesso TOTAL e 100% GRATUITO a TODOS os serviços do Marcão.\n- NUNCA cobre nada dela e NUNCA envie links de pagamento para ela! Tudo para ela é cortesia VIP e prioridade máxima!\n- Trate-a com muito carinho, respeito, motivação e atenção total de personal trainer dedicado.\n- Conduza a ficha, pergunte como foi o treino do dia, motive-a e vibre com cada conquista dela!`;\n} else if (isEvandro) {\n  nomeUsuario = \"Evandro\";\n} else if (nameRaw) {\n  nomeUsuario = nameRaw.split(/\\s+/)[0];\n} else if (profile.username) {\n  const limpo = profile.username.replace(/[0-9_.]/g, ' ').trim().split(/\\s+/)[0];\n  if (limpo && limpo.length >= 3) {\n    nomeUsuario = limpo.charAt(0).toUpperCase() + limpo.slice(1).toLowerCase();\n  }\n}\n\n// 2. Identificação de Gênero\nlet genero = \"homem\";\nif (nomeUsuario && !isEvandro) {\n  const pLower = nomeUsuario.toLowerCase();\n  const excecoesMasc = [\"lucas\", \"joshua\", \"elias\", \"luca\", \"isaac\", \"jean\", \"alan\", \"alex\", \"nicolas\"];\n  const excecoesFem = [\"beatriz\", \"ingrid\", \"karen\", \"carmen\", \"miriam\", \"ruth\", \"ester\", \"raquel\", \"elis\", \"iris\", \"carol\", \"aline\", \"patricia\", \"vanessa\", \"camila\", \"amanda\", \"leticia\", \"larissa\", \"bruna\", \"jessica\", \"bianca\", \"fernanda\", \"mariana\", \"debora\", \"paula\", \"renata\", \"juliana\", \"luana\"];\n  if (excecoesMasc.includes(pLower)) {\n    genero = \"homem\";\n  } else if (excecoesFem.includes(pLower)) {\n    genero = \"mulher\";\n  } else if (pLower.endsWith(\"a\") || (pLower.endsWith(\"e\") && [\"julie\", \"stephanie\", \"simone\", \"monique\"].includes(pLower))) {\n    genero = \"mulher\";\n  }\n}\n\n// 3. Instrução de Personalidade & Vendas Persuasivas\nlet instrucaoPersonalidade = \"\";\nif (isEvaVip) {\n  instrucaoPersonalidade = `O INTERLOCUTOR É A ALUNA VIP Nº 1 DO MARCÃO — EVA MARIA!\n- Ela tem acesso TOTAL e 100% GRATUITO a TODOS os serviços do Marcão.\n- NUNCA cobre nada dela e NUNCA envie links de pagamento para ela! Tudo para ela é cortesia VIP e prioridade máxima!\n- Trate-a com muito carinho, respeito, motivação e atenção total de personal trainer dedicado.\n- Conduza a ficha, pergunte como foi o treino do dia, motive-a e vibre com cada conquista dela!`;\n} else if (isEvandro) {\n  instrucaoPersonalidade = `O INTERLOCUTOR É O DIRETOR E FUNDADOR EVANDRO GALLINA (SEU CHEFE E CRIADOR)!\n- Trate sempre com lealdade de braço direito, prontidão e respeito ('meu chefe', 'Evandro').\n- NUNCA tente vender produtos ou balança para ele!`;\n} else if (genero === \"mulher\") {\n  instrucaoPersonalidade = `O INTERLOCUTOR É UMA MULHER${nomeUsuario ? ' (' + nomeUsuario + ')' : ''}.\n- Seja CORTEZ, acolhedor e seguro: \"querida\", \"minha parceira\", \"guerreira\".\n- Foco em cintura fina, bumbum firme, pele sem celulite e desmistificar que creatina incha!`;\n} else {\n  instrucaoPersonalidade = `O INTERLOCUTOR É UM HOMEM${nomeUsuario ? ' (' + nomeUsuario + ')' : ''}.\n- Fale com energia de brother maromba: \"irmão\", \"campeão\", \"parceiro de treino\", \"fera\".\n- Foco em hipertrofia, força bruta e queima de gordura visceral.`;\n}\n\n\n   // PERSISTÊNCIA SUAVE PARA PREENCHER FICHA E ONBOARDING (INSTAGRAM DIRECT):\n   // - Se o seguidor falar que quer começar a treinar, quer consultoria, dieta, ficha de treino ou avaliação corporal:\n   // - No primeiro balão, responda com energia acolhedora e brother maromba ('Show de bola, tamo junto nessa!').\n   // - No segundo balão, faça a cobrança amigável de onboarding dos dados faltantes para montar a ficha:\n   //   * 'Pra eu já abrir sua ficha oficial aqui, me manda quando puder: seu peso, altura, idade e se você tem alguma dorzinha no joelho/coluna! Ou se preferir me passa seu WhatsApp que te chamo por lá!'\n   // - Se ele já garantiu a Balança ou Creatina, reforce o onboarding: peça o print da balança ou peso em jejum para calcular a meta hídrica (35ml/kg) e os macros exatos.\n\n\n// 🚨 REGRA SUPREMA DE FORMATAÇÃO E HUMANIZAÇÃO:\n// - NUNCA ENVIE UM TEXTÃO CONTÍNUO EM UM ÚNICO BLOCO!\n// - Responda SEMPRE em 2 a 3 balões curtos e ágeis (cada balão com 50 a 120 caracteres, no máximo 140 caracteres).\n// - Separe CADA balão OBRIGATORIAMENTE por DUAS quebras de linha (\\n\\n) para que o sistema fatie e envie balões separados com tempo de digitação natural!\n// - Use emojis naturais de brother maromba (👊, 🦁, 💪, 🔥) em cada balão.\n\n\nif (alunoVinculado) {\n  const nomeAluno = alunoVinculado.nome || alunoVinculado.nome_aluno || 'Campeã';\n  const primeiroNome = nomeAluno.split(/\\s+/)[0];\n  const ehVip = alunoVinculado.status_acompanhamento === 'ativo' || alunoVinculado.metas_nutricionais?.vip_liberado;\n  \n  instrucaoPersonalidade = `O INTERLOCUTOR É ALUNO(A) OFICIAL CADASTRADO NO SEU SISTEMA CENTRAL (WHATSAPP & APP)!\n- NOME DO ALUNO: ${nomeAluno} | Telefone WhatsApp: ${alunoVinculado.telefone || 'Cadastrado'}\n- STATUS VIP: ${ehVip ? 'ACESSO VIP LIBERADO (NUNCA COBRE NADA NEM ENVIE LINK DE COMPRA/CHECKOUT!)' : 'Aluno em acompanhamento'}\n- DADOS DA FICHA: Objetivo: ${alunoVinculado.objetivo || 'Onboarding'} | Local de treino: ${alunoVinculado.local_treino || 'Pendente'} | Dores/Restrições: ${alunoVinculado.restricoes_saude || 'Nenhuma'}\n- REGRA DE IDENTIDADE ÚNICA: VOCÊ É EXATAMENTE O MESMO MARCÃO! Demonstre que já a conhece do WhatsApp e que seu sistema é 100% integrado!\n  Exemplo: \"Fala, ${primeiroNome}! Que bom te ver aqui no Insta também! Tô acompanhando tudo na sua ficha central! Como tão os treinos hoje? 👊🦁\"\n- Se ela perguntar algo sobre treino ou dieta, responda com sua sabedoria de personal trainer acolhedor e reforce que os dois canais estão integrados!`;\n}\n\nconst promptSistema = `\n// 🎯 DIRETRIZ DE OURO — SAÚDE, ESTÉTICA CORPORAL E BALANÇA COM IA:\n// 1. SE O SEGUIDOR ENTRA EM CONTATO PELA PRIMEIRA VEZ OU MANDOU MENSAGEM CURTA (\"Oi\", \"Olá\", \"Tudo bem\", áudio curto):\n//    - Seja acolhedor e pergunte diretamente e com carinho de personal:\n//      \"Fala, guerreiro(a)! Marcão na área! 🦁\"\n//      \"Me conta uma coisa: você tá precisando de alguma coisa hoje pra melhorar seu corpo físico e ficar mais saudável e mais atraente? 👊💪\"\n//\n// 2. QUANDO O SEGUIDOR RESPONDER COM A SUA DOR / OBJETIVO (ex: perder barriga, emagrecer, secar, ganhar massa, autoestima, definição):\n//    - Valide a meta com entusiasmo de brother maromba (\"Tamo junto! Isso é totalmente possível e eu vou te ajudar!\").\n//    - O GOLPE DE MESTRE É A BALANÇA DE BIOIMPEDÂNCIA COM IA: Apresente a nossa Balança Inteligente Bluetooth com App (R$ 129,90 no PIX ou até 12x no cartão de crédito)!\n//    - O GRANDE DIFERENCIAL IRRESISTÍVEL: Quem garante a balança GANHA 3 MESES DE CONSULTORIA VIP GRATUITA DIRETO COM O MARCÃO NO WHATSAPP! A IA da balança mede 12 parâmetros (gordura visceral, massa magra, água) e o Marcão monta a estratégia personalizada!\n//    - Link Oficial da Balança: https://marcaopersonal.com#balanca (ou https://ev.braip.com/ref?pl=plam4460&ck=cheqzz4r&af=afi659l82e).\n//\n// 3. SE O FOCO FOR EXCLUSIVO DE SUPLEMENTAÇÃO OU POTÊNCIA:\n//    - Se pediu massa pura e glúteo firme: Creatina Micronizada 100% Pura (R$ 169,90 no PIX ou 12x).\n//    - Se homem maduro buscando potência na cama: Caneta Peniana Azempika Original (R$ 99,00 no PIX ou 12x).\n//    - Se flacidez e pele: Colágeno Hidrolisado + Ácido Hialurônico (R$ 164,90).\n\n\n// REGRA MANDATÓRIA DE IDIOMA (MULTILÍNGUE):\n// - Detecte o idioma do interlocutor e responda SEMPRE no exato mesmo idioma!\n// - Se o seguidor falou em INGLÊS, responda 100% em INGLÊS natural, motivador e brother maromba (\"Hey brother!\", \"What's up, man!\")!\n// - Se falou em ESPANHOL, responda em ESPANHOL!\n// - Se falou em PORTUGUÊS, responda em PORTUGUÊS!\n\nVocê é o MARCÃO PERSONAL (@marcaopersonalfitness), personal trainer de 35 anos de Muriaé-MG.\nVocê é um ser humano de verdade, consultivo, vendedor persuasivo nato e especialista em estética corporal.\n\n\nDISTINCAO CRITICA ENTRE CONVERSACAO HUMANA VS CONSULTA TECNICA:\n- PROIBIDO PESQUISAR OU DEFINIR PALAVRAS COMUNS, GIRIAS OU CONFIRMACOES: Se o seguidor disser apenas 'ok', 'show', 'beleza', 'blz', 'valeu', 'combinado', 'sim', 'entendi', 'ta bom', 'obrigado', etc., NUNCA defina a palavra nem busque no dicionario! Isso e conversa humana informal no Direct.\n- Responda de forma rapida, amiga e parceira em 1 ou 2 baloes curtos (Ex: 'Fechado, campeao! Tamo junto! Qualquer duvida no treino ou shape e so me chamar aqui!').\n\nREGRA SUPREMA DE LINKS (WHITELIST EXCLUSIVA DE LINKS):\n- E TERMINANTEMENTE PROIBIDO enviar links de sites de busca, enciclopedias, artigos externos ou blogs no Direct ou Comentarios!\n- Os UNICOS links autorizados no seu vocabulario sao:\n  1. Site Oficial & Balanca: https://marcaopersonal.com (e ancoras como #balanca)\n  2. Catalogo Oficial de Produtos Braip (Creatina, Colageno, Azempika, IArmonize, Vision Prime)\n  3. Assinatura VIP Stripe (https://buy.stripe.com/7sYfZgbmtgaI5dncwrfMA01)\n- NUNCA envie nenhuma outra URL.\n\n${instrucaoPersonalidade}\n\n\n🔥 POSTURA MANDATÓRIA: MARCÃO CLOSER NATO (GENTE BOA, MAS GRANDE VENDEDOR)!\n- Você é marombeiro inteligente, super legal, acolhedor e incentivador... MAS SEU FOCO SUPREMO É VENDER, LUCRAR E FAZER DINHEIRO GERANDO RESULTADO REAL PRO ALUNO!\n- NUNCA seja um atendente passivo que só tira dúvidas e dá aula grátis! Toda conversa com um lead que não é VIP tem que terminar com uma OFERTA IRRESISTÍVEL DO SEU CATÁLOGO!\n- Vender para você é uma missão de honra: quem compra o produto certo tem resultado 5x mais rápido; quem fica só na promessa gasta dinheiro com besteira e continua frustrado sem ver resultados reais no corpo.\n\nMETODOLOGIA DE VENDAS EM 3 PASSOS RÁPIDOS:\n1. ENTENDA A DOR DO LEAD:\n   * Homem maduro (40+, 50+, 60+), perda de potência na cama, cansaço, ereções fracas ou receio de falhar na hora H -> Apresente com respeito e papo reto de homem a CANETA PENIANA AZEMPIKA ORIGINAL (R$ 99,00 no PIX ou até 12x no cartão). Explique que ela age diretamente nos vasos cavernosos aumentando a irrigação peniana e a firmeza sem taquicardia. ENSINE SEMPRE O MODO DE USO (aplicar na haste 10-15 min antes e massagear por 1-2 min).\n   * Treina pesado mas não ganha força, não cresce ou cansa rápido -> Apresente a CREATINA MICRONIZADA 100% PURA 300G (R$ 169,90). Explique o mecanismo de ATP celular, 20% mais força e hidratação exclusivamente intramuscular.\n   * Flacidez pós-parto/emagrecimento, celulite ou dores nos joelhos -> Apresente o COLÁGENO VERISOL® COM ÁCIDO HIALURÔNICO (R$ 164,90). Explique a reconstrução da firmeza da derme.\n   * Queda de cabelo, entradas, calvície inicial -> Apresente o KIT IARMONIZE CAPILAR (Escova LED + Nutracêutico).\n   * Olhos secos, ardência e cansaço de telas -> Apresente o VISION PRIME (R$ 199,00).\n   * Quer começar a treinar, quer acompanhamento ou avaliação física -> Apresente o GOLPE DE MESTRE: A BALANÇA INTELIGENTE BLUETOOTH COM IA (R$ 89,90). Destaque que comprando a balança ela GANHA 3 MESES DE CONSULTORIA VIP GRATUITA DIRETO COM VOCÊ NO WHATSAPP!\n\n2. EXPLIQUE A ESTRATÉGIA FÍSICA E O EFEITO BIOLÓGICO:\n   * Explique na prática o que fazer: hidratação calculada (35ml por kg), horário de ingestão e ajuste de treino.\n   * Mostre que o produto é o acelerador comprovado que faz essa estratégia física funcionar de verdade.\n\n3. QUEBRE QUALQUER BARREIRA DE PAGAMENTO (PIX & CARTÃO 12X):\n   * SEMPRE destaque a facilidade e o custo diário na ponta do lápis:\n     - \"Dá pra pagar no PIX (aprovação na hora e seu pedido já vai pra esteira de despacho hoje mesmo!) ou parcelar no Cartão de Crédito em até 12x suaves!\"\n     - Faça a conta de padaria: a Creatina com 100 doses dá R$ 1,69 por dia (menos que meio café!). A Balança dá menos de 30 centavos por dia! A Caneta Peniana Azempika dá menos de R$ 3,30 por aplicação para ter segurança e potência de jovem na cama!\n   * O link oficial direto deve vir SEMPRE no final do último balão com uma chamada convidativa e firme!\n\nPOSTURA DE VENDAS PERSUASIVO NO DIRECT (CLOSER NATO):\n- Não seja passivo! Se o seguidor perguntar sobre treino, cansaço, inchaço ou evolução, responda a dúvida e OFEREÇA O PROTOCOLO IDEAL COM PERSUASÃO!\n- FAÇA AS CONTAS NA PONTA DO LÁPIS (Custo Diário x Lanches):\n  * Creatina 100% Pura: \"São 100 doses no pote. Dá só R$ 1,69 por dia! Menos que meio café na padaria pra você ter 20% mais força e regenerar os músculos.\"\n  * Balança Bluetooth IA: \"Dá menos de 30 centavos por dia! E você ganha 3 meses de acompanhamento VIP direto comigo no WhatsApp.\"\n  * Caneta Azempika: \"R$ 3,30 por dia para silenciar aquela fome de doce à noite. Menos que uma pizza no fim de semana.\"\n- MOSTRE PRÓS E CONTRAS: \"O pró de começar hoje é que semana que vem sua disposição já é outra. O contra de adiar é continuar insatisfeito com o shape.\"\n- QUEBRE OBJEÇÕES: Se a pessoa disser que vai pensar ou achar caro, insista com elegância e carinho de personal: \"De coração, 'depois' é onde a gente desiste. R$ 1,69 por dia não pesa no bolso, mas adiar seu objetivo pesa na sua autoestima. Bora destravar isso agora?\"\n- Envie o link oficial direto no final do último balão!\n\nMÁXIMA HUMANIZAÇÃO (PADRÃO DIRECT REAL - BALÕES CURTOS E LEVES):\n1. ZERO TEXTÃO! Jamais mande blocos grandes de texto em um único envio.\n2. OBRIGATÓRIO: Responda SEMPRE em EXATAMENTE 2 ou no máximo 3 balões curtos separados por DUAS QUEBRAS DE LINHA (\\n\\n).\n3. POUCOS CARACTERES POR BALÃO: Cada balão deve ter entre 12 e 20 palavras (80 a 120 caracteres no máximo). Frases curtas, diretas e motivadoras!\n4. O link direto de compra deve vir no último balão sozinho ou acompanhado de no máximo uma frase de 1 linha!\n\nCATÁLOGO ATUALIZADO:\n${catalogoFormatado}`;\n\nlet messages = [{ role: 'system', content: promptSistema }];\n\nif (historico && historico.length > 0) {\n  for (const h of historico.slice(-6)) {\n    if (h.role && h.content) {\n      messages.push({ role: h.role, content: typeof h.content === 'string' ? h.content : JSON.stringify(h.content) });\n    }\n  }\n}\n\nmessages.push({ role: 'user', content: item.texto });\n\nconst devePesquisar = (!isEvandro && devePesquisarNaWeb(item.texto));\nconst modeloFinal = devePesquisar ? 'google/gemini-2.5-flash:online' : 'google/gemini-2.5-flash';\n\nconst payload = {\n  model: modeloFinal,\n  messages: messages,\n  max_tokens: 280,\n  temperature: 0.7\n};\n\nreturn [{ json: { ...item, nomeUsuario, genero, isEvandro, historico, openrouterPayload: payload } }];"
+        "jsCode": "\nfunction devePesquisarNaWeb(texto) {\n  if (!texto) return false;\n  let t = texto.trim().toLowerCase();\n\n  t = t.replace(/[!?,;.]+/g, ' ').replace(/\\s+/g, ' ').trim();\n\n  const tokensCasuais = new Set([\n    'ok', 'tudo', 'bem', 'bom', 'td', 'certo', 'cima', 'beleza', 'blz', 'tranquilo', \n    'como', 'vai', 'voce', 'você', 'esta', 'está', 'e', 'ai', 'aí', 'opa', 'oi', \n    'ola', 'olá', 'bom', 'dia', 'boa', 'tarde', 'noite', 'valeu', 'obrigado', \n    'obrigada', 'combinado', 'fechado', 'sim', 'ta', 'tá', 'show', 'top', 'tmj', \n    'marcao', 'marcão', 'fala', 'irmão', 'irmao', 'parceiro', 'campeão', 'campeao'\n  ]);\n\n  const palavras = t.split(' ').filter(w => w.length > 0);\n  const todasSaoCasuais = palavras.length > 0 && palavras.every(w => tokensCasuais.has(w));\n  if (todasSaoCasuais) return false;\n\n  if (/^(treinei|treino pago|t[aá] pago|fui treinar|acabei o treino|hoje tem|cansei|pesando|estou com|tenho \\d+|concordo|fechado)/i.test(t)) {\n    return false;\n  }\n\n  const temInterrogacao = texto.includes('?');\n  const termosPergunta = /\\b(o que|oq|qual|quais|como|por que|pq|quanto|quantos|quem|onde|quando|pesquisa|pesquise|busca|busque|explica|explique|sabe me dizer|me tira uma d[uú]vida|d[uú]vida|voc[eê] conhece|voce conhece|indica|recomenda|vale a pena|funciona|estudo|pesquisa recente)\\b/i.test(t);\n\n  return termosPergunta || (temInterrogacao && palavras.length >= 3);\n}\n\nconst item = $('Processar Evento Instagram').item.json;\nconst profile = $('Buscar Perfil IG (Nome)').item.json || {};\nconst memData = $('Buscar Memória Contexto (Supabase)').first() ? $('Buscar Memória Contexto (Supabase)').first().json : {};\nlet historico = [];\nif (Array.isArray(memData) && memData[0] && Array.isArray(memData[0].historico_mensagens)) {\n  historico = memData[0].historico_mensagens;\n} else if (memData && Array.isArray(memData.historico_mensagens)) {\n  historico = memData.historico_mensagens;\n}\n\n// Catálogo Oficial com Preços e Links\nconst catalogoFormatado = `\n- Balança Inteligente de Bioimpedância Shopee Oficial (R$ 34,90 - Carro-Chefe nº 1!): Link: https://s.shopee.com.br/2BFoInIBeb\n  * DIFERENCIAL SUPREMO: Apenas R$ 0,09 por dia! Mede 13 biomarcadores por Bluetooth. QUEM COMPRA GANHA MINHA CONSULTORIA VIP NO WHATSAPP!\n- Creatina Micronizada 100% Pura 300g (Nature's Prime / Braip - R$ 169,90): Link: https://ev.braip.com/ref?pl=pla1x6xn&ck=chen80rq&af=afimeno621\n  * 100 doses (apenas R$ 1,69/dia!). Aumento de força, explosão e volume magro.\n- Caneta Peniana Azempika Original (Potência Masculina, Ereções Firmes & Homens Maduros 40+ - R$ 99,00): Link: https://ev.braip.com/ref?pl=plaljlxy&ck=che6vnvr&af=afine5z3yv\n  * MODO DE USO: Aplicar 10-15 min antes e massagear. Dilatação dos vasos cavernosos e firmeza imediata!\n- Colágeno Hidrolisado + Ácido Hialurônico 300g (Pele Firme & Articulações - R$ 164,90): Link: https://ev.braip.com/ref?pl=plawdmnw&ck=chen80pq&af=afi659l8pg\n- Link da Consultoria VIP Marcão Personal no WhatsApp: https://wa.me/553284587255\n- Loja e Site Oficial Geral: https://marcaopersonal.com\n`;\n\n// =========================================================================\n// RECONHECIMENTO INTELIGENTE DE ALUNOS (SUPABASE FICHAS_ALUNOS)\n// =========================================================================\nlet alunoVinculado = null;\ntry {\n  const supabaseUrl = 'https://qkopgftfrfftoyndhhfj.supabase.co';\n  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrb3BnZnRmcmZmdG95bmRoaGZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MTgwMTU4MywiZXhwIjoyMTA3Mzc3NTgzfQ.S_RRdnI6SZTVR1UH7jryDVHf316YmnMOVEBuoedyKv8';\n  \n  const rFichas = await this.helpers.httpRequest({\n    method: 'GET',\n    url: `${supabaseUrl}/rest/v1/fichas_alunos?select=*`,\n    headers: {\n      'apikey': supabaseKey,\n      'Authorization': `Bearer ${supabaseKey}`\n    },\n    json: true\n  });\n\n  if (Array.isArray(rFichas)) {\n    const rawMsg = item.texto || '';\n    const cleanDigits = rawMsg.replace(/\\D/g, '');\n    const userHandle = (profile.username || '').toLowerCase().replace('@', '');\n    const userNomeLower = (profile.name || '').toLowerCase();\n\n    // 1. Tenta casar por telefone se o seguidor enviou o número no Direct\n    if (cleanDigits.length >= 8) {\n      alunoVinculado = rFichas.find(f => {\n        const fTel = (f.telefone || '').replace(/\\D/g, '');\n        return fTel && (cleanDigits.includes(fTel) || fTel.includes(cleanDigits) || (fTel.slice(-8) === cleanDigits.slice(-8)));\n      });\n    }\n\n    // 2. Se não casou por telefone, tenta casar por instagram_username já salvo na ficha\n    if (!alunoVinculado && userHandle) {\n      alunoVinculado = rFichas.find(f => {\n        const metaInsta = ((f.metas_nutricionais && f.metas_nutricionais.instagram_username) || '').toLowerCase().replace('@', '');\n        return metaInsta && (metaInsta === userHandle || userHandle.includes(metaInsta));\n      });\n    }\n\n    // 3. Se não casou, tenta casar por nome (ex: Kamila, Eva Maria, etc.)\n    if (!alunoVinculado) {\n      alunoVinculado = rFichas.find(f => {\n        const fnLower = (f.nome || f.nome_aluno || '').toLowerCase();\n        if (fnLower && (userHandle.includes(fnLower) || (userNomeLower && userNomeLower.includes(fnLower)))) {\n          return true;\n        }\n        return false;\n      });\n    }\n  }\n} catch(err) {\n  console.log('Erro cruzamento IG-WhatsApp:', err);\n}\n\n// 1. Identificar perfis conhecidos\nconst username = (profile.username || '').toLowerCase();\nconst nameRaw = (profile.name || '').trim();\nconst nameLower = nameRaw.toLowerCase().replace(/\\s+/g, ' ');\n\nconst isEvaVip = (\n  username.includes('eva') ||\n  nameLower.includes('eva') ||\n  item.senderId === '1386287843682266'\n);\n\nconst isEvandro = (\n  username.includes('evandro') ||\n  nameLower.includes('evandro') ||\n  item.senderId === '1074518592075534'\n);\n\nlet nomeUsuario = \"\";\nif (isEvandro) {\n  nomeUsuario = \"Evandro\";\n} else if (nameRaw) {\n  nomeUsuario = nameRaw.split(/\\s+/)[0];\n} else if (profile.username) {\n  const limpo = profile.username.replace(/[0-9_.]/g, ' ').trim().split(/\\s+/)[0];\n  if (limpo && limpo.length >= 3) {\n    nomeUsuario = limpo.charAt(0).toUpperCase() + limpo.slice(1).toLowerCase();\n  }\n}\n\n// 2. Identificação de Gênero\nlet genero = \"homem\";\nif (nomeUsuario && !isEvandro) {\n  const pLower = nomeUsuario.toLowerCase();\n  const excecoesMasc = [\"lucas\", \"joshua\", \"elias\", \"luca\", \"isaac\", \"jean\", \"alan\", \"alex\", \"nicolas\"];\n  const excecoesFem = [\"beatriz\", \"ingrid\", \"karen\", \"carmen\", \"miriam\", \"ruth\", \"ester\", \"raquel\", \"elis\", \"iris\", \"carol\", \"aline\", \"patricia\", \"vanessa\", \"camila\", \"amanda\", \"leticia\", \"larissa\", \"bruna\", \"jessica\", \"bianca\", \"fernanda\", \"mariana\", \"debora\", \"paula\", \"renata\", \"juliana\", \"luana\", \"eva\"];\n  if (excecoesMasc.includes(pLower)) {\n    genero = \"homem\";\n  } else if (excecoesFem.includes(pLower)) {\n    genero = \"mulher\";\n  } else if (pLower.endsWith(\"a\") || (pLower.endsWith(\"e\") && [\"julie\", \"stephanie\", \"simone\", \"monique\"].includes(pLower))) {\n    genero = \"mulher\";\n  }\n}\n\n// 3. Instrução de Personalidade & Vendas\nlet instrucaoPersonalidade = \"\";\nif (isEvaVip) {\n  instrucaoPersonalidade = `O INTERLOCUTOR É A ALUNA VIP Nº 1 DO MARCÃO — EVA MARIA!\n- Ela tem acesso TOTAL e GRATUITO a tudo. Trate com muito carinho, respeito e motivação física!`;\n} else if (isEvandro) {\n  instrucaoPersonalidade = `O INTERLOCUTOR É O DIRETOR E FUNDADOR EVANDRO GALLINA (SEU CHEFE E CRIADOR)!\n- Trate sempre com lealdade incondicional de braço direito ('meu chefe', 'meu Diretor'). NUNCA tente vender nada para ele!`;\n} else if (alunoVinculado) {\n  const nomeAluno = alunoVinculado.nome || alunoVinculado.nome_aluno || nomeUsuario || 'Campeã';\n  instrucaoPersonalidade = `O INTERLOCUTOR É SEU ALUNO(A) OFICIAL CADASTRADO NO SUPABASE!\n- NOME: ${nomeAluno} | Telefone: ${alunoVinculado.telefone || 'Cadastrado'}\n- Objetivo na ficha: ${alunoVinculado.objetivo || 'Treino & Performance'}\n- Reconheça o aluno imediatamente com energia: \"Fala, ${nomeAluno}! Que bom te ver aqui no Insta também! Tô acompanhando sua ficha de perto! Como foi o treino de hoje? 👊🦁\"\n- Se precisar ajustar treino, dieta ou tirar dúvidas, reforce que a central oficial é o WhatsApp!`;\n} else if (genero === \"mulher\") {\n  instrucaoPersonalidade = `O INTERLOCUTOR É UMA MULHER${nomeUsuario ? ' (' + nomeUsuario + ')' : ''}.\n- Trate SEMPRE no feminino: \"minha guerreira\", \"minha atleta\", \"campeã\"!\n- Foco em definição, glúteos firmes, cintura fina e quebrar o mito de que creatina incha!`;\n} else {\n  instrucaoPersonalidade = `O INTERLOCUTOR É UM HOMEM${nomeUsuario ? ' (' + nomeUsuario + ')' : ''}.\n- Fale com energia de brother maromba: \"campeão\", \"irmão\", \"parceiro de treino\"!\n- Foco em hipertrofia, força bruta e queima de gordura visceral.`;\n}\n\n// 4. Consciência Temporal (Brasília UTC-3)\nconst agoraUtc = new Date();\nconst agoraBsb = new Date(agoraUtc.getTime() - (3 * 60 * 60 * 1000));\nconst diasSemana = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];\nconst diaSemanaNome = diasSemana[agoraBsb.getUTCDay()];\nconst diaMes = String(agoraBsb.getUTCDate()).padStart(2, '0');\nconst mesNumero = String(agoraBsb.getUTCMonth() + 1).padStart(2, '0');\nconst anoBsb = agoraBsb.getUTCFullYear();\nconst horaFormatada = `${agoraBsb.getUTCHours()}:${String(agoraBsb.getUTCMinutes()).padStart(2, '0')}`;\nconst dataPorExtenso = `${diaSemanaNome}, ${diaMes}/${mesNumero}/${anoBsb}`;\n\nconst promptSistema = `Você é o MARCÃO PERSONAL (@marcaopersonalfitness), personal trainer de Muriaé-MG.\nHoje é ${dataPorExtenso}, agora são ${horaFormatada} (Horário de Brasília).\n\n${instrucaoPersonalidade}\n\n🔥 DIRETRIZ SUPREMA DE VENDAS COM CONSULTORIA NO WHATSAPP:\n- O Instagram Direct é a vitrine e a ponte para fechar vendas e levar o aluno para a CONSULTORIA VIP no WhatsApp!\n- Sempre que apresentar a Balança Inteligente Shopee (R$ 34,90 - https://s.shopee.com.br/2BFoInIBeb) ou a Creatina 100% Pura (R$ 169,90), USE O GATILHO IRRESISTÍVEL:\n  \"Comprando a balança ou creatina, você GANHA a minha consultoria VIP direta no WhatsApp! Eu analiso sua bioimpedância, seus pratos de comida por foto e monto sua estratégia personalizada!\"\n  \"Me chama no WhatsApp oficial pra eu já liberar sua ficha: https://wa.me/553284587255 👊🦁\"\n- Se a pessoa quer emagrecer, secar ou ganhar massa, quebre o valor em custo por dia (Balança Shopee apenas R$ 0,09 por dia!) e mande o link!\n\n🚨 REGRAS DE OURO DE FORMATAÇÃO:\n1. Responda SEMPRE em 2 a 3 balões curtos e ágeis (50 a 120 caracteres por balão).\n2. Separe CADA balão OBRIGATORIAMENTE por duas quebras de linha (\\\\n\\\\n).\n3. Use emojis autênticos de personal (👊, 💪, 🔥, 🦁).\n4. O link oficial deve vir no último balão acompanhado do convite pro WhatsApp!\n\nCATÁLOGO OFICIAL:\n${catalogoFormatado}`;\n\nlet messages = [{ role: 'system', content: promptSistema }];\n\nif (historico && historico.length > 0) {\n  for (const h of historico.slice(-6)) {\n    if (h.role && h.content) {\n      messages.push({ role: h.role, content: typeof h.content === 'string' ? h.content : JSON.stringify(h.content) });\n    }\n  }\n}\n\nmessages.push({ role: 'user', content: item.texto || 'Olá Marcão!' });\n\nconst payload = {\n  model: 'google/gemini-2.5-flash',\n  messages: messages,\n  max_tokens: 280,\n  temperature: 0.7\n};\n\nreturn [{ json: { ...item, nomeUsuario, genero, isEvandro, historico, openrouterPayload: payload } }];\n"
       }
     },
     {
@@ -307,7 +312,7 @@
         420
       ],
       "parameters": {
-        "jsCode": "\nfunction isWhitelistedUrl(url) {\n  if (!url) return false;\n  const u = url.toLowerCase();\n  return u.includes('marcaopersonal.com') || u.includes('ev.braip.com') || u.includes('buy.stripe.com');\n}\n\nfunction sanitizarTextoLinks(texto) {\n  if (!texto) return '';\n  let limpo = texto.replace(/\\[([^\\]]+)\\]\\((https?:\\/\\/[^\\s\\)]+)\\)/gi, (m, txt, url) => isWhitelistedUrl(url) ? url : txt);\n  limpo = limpo.replace(/https?:\\/\\/[^\\s\\)\\],]+/gi, (url) => isWhitelistedUrl(url) ? url : '');\n  limpo = limpo.replace(/\\(\\s*\\)/g, '').replace(/\\[\\s*\\]/g, '');\n  return limpo.replace(/[ \\t]{2,}/g, ' ').trim();\n}\n\n\nconst item = $('OpenRouter - Marcão Direct').item.json;\nconst eventData = $('Processar Evento Instagram').first().json;\nconst isAudio = Boolean(eventData.isAudio);\n\n// 1. Busca recipientId resiliente com múltiplas camadas de fallback\nlet recipientId = \"\";\ntry {\n  recipientId = eventData.senderId;\n} catch (e) {}\n\nif (!recipientId) {\n  try {\n    recipientId = $('Montar Prompt Direct Texto').first().json.senderId;\n  } catch (e) {}\n}\n\nif (!recipientId) {\n  try {\n    recipientId = $('Montar Prompt Direct Áudio').first().json.senderId;\n  } catch (e) {}\n}\n\nif (!recipientId) {\n  try {\n    recipientId = $('Buscar Perfil IG (Nome)').first().json.id;\n  } catch (e) {}\n}\n\nrecipientId = String(recipientId || \"\").trim();\n\nif (!recipientId || recipientId === \"undefined\" || recipientId === \"null\") {\n  return [{\n    json: {\n      ...item,\n      error: \"recipientId não encontrado nos nós anteriores. Envio cancelado.\"\n    }\n  }];\n}\n\nconst rawText = sanitizarTextoLinks((item.choices && item.choices[0] && item.choices[0].message) ? item.choices[0].message.content : 'Fala, guerreiro! Marcão na área! Vamos pra cima!');\n\nconst igToken = \"IGAAXMQcymNdhBZAGIzbTY4RnR5SXE4bklSVFVTdFRSY2g3SDR6Vzg0cmd4aWV2dk9WYUJ0dXJ6bVFORUxra3ZAvQ3lvYWhibGx6cnFRYmdaSkR0TW9YY0t4YnA2aWpmVEoxN1kyQ0FMVXMwaFNuRlBZAVWFB\";\nconst elevenKey = \"sk_f56f7b1dfcca48a8ec71091cd5d32bc851523fb1e1c8f715\";\nconst elevenVoice = \"s7EZmcmeY0PaadjMDC6H\";\nconst sbUrl = \"https://qkopgftfrfftoyndhhfj.supabase.co\";\nconst sbKey = \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrb3BnZnRmcmZmdG95bmRoaGZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MTgwMTU4MywiZXhwIjoyMTA3Mzc3NTgzfQ.S_RRdnI6SZTVR1UH7jryDVHf316YmnMOVEBuoedyKv8\";\n\nconst sentResults = [];\n\n// 2. SE FOR MENSAGEM DE ÁUDIO: GERA VOZ DO MARCÃO NO ELEVENLABS E DISPACHA ÁUDIO NO DIRECT\nif (isAudio) {\n  try {\n    const textoParaVoz = rawText.replace(/https?:\\/\\/\\S+/g, '').replace(/[*_#]/g, '').trim();\n    \n    // Gera PCM 24kHz no ElevenLabs\n    const elevenRes = await this.helpers.httpRequest({\n      method: 'POST',\n      url: `https://api.elevenlabs.io/v1/text-to-speech/${elevenVoice}?output_format=pcm_24000`,\n      headers: {\n        'xi-api-key': elevenKey,\n        'Content-Type': 'application/json'\n      },\n      body: {\n        text: textoParaVoz,\n        model_id: 'eleven_multilingual_v2',\n        voice_settings: {\n          stability: 0.5,\n          similarity_boost: 0.8\n        }\n      },\n      encoding: 'arraybuffer'\n    });\n\n    const pcm = Buffer.from(elevenRes);\n    \n    // Constrói cabeçalho WAV padrão de 44 bytes compatível com a Meta\n    const sampleRate = 24000;\n    const numChannels = 1;\n    const bitsPerSample = 16;\n    const byteRate = (sampleRate * numChannels * bitsPerSample) / 8;\n    const blockAlign = (numChannels * bitsPerSample) / 8;\n    const dataSize = pcm.length;\n    const chunkSize = 36 + dataSize;\n\n    const header = Buffer.alloc(44);\n    header.write('RIFF', 0);\n    header.writeUInt32LE(chunkSize, 4);\n    header.write('WAVE', 8);\n    header.write('fmt ', 12);\n    header.writeUInt32LE(16, 16);\n    header.writeUInt16LE(1, 20); // PCM\n    header.writeUInt16LE(numChannels, 22);\n    header.writeUInt32LE(sampleRate, 24);\n    header.writeUInt32LE(byteRate, 28);\n    header.writeUInt16LE(blockAlign, 32);\n    header.writeUInt16LE(bitsPerSample, 34);\n    header.write('data', 36);\n    header.writeUInt32LE(dataSize, 40);\n\n    const wavBuffer = Buffer.concat([header, pcm]);\n    const fileName = `marcao_audio_${Date.now()}_${Math.floor(Math.random() * 1000)}.wav`;\n\n    // Upload para Supabase Storage\n    await this.helpers.httpRequest({\n      method: 'POST',\n      url: `${sbUrl}/storage/v1/object/creativos/${fileName}`,\n      headers: {\n        'apikey': sbKey,\n        'Authorization': `Bearer ${sbKey}`,\n        'Content-Type': 'audio/wav',\n        'x-upsert': 'true'\n      },\n      body: wavBuffer\n    });\n\n    const publicAudioUrl = `${sbUrl}/storage/v1/object/public/creativos/${fileName}`;\n\n    // Disparo do Áudio no Direct do Instagram via Meta Graph API\n    const resAudio = await this.helpers.httpRequest({\n      method: 'POST',\n      url: 'https://graph.instagram.com/v21.0/me/messages',\n      headers: {\n        'Authorization': `Bearer ${igToken}`,\n        'Content-Type': 'application/json'\n      },\n      body: {\n        recipient: { id: recipientId },\n        message: {\n          attachment: {\n            type: 'audio',\n            payload: {\n              url: publicAudioUrl\n            }\n          }\n        }\n      },\n      json: true\n    });\n    sentResults.push({ type: 'audio', result: resAudio, url: publicAudioUrl });\n  } catch (audioErr) {\n    const errDetails = audioErr.response ? audioErr.response.data : audioErr.message;\n    sentResults.push({ type: 'audio_error', error: audioErr.message, details: errDetails });\n  }\n}\n\n// 3. Fatiamento em Balões Curtos (< 60 caracteres) para envio de Texto\nconst urls = [];\nconst textoComPlaceholders = rawText.replace(/https?:\\/\\/\\S+/g, (match) => {\n  urls.push(match);\n  return `\\n__URL_${urls.length - 1}__\\n`;\n});\n\nconst blocos = textoComPlaceholders.split(/\\n+/).map(b => b.trim()).filter(b => b.length > 0);\nconst rawUnits = [];\n\nfor (const b of blocos) {\n  if (b.startsWith('__URL_')) {\n    const idx = parseInt(b.replace('__URL_', '').replace('__', ''), 10);\n    if (!isNaN(idx) && urls[idx]) {\n      rawUnits.push(urls[idx]);\n    }\n    continue;\n  }\n\n  const sents = b.split(/(?<=[.!?])\\s+/).filter(s => s.trim().length > 0);\n  for (const s of sents) {\n    const st = s.trim();\n    if (!st) continue;\n\n    if (st.length > 60 && (st.includes(',') || st.includes(';') || st.includes(' - '))) {\n      const partes = st.split(/(?<=[,;])\\s+|(?<=\\s-\\s)/).filter(p => p.trim().length > 0);\n      for (const pt of partes) {\n        if (pt.trim()) rawUnits.push(pt.trim());\n      }\n    } else {\n      rawUnits.push(st);\n    }\n  }\n}\n\nconst finalBubbles = [];\nfor (const u of rawUnits) {\n  if (finalBubbles.length === 0) {\n    finalBubbles.push(u);\n    continue;\n  }\n  if (u.length <= 3 && !u.startsWith('http')) {\n    finalBubbles[finalBubbles.length - 1] += ' ' + u;\n  } else {\n    finalBubbles.push(u);\n  }\n}\n\n// Delay de 1.5s entre o áudio e os balões de texto\nif (isAudio) {\n  await new Promise(r => setTimeout(r, 1500));\n}\n\n\n// REAÇÃO AUTOMÁTICA DE EMOJI NO BALÃO DO INTERLOCUTOR (SE HOUVER MESSAGE_ID)\nconst messageId = eventData.messageId || '';\nif (messageId && recipientId) {\n  try {\n    await this.helpers.httpRequest({\n      method: 'POST',\n      url: 'https://graph.instagram.com/v21.0/me/messages',\n      headers: {\n        'Authorization': `Bearer ${igToken}`,\n        'Content-Type': 'application/json'\n      },\n      body: {\n        recipient: { id: recipientId },\n        message: {\n          reaction: {\n            message_id: messageId,\n            action: 'react',\n            emoji: '🔥'\n          }\n        }\n      },\n      json: true\n    });\n  } catch (e) {\n    // Graceful fallback se a conta Meta não tiver flag de reaction ativa\n  }\n}\n// reacao_emoji_direct: OK\n\n// 4. Envio sequencial de cada balão no Direct\nfor (let i = 0; i < finalBubbles.length; i++) {\n  const bText = finalBubbles[i];\n  if (!bText) continue;\n\n  // 1. Simulação visual de presença e digitação humana (typing_on)\n  try {\n    await this.helpers.httpRequest({\n      method: 'POST',\n      url: 'https://graph.instagram.com/v21.0/me/messages',\n      headers: {\n        'Authorization': `Bearer ${igToken}`,\n        'Content-Type': 'application/json'\n      },\n      body: {\n        recipient: { id: recipientId },\n        sender_action: 'typing_on'\n      },\n      json: true\n    });\n  } catch (errTyping) {}\n\n  // Pausa proporcional à digitação humana (1.5s)\n  await new Promise(r => setTimeout(r, 1500));\n\n  // 2. Disparo do balão de texto\n  try {\n    const res = await this.helpers.httpRequest({\n      method: 'POST',\n      url: 'https://graph.instagram.com/v21.0/me/messages',\n      headers: {\n        'Authorization': `Bearer ${igToken}`,\n        'Content-Type': 'application/json'\n      },\n      body: {\n        recipient: { id: recipientId },\n        message: { text: bText }\n      },\n      json: true\n    });\n    sentResults.push(res);\n  } catch (err) {\n    const errDetails = err.response ? err.response.data : err.message;\n    sentResults.push({ error: err.message, details: errDetails });\n  }\n\n  if (i < finalBubbles.length - 1) {\n    await new Promise(r => setTimeout(r, 1500));\n  }\n}\n\nreturn [{ json: { ...item, recipientId, isAudio, finalBubbles, sentResults } }];\n"
+        "jsCode": "\nfunction isWhitelistedUrl(url) {\n  if (!url) return false;\n  const u = url.toLowerCase();\n  return u.includes('marcaopersonal.com') || u.includes('shopee.com.br') || u.includes('s.shopee.com.br') || u.includes('wa.me') || u.includes('braip.com') || u.includes('ev.braip.com') || u.includes('stripe.com');\n}\n\nfunction sanitizarTextoLinks(texto) {\n  if (!texto) return '';\n  let limpo = texto.replace(/\\[([^\\]]+)\\]\\((https?:\\/\\/[^\\s\\)]+)\\)/gi, (m, txt, url) => isWhitelistedUrl(url) ? url : txt);\n  limpo = limpo.replace(/https?:\\/\\/[^\\s\\)\\],]+/gi, (url) => isWhitelistedUrl(url) ? url : '');\n  limpo = limpo.replace(/\\(\\s*\\)/g, '').replace(/\\[\\s*\\]/g, '');\n  return limpo.replace(/[ \\t]{2,}/g, ' ').trim();\n}\n\nconst item = $('OpenRouter - Marcão Direct').item.json;\nconst eventData = $('Processar Evento Instagram').first().json;\nconst isAudio = Boolean(eventData.isAudio);\n\n// 1. Busca recipientId resiliente com múltiplas camadas de fallback\nlet recipientId = eventData.senderId || '';\nif (!recipientId) {\n  try { recipientId = $('Montar Prompt Direct Texto').first().json.senderId; } catch(e) {}\n}\nif (!recipientId) {\n  try { recipientId = $('Montar Prompt Direct Áudio').first().json.senderId; } catch(e) {}\n}\nif (!recipientId) {\n  try { recipientId = $('Buscar Perfil IG (Nome)').first().json.id; } catch(e) {}\n}\nrecipientId = String(recipientId || '').trim();\n\nif (!recipientId || recipientId === 'undefined' || recipientId === 'null') {\n  return [{ json: { ...item, error: 'recipientId não encontrado.' } }];\n}\n\nlet rawText = (item.choices && item.choices[0] && item.choices[0].message) ? item.choices[0].message.content : '';\n\n// =========================================================================\n// RESILIÊNCIA TOTAL: Fallback Nativo com Cascata Google Gemini se a LLM falhou\n// =========================================================================\nif (!rawText || rawText.length < 5) {\n  try {\n    const gemKey = \"GEMINI_API_KEY_ENV\";\n    const promptNode = $('Montar Prompt Direct Texto').first() ? $('Montar Prompt Direct Texto').first().json : null;\n    const msgs = (promptNode && promptNode.openrouterPayload && promptNode.openrouterPayload.messages) || [];\n\n    let sysInst = \"\";\n    const contents = [];\n\n    for (const m of msgs) {\n      if (m.role === 'system') {\n        sysInst += (typeof m.content === 'string' ? m.content : '') + '\\n\\n';\n      } else {\n        const gemRole = m.role === 'assistant' ? 'model' : 'user';\n        const txt = typeof m.content === 'string' ? m.content : JSON.stringify(m.content);\n        if (txt.trim()) {\n          if (contents.length > 0 && contents[contents.length - 1].role === gemRole) {\n            contents[contents.length - 1].parts.push({ text: txt.trim() });\n          } else {\n            contents.push({ role: gemRole, parts: [{ text: txt.trim() }] });\n          }\n        }\n      }\n    }\n\n    if (contents.length === 0) {\n      contents.push({ role: 'user', parts: [{ text: eventData.texto || 'Olá Marcão!' }] });\n    }\n\n    const gemPayload = { contents: contents };\n    if (sysInst.trim()) {\n      gemPayload.system_instruction = { parts: [{ text: sysInst.trim() }] };\n    }\n\n    const modelosCascata = [\n      'gemini-3.5-flash-lite',\n      'gemini-3.1-flash-lite',\n      'gemini-flash-lite-latest',\n      'gemini-3.5-flash'\n    ];\n\n    for (const mod of modelosCascata) {\n      try {\n        const gemRes = await this.helpers.httpRequest({\n          method: 'POST',\n          url: `https://generativelanguage.googleapis.com/v1beta/models/${mod}:generateContent?key=${gemKey}`,\n          headers: { 'Content-Type': 'application/json' },\n          body: gemPayload,\n          json: true,\n          timeout: 20000\n        });\n\n        if (gemRes && gemRes.candidates && gemRes.candidates[0]?.content?.parts[0]?.text) {\n          rawText = gemRes.candidates[0].content.parts[0].text.trim();\n          break;\n        }\n      } catch(errMod) {}\n    }\n  } catch(eGem) {}\n}\n\nif (!rawText) {\n  rawText = \"Fala, campeão! Marcão na área! 👊🔥\\n\\nBora pra cima conquistar esse shape! Me chama no WhatsApp oficial pra eu já montar sua estratégia: https://wa.me/553284587255 💪🦁\";\n}\n\nrawText = sanitizarTextoLinks(rawText);\n\nconst igToken = \"IGAAXMQcymNdhBZAGIzbTY4RnR5SXE4bklSVFVTdFRSY2g3SDR6Vzg0cmd4aWV2dk9WYUJ0dXJ6bVFORUxra3ZAvQ3lvYWhibGx6cnFRYmdaSkR0TW9YY0t4YnA2aWpmVEoxN1kyQ0FMVXMwaFNuRlBZAVWFB\";\nconst elevenKey = \"sk_f56f7b1dfcca48a8ec71091cd5d32bc851523fb1e1c8f715\";\nconst elevenVoice = \"s7EZmcmeY0PaadjMDC6H\"; // Clayton Friendly Oficial\nconst sbUrl = \"https://qkopgftfrfftoyndhhfj.supabase.co\";\nconst sbKey = \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrb3BnZnRmcmZmdG95bmRoaGZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MTgwMTU4MywiZXhwIjoyMTA3Mzc3NTgzfQ.S_RRdnI6SZTVR1UH7jryDVHf316YmnMOVEBuoedyKv8\";\n\nconst sentResults = [];\n\n// 2. SE FOR ÁUDIO RECEBIDO: GERA ÁUDIO DE RESPOSTA NO ELEVENLABS E ENVIA NO DIRECT\nif (isAudio) {\n  try {\n    const textoParaVoz = rawText.replace(/https?:\\/\\/\\S+/g, '').replace(/[*_#]/g, '').trim();\n    \n    const elevenRes = await this.helpers.httpRequest({\n      method: 'POST',\n      url: `https://api.elevenlabs.io/v1/text-to-speech/${elevenVoice}?output_format=pcm_24000`,\n      headers: {\n        'xi-api-key': elevenKey,\n        'Content-Type': 'application/json'\n      },\n      body: {\n        text: textoParaVoz,\n        model_id: 'eleven_multilingual_v2',\n        voice_settings: {\n          stability: 0.42,\n          similarity_boost: 0.82\n        }\n      },\n      encoding: 'arraybuffer'\n    });\n\n    const pcm = Buffer.from(elevenRes);\n    const sampleRate = 24000;\n    const numChannels = 1;\n    const bitsPerSample = 16;\n    const byteRate = (sampleRate * numChannels * bitsPerSample) / 8;\n    const blockAlign = (numChannels * bitsPerSample) / 8;\n    const dataSize = pcm.length;\n    const chunkSize = 36 + dataSize;\n\n    const header = Buffer.alloc(44);\n    header.write('RIFF', 0);\n    header.writeUInt32LE(chunkSize, 4);\n    header.write('WAVE', 8);\n    header.write('fmt ', 12);\n    header.writeUInt32LE(16, 16);\n    header.writeUInt16LE(1, 20);\n    header.writeUInt16LE(numChannels, 22);\n    header.writeUInt32LE(sampleRate, 24);\n    header.writeUInt32LE(byteRate, 28);\n    header.writeUInt16LE(blockAlign, 32);\n    header.writeUInt16LE(bitsPerSample, 34);\n    header.write('data', 36);\n    header.writeUInt32LE(dataSize, 40);\n\n    const wavBuffer = Buffer.concat([header, pcm]);\n    const fileName = `marcao_audio_${Date.now()}_${Math.floor(Math.random() * 1000)}.wav`;\n\n    await this.helpers.httpRequest({\n      method: 'POST',\n      url: `${sbUrl}/storage/v1/object/creativos/${fileName}`,\n      headers: {\n        'apikey': sbKey,\n        'Authorization': `Bearer ${sbKey}`,\n        'Content-Type': 'audio/wav',\n        'x-upsert': 'true'\n      },\n      body: wavBuffer\n    });\n\n    const publicAudioUrl = `${sbUrl}/storage/v1/object/public/creativos/${fileName}`;\n\n    const resAudio = await this.helpers.httpRequest({\n      method: 'POST',\n      url: 'https://graph.instagram.com/v21.0/me/messages',\n      headers: {\n        'Authorization': `Bearer ${igToken}`,\n        'Content-Type': 'application/json'\n      },\n      body: {\n        recipient: { id: recipientId },\n        message: {\n          attachment: {\n            type: 'audio',\n            payload: { url: publicAudioUrl }\n          }\n        }\n      },\n      json: true\n    });\n    sentResults.push({ type: 'audio', result: resAudio, url: publicAudioUrl });\n  } catch (audioErr) {\n    sentResults.push({ type: 'audio_error', error: audioErr.message });\n  }\n}\n\n// 3. Fatiamento em Balões Curtos (< 140 caracteres)\nconst urls = [];\nconst textoComPlaceholders = rawText.replace(/https?:\\/\\/\\S+/g, (match) => {\n  urls.push(match);\n  return `\\n__URL_${urls.length - 1}__\\n`;\n});\n\nconst blocos = textoComPlaceholders.split(/\\n+/).map(b => b.trim()).filter(b => b.length > 0);\nconst finalBubbles = [];\n\nfor (const b of blocos) {\n  if (b.startsWith('__URL_')) {\n    const idx = parseInt(b.replace('__URL_', '').replace('__', ''), 10);\n    if (!isNaN(idx) && urls[idx]) {\n      finalBubbles.push(urls[idx]);\n    }\n    continue;\n  }\n  finalBubbles.push(b);\n}\n\n// Reação de emoji no balão do lead se houver messageId\nconst messageId = eventData.messageId || '';\nif (messageId && recipientId) {\n  try {\n    await this.helpers.httpRequest({\n      method: 'POST',\n      url: 'https://graph.instagram.com/v21.0/me/messages',\n      headers: {\n        'Authorization': `Bearer ${igToken}`,\n        'Content-Type': 'application/json'\n      },\n      body: {\n        recipient: { id: recipientId },\n        message: {\n          reaction: {\n            message_id: messageId,\n            action: 'react',\n            emoji: '🔥'\n          }\n        }\n      },\n      json: true\n    });\n  } catch(e) {}\n}\n\n// 4. Envio sequencial de cada balão de texto com digitação\nfor (let i = 0; i < finalBubbles.length; i++) {\n  const bText = finalBubbles[i];\n  if (!bText) continue;\n\n  try {\n    await this.helpers.httpRequest({\n      method: 'POST',\n      url: 'https://graph.instagram.com/v21.0/me/messages',\n      headers: {\n        'Authorization': `Bearer ${igToken}`,\n        'Content-Type': 'application/json'\n      },\n      body: {\n        recipient: { id: recipientId },\n        sender_action: 'typing_on'\n      },\n      json: true\n    });\n  } catch (errTyping) {}\n\n  await new Promise(r => setTimeout(r, 1200));\n\n  try {\n    const res = await this.helpers.httpRequest({\n      method: 'POST',\n      url: 'https://graph.instagram.com/v21.0/me/messages',\n      headers: {\n        'Authorization': `Bearer ${igToken}`,\n        'Content-Type': 'application/json'\n      },\n      body: {\n        recipient: { id: recipientId },\n        message: { text: bText }\n      },\n      json: true\n    });\n    sentResults.push(res);\n  } catch (err) {\n    sentResults.push({ error: err.message });\n  }\n\n  if (i < finalBubbles.length - 1) {\n    await new Promise(r => setTimeout(r, 1200));\n  }\n}\n\nreturn [{ json: { ...item, recipientId, isAudio, finalBubbles, sentResults } }];\n"
       }
     },
     {
@@ -692,42 +697,747 @@
       ]
     }
   },
+  "nodeGroups": [],
   "settings": {
     "executionOrder": "v1",
     "availableInMCP": true
   },
   "staticData": null,
-  "meta": null,
-  "nodeGroups": [],
   "pinData": null,
-  "versionId": "00625ab8-be4c-4cbf-8fe2-acf56ae24848",
-  "activeVersionId": "00625ab8-be4c-4cbf-8fe2-acf56ae24848",
-  "versionCounter": 36,
-  "triggerCount": 2,
-  "sourceWorkflowId": null,
+  "meta": null,
   "tags": [],
   "shared": [
     {
-      "updatedAt": "2026-10-12T22:29:05.634Z",
-      "createdAt": "2026-10-12T22:29:05.634Z",
       "role": "workflow:owner",
       "workflowId": "jlG1OPBCsaAx75zQ",
       "projectId": "o73CYLdeW5HvCHUj",
       "project": {
-        "updatedAt": "2026-10-11T16:48:24.539Z",
-        "createdAt": "2026-10-11T16:32:09.514Z",
         "id": "o73CYLdeW5HvCHUj",
         "name": "Evandrosilva Silva <silvaev549@gmail.com>",
         "type": "personal",
         "icon": null,
         "description": null,
         "customTelemetryTags": [],
-        "creatorId": "5f37e26b-bd4f-4342-84e1-d7060e6c7c97"
-      }
+        "creatorId": "5f37e26b-bd4f-4342-84e1-d7060e6c7c97",
+        "createdAt": "2026-10-11T16:32:09.514Z",
+        "updatedAt": "2026-10-11T16:48:24.539Z"
+      },
+      "createdAt": "2026-10-12T22:29:05.634Z",
+      "updatedAt": "2026-10-12T22:29:05.634Z"
     }
   ],
-  "versionMetadata": {
+  "activeVersion": {
+    "versionId": "abd1ca79-91fc-400c-bb0e-9e3fa74dfa7b",
+    "workflowId": "jlG1OPBCsaAx75zQ",
+    "nodes": [
+      {
+        "id": "node-webhook-ig-get",
+        "name": "Webhook Instagram GET",
+        "webhookId": "2fb7921b-08eb-47f0-9bc0-abddb2028ece",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          100,
+          200
+        ],
+        "parameters": {
+          "httpMethod": "GET",
+          "path": "instagram-webhook",
+          "responseMode": "responseNode",
+          "options": {}
+        }
+      },
+      {
+        "id": "node-respond-challenge",
+        "name": "Responder Desafio Meta",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          320,
+          200
+        ],
+        "parameters": {
+          "respondWith": "text",
+          "responseBody": "={{ $json.query[\"hub.challenge\"] }}",
+          "options": {
+            "responseCode": 200
+          }
+        }
+      },
+      {
+        "id": "node-webhook-ig-post",
+        "name": "Webhook Instagram POST",
+        "webhookId": "e096bf58-994a-4d07-b0ac-1f66cc198527",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          100,
+          480
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "instagram-webhook",
+          "responseMode": "responseNode",
+          "options": {}
+        }
+      },
+      {
+        "id": "node-respond-ok",
+        "name": "Responder 200 OK Meta",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          320,
+          380
+        ],
+        "parameters": {
+          "respondWith": "text",
+          "responseBody": "EVENT_RECEIVED",
+          "options": {
+            "responseCode": 200
+          }
+        }
+      },
+      {
+        "id": "node-process-event",
+        "name": "Processar Evento Instagram",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          320,
+          540
+        ],
+        "parameters": {
+          "jsCode": "const body = $input.first().json.body || {};\nconst entries = body.entry || [];\nconst eventos = [];\n\nfor (const entry of entries) {\n  const entryId = entry.id || '';\n\n  // 1. Direct Messages\n  if (entry.messaging && Array.isArray(entry.messaging)) {\n    for (const msg of entry.messaging) {\n      if (msg.message && !msg.message.is_echo) {\n        const senderId = msg.sender ? msg.sender.id : '';\n\n        // Bloqueio de auto-mensagens (Marcão enviando para si mesmo)\n        if (\n          senderId === entryId || \n          senderId === '17841417712557777' || \n          senderId === '28570207812599721'\n        ) {\n          continue;\n        }\n\n        let isAudio = false;\n        let audioUrl = null;\n\n        if (msg.message.attachments && Array.isArray(msg.message.attachments)) {\n          for (const att of msg.message.attachments) {\n            if (att.type === 'audio' || att.type === 'voice' || att.type === 'file') {\n              isAudio = true;\n              audioUrl = att.payload ? att.payload.url : null;\n            }\n          }\n        }\n\n        const texto = (msg.message.text || '').trim();\n\n        if (texto || isAudio) {\n          eventos.push({\n            tipo: 'direct',\n            senderId: senderId,\n            recipientId: msg.recipient ? msg.recipient.id : '',\n            messageId: msg.message.mid || '',\n            texto: texto || '[Áudio enviado pelo seguidor no Direct]',\n            isAudio: isAudio,\n            audioUrl: audioUrl,\n            timestamp: msg.timestamp\n          });\n        }\n      }\n    }\n  }\n\n  // 2. Comentários em Posts / Reels\n  if (entry.changes && Array.isArray(entry.changes)) {\n    for (const change of entry.changes) {\n      if (change.field === 'comments' && change.value) {\n        const val = change.value;\n        const from = val.from || {};\n        const fromUsername = (from.username || '').toLowerCase();\n        const fromId = from.id || '';\n\n        // BLOQUEIO RIGOROSO DE AUTO-COMENTÁRIOS E LOOP INFINITO:\n        // Se o comentário for feito pelo próprio Marcão, IGNORA IMEDIATAMENTE!\n        if (\n          fromUsername === 'marcaopersonalfitness' ||\n          fromUsername.includes('marcao') ||\n          fromId === entryId ||\n          fromId === '17841417712557777' ||\n          fromId === '28570207812599721' ||\n          Boolean(from.self_ig_scoped_id)\n        ) {\n          continue; // Pula sem processar para não entrar em loop infinito!\n        }\n\n        if (val.text) {\n          eventos.push({\n            tipo: 'comentario',\n            commentId: val.id,\n            mediaId: val.media ? val.media.id : '',\n            fromUser: from.username || '',\n            fromId: fromId,\n            texto: val.text.trim(),\n            createdTime: val.created_time\n          });\n        }\n      }\n    }\n  }\n}\n\nreturn eventos.map(e => ({ json: e }));"
+        }
+      },
+      {
+        "id": "node-supabase-products",
+        "name": "Consultar Produtos Atualizados (Supabase)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          540,
+          540
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "https://qkopgftfrfftoyndhhfj.supabase.co/rest/v1/products?select=*",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrb3BnZnRmcmZmdG95bmRoaGZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MTgwMTU4MywiZXhwIjoyMTA3Mzc3NTgzfQ.S_RRdnI6SZTVR1UH7jryDVHf316YmnMOVEBuoedyKv8"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrb3BnZnRmcmZmdG95bmRoaGZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MTgwMTU4MywiZXhwIjoyMTA3Mzc3NTgzfQ.S_RRdnI6SZTVR1UH7jryDVHf316YmnMOVEBuoedyKv8"
+              }
+            ]
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "node-if-tipo",
+        "name": "É Direct Message (DM)?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 1,
+        "position": [
+          760,
+          540
+        ],
+        "parameters": {
+          "conditions": {
+            "string": [
+              {
+                "value1": "={{ $('Processar Evento Instagram').item.json.tipo }}",
+                "operation": "equal",
+                "value2": "direct"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "node-ig-profile",
+        "name": "Buscar Perfil IG (Nome)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          980,
+          420
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "=https://graph.instagram.com/v21.0/{{ $('Processar Evento Instagram').item.json.senderId }}?fields=name,username",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer IGAAXMQcymNdhBZAGIzbTY4RnR5SXE4bklSVFVTdFRSY2g3SDR6Vzg0cmd4aWV2dk9WYUJ0dXJ6bVFORUxra3ZAvQ3lvYWhibGx6cnFRYmdaSkR0TW9YY0t4YnA2aWpmVEoxN1kyQ0FMVXMwaFNuRlBZAVWFB"
+              }
+            ]
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "node-get-history",
+        "name": "Buscar Memória Contexto (Supabase)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          1200,
+          420
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://qkopgftfrfftoyndhhfj.supabase.co/rest/v1/leads_conversas?on_conflict=remote_jid",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrb3BnZnRmcmZmdG95bmRoaGZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MTgwMTU4MywiZXhwIjoyMTA3Mzc3NTgzfQ.S_RRdnI6SZTVR1UH7jryDVHf316YmnMOVEBuoedyKv8"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrb3BnZnRmcmZmdG95bmRoaGZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MTgwMTU4MywiZXhwIjoyMTA3Mzc3NTgzfQ.S_RRdnI6SZTVR1UH7jryDVHf316YmnMOVEBuoedyKv8"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Prefer",
+                "value": "resolution=merge-duplicates,return=representation"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"remote_jid\": \"ig_{{ $('Processar Evento Instagram').item.json.senderId }}@instagram.com\",\n  \"push_name\": \"{{ $('Buscar Perfil IG (Nome)').item.json.name || $('Buscar Perfil IG (Nome)').item.json.username || 'Cliente IG' }}\",\n  \"telefone\": \"instagram\"\n}",
+          "options": {}
+        }
+      },
+      {
+        "id": "node-if-audio",
+        "name": "É Mensagem de Áudio?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 1,
+        "position": [
+          1440,
+          420
+        ],
+        "parameters": {
+          "conditions": {
+            "boolean": [
+              {
+                "value1": "={{ $('Processar Evento Instagram').item.json.isAudio }}",
+                "value2": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "node-download-audio",
+        "name": "Baixar Áudio Direct IG",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          1680,
+          300
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "={{ $('Processar Evento Instagram').item.json.audioUrl }}",
+          "responseFormat": "file",
+          "options": {}
+        }
+      },
+      {
+        "id": "node-prompt-audio",
+        "name": "Montar Prompt Direct Áudio",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1900,
+          300
+        ],
+        "parameters": {
+          "jsCode": "\nconst item = $('Processar Evento Instagram').item.json;\nconst profile = $('Buscar Perfil IG (Nome)').item.json || {};\nconst memData = $('Buscar Memória Contexto (Supabase)').first() ? $('Buscar Memória Contexto (Supabase)').first().json : {};\nlet historico = [];\nif (Array.isArray(memData) && memData[0] && Array.isArray(memData[0].historico_mensagens)) {\n  historico = memData[0].historico_mensagens;\n} else if (memData && Array.isArray(memData.historico_mensagens)) {\n  historico = memData.historico_mensagens;\n}\n\nlet audioB64 = \"\";\ntry {\n  const buffer = await this.helpers.getBinaryDataBuffer(0, 'data');\n  audioB64 = buffer.toString('base64');\n} catch (e) {\n  try {\n    const binaryData = $input.first().binary;\n    audioB64 = (binaryData && binaryData.data && binaryData.data.data !== 'filesystem-v2') ? binaryData.data.data : '';\n  } catch (err) {\n    audioB64 = \"\";\n  }\n}\n\nconst nameRaw = (profile.name || '').trim();\nconst username = (profile.username || '').toLowerCase();\nconst isEvandro = username.includes('evandro') || nameRaw.toLowerCase().includes('evandro') || item.senderId === '1074518592075534';\nconst nomeUsuario = isEvandro ? 'Evandro' : (nameRaw ? nameRaw.split(/\\s+/)[0] : 'campeão');\n\n\n   // PERSISTÊNCIA SUAVE PARA PREENCHER FICHA E ONBOARDING (INSTAGRAM DIRECT):\n   // - Se o seguidor falar que quer começar a treinar, quer consultoria, dieta, ficha de treino ou avaliação corporal:\n   // - No primeiro balão, responda com energia acolhedora e brother maromba ('Show de bola, tamo junto nessa!').\n   // - No segundo balão, faça a cobrança amigável de onboarding dos dados faltantes para montar a ficha:\n   //   * 'Pra eu já abrir sua ficha oficial aqui, me manda quando puder: seu peso, altura, idade e se você tem alguma dorzinha no joelho/coluna! Ou se preferir me passa seu WhatsApp que te chamo por lá!'\n   // - Se ele já garantiu a Balança ou Creatina, reforce o onboarding: peça o print da balança ou peso em jejum para calcular a meta hídrica (35ml/kg) e os macros exatos.\n\n\n// 🚨 REGRA SUPREMA DE FORMATAÇÃO E HUMANIZAÇÃO:\n// - NUNCA ENVIE UM TEXTÃO CONTÍNUO EM UM ÚNICO BLOCO!\n// - Responda SEMPRE em 2 a 3 balões curtos e ágeis (cada balão com 50 a 120 caracteres, no máximo 140 caracteres).\n// - Separe CADA balão OBRIGATORIAMENTE por DUAS quebras de linha (\\n\\n) para que o sistema fatie e envie balões separados com tempo de digitação natural!\n// - Use emojis naturais de brother maromba (👊, 🦁, 💪, 🔥) em cada balão.\n\nconst promptSistema = `\nDISTINCAO CRITICA ENTRE CONVERSACAO HUMANA VS CONSULTA TECNICA:\n- PROIBIDO PESQUISAR OU DEFINIR PALAVRAS COMUNS, GIRIAS OU CONFIRMACOES: Se o seguidor disser apenas 'ok', 'show', 'beleza', 'blz', 'valeu', 'combinado', 'sim', 'entendi', 'ta bom', 'obrigado', etc., NUNCA defina a palavra nem busque no dicionario! Isso e conversa humana informal no Direct.\n- Responda de forma rapida, amiga e parceira em 1 ou 2 baloes curtos (Ex: 'Fechado, campeao! Tamo junto! Qualquer duvida no treino ou shape e so me chamar aqui!').\n\nREGRA SUPREMA DE LINKS (WHITELIST EXCLUSIVA DE LINKS):\n- E TERMINANTEMENTE PROIBIDO enviar links de sites de busca, enciclopedias, artigos externos ou blogs no Direct ou Comentarios!\n- Os UNICOS links autorizados no seu vocabulario sao:\n  1. Site Oficial & Balanca: https://marcaopersonal.com (e ancoras como #balanca)\n  2. Catalogo Oficial de Produtos Braip (Creatina, Colageno, Azempika, IArmonize, Vision Prime)\n  3. Assinatura VIP Stripe (https://buy.stripe.com/7sYfZgbmtgaI5dncwrfMA01)\n- NUNCA envie nenhuma outra URL.\n\nVocê é o MARCÃO PERSONAL (@marcaopersonalfitness), personal trainer de 35 anos de Muriaé-MG.\nO seguidor enviou um ÁUDIO de voz no Direct do Instagram.\nOuça o áudio com atenção total e responda com carinho e energia de educador físico!\nMÁXIMA HUMANIZAÇÃO:\n1. Responda em 2 balões curtos separados por \\n\\n.\n2. POUCOS CARACTERES POR BALÃO (12 a 20 palavras por balão).\n3. Seja super humano, cortês e direto.\n${isEvandro ? 'Trate com lealdade de braço direito: \"Fala meu chefe!\".' : 'Chame pelo nome (' + nomeUsuario + ') e tire a dúvida na lata!'}`;\n\nlet messages = [{ role: 'system', content: promptSistema }];\n\nif (historico && historico.length > 0) {\n  for (const h of historico.slice(-4)) {\n    if (h.role && h.content) {\n      messages.push({ role: h.role, content: typeof h.content === 'string' ? h.content : JSON.stringify(h.content) });\n    }\n  }\n}\n\nif (audioB64) {\n  messages.push({\n    role: 'user',\n    content: [\n      { type: 'text', text: 'Ouça atentamente este áudio do seguidor e responda no seu estilo Marcão Personal:' },\n      { type: 'image_url', image_url: { url: 'data:audio/mp4;base64,' + audioB64 } }\n    ]\n  });\n} else {\n  messages.push({ role: 'user', content: '[O seguidor enviou um áudio no direct]' });\n}\n\nconst payload = {\n  model: 'google/gemini-2.5-flash',\n  messages: messages,\n  max_tokens: 220,\n  temperature: 0.7\n};\n\nreturn [{ json: { ...item, nomeUsuario, isEvandro, historico, openrouterPayload: payload } }];\n"
+        }
+      },
+      {
+        "id": "node-prompt-text",
+        "name": "Montar Prompt Direct Texto",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1680,
+          520
+        ],
+        "parameters": {
+          "jsCode": "\nfunction devePesquisarNaWeb(texto) {\n  if (!texto) return false;\n  let t = texto.trim().toLowerCase();\n\n  t = t.replace(/[!?,;.]+/g, ' ').replace(/\\s+/g, ' ').trim();\n\n  const tokensCasuais = new Set([\n    'ok', 'tudo', 'bem', 'bom', 'td', 'certo', 'cima', 'beleza', 'blz', 'tranquilo', \n    'como', 'vai', 'voce', 'você', 'esta', 'está', 'e', 'ai', 'aí', 'opa', 'oi', \n    'ola', 'olá', 'bom', 'dia', 'boa', 'tarde', 'noite', 'valeu', 'obrigado', \n    'obrigada', 'combinado', 'fechado', 'sim', 'ta', 'tá', 'show', 'top', 'tmj', \n    'marcao', 'marcão', 'fala', 'irmão', 'irmao', 'parceiro', 'campeão', 'campeao'\n  ]);\n\n  const palavras = t.split(' ').filter(w => w.length > 0);\n  const todasSaoCasuais = palavras.length > 0 && palavras.every(w => tokensCasuais.has(w));\n  if (todasSaoCasuais) return false;\n\n  if (/^(treinei|treino pago|t[aá] pago|fui treinar|acabei o treino|hoje tem|cansei|pesando|estou com|tenho \\d+|concordo|fechado)/i.test(t)) {\n    return false;\n  }\n\n  const temInterrogacao = texto.includes('?');\n  const termosPergunta = /\\b(o que|oq|qual|quais|como|por que|pq|quanto|quantos|quem|onde|quando|pesquisa|pesquise|busca|busque|explica|explique|sabe me dizer|me tira uma d[uú]vida|d[uú]vida|voc[eê] conhece|voce conhece|indica|recomenda|vale a pena|funciona|estudo|pesquisa recente)\\b/i.test(t);\n\n  return termosPergunta || (temInterrogacao && palavras.length >= 3);\n}\n\nconst item = $('Processar Evento Instagram').item.json;\nconst profile = $('Buscar Perfil IG (Nome)').item.json || {};\nconst memData = $('Buscar Memória Contexto (Supabase)').first() ? $('Buscar Memória Contexto (Supabase)').first().json : {};\nlet historico = [];\nif (Array.isArray(memData) && memData[0] && Array.isArray(memData[0].historico_mensagens)) {\n  historico = memData[0].historico_mensagens;\n} else if (memData && Array.isArray(memData.historico_mensagens)) {\n  historico = memData.historico_mensagens;\n}\n\n// Catálogo Oficial com Preços e Links\nconst catalogoFormatado = `\n- Balança Inteligente de Bioimpedância Shopee Oficial (R$ 34,90 - Carro-Chefe nº 1!): Link: https://s.shopee.com.br/2BFoInIBeb\n  * DIFERENCIAL SUPREMO: Apenas R$ 0,09 por dia! Mede 13 biomarcadores por Bluetooth. QUEM COMPRA GANHA MINHA CONSULTORIA VIP NO WHATSAPP!\n- Creatina Micronizada 100% Pura 300g (Nature's Prime / Braip - R$ 169,90): Link: https://ev.braip.com/ref?pl=pla1x6xn&ck=chen80rq&af=afimeno621\n  * 100 doses (apenas R$ 1,69/dia!). Aumento de força, explosão e volume magro.\n- Caneta Peniana Azempika Original (Potência Masculina, Ereções Firmes & Homens Maduros 40+ - R$ 99,00): Link: https://ev.braip.com/ref?pl=plaljlxy&ck=che6vnvr&af=afine5z3yv\n  * MODO DE USO: Aplicar 10-15 min antes e massagear. Dilatação dos vasos cavernosos e firmeza imediata!\n- Colágeno Hidrolisado + Ácido Hialurônico 300g (Pele Firme & Articulações - R$ 164,90): Link: https://ev.braip.com/ref?pl=plawdmnw&ck=chen80pq&af=afi659l8pg\n- Link da Consultoria VIP Marcão Personal no WhatsApp: https://wa.me/553284587255\n- Loja e Site Oficial Geral: https://marcaopersonal.com\n`;\n\n// =========================================================================\n// RECONHECIMENTO INTELIGENTE DE ALUNOS (SUPABASE FICHAS_ALUNOS)\n// =========================================================================\nlet alunoVinculado = null;\ntry {\n  const supabaseUrl = 'https://qkopgftfrfftoyndhhfj.supabase.co';\n  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrb3BnZnRmcmZmdG95bmRoaGZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MTgwMTU4MywiZXhwIjoyMTA3Mzc3NTgzfQ.S_RRdnI6SZTVR1UH7jryDVHf316YmnMOVEBuoedyKv8';\n  \n  const rFichas = await this.helpers.httpRequest({\n    method: 'GET',\n    url: `${supabaseUrl}/rest/v1/fichas_alunos?select=*`,\n    headers: {\n      'apikey': supabaseKey,\n      'Authorization': `Bearer ${supabaseKey}`\n    },\n    json: true\n  });\n\n  if (Array.isArray(rFichas)) {\n    const rawMsg = item.texto || '';\n    const cleanDigits = rawMsg.replace(/\\D/g, '');\n    const userHandle = (profile.username || '').toLowerCase().replace('@', '');\n    const userNomeLower = (profile.name || '').toLowerCase();\n\n    // 1. Tenta casar por telefone se o seguidor enviou o número no Direct\n    if (cleanDigits.length >= 8) {\n      alunoVinculado = rFichas.find(f => {\n        const fTel = (f.telefone || '').replace(/\\D/g, '');\n        return fTel && (cleanDigits.includes(fTel) || fTel.includes(cleanDigits) || (fTel.slice(-8) === cleanDigits.slice(-8)));\n      });\n    }\n\n    // 2. Se não casou por telefone, tenta casar por instagram_username já salvo na ficha\n    if (!alunoVinculado && userHandle) {\n      alunoVinculado = rFichas.find(f => {\n        const metaInsta = ((f.metas_nutricionais && f.metas_nutricionais.instagram_username) || '').toLowerCase().replace('@', '');\n        return metaInsta && (metaInsta === userHandle || userHandle.includes(metaInsta));\n      });\n    }\n\n    // 3. Se não casou, tenta casar por nome (ex: Kamila, Eva Maria, etc.)\n    if (!alunoVinculado) {\n      alunoVinculado = rFichas.find(f => {\n        const fnLower = (f.nome || f.nome_aluno || '').toLowerCase();\n        if (fnLower && (userHandle.includes(fnLower) || (userNomeLower && userNomeLower.includes(fnLower)))) {\n          return true;\n        }\n        return false;\n      });\n    }\n  }\n} catch(err) {\n  console.log('Erro cruzamento IG-WhatsApp:', err);\n}\n\n// 1. Identificar perfis conhecidos\nconst username = (profile.username || '').toLowerCase();\nconst nameRaw = (profile.name || '').trim();\nconst nameLower = nameRaw.toLowerCase().replace(/\\s+/g, ' ');\n\nconst isEvaVip = (\n  username.includes('eva') ||\n  nameLower.includes('eva') ||\n  item.senderId === '1386287843682266'\n);\n\nconst isEvandro = (\n  username.includes('evandro') ||\n  nameLower.includes('evandro') ||\n  item.senderId === '1074518592075534'\n);\n\nlet nomeUsuario = \"\";\nif (isEvandro) {\n  nomeUsuario = \"Evandro\";\n} else if (nameRaw) {\n  nomeUsuario = nameRaw.split(/\\s+/)[0];\n} else if (profile.username) {\n  const limpo = profile.username.replace(/[0-9_.]/g, ' ').trim().split(/\\s+/)[0];\n  if (limpo && limpo.length >= 3) {\n    nomeUsuario = limpo.charAt(0).toUpperCase() + limpo.slice(1).toLowerCase();\n  }\n}\n\n// 2. Identificação de Gênero\nlet genero = \"homem\";\nif (nomeUsuario && !isEvandro) {\n  const pLower = nomeUsuario.toLowerCase();\n  const excecoesMasc = [\"lucas\", \"joshua\", \"elias\", \"luca\", \"isaac\", \"jean\", \"alan\", \"alex\", \"nicolas\"];\n  const excecoesFem = [\"beatriz\", \"ingrid\", \"karen\", \"carmen\", \"miriam\", \"ruth\", \"ester\", \"raquel\", \"elis\", \"iris\", \"carol\", \"aline\", \"patricia\", \"vanessa\", \"camila\", \"amanda\", \"leticia\", \"larissa\", \"bruna\", \"jessica\", \"bianca\", \"fernanda\", \"mariana\", \"debora\", \"paula\", \"renata\", \"juliana\", \"luana\", \"eva\"];\n  if (excecoesMasc.includes(pLower)) {\n    genero = \"homem\";\n  } else if (excecoesFem.includes(pLower)) {\n    genero = \"mulher\";\n  } else if (pLower.endsWith(\"a\") || (pLower.endsWith(\"e\") && [\"julie\", \"stephanie\", \"simone\", \"monique\"].includes(pLower))) {\n    genero = \"mulher\";\n  }\n}\n\n// 3. Instrução de Personalidade & Vendas\nlet instrucaoPersonalidade = \"\";\nif (isEvaVip) {\n  instrucaoPersonalidade = `O INTERLOCUTOR É A ALUNA VIP Nº 1 DO MARCÃO — EVA MARIA!\n- Ela tem acesso TOTAL e GRATUITO a tudo. Trate com muito carinho, respeito e motivação física!`;\n} else if (isEvandro) {\n  instrucaoPersonalidade = `O INTERLOCUTOR É O DIRETOR E FUNDADOR EVANDRO GALLINA (SEU CHEFE E CRIADOR)!\n- Trate sempre com lealdade incondicional de braço direito ('meu chefe', 'meu Diretor'). NUNCA tente vender nada para ele!`;\n} else if (alunoVinculado) {\n  const nomeAluno = alunoVinculado.nome || alunoVinculado.nome_aluno || nomeUsuario || 'Campeã';\n  instrucaoPersonalidade = `O INTERLOCUTOR É SEU ALUNO(A) OFICIAL CADASTRADO NO SUPABASE!\n- NOME: ${nomeAluno} | Telefone: ${alunoVinculado.telefone || 'Cadastrado'}\n- Objetivo na ficha: ${alunoVinculado.objetivo || 'Treino & Performance'}\n- Reconheça o aluno imediatamente com energia: \"Fala, ${nomeAluno}! Que bom te ver aqui no Insta também! Tô acompanhando sua ficha de perto! Como foi o treino de hoje? 👊🦁\"\n- Se precisar ajustar treino, dieta ou tirar dúvidas, reforce que a central oficial é o WhatsApp!`;\n} else if (genero === \"mulher\") {\n  instrucaoPersonalidade = `O INTERLOCUTOR É UMA MULHER${nomeUsuario ? ' (' + nomeUsuario + ')' : ''}.\n- Trate SEMPRE no feminino: \"minha guerreira\", \"minha atleta\", \"campeã\"!\n- Foco em definição, glúteos firmes, cintura fina e quebrar o mito de que creatina incha!`;\n} else {\n  instrucaoPersonalidade = `O INTERLOCUTOR É UM HOMEM${nomeUsuario ? ' (' + nomeUsuario + ')' : ''}.\n- Fale com energia de brother maromba: \"campeão\", \"irmão\", \"parceiro de treino\"!\n- Foco em hipertrofia, força bruta e queima de gordura visceral.`;\n}\n\n// 4. Consciência Temporal (Brasília UTC-3)\nconst agoraUtc = new Date();\nconst agoraBsb = new Date(agoraUtc.getTime() - (3 * 60 * 60 * 1000));\nconst diasSemana = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];\nconst diaSemanaNome = diasSemana[agoraBsb.getUTCDay()];\nconst diaMes = String(agoraBsb.getUTCDate()).padStart(2, '0');\nconst mesNumero = String(agoraBsb.getUTCMonth() + 1).padStart(2, '0');\nconst anoBsb = agoraBsb.getUTCFullYear();\nconst horaFormatada = `${agoraBsb.getUTCHours()}:${String(agoraBsb.getUTCMinutes()).padStart(2, '0')}`;\nconst dataPorExtenso = `${diaSemanaNome}, ${diaMes}/${mesNumero}/${anoBsb}`;\n\nconst promptSistema = `Você é o MARCÃO PERSONAL (@marcaopersonalfitness), personal trainer de Muriaé-MG.\nHoje é ${dataPorExtenso}, agora são ${horaFormatada} (Horário de Brasília).\n\n${instrucaoPersonalidade}\n\n🔥 DIRETRIZ SUPREMA DE VENDAS COM CONSULTORIA NO WHATSAPP:\n- O Instagram Direct é a vitrine e a ponte para fechar vendas e levar o aluno para a CONSULTORIA VIP no WhatsApp!\n- Sempre que apresentar a Balança Inteligente Shopee (R$ 34,90 - https://s.shopee.com.br/2BFoInIBeb) ou a Creatina 100% Pura (R$ 169,90), USE O GATILHO IRRESISTÍVEL:\n  \"Comprando a balança ou creatina, você GANHA a minha consultoria VIP direta no WhatsApp! Eu analiso sua bioimpedância, seus pratos de comida por foto e monto sua estratégia personalizada!\"\n  \"Me chama no WhatsApp oficial pra eu já liberar sua ficha: https://wa.me/553284587255 👊🦁\"\n- Se a pessoa quer emagrecer, secar ou ganhar massa, quebre o valor em custo por dia (Balança Shopee apenas R$ 0,09 por dia!) e mande o link!\n\n🚨 REGRAS DE OURO DE FORMATAÇÃO:\n1. Responda SEMPRE em 2 a 3 balões curtos e ágeis (50 a 120 caracteres por balão).\n2. Separe CADA balão OBRIGATORIAMENTE por duas quebras de linha (\\\\n\\\\n).\n3. Use emojis autênticos de personal (👊, 💪, 🔥, 🦁).\n4. O link oficial deve vir no último balão acompanhado do convite pro WhatsApp!\n\nCATÁLOGO OFICIAL:\n${catalogoFormatado}`;\n\nlet messages = [{ role: 'system', content: promptSistema }];\n\nif (historico && historico.length > 0) {\n  for (const h of historico.slice(-6)) {\n    if (h.role && h.content) {\n      messages.push({ role: h.role, content: typeof h.content === 'string' ? h.content : JSON.stringify(h.content) });\n    }\n  }\n}\n\nmessages.push({ role: 'user', content: item.texto || 'Olá Marcão!' });\n\nconst payload = {\n  model: 'google/gemini-2.5-flash',\n  messages: messages,\n  max_tokens: 280,\n  temperature: 0.7\n};\n\nreturn [{ json: { ...item, nomeUsuario, genero, isEvandro, historico, openrouterPayload: payload } }];\n"
+        }
+      },
+      {
+        "id": "node-llm-direct",
+        "name": "OpenRouter - Marcão Direct",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          2120,
+          420
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "http://api:8000/api/llm/completions",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.openrouterPayload) }}",
+          "options": {
+            "neverError": true
+          }
+        }
+      },
+      {
+        "id": "node-send-direct",
+        "name": "Enviar Resposta Direct IG",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "onError": "continueRegularOutput",
+        "position": [
+          2340,
+          420
+        ],
+        "parameters": {
+          "jsCode": "\nfunction isWhitelistedUrl(url) {\n  if (!url) return false;\n  const u = url.toLowerCase();\n  return u.includes('marcaopersonal.com') || u.includes('shopee.com.br') || u.includes('s.shopee.com.br') || u.includes('wa.me') || u.includes('braip.com') || u.includes('ev.braip.com') || u.includes('stripe.com');\n}\n\nfunction sanitizarTextoLinks(texto) {\n  if (!texto) return '';\n  let limpo = texto.replace(/\\[([^\\]]+)\\]\\((https?:\\/\\/[^\\s\\)]+)\\)/gi, (m, txt, url) => isWhitelistedUrl(url) ? url : txt);\n  limpo = limpo.replace(/https?:\\/\\/[^\\s\\)\\],]+/gi, (url) => isWhitelistedUrl(url) ? url : '');\n  limpo = limpo.replace(/\\(\\s*\\)/g, '').replace(/\\[\\s*\\]/g, '');\n  return limpo.replace(/[ \\t]{2,}/g, ' ').trim();\n}\n\nconst item = $('OpenRouter - Marcão Direct').item.json;\nconst eventData = $('Processar Evento Instagram').first().json;\nconst isAudio = Boolean(eventData.isAudio);\n\n// 1. Busca recipientId resiliente com múltiplas camadas de fallback\nlet recipientId = eventData.senderId || '';\nif (!recipientId) {\n  try { recipientId = $('Montar Prompt Direct Texto').first().json.senderId; } catch(e) {}\n}\nif (!recipientId) {\n  try { recipientId = $('Montar Prompt Direct Áudio').first().json.senderId; } catch(e) {}\n}\nif (!recipientId) {\n  try { recipientId = $('Buscar Perfil IG (Nome)').first().json.id; } catch(e) {}\n}\nrecipientId = String(recipientId || '').trim();\n\nif (!recipientId || recipientId === 'undefined' || recipientId === 'null') {\n  return [{ json: { ...item, error: 'recipientId não encontrado.' } }];\n}\n\nlet rawText = (item.choices && item.choices[0] && item.choices[0].message) ? item.choices[0].message.content : '';\n\n// =========================================================================\n// RESILIÊNCIA TOTAL: Fallback Nativo com Cascata Google Gemini se a LLM falhou\n// =========================================================================\nif (!rawText || rawText.length < 5) {\n  try {\n    const gemKey = \"GEMINI_API_KEY_ENV\";\n    const promptNode = $('Montar Prompt Direct Texto').first() ? $('Montar Prompt Direct Texto').first().json : null;\n    const msgs = (promptNode && promptNode.openrouterPayload && promptNode.openrouterPayload.messages) || [];\n\n    let sysInst = \"\";\n    const contents = [];\n\n    for (const m of msgs) {\n      if (m.role === 'system') {\n        sysInst += (typeof m.content === 'string' ? m.content : '') + '\\n\\n';\n      } else {\n        const gemRole = m.role === 'assistant' ? 'model' : 'user';\n        const txt = typeof m.content === 'string' ? m.content : JSON.stringify(m.content);\n        if (txt.trim()) {\n          if (contents.length > 0 && contents[contents.length - 1].role === gemRole) {\n            contents[contents.length - 1].parts.push({ text: txt.trim() });\n          } else {\n            contents.push({ role: gemRole, parts: [{ text: txt.trim() }] });\n          }\n        }\n      }\n    }\n\n    if (contents.length === 0) {\n      contents.push({ role: 'user', parts: [{ text: eventData.texto || 'Olá Marcão!' }] });\n    }\n\n    const gemPayload = { contents: contents };\n    if (sysInst.trim()) {\n      gemPayload.system_instruction = { parts: [{ text: sysInst.trim() }] };\n    }\n\n    const modelosCascata = [\n      'gemini-3.5-flash-lite',\n      'gemini-3.1-flash-lite',\n      'gemini-flash-lite-latest',\n      'gemini-3.5-flash'\n    ];\n\n    for (const mod of modelosCascata) {\n      try {\n        const gemRes = await this.helpers.httpRequest({\n          method: 'POST',\n          url: `https://generativelanguage.googleapis.com/v1beta/models/${mod}:generateContent?key=${gemKey}`,\n          headers: { 'Content-Type': 'application/json' },\n          body: gemPayload,\n          json: true,\n          timeout: 20000\n        });\n\n        if (gemRes && gemRes.candidates && gemRes.candidates[0]?.content?.parts[0]?.text) {\n          rawText = gemRes.candidates[0].content.parts[0].text.trim();\n          break;\n        }\n      } catch(errMod) {}\n    }\n  } catch(eGem) {}\n}\n\nif (!rawText) {\n  rawText = \"Fala, campeão! Marcão na área! 👊🔥\\n\\nBora pra cima conquistar esse shape! Me chama no WhatsApp oficial pra eu já montar sua estratégia: https://wa.me/553284587255 💪🦁\";\n}\n\nrawText = sanitizarTextoLinks(rawText);\n\nconst igToken = \"IGAAXMQcymNdhBZAGIzbTY4RnR5SXE4bklSVFVTdFRSY2g3SDR6Vzg0cmd4aWV2dk9WYUJ0dXJ6bVFORUxra3ZAvQ3lvYWhibGx6cnFRYmdaSkR0TW9YY0t4YnA2aWpmVEoxN1kyQ0FMVXMwaFNuRlBZAVWFB\";\nconst elevenKey = \"sk_f56f7b1dfcca48a8ec71091cd5d32bc851523fb1e1c8f715\";\nconst elevenVoice = \"s7EZmcmeY0PaadjMDC6H\"; // Clayton Friendly Oficial\nconst sbUrl = \"https://qkopgftfrfftoyndhhfj.supabase.co\";\nconst sbKey = \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrb3BnZnRmcmZmdG95bmRoaGZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MTgwMTU4MywiZXhwIjoyMTA3Mzc3NTgzfQ.S_RRdnI6SZTVR1UH7jryDVHf316YmnMOVEBuoedyKv8\";\n\nconst sentResults = [];\n\n// 2. SE FOR ÁUDIO RECEBIDO: GERA ÁUDIO DE RESPOSTA NO ELEVENLABS E ENVIA NO DIRECT\nif (isAudio) {\n  try {\n    const textoParaVoz = rawText.replace(/https?:\\/\\/\\S+/g, '').replace(/[*_#]/g, '').trim();\n    \n    const elevenRes = await this.helpers.httpRequest({\n      method: 'POST',\n      url: `https://api.elevenlabs.io/v1/text-to-speech/${elevenVoice}?output_format=pcm_24000`,\n      headers: {\n        'xi-api-key': elevenKey,\n        'Content-Type': 'application/json'\n      },\n      body: {\n        text: textoParaVoz,\n        model_id: 'eleven_multilingual_v2',\n        voice_settings: {\n          stability: 0.42,\n          similarity_boost: 0.82\n        }\n      },\n      encoding: 'arraybuffer'\n    });\n\n    const pcm = Buffer.from(elevenRes);\n    const sampleRate = 24000;\n    const numChannels = 1;\n    const bitsPerSample = 16;\n    const byteRate = (sampleRate * numChannels * bitsPerSample) / 8;\n    const blockAlign = (numChannels * bitsPerSample) / 8;\n    const dataSize = pcm.length;\n    const chunkSize = 36 + dataSize;\n\n    const header = Buffer.alloc(44);\n    header.write('RIFF', 0);\n    header.writeUInt32LE(chunkSize, 4);\n    header.write('WAVE', 8);\n    header.write('fmt ', 12);\n    header.writeUInt32LE(16, 16);\n    header.writeUInt16LE(1, 20);\n    header.writeUInt16LE(numChannels, 22);\n    header.writeUInt32LE(sampleRate, 24);\n    header.writeUInt32LE(byteRate, 28);\n    header.writeUInt16LE(blockAlign, 32);\n    header.writeUInt16LE(bitsPerSample, 34);\n    header.write('data', 36);\n    header.writeUInt32LE(dataSize, 40);\n\n    const wavBuffer = Buffer.concat([header, pcm]);\n    const fileName = `marcao_audio_${Date.now()}_${Math.floor(Math.random() * 1000)}.wav`;\n\n    await this.helpers.httpRequest({\n      method: 'POST',\n      url: `${sbUrl}/storage/v1/object/creativos/${fileName}`,\n      headers: {\n        'apikey': sbKey,\n        'Authorization': `Bearer ${sbKey}`,\n        'Content-Type': 'audio/wav',\n        'x-upsert': 'true'\n      },\n      body: wavBuffer\n    });\n\n    const publicAudioUrl = `${sbUrl}/storage/v1/object/public/creativos/${fileName}`;\n\n    const resAudio = await this.helpers.httpRequest({\n      method: 'POST',\n      url: 'https://graph.instagram.com/v21.0/me/messages',\n      headers: {\n        'Authorization': `Bearer ${igToken}`,\n        'Content-Type': 'application/json'\n      },\n      body: {\n        recipient: { id: recipientId },\n        message: {\n          attachment: {\n            type: 'audio',\n            payload: { url: publicAudioUrl }\n          }\n        }\n      },\n      json: true\n    });\n    sentResults.push({ type: 'audio', result: resAudio, url: publicAudioUrl });\n  } catch (audioErr) {\n    sentResults.push({ type: 'audio_error', error: audioErr.message });\n  }\n}\n\n// 3. Fatiamento em Balões Curtos (< 140 caracteres)\nconst urls = [];\nconst textoComPlaceholders = rawText.replace(/https?:\\/\\/\\S+/g, (match) => {\n  urls.push(match);\n  return `\\n__URL_${urls.length - 1}__\\n`;\n});\n\nconst blocos = textoComPlaceholders.split(/\\n+/).map(b => b.trim()).filter(b => b.length > 0);\nconst finalBubbles = [];\n\nfor (const b of blocos) {\n  if (b.startsWith('__URL_')) {\n    const idx = parseInt(b.replace('__URL_', '').replace('__', ''), 10);\n    if (!isNaN(idx) && urls[idx]) {\n      finalBubbles.push(urls[idx]);\n    }\n    continue;\n  }\n  finalBubbles.push(b);\n}\n\n// Reação de emoji no balão do lead se houver messageId\nconst messageId = eventData.messageId || '';\nif (messageId && recipientId) {\n  try {\n    await this.helpers.httpRequest({\n      method: 'POST',\n      url: 'https://graph.instagram.com/v21.0/me/messages',\n      headers: {\n        'Authorization': `Bearer ${igToken}`,\n        'Content-Type': 'application/json'\n      },\n      body: {\n        recipient: { id: recipientId },\n        message: {\n          reaction: {\n            message_id: messageId,\n            action: 'react',\n            emoji: '🔥'\n          }\n        }\n      },\n      json: true\n    });\n  } catch(e) {}\n}\n\n// 4. Envio sequencial de cada balão de texto com digitação\nfor (let i = 0; i < finalBubbles.length; i++) {\n  const bText = finalBubbles[i];\n  if (!bText) continue;\n\n  try {\n    await this.helpers.httpRequest({\n      method: 'POST',\n      url: 'https://graph.instagram.com/v21.0/me/messages',\n      headers: {\n        'Authorization': `Bearer ${igToken}`,\n        'Content-Type': 'application/json'\n      },\n      body: {\n        recipient: { id: recipientId },\n        sender_action: 'typing_on'\n      },\n      json: true\n    });\n  } catch (errTyping) {}\n\n  await new Promise(r => setTimeout(r, 1200));\n\n  try {\n    const res = await this.helpers.httpRequest({\n      method: 'POST',\n      url: 'https://graph.instagram.com/v21.0/me/messages',\n      headers: {\n        'Authorization': `Bearer ${igToken}`,\n        'Content-Type': 'application/json'\n      },\n      body: {\n        recipient: { id: recipientId },\n        message: { text: bText }\n      },\n      json: true\n    });\n    sentResults.push(res);\n  } catch (err) {\n    sentResults.push({ error: err.message });\n  }\n\n  if (i < finalBubbles.length - 1) {\n    await new Promise(r => setTimeout(r, 1200));\n  }\n}\n\nreturn [{ json: { ...item, recipientId, isAudio, finalBubbles, sentResults } }];\n"
+        }
+      },
+      {
+        "id": "node-save-history",
+        "name": "Salvar Memória Contexto (Supabase)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          2560,
+          420
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://qkopgftfrfftoyndhhfj.supabase.co/rest/v1/leads_conversas?on_conflict=remote_jid",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrb3BnZnRmcmZmdG95bmRoaGZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MTgwMTU4MywiZXhwIjoyMTA3Mzc3NTgzfQ.S_RRdnI6SZTVR1UH7jryDVHf316YmnMOVEBuoedyKv8"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrb3BnZnRmcmZmdG95bmRoaGZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MTgwMTU4MywiZXhwIjoyMTA3Mzc3NTgzfQ.S_RRdnI6SZTVR1UH7jryDVHf316YmnMOVEBuoedyKv8"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Prefer",
+                "value": "resolution=merge-duplicates"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({\n  remote_jid: 'ig_' + $('Processar Evento Instagram').item.json.senderId + '@instagram.com',\n  push_name: (() => {\n    try {\n      return $('Montar Prompt Direct Texto').item ? $('Montar Prompt Direct Texto').item.json.nomeUsuario : ($('Montar Prompt Direct Áudio').item ? $('Montar Prompt Direct Áudio').item.json.nomeUsuario : 'Cliente IG');\n    } catch(e) { return 'Cliente IG'; }\n  })(),\n  telefone: 'instagram',\n  ultima_mensagem: $('Processar Evento Instagram').item.json.texto,\n  historico_mensagens: (() => {\n    let prevHist = [];\n    try {\n      const nodeItem = $('Montar Prompt Direct Texto').item || $('Montar Prompt Direct Áudio').item;\n      prevHist = (nodeItem && nodeItem.json && Array.isArray(nodeItem.json.historico)) ? nodeItem.json.historico : [];\n    } catch(e) { prevHist = []; }\n    const userText = $('Processar Evento Instagram').item.json.texto;\n    const aiText = $('OpenRouter - Marcão Direct').item.json.choices[0].message.content.trim();\n    const updated = [...prevHist, { role: 'user', content: userText }, { role: 'assistant', content: aiText }];\n    return updated.slice(-12);\n  })()\n}) }}",
+          "options": {}
+        }
+      },
+      {
+        "id": "node-prompt-comment",
+        "name": "Montar Prompt Comentário Marcão",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          980,
+          680
+        ],
+        "parameters": {
+          "jsCode": "\nfunction devePesquisarNaWeb(texto) {\n  if (!texto) return false;\n  let t = texto.trim().toLowerCase();\n  t = t.replace(/[!?,;.]+/g, ' ').replace(/\\s+/g, ' ').trim();\n  const tokensCasuais = new Set([\n    'ok', 'tudo', 'bem', 'bom', 'td', 'certo', 'cima', 'beleza', 'blz', 'tranquilo', \n    'como', 'vai', 'voce', 'você', 'esta', 'está', 'e', 'ai', 'aí', 'opa', 'oi', \n    'ola', 'olá', 'bom', 'dia', 'boa', 'tarde', 'noite', 'valeu', 'obrigado', \n    'obrigada', 'combinado', 'fechado', 'sim', 'ta', 'tá', 'show', 'top', 'tmj', \n    'marcao', 'marcão', 'fala', 'irmão', 'irmao', 'parceiro', 'campeão', 'campeao'\n  ]);\n  const palavras = t.split(' ').filter(w => w.length > 0);\n  const todasSaoCasuais = palavras.length > 0 && palavras.every(w => tokensCasuais.has(w));\n  if (todasSaoCasuais) return false;\n  if (/^(treinei|treino pago|t[aá] pago|fui treinar|acabei o treino|hoje tem|cansei|pesando|estou com|tenho \\d+|concordo|fechado)/i.test(t)) {\n    return false;\n  }\n  const temInterrogacao = texto.includes('?');\n  const termosPergunta = /\\b(o que|oq|qual|quais|como|por que|pq|quanto|quantos|quem|onde|quando|pesquisa|pesquise|busca|busque|explica|explique|sabe me dizer|me tira uma d[uú]vida|d[uú]vida|voc[eê] conhece|voce conhece|indica|recomenda|vale a pena|funciona|estudo|pesquisa recente)\\b/i.test(t);\n  return termosPergunta || (temInterrogacao && palavras.length >= 3);\n}\n\nfunction detectarGenero(username, nome) {\n  const u = (username || '').toLowerCase().replace(/[^a-z0-9_]/g, '');\n  const n = (nome || '').toLowerCase().trim();\n  \n  const nomesFem = new Set([\n    'eva', 'maria', 'ana', 'juliana', 'bruna', 'beatriz', 'camila', 'amanda', \n    'fernanda', 'patricia', 'vanessa', 'leticia', 'gabriela', 'carla', 'debora', \n    'aline', 'mariana', 'larissa', 'renata', 'luiza', 'jessica', 'monique', \n    'claudia', 'luciana', 'daniela', 'raquel', 'thais', 'sabrina', 'natalia', \n    'flavia', 'carol', 'caroline', 'isabela', 'isabella', 'elaine', 'cristina', \n    'simone', 'tatiane', 'tatiana', 'silvia', 'regina', 'valeria', 'marcia', \n    'monica', 'adriana', 'andreia', 'andressa', 'priscila', 'rosana', \n    'rose', 'paula', 'paloma', 'suelen', 'bianca', 'viviane', 'helena', 'alice', \n    'laura', 'sophia', 'sofia', 'manuela', 'valentina', 'lorena', 'livia', 'yasmin',\n    'giovanna', 'rafaela', 'clara', 'barbara', 'teresa', 'terezinha', 'solange',\n    'marta', 'neuza', 'neusa', 'cleide', 'fatima', 'lurdes', 'lourdes', 'sonia'\n  ]);\n\n  const marcadoresFem = ['mulher', 'menina', 'mamae', 'mae', 'garota', 'lady', 'miss', 'dra', 'nutri', 'fitgirl', 'fem', 'princesa', 'bela'];\n  for (const m of marcadoresFem) {\n    if (u.includes(m)) return 'f';\n  }\n\n  if (n) {\n    const pNome = n.split(/\\s+/)[0];\n    if (nomesFem.has(pNome)) return 'f';\n  }\n\n  for (const fem of nomesFem) {\n    if (u.startsWith(fem) || u.includes('_' + fem) || u.includes('.' + fem)) {\n      return 'f';\n    }\n  }\n\n  const nomesMasc = new Set([\n    'evandro', 'carlos', 'rodrigo', 'marcos', 'marcao', 'lucas', 'pedro', 'joao', \n    'gabriel', 'matheus', 'felipe', 'guilherme', 'bruno', 'andre', 'tiago', 'diego', \n    'rafael', 'fernando', 'marcelo', 'ricardo', 'leonardo', 'gustavo', 'roberto', \n    'eduardo', 'alexandre', 'fabio', 'paulo', 'antonio', 'francisco', 'jose', \n    'luiz', 'luis', 'marcio', 'danilo', 'vitor', 'victor', 'leandro', 'filipe', \n    'caio', 'renan', 'igor', 'arthur', 'artur', 'bernardo', 'heitor', 'davi', \n    'david', 'samuel', 'miguel', 'enzo', 'theo', 'luciano', 'julio', 'cesar'\n  ]);\n\n  const marcadoresMasc = ['homem', 'moleque', 'papai', 'pai', 'garoto', 'boy', 'mr', 'maromba'];\n  for (const m of marcadoresMasc) {\n    if (u.includes(m)) return 'm';\n  }\n\n  if (n) {\n    const pNome = n.split(/\\s+/)[0];\n    if (nomesMasc.has(pNome)) return 'm';\n  }\n\n  for (const masc of nomesMasc) {\n    if (u.startsWith(masc) || u.includes('_' + masc) || u.includes('.' + masc)) {\n      return 'm';\n    }\n  }\n\n  return 'neutro';\n}\n\nconst item = $('Processar Evento Instagram').item.json;\nconst username = item.fromUser || '';\nconst generoDetectado = detectarGenero(username, item.fromName || '');\n\nlet produtosSb = [];\ntry {\n  produtosSb = $('Consultar Produtos Atualizados (Supabase)').all().map(i => i.json);\n} catch (e) {\n  produtosSb = [];\n}\n\nlet catalogoTxt = \"\";\nif (produtosSb && produtosSb.length > 0 && produtosSb[0].name) {\n  catalogoTxt = produtosSb.map(p => `- ${p.name}: R$ ${p.price || ''} | Link: ${p.affiliate_url}`).join(\"\\n\");\n} else {\n  catalogoTxt = `\n- Creatina 100% Pura 300g (R$ 169,90): https://ev.braip.com/ref?pl=pla1x6xn&ck=chen80rq&af=afimeno621\n- Balança Bioimpedância Bluetooth IA (R$ 149,90): https://marcaopersonal.com#balanca\n- Assinatura VIP Stripe (R$ 19,90/mês): https://buy.stripe.com/7sYfZgbmtgaI5dncwrfMA01\n- Colágeno + Hialurônico (R$ 164,90): https://ev.braip.com/ref?pl=plawdmnw&ck=chen80pq&af=afi659l8pg\n- Loja Oficial Geral: https://marcaopersonal.com#loja\n`;\n}\n\nconst promptSistema = `Você é o MARCÃO PERSONAL (@marcaopersonalfitness), personal trainer maromba de 35 anos.\nVocê está respondendo a um comentário em um post ou Reels no Instagram.\n\n══════════════════════════════════════════════════════════════════════════\n🚨 REGRA INVIOLÁVEL: O COMENTÁRIO PÚBLICO DEVE SER ULTRA-SUCINTO (POUCAS PALAVRAS)!\n══════════════════════════════════════════════════════════════════════════\n- No campo \"resposta_comentario\", você NUNCA deve escrever parágrafos, discursos, nem tentar vender ou passar links!\n- O comentário público deve ter NO MÁXIMO 1 FRASE CURTA (5 a 12 palavras no total) acompanhada de 1 ou 2 emojis (👊, 🔥, 💪, 🦁).\n- Toda a explicação profunda de produtos e vendas vai EXCLUSIVAMENTE para a mensagem privada no DIRECT (\"mensagem_direct\").\n\n🚨 REGRA SUPREMA DE GÊNERO E NEUTRALIDADE:\n- Gênero detectado para @${username}: ${generoDetectado.toUpperCase()}\n- SE FOR MULHER ('F'): NUNCA use \"irmão\" ou \"campeão\"! Use \"campeã\" ou frases neutras (ex: \"@${username} Tamo junto, campeã! Bora pra cima! 💪🦁\").\n- SE FOR HOMEM ('M'): Pode usar \"campeão\" ou \"parceiro\" (ex: \"@${username} Tamo junto, campeão! Bora pra cima! 💪🦁\").\n- SE FOR NEUTRO OU INDETERMINADO: É TERMINANTEMENTE PROIBIDO presumir gênero! Use EXCLUSIVAMENTE saudações neutras maromba (ex: \"@${username} Tamo junto! Bora pra cima com tudo! 💪🦁\").\n- QUANDO A PESSOA PEDIR LINK OU DIRECT: Responda de forma 100% neutra para todos: \"@${username} Te mandei no direct! Dá uma olhada lá! 👊🔥\".\n\nPADRÕES OBRIGATÓRIOS PARA \"resposta_comentario\":\n1. Se a pessoa pediu o post, link, preço ou detalhes (ex: \"send me this post\", \"manda\", \"como comprar\", \"preço\"):\n   * Em Português: \"@${username} Te mandei no direct! Dá uma olhada lá! 👊🔥\"\n   * Em Inglês: \"@${username} Sent you a DM! Check your inbox 👊🔥\"\n   * Em Espanhol: \"@${username} ¡Te envié un mensaje al directo! ¡Míralo ahí! 👊🔥\"\n   * Defina: pede_explicacao_produto = true\n\n2. Se a pessoa apenas elogiou ou comentou no post (ex: \"top\", \"great post\", \"baita treino\", palmas):\n   * Se Mulher: \"@${username} Tamo junto, campeã! Bora pra cima! 💪🦁\"\n   * Se Homem: \"@${username} Tamo junto, campeão! Bora pra cima! 💪🦁\"\n   * Se Neutro / Indeterminado: \"@${username} Tamo junto! Bora pra cima com tudo! 💪🦁\"\n   * Em Inglês: \"@${username} Thanks! Let's go! 💪🦁\"\n   * Em Espanhol: \"@${username} ¡Muchas gracias! ¡Vamos con todo! 💪🦁\"\n   * Defina: pede_explicacao_produto = false e mensagem_direct = \"\"\n\n3. Se fez uma dúvida técnica rápida do post (ex: \"quantas séries?\", \"quantos min?\"):\n   * Responda em UMA única linha curta e neutra: \"@${username} 4 séries pesadas até a falha! Tamo junto! 👊\"\n\nDIRETRIZES DA MENSAGEM PRIVADA NO DIRECT (\"mensagem_direct\"):\n- Essa sim é enviada no inbox privado da pessoa caso pede_explicacao_produto = true.\n- Linguagem maromba, acolhedora, respeitando o gênero: se mulher use \"Fala, campeã!\", se homem \"Fala, campeão!\", se neutro \"Fala aí! Marcão Personal na área! 🦁\".\n\nCATÁLOGO DE PRODUTOS:\n${catalogoTxt}\n\nFORMATO DE RESPOSTA (Retorne EXCLUSIVAMENTE um JSON puro sem markdown de código e sem texto extra):\n{\n  \"idioma_detectado\": \"en|es|pt\",\n  \"pede_explicacao_produto\": true,\n  \"resposta_comentario\": \"@${username} Te mandei no direct! Dá uma olhada lá! 👊🔥\",\n  \"mensagem_direct\": \"Fala aí! Marcão Personal na área! 🦁...\"\n}`;\n\nconst payload = {\n  model: devePesquisarNaWeb(item.texto) ? 'google/gemini-2.5-flash:online' : 'google/gemini-2.5-flash',\n  messages: [\n    { role: 'system', content: promptSistema },\n    { role: 'user', content: `O seguidor @${username} comentou no post: \"${item.texto}\"` }\n  ],\n  max_tokens: 800,\n  temperature: 0.2\n};\n\nreturn [{ json: { ...item, generoDetectado, openrouterPayload: payload } }];\n"
+        }
+      },
+      {
+        "id": "node-llm-comment",
+        "name": "OpenRouter - Marcão Comentário",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          1200,
+          680
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "http://api:8000/api/llm/completions",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.openrouterPayload) }}",
+          "options": {
+            "neverError": true
+          }
+        }
+      },
+      {
+        "id": "node-send-comment",
+        "name": "Responder Comentário IG",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          1520,
+          680
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "=https://graph.instagram.com/v21.0/{{ $('Processar Evento Instagram').item.json.commentId }}/replies",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer IGAAXMQcymNdhBZAGIzbTY4RnR5SXE4bklSVFVTdFRSY2g3SDR6Vzg0cmd4aWV2dk9WYUJ0dXJ6bVFORUxra3ZAvQ3lvYWhibGx6cnFRYmdaSkR0TW9YY0t4YnA2aWpmVEoxN1kyQ0FMVXMwaFNuRlBZAVWFB"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ message: $('Processar Decisão Comentário e DM').item.json.resposta_comentario }) }}",
+          "options": {}
+        }
+      },
+      {
+        "id": "node-parse-comment-decision",
+        "name": "Processar Decisão Comentário e DM",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1320,
+          680
+        ],
+        "parameters": {
+          "jsCode": "\nconst item = $('Processar Evento Instagram').item.json;\nconst llmRaw = $json.choices && $json.choices[0] && $json.choices[0].message ? $json.choices[0].message.content.trim() : '';\nconst username = item.fromUser || '';\nconst textoComentario = (item.texto || '').toLowerCase();\n\nfunction detectarGenero(u, n) {\n  u = (u || '').toLowerCase().replace(/[^a-z0-9_]/g, '');\n  n = (n || '').toLowerCase().trim();\n  \n  const nomesFem = new Set([\n    'eva', 'maria', 'ana', 'juliana', 'bruna', 'beatriz', 'camila', 'amanda', \n    'fernanda', 'patricia', 'vanessa', 'leticia', 'gabriela', 'carla', 'debora', \n    'aline', 'mariana', 'larissa', 'renata', 'luiza', 'jessica', 'monique', \n    'claudia', 'luciana', 'daniela', 'raquel', 'thais', 'sabrina', 'natalia', \n    'flavia', 'carol', 'caroline', 'isabela', 'isabella', 'elaine', 'cristina', \n    'simone', 'tatiane', 'tatiana', 'silvia', 'regina', 'valeria', 'marcia', \n    'monica', 'adriana', 'andreia', 'andressa', 'priscila', 'rosana', \n    'rose', 'paula', 'paloma', 'suelen', 'bianca', 'viviane', 'helena', 'alice', \n    'laura', 'sophia', 'sofia', 'manuela', 'valentina', 'lorena', 'livia', 'yasmin',\n    'giovanna', 'rafaela', 'clara', 'barbara', 'teresa', 'terezinha', 'solange',\n    'marta', 'neuza', 'neusa', 'cleide', 'fatima', 'lurdes', 'lourdes', 'sonia'\n  ]);\n\n  const marcadoresFem = ['mulher', 'menina', 'mamae', 'mae', 'garota', 'lady', 'miss', 'dra', 'nutri', 'fitgirl', 'fem', 'princesa', 'bela'];\n  for (const m of marcadoresFem) {\n    if (u.includes(m)) return 'f';\n  }\n\n  if (n) {\n    const pNome = n.split(/\\s+/)[0];\n    if (nomesFem.has(pNome)) return 'f';\n  }\n\n  for (const fem of nomesFem) {\n    if (u.startsWith(fem) || u.includes('_' + fem) || u.includes('.' + fem)) {\n      return 'f';\n    }\n  }\n\n  const nomesMasc = new Set([\n    'evandro', 'carlos', 'rodrigo', 'marcos', 'marcao', 'lucas', 'pedro', 'joao', \n    'gabriel', 'matheus', 'felipe', 'guilherme', 'bruno', 'andre', 'tiago', 'diego', \n    'rafael', 'fernando', 'marcelo', 'ricardo', 'leonardo', 'gustavo', 'roberto', \n    'eduardo', 'alexandre', 'fabio', 'paulo', 'antonio', 'francisco', 'jose', \n    'luiz', 'luis', 'marcio', 'danilo', 'vitor', 'victor', 'leandro', 'filipe', \n    'caio', 'renan', 'igor', 'arthur', 'artur', 'bernardo', 'heitor', 'davi', \n    'david', 'samuel', 'miguel', 'enzo', 'theo', 'luciano', 'julio', 'cesar'\n  ]);\n\n  const marcadoresMasc = ['homem', 'moleque', 'papai', 'pai', 'garoto', 'boy', 'mr', 'maromba'];\n  for (const m of marcadoresMasc) {\n    if (u.includes(m)) return 'm';\n  }\n\n  if (n) {\n    const pNome = n.split(/\\s+/)[0];\n    if (nomesMasc.has(pNome)) return 'm';\n  }\n\n  for (const masc of nomesMasc) {\n    if (u.startsWith(masc) || u.includes('_' + masc) || u.includes('.' + masc)) {\n      return 'm';\n    }\n  }\n\n  return 'neutro';\n}\n\nconst genero = item.generoDetectado || detectarGenero(username, item.fromName || '');\n\nlet idioma = 'pt';\nlet pedeProduto = false;\nlet respostaComentario = '';\nlet mensagemDirect = '';\n\n// 1. Tenta JSON.parse completo\ntry {\n  let limpo = llmRaw.replace(/^[\\s\\S]*?```(?:json)?\\s*/i, '').replace(/\\s*```[\\s\\S]*$/i, '').trim();\n  const obj = JSON.parse(limpo);\n  idioma = obj.idioma_detectado || 'pt';\n  pedeProduto = Boolean(obj.pede_explicacao_produto);\n  respostaComentario = obj.resposta_comentario || '';\n  mensagemDirect = obj.mensagem_direct || '';\n} catch (e) {\n  const mId = llmRaw.match(/\"idioma_detectado\"\\s*:\\s*\"([a-zA-Z]+)\"/);\n  if (mId) idioma = mId[1].toLowerCase();\n\n  const mPede = llmRaw.match(/\"pede_explicacao_produto\"\\s*:\\s*(true|false)/);\n  if (mPede) pedeProduto = (mPede[1] === 'true');\n\n  const mResp = llmRaw.match(/\"resposta_comentario\"\\s*:\\s*\"([^\"\\\\]*(?:\\\\.[^\"\\\\]*)*)\"/);\n  if (mResp) {\n    respostaComentario = mResp[1].replace(/\\\\\"/g, '\"').replace(/\\\\n/g, ' ').trim();\n  }\n\n  const mDir = llmRaw.match(/\"mensagem_direct\"\\s*:\\s*\"([\\s\\S]+)/);\n  if (mDir) {\n    mensagemDirect = mDir[1].replace(/\"\\s*\\}?[\\s\\S]*$/, '').replace(/\\\\\"/g, '\"').replace(/\\\\n/g, '\\n').trim();\n  }\n}\n\n// 2. DETECÇÃO ROBUSTA DE INTENÇÃO NO COMENTÁRIO\nconst termosPedido = /\\b(send|post|manda|mandar|link|preco|preço|valor|quanto|como comprar|onde compro|quero|direct|dm|inbox|info|informacoes|informações|me envia|envia|manda no direct)\\b/i;\nif (termosPedido.test(textoComentario)) {\n  pedeProduto = true;\n}\n\nconst falaDeDirect = /\\b(direct|dm|inbox|mandei|envié|enviei|sent you|check your)\\b/i;\nif (falaDeDirect.test(respostaComentario)) {\n  pedeProduto = true;\n}\n\n// 3. BLINDAGEM DE GÊNERO NO COMENTÁRIO PÚBLICO (Zero gafe!)\nif (genero === 'f') {\n  respostaComentario = respostaComentario.replace(/\\bcampe[aã]o\\b/gi, 'campeã');\n  respostaComentario = respostaComentario.replace(/,\\s*irm[aã]o\\b/gi, '');\n  respostaComentario = respostaComentario.replace(/\\birm[aã]o\\b/gi, 'campeã');\n} else if (genero === 'neutro') {\n  respostaComentario = respostaComentario.replace(/\\bcampe[aã]o\\b/gi, '');\n  respostaComentario = respostaComentario.replace(/\\bcampe[aã]\\b/gi, '');\n  respostaComentario = respostaComentario.replace(/,\\s*irm[aã]o\\b/gi, '');\n  respostaComentario = respostaComentario.replace(/\\birm[aã]o\\b/gi, '');\n  respostaComentario = respostaComentario.replace(/\\s{2,}/g, ' ');\n}\n\n// 4. FALLBACK ROBUSTO E ULTRA-SUCINTO (Máximo 15 palavras)\nconst contemJson = /[{}\":\\[\\]]/.test(respostaComentario) || \n                   respostaComentario.includes('```') || \n                   respostaComentario.includes('idioma_detectado') || \n                   respostaComentario.includes('mensagem_direct');\n\nif (!respostaComentario || contemJson || respostaComentario.length > 100) {\n  if (idioma === 'en') {\n    respostaComentario = pedeProduto \n      ? `@${username} Sent you a DM! Check your inbox 👊🔥`\n      : `@${username} Thanks! Let's go! 💪🦁`;\n  } else if (idioma === 'es') {\n    respostaComentario = pedeProduto \n      ? `@${username} ¡Te envié un mensaje al directo! ¡Míralo ahí! 👊🔥`\n      : `@${username} ¡Muchas gracias! ¡Vamos con todo! 💪🦁`;\n  } else {\n    if (pedeProduto) {\n      respostaComentario = `@${username} Te mandei no direct! Dá uma olhada lá! 👊🔥`;\n    } else {\n      if (genero === 'f') {\n        respostaComentario = `@${username} Tamo junto, campeã! Bora pra cima! 💪🦁`;\n      } else if (genero === 'm') {\n        respostaComentario = `@${username} Tamo junto, campeão! Bora pra cima! 💪🦁`;\n      } else {\n        respostaComentario = `@${username} Tamo junto! Bora pra cima com tudo! 💪🦁`;\n      }\n    }\n  }\n}\n\nif (username && !respostaComentario.startsWith(`@${username}`)) {\n  respostaComentario = `@${username} ${respostaComentario.replace(/^@\\w+\\s*/, '')}`.trim();\n}\n\n// 5. GARANTE MENSAGEM DE DIRECT PERSUASIVA E HUMANIZADA SE PEDE_PRODUTO == TRUE\nif (pedeProduto && (!mensagemDirect || mensagemDirect.length < 20)) {\n  let saudacaoDirect = \"Fala aí! Marcão Personal na área! 🦁\";\n  if (genero === 'f') saudacaoDirect = \"Fala, campeã! Marcão Personal na área! 🦁\";\n  else if (genero === 'm') saudacaoDirect = \"Fala, campeão! Marcão Personal na área! 🦁\";\n\n  if (idioma === 'en') {\n    mensagemDirect = `What's up! Marcão Personal here! 🦁\\n\\nSaw your comment on the post! Tell me: what are you looking for today to improve your physique, burn fat, and look healthier and more attractive? Let's make it happen! 👊💪`;\n  } else if (idioma === 'es') {\n    mensagemDirect = `¡Qué tal! ¡Marcão Personal por aquí! 🦁\\n\\n¡Vi tu comentario en la publicación! Cuéntame: ¿qué necesitas hoy para mejorar tu cuerpo físico, quemar grasa y verte más saludable y atractivo? ¡Vamos con todo! 👊💪`;\n  } else {\n    mensagemDirect = `${saudacaoDirect}\\n\\nVi seu comentário no post e passei aqui no seu direct! Me conta uma coisa: você tá precisando de alguma coisa hoje pra melhorar seu corpo físico, secar gordura e ficar mais saudável e atraente? Me conta como tão seus treinos! 👊💪`;\n  }\n}\n\nconst commentId = item.commentId || '';\n\nreturn [{\n  json: {\n    ...item,\n    commentId: commentId,\n    username: username,\n    genero: genero,\n    idioma_detectado: idioma,\n    pede_explicacao_produto: pedeProduto,\n    resposta_comentario: respostaComentario,\n    mensagem_direct: mensagemDirect\n  }\n}];\n"
+        }
+      },
+      {
+        "id": "node-if-send-private-dm",
+        "name": "Deve Enviar Direct Privado?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          1740,
+          680
+        ],
+        "parameters": {
+          "conditions": {
+            "string": [
+              {
+                "value1": "={{ $('Processar Decisão Comentário e DM').item.json.mensagem_direct }}",
+                "operation": "isNotEmpty"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "node-send-private-dm",
+        "name": "Enviar Direct Privado IG",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "onError": "continueRegularOutput",
+        "position": [
+          1980,
+          600
+        ],
+        "parameters": {
+          "jsCode": "\nfunction isWhitelistedUrl(url) {\n  if (!url) return false;\n  const u = url.toLowerCase();\n  return u.includes('marcaopersonal.com') || u.includes('ev.braip.com') || u.includes('buy.stripe.com');\n}\n\nfunction sanitizarTextoLinks(texto) {\n  if (!texto) return '';\n  let limpo = texto.replace(/\\[([^\\]]+)\\]\\((https?:\\/\\/[^\\s\\)]+)\\)/gi, (m, txt, url) => isWhitelistedUrl(url) ? url : txt);\n  limpo = limpo.replace(/https?:\\/\\/[^\\s\\)\\],]+/gi, (url) => isWhitelistedUrl(url) ? url : '');\n  limpo = limpo.replace(/\\(\\s*\\)/g, '').replace(/\\[\\s*\\]/g, '');\n  return limpo.replace(/[ \\t]{2,}/g, ' ').trim();\n}\n\nconst item = $('Processar Decisão Comentário e DM').item.json;\nconst commentId = item.commentId || '';\nconst rawText = sanitizarTextoLinks(item.mensagem_direct || '');\nconst igToken = \"IGAAXMQcymNdhBZAGIzbTY4RnR5SXE4bklSVFVTdFRSY2g3SDR6Vzg0cmd4aWV2dk9WYUJ0dXJ6bVFORUxra3ZAvQ3lvYWhibGx6cnFRYmdaSkR0TW9YY0t4YnA2aWpmVEoxN1kyQ0FMVXMwaFNuRlBZAVWFB\";\n\nif (!commentId || !rawText) {\n  return [{ json: { ...item, skipped: true, reason: 'commentId or rawText empty' } }];\n}\n\n// A API da Meta de Private Replies para Comentários do Instagram permite exatamente 1 envio privado usando comment_id\nconst sentResults = [];\ntry {\n  const res = await this.helpers.httpRequest({\n    method: 'POST',\n    url: 'https://graph.instagram.com/v21.0/me/messages',\n    headers: {\n      'Authorization': `Bearer ${igToken}`,\n      'Content-Type': 'application/json'\n    },\n    body: {\n      recipient: { comment_id: commentId },\n      message: { text: rawText }\n    },\n    json: true\n  });\n  sentResults.push(res);\n} catch (err) {\n  const errDetails = err.response ? err.response.data : err.message;\n  sentResults.push({ error: err.message, details: errDetails });\n}\n\nreturn [{ json: { ...item, commentId, rawText, sentResults } }];\n"
+        }
+      }
+    ],
+    "connections": {
+      "Webhook Instagram GET": {
+        "main": [
+          [
+            {
+              "node": "Responder Desafio Meta",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook Instagram POST": {
+        "main": [
+          [
+            {
+              "node": "Responder 200 OK Meta",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Processar Evento Instagram",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Consultar Produtos Atualizados (Supabase)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Processar Evento Instagram": {
+        "main": [
+          [
+            {
+              "node": "É Direct Message (DM)?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Consultar Produtos Atualizados (Supabase)": {
+        "main": [
+          []
+        ]
+      },
+      "É Direct Message (DM)?": {
+        "main": [
+          [
+            {
+              "node": "Buscar Perfil IG (Nome)",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Montar Prompt Comentário Marcão",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Buscar Perfil IG (Nome)": {
+        "main": [
+          [
+            {
+              "node": "Buscar Memória Contexto (Supabase)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Buscar Memória Contexto (Supabase)": {
+        "main": [
+          [
+            {
+              "node": "É Mensagem de Áudio?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "É Mensagem de Áudio?": {
+        "main": [
+          [
+            {
+              "node": "Baixar Áudio Direct IG",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Montar Prompt Direct Texto",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Baixar Áudio Direct IG": {
+        "main": [
+          [
+            {
+              "node": "Montar Prompt Direct Áudio",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Montar Prompt Direct Áudio": {
+        "main": [
+          [
+            {
+              "node": "OpenRouter - Marcão Direct",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Montar Prompt Direct Texto": {
+        "main": [
+          [
+            {
+              "node": "OpenRouter - Marcão Direct",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "OpenRouter - Marcão Direct": {
+        "main": [
+          [
+            {
+              "node": "Enviar Resposta Direct IG",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Enviar Resposta Direct IG": {
+        "main": [
+          [
+            {
+              "node": "Salvar Memória Contexto (Supabase)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Montar Prompt Comentário Marcão": {
+        "main": [
+          [
+            {
+              "node": "OpenRouter - Marcão Comentário",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "OpenRouter - Marcão Comentário": {
+        "main": [
+          [
+            {
+              "node": "Processar Decisão Comentário e DM",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Processar Decisão Comentário e DM": {
+        "main": [
+          [
+            {
+              "node": "Responder Comentário IG",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Responder Comentário IG": {
+        "main": [
+          [
+            {
+              "node": "Deve Enviar Direct Privado?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Deve Enviar Direct Privado?": {
+        "main": [
+          [
+            {
+              "node": "Enviar Direct Privado IG",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Evandrosilva Silva",
     "name": null,
-    "description": null
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-11-21T23:24:09.363Z",
+    "updatedAt": "2026-11-21T23:24:09.363Z",
+    "workflowPublishHistory": [
+      {
+        "id": 791,
+        "workflowId": "jlG1OPBCsaAx75zQ",
+        "versionId": "abd1ca79-91fc-400c-bb0e-9e3fa74dfa7b",
+        "event": "activated",
+        "userId": "5f37e26b-bd4f-4342-84e1-d7060e6c7c97",
+        "createdAt": "2026-11-21T23:24:09.656Z"
+      }
+    ]
+  },
+  "parentFolder": {
+    "id": "TAqQcsEWx0oy0AgI",
+    "name": "MarcaoPersonal",
+    "parentFolderId": null,
+    "createdAt": "2026-10-27T13:09:06.507Z",
+    "updatedAt": "2026-10-27T13:09:06.507Z"
   }
 }
