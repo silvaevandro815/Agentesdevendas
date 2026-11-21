@@ -69,6 +69,12 @@ METADADOS_CONHECIDOS = {
         "claims_permitidos": ["Nº 1 do mundo", "Predomínio de isolado", "24g proteína microfiltrada", "Digestão perfeita"],
         "pitch_diario": "R$ 8,33 por dia para colocar no seu corpo o padrão ouro mundial absoluto de proteína!"
     },
+    "SMARTWATCH-D20-SHOPEE": {
+        "doses": 30,
+        "beneficio_chave": "Smartwatch Esportivo D20 Pro Bluetooth com monitor cardíaco, contador de passos, queima de calorias e notificações. A solução perfeita e ultra acessível para quem não tem relógio inteligente e quer monitorar o cardio no pulso.",
+        "claims_permitidos": ["Monitor cardíaco e pressão", "Contador de passos e calorias", "Conexão Bluetooth celular", "Preço ultra popular Shopee"],
+        "pitch_diario": "Apenas R$ 0,70 por dia (R$ 20,99 total) para ter monitor cardíaco e passos no seu pulso o dia todo!"
+    },
     "SMARTWATCH-XIAOMI-BAND": {
         "doses": 365,
         "beneficio_chave": "Xiaomi Smart Band 8 com monitoramento contínuo de frequência cardíaca, SpO2, rastreio de sono profundo, mais de 150 esportes e sincronização com Strava.",
@@ -217,6 +223,15 @@ async def obter_produtos_ativos() -> list:
                 "custo_dia": 0.41,
                 "pitch_diario": "Apenas R$ 0,41 por dia para ter a tecnologia Xiaomi de bioimpedância e 3 meses de mentoria VIP comigo!",
                 "beneficio_chave": "13 métricas corporais BIA de precisão clínica e liberação de 3 meses de mentoria VIP no WhatsApp."
+            },
+            {
+                "sku": "SMARTWATCH-D20-SHOPEE",
+                "name": "Smartwatch Esportivo D20 Pro Bluetooth (Shopee)",
+                "price": 20.99,
+                "affiliate_url": "https://s.shopee.com.br/5AuEpD0Jrr",
+                "custo_dia": 0.70,
+                "pitch_diario": "Apenas R$ 0,70 por dia para ter monitor cardíaco e passos no seu pulso o dia todo!",
+                "beneficio_chave": "Monitor cardíaco, contador de passos e calorias no pulso para quem não tem relógio inteligente."
             },
             {
                 "sku": "CREATINA-PRIME",

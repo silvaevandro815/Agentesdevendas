@@ -319,7 +319,15 @@ MAPA_DORES_SHOPEE = {
         "gatilhos_b": ["onde apoiar", "nao tenho onde", "dificuldade de filmar", "suporte", "onde comprar"]
     },
 
-    # 4. Monitoramento & Balança de Bioimpedância
+    # 4. Monitoramento, Balança & Smartwatch
+    "smartwatch": {
+        "aliases": ["nao tenho relogio", "não tenho relógio", "nao tenho smartwatch", "qual relogio comprar", "onde comprar relogio", "qual smartwatch comprar", "sem relogio", "sem relógio", "relogio barato", "smartwatch barato", "como conectar relogio", "indica um relogio", "indica um smartwatch"],
+        "termo_busca": "smartwatch d20 relogio inteligente bluetooth monitor cardiaco",
+        "motivo": "monitorar frequência cardíaca, contagem de passos, calorias queimadas e ritmo de cardio no pulso o dia todo",
+        "estudo": "o monitoramento em tempo real aumenta em 42% a queima calórica e a aderência aos treinos aeróbicos",
+        "gatilhos_a": ["relogio", "relógio", "smartwatch", "smartband", "pulso"],
+        "gatilhos_b": ["nao tenho", "não tenho", "qual comprar", "onde comprar", "barato", "sem", "indica", "recomenda", "preco", "preço"]
+    },
     "balanca": {
         "aliases": ["qual balanca de bioimpedancia", "quero comprar a balanca", "onde compro a balanca", "link da balanca", "como medir percentual de gordura", "como vejo minha gordura visceral"],
         "termo_busca": "balanca bioimpedancia bluetooth",
@@ -397,8 +405,8 @@ async def prescrever_produto_autonomo(mensagem_aluno: str, sub_id: str = "aluno"
     # Se não tiver nenhum indicador de dor, dificuldade ou pedido de recomendação, ABORTA IMEDIATAMENTE!
     t_low = mensagem_aluno.lower()
     tem_dor = any(w in t_low for w in ['dor', 'doendo', 'doi', 'dói', 'machuc', 'incomod', 'assadur', 'assando', 'travou', 'travad', 'estala', 'estalando'])
-    tem_dificuldade = any(w in t_low for w in ['dificil', 'difícil', 'dificuldade', 'nao consigo', 'não consigo', 'empelota', 'grudando', 'gruda', 'chao duro', 'chão duro'])
-    tem_duvida_rotina = 'como' in t_low and any(w in t_low for w in ['sei', 'faco', 'faço', 'pesar', 'bater', 'triturar', 'coar', 'filtrar', 'medir'])
+    tem_dificuldade = any(w in t_low for w in ['dificil', 'difícil', 'dificuldade', 'nao consigo', 'não consigo', 'empelota', 'grudando', 'gruda', 'chao duro', 'chão duro', 'nao tenho', 'não tenho', 'sem relogio', 'sem relógio', 'sem smartwatch'])
+    tem_duvida_rotina = 'como' in t_low and any(w in t_low for w in ['sei', 'faco', 'faço', 'pesar', 'bater', 'triturar', 'coar', 'filtrar', 'medir', 'conectar'])
     tem_pedido_compra = any(w in t_low for w in ['onde compro', 'onde eu compro', 'onde acho', 'onde encontro', 'qual comprar', 'qual você recomenda', 'qual voce recomenda', 'qual você indica', 'qual voce indica', 'qual você usa', 'qual voce usa', 'qual modelo', 'me passa o link', 'me manda o link', 'tem na shopee', 'quero comprar', 'link da', 'link do'])
 
     if not (tem_dor or tem_dificuldade or tem_duvida_rotina or tem_pedido_compra or 'link' in t_low or 'shopee' in t_low):

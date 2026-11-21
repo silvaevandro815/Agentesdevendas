@@ -507,3 +507,21 @@ unpod_open_engine.py: Gerenciador de GPU Serverless para geração de takes 3D h
   * `style: 0.20`: arfar e cadência de áudio real de WhatsApp.
   * `use_speaker_boost: True`: clareza e reforço de frequências graves.
 - **Fallback Automático Resiliente:** Integrado em `marcao_voice.py` e `marcao_engine.py` como motor primário. Se a cota mensal da ElevenLabs atingir o limite ou houver instabilidade de rede, comuta instantaneamente para o fallback nativo sem interrupção de serviço aos alunos.
+
+## 30. Resolução Definitiva Strava Hub, Blindagem da Kamila & Smartwatch Shopee Homologado
+- **Arquitetura Strava OAuth & Callback 100% Funcional no Domínio Oficial:**
+  * **Causa Raiz Anterior do Erro Strava:** O endpoint de autorização do Strava estava gerando `redirect_uri` para `https://api.marcaopersonal.com/api/integracoes/strava/callback` (subdomínio sem certificado SSL ou 503) e com fallback incorreto de Client ID (`146959`). Além disso, o callback só existia no painel admin interno e não existia no container público de `apps/site/server.js`.
+  * **Correção Definitiva:**
+    1. Endpoint `/api/integracoes/strava/oauth` em `apps/site/server.js` atualizado com `client_id=187215` e `redirect_uri=https://marcaopersonal.com/api/integracoes/strava/callback`.
+    2. Endpoint `/api/integracoes/strava/callback` implementado com primor visual em `apps/site/server.js`: troca o authorization code por tokens oficiais na API do Strava (`https://www.strava.com/oauth/token`), persiste tokens em `fichas_alunos` e `clientes_balanca`, dispara mensagens comemorativas automáticas no WhatsApp via Evolution API e renderiza página de confirmação Dark/Neon com botão "VOLTAR AO MEU PORTAL DO ALUNO".
+    3. Handshake e Webhook de atividades Strava (`GET` e `POST` em `/api/integracoes/strava/webhook`) implementados para auditoria diária contínua.
+- **Blindagem Total da Aluna Kamila Vitória (Fim da Insistência em Dados):**
+  * **Causa Raiz da Insistência:** O nó `Montar Prompt com Memória e Visão` no workflow n8n `F3` (`9mM5ZK32cUTVXpNO`) possuía um bloco obsoleto de onboarding forçando o Marcão a cobrar nome completo, sobrenome, peso e altura.
+  * **Correção no n8n F3:** Bloco reformulado com status de **ALUNA VIP OFICIAL E ATIVA**. Ficha 100% consolidada (Kamila Vitória de Paula Silva, 19 anos, 1.60m, 65kg, treino ABC Academia Feminino, 2.3L água, 110g proteína). Adicionada **PROIBIÇÃO ABSOLUTA E TERMINANTE** de perguntar ou cobrar nome, sobrenome, peso ou altura. O Marcão foca exclusivamente em motivação, avaliação de pratos de comida por visão computacional e auditoria de treinos.
+- **Smartwatch Homologado na Shopee para Alunos Sem Relógio (Preço Ultra Popular):**
+  * **Produto Campeão:** *Smartwatch Esportivo D20 Pro / Fitpro Bluetooth* com monitor cardíaco, contador de passos e calorias queimadas.
+  * **Preço:** R$ 20,99 (apenas **R$ 0,70 por dia**, menos que um cafezinho!).
+  * **Link Oficial de Afiliado:** `https://s.shopee.com.br/5AuEpD0Jrr`.
+  * **Habilidade Autônoma Integrada:** Se o aluno disser que não tem relógio inteligente ("não tenho relógio", "sem smartwatch", "qual relógio comprar?"), o Marcão apresenta duas opções:
+    1. *Imediata e 100% gratuita:* Usar o app oficial do Strava direto no smartphone (apertar "Gravar" e colocar no bolso).
+    2. *Relógio no pulso:* Adquirir o Smartwatch Esportivo D20 Pro na Shopee por apenas R$ 0,70/dia com o link oficial.
