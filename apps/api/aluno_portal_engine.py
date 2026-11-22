@@ -809,7 +809,9 @@ async def obter_dados_portal_aluno(identificador: str) -> Dict[str, Any]:
 
     # Fotos de evolução
     fotos = ficha.get("fotos_criptografadas") or []
-    tem_fotos = len(fotos) > 0
+    metas_aluno = ficha.get("metas_nutricionais") or {}
+    dispensa_fotos = bool(ficha.get("dispensa_fotos") or metas_aluno.get("dispensa_fotos") or metas_aluno.get("recusou_fotos"))
+    tem_fotos = len(fotos) > 0 or dispensa_fotos
 
     t_obj = ficha.get("treino_atual") or {}
     ultimo_treino = (
@@ -897,11 +899,15 @@ async def obter_dados_portal_aluno(identificador: str) -> Dict[str, Any]:
         "fotos_evolucao": {
             "tem_fotos": tem_fotos,
             "qtd_fotos": len(fotos),
+            "dispensa_fotos": dispensa_fotos,
             "parecer_marcao": (
-                "Postura alinhada e redução perceptível de retenção hídrica na região abdominal e flancos. "
-                "Para os próximos 15 dias, manter o déficit e caprichar na hidratação para secar a gordura superficial."
-                if tem_fotos else
-                "Ainda não recebemos suas fotos de frente e costas! Mande no WhatsApp para eu traçar seu antes/depois completo!"
+                "Avaliação personalizada focada em peso, medidas e desempenho nos treinos conforme sua preferência! Foco total na disciplina diária!"
+                if dispensa_fotos else (
+                    "Postura alinhada e redução perceptível de retenção hídrica na região abdominal e flancos. "
+                    "Para os próximos 15 dias, manter o déficit e caprichar na hidratação para secar a gordura superficial."
+                    if len(fotos) > 0 else
+                    "Ainda não recebemos suas fotos de frente e costas! Mande no WhatsApp para eu traçar seu antes/depois completo!"
+                )
             )
         },
         "arsenal_produtos": arsenal_produtos,

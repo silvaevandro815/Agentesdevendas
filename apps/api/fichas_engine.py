@@ -1401,7 +1401,8 @@ def identificar_campos_pendentes_ficha(ficha: dict) -> dict:
     tem_restricoes = bool(restricoes and str(restricoes).strip())
 
     fotos = ficha.get("fotos_criptografadas") or []
-    tem_fotos = isinstance(fotos, list) and len(fotos) > 0
+    dispensa_fotos = bool(ficha.get("dispensa_fotos") or metas.get("dispensa_fotos") or metas.get("recusou_fotos"))
+    tem_fotos = dispensa_fotos or (isinstance(fotos, list) and len(fotos) > 0)
 
     tem_bioimpedancia = bool(metas.get("dados_bioimpedancia"))
 

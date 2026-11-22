@@ -1236,6 +1236,12 @@ class MarcaoAutonomousScheduler:
                 if filtro_aluno and filtro_aluno not in tel and filtro_aluno.lower() not in nome.lower():
                     continue
 
+                # Se o aluno dispensou ou cancelou fotos corporais, respeitar 100% e JAMAIS cobrar!
+                metas_nutri = a.get("metas_nutricionais") or {}
+                if a.get("dispensa_fotos") or metas_nutri.get("dispensa_fotos") or metas_nutri.get("recusou_fotos"):
+                    bloqueados_dedup.append({"aluno": nome, "telefone": tel, "motivo": "fotos_dispensadas_pelo_aluno"})
+                    continue
+
                 if not self.adquirir_trava_deduplicacao("fotos_corporais_mensal", tel, ttl_segundos=86400 * 25):
                     bloqueados_dedup.append({"aluno": nome, "telefone": tel, "motivo": "ja_cobrado_este_mes"})
                     continue
@@ -1267,7 +1273,8 @@ class MarcaoAutonomousScheduler:
                     "A foto precisa ser A FAVOR DA LUZ: luz natural vindo de frente em direção a você pra máxima nitidez!",
                     "1 foto de FRENTE e 1 de COSTAS, corpo inteiro, com menos roupa possível pra eu avaliar tudo.",
                     "Dica: apoia o celular na janela de frente pra luz com timer de 5 a 10s, ou pede pra alguém tirar!",
-                    "Fica tudo em cofre militar criptografado. Daqui a 30 dias peço novas pra comparar antes e depois! Tamo junto! 👊🔥"
+                    "Pode ficar 100% tranquila(o): nem o criador do sistema tem acesso para ver as fotos no banco! Ninguém humano vê nada, só a IA lê.",
+                    "Assim que eu confirmar que recebi e a IA ler, você já pode apagar a foto da nossa conversa no WhatsApp! E se preferir não fazer por foto, me avisa que cancelo na sua ficha na hora! Tamo junto! 👊🦁"
                 ]
 
                 for b in baloes:
