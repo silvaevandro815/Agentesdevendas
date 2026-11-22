@@ -564,3 +564,10 @@ unpod_open_engine.py: Gerenciador de GPU Serverless para geração de takes 3D h
 - **Blindagem da Esteira dos 365 Dias:**
   * Todo card gerado para o catálogo de 365 dias DEVE conter a imagem do alimento/produto correspondente como protagonista visual absoluto.
 
+## 34. Padrão Visual Anti-Imperfeições (Diretriz de Composição de Evandro Gallina)
+- **Ajustes de Precisão Realizados pelo Diretor Evandro no Canva (`DAHbrUOZsZo`):**
+  1. *Fundo em Sangria Total (Full Bleed):* Imagem de fundo esticada para além da prancheta (top: -247px, left: -29px, width: 1356px, height: 1778px), aniquilando costuras, dobras aparentes e linhas de corte periféricas.
+  2. *Lâmina Diagonal Laranja:* Redimensionada e ajustada (top: -68px, left: 437px, width: 686px, height: 1350px), consolidando uma área diagonal sólida e vibrante.
+  3. *Alimento Recortado com Sobreposição Estratégica:* A beterraba com fundo transparente foi ampliada (width: 636px, height: 1058px, top: 215px, left: 474px) e posicionada de modo que seu contorno cubra a junção da barra laranja com o fundo escuro, mascarando imperfeições residuais e gerando efeito tridimensional sem invadir o bloco de texto (margem esquerda segura em x <= 474px).
+- **Padronização para Toda a Esteira:** Esta composição geométrica torna-se a referência definitiva de layout para a automação diária dos 365 posts no Canva.
+
