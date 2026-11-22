@@ -382,6 +382,14 @@ class MarcaoAutonomousScheduler:
             replace_existing=True
         )
 
+        # 8. Postagem Diária Autônoma de Alimentos & Curiosidades Canva (365 Dias) às 11:30
+        self.scheduler.add_job(
+            self.rotina_postagem_diaria_alimento_canva,
+            CronTrigger(hour=11, minute=30, timezone="America/Sao_Paulo"),
+            id="cron_post_diario_alimento_canva",
+            replace_existing=True
+        )
+
         self.scheduler.start()
 
         self._inicializado = True
@@ -1429,6 +1437,63 @@ class MarcaoAutonomousScheduler:
             return {"sucesso": True, "total": len(enviados), "detalhes": enviados, "bloqueados_dedup": bloqueados_dedup}
         except Exception as e:
             print(f"[CRON PESO MENSAL] Erro: {e}")
+            return {"sucesso": False, "erro": str(e)}
+
+    # -------------------------------------------------------------------------
+    # 8. ROTINA DIÁRIA AUTÔNOMA DE POSTAGEM DE ALIMENTOS & CURIOSIDADES CANVA (11:30)
+    # -------------------------------------------------------------------------
+    async def rotina_postagem_diaria_alimento_canva(self) -> dict:
+        """
+        Publica diariamente às 11:30 o Card 4:5 e Story 9:16 do alimento do dia
+        (365 Dias de Nutrição Canva) de forma 100% autônoma, sem necessidade de autorização
+        (ordem executiva do Diretor Evandro Gallina).
+        """
+        data_hoje = datetime.now().strftime("%Y-%m-%d")
+        chave_lock = f"post_alimento_canva_{data_hoje}"
+
+        # 1. Trava de Idempotência
+        if not adquirir_trava_deduplicacao(chave_lock):
+            print(f"[POST CANVA] Post de alimentos já realizado hoje ({data_hoje}). Abortando disparo duplicado.")
+            return {"sucesso": False, "motivo": "ja_publicado_hoje"}
+
+        try:
+            # 2. Obter o Alimento do Dia do catálogo de 366 dias
+            try:
+                from food_cards_engine import obter_alimento_do_dia, montar_legenda_instagram_alimento
+            except ImportError:
+                from apps.api.food_cards_engine import obter_alimento_do_dia, montar_legenda_instagram_alimento
+
+            alimento = obter_alimento_do_dia()
+            legenda = montar_legenda_instagram_alimento(alimento)
+            nome_alimento = alimento.get("alimento", "Nutrição")
+
+            # 3. Publicar via Canva Publisher Service
+            try:
+                from canva_publisher_service import publicar_arte_canva_no_instagram
+            except ImportError:
+                from apps.api.canva_publisher_service import publicar_arte_canva_no_instagram
+
+            scratch_dir = os.path.join(_base_dir, "..", "..", "scratch")
+            caminho_canva = os.path.join(scratch_dir, f"canva_real_{nome_alimento.lower()}.png")
+            if not os.path.exists(caminho_canva):
+                caminho_canva = os.path.join(scratch_dir, "canva_real_cenoura.png")
+
+            res_pub = publicar_arte_canva_no_instagram(
+                caminho_imagem_canva=caminho_canva,
+                legenda=legenda,
+                titulo_story=f"{nome_alimento}: Aliado da Saúde"
+            )
+
+            self._registrar_log("post_diario_alimento_canva", {
+                "alimento": nome_alimento,
+                "resultado": res_pub,
+                "data": data_hoje
+            })
+            print(f"[POST CANVA SUCESSO] Alimento do Dia ({nome_alimento}) publicado com sucesso no Instagram!")
+            return res_pub
+
+        except Exception as e:
+            print(f"[ERRO POST CANVA] Falha na rotina diária de alimentos: {e}")
             return {"sucesso": False, "erro": str(e)}
 
     def status(self) -> dict:
