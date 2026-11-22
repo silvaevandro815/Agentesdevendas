@@ -551,3 +551,16 @@ unpod_open_engine.py: Gerenciador de GPU Serverless para geração de takes 3D h
      - **Link do Post no Feed:** `https://www.instagram.com/p/DgDmh5Zjxd2/`.
      - **Story Oficial:** Publicado simultaneamente nos Stories (ID: `18390525988237892`).
      - **Registro de Auditoria:** Gravado com status `published` no Supabase `content_calendar`.
+
+## 33. Protagonismo Fotográfico no Canva (Regra do Objeto Real do Tema) & Correção da Beterraba
+- **Falha Identificada pelo Diretor Evandro:**
+  * No card duplicado da Beterraba (`DAHbrUOZsZo`), os textos haviam sido atualizados, porém a foto à direita continuava sendo a do homem segurando uma cenoura.
+  * O Diretor determinou a **REGRA INVIOLÁVEL DE PROTAGONISMO DO TEMA**: o tema principal abordado (Beterraba, Whey Protein, Carne Vermelha, Açúcar, Anti-inflamatório, etc.) DEVE ter uma fotografia macro ultra-realista de alta definição do exato objeto/alimento no card.
+- **Correção Executada no Canva (`DAHbrUOZsZo`):**
+  * Gerada foto macro ultra-realista em close-up de beterrabas frescas fatiadas com gotas de água e textura carmim profunda via Canva AI (`MAHbrls0WH4`).
+  * Aplicado `update_fill` no locator `PB4XYy5jKCvQ8XWy-LBvVqNJj3xWdfz6Q` substituindo o homem com a cenoura pela fotografia da beterraba.
+  * Card da Beterraba atualizado e salvo definitivamente no Canva na pasta oficial `Marcão Personal - 365 Dias de Alimentos` (`https://www.canva.com/folder/FAHbrXwZDqc`).
+  * Link de edição: `https://www.canva.com/d/rRFSG1SBM5hwgIM`.
+- **Blindagem da Esteira dos 365 Dias:**
+  * Todo card gerado para o catálogo de 365 dias DEVE conter a imagem do alimento/produto correspondente como protagonista visual absoluto.
+
