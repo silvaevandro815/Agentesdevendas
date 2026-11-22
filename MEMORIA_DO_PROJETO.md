@@ -538,3 +538,16 @@ unpod_open_engine.py: Gerenciador de GPU Serverless para geração de takes 3D h
     1. *Poda Automática de Histórico:* Limitado às últimas 8 mensagens no n8n F3, reduzindo o payload de 12.000 para ~1.500 tokens.
     2. *Fallback Automático para Gemini 3.5 Flash:* Em `apps/api/main.py`, se o OpenRouter retornar status != 200 (402, 429, timeout), a chamada comuta instantaneamente para a Google Gemini API oficial (`gemini-3.5-flash`), retornando HTTP 200 com a resposta do personal.
     3. *Fallback Local Humanizado no Feminino:* Em `Processar Despacho do Chefe`, o fallback de contingência foi reprogramado para reconhecer mulheres e responder dúvidas de rotina no feminino ("Pode sim, minha guerreira! 🥣💪").
+
+## 32. Ativação da Esteira Diária de Alimentos Canva (365 Dias) & Publicação Imediata do Post do Dia
+- **Diagnóstico da Ausência do Post das 11:30h (22/11):**
+  * Um Killswitch de segurança havia sido instalado no sábado (21/11 às 16:37h) para congelar temporariamente as postagens diárias até que o Diretor Evandro validasse o design e a identidade visual definitiva.
+  * Na manhã de domingo (22/11 às 07:15h), o Diretor aprovou o padrão do Canva (Cenoura / Alimentos) e solicitou o catálogo de 365 dias de nutrição. O motor `food_cards_engine.py` e a base `alimentos_365_dias.json` foram criados, mas a conversa migrou imediatamente para a urgência da API do Strava antes que as travas do agendador automático fossem removidas. Como resultado, o gatilho das 11:30h foi abortado pelo Killswitch remanescente.
+- **Correção Executada de Ponta a Ponta:**
+  1. *Killswitches Extirpados:* Travas de suspensão removidas em `apps/api/creative_factory.py`, `apps/api/instagram_executor.py` e `n8n/workflows/I2_Fabrica_Criativos_Instagram.json`. A proibição definitiva de vídeos/Reels permanece ativa e inviolável.
+  2. *Geração e Composição Gráfica do Card Aprovado (Cenoura):* Card vertical 4:5 (1080x1350) com foto macro suculenta no topo e card Dark Glassmorphism na base gerado via Pillow de alta resolução (`card_cenoura_protagonista_4x5.jpg`). Story complementar 9:16 (1080x1920) montado para divulgação simultânea (`story_cenoura_marcao_9x16.jpg`).
+  3. *Upload e Publicação Imediata no Instagram Oficial (`@marcaopersonalfitness`):*
+     - **Post no Feed:** Publicado com sucesso via Meta Graph API oficial (ID: `18434918260151917`).
+     - **Link do Post no Feed:** `https://www.instagram.com/p/DgDmh5Zjxd2/`.
+     - **Story Oficial:** Publicado simultaneamente nos Stories (ID: `18390525988237892`).
+     - **Registro de Auditoria:** Gravado com status `published` no Supabase `content_calendar`.

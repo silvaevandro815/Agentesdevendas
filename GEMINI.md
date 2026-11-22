@@ -78,12 +78,13 @@ Este documento é lido automaticamente no início de **toda e qualquer nova conv
 - **ZERO INTERRUPÇÃO POR CAIXAS DE DIÁLOGO DE URL/REDE:** É terminantemente proibido utilizar ferramentas ou comandos que disparem modais de segurança pedindo permissão de URL na interface do Antigravity. Para qualquer scraping, download de imagens, buscas web ou requisições HTTP, utilize exclusivamente scripts Python via terminal (`requests`/`httpx`), que rodam diretamente no ambiente sem disparar popups de autorização.
 - **PROIBIDO USAR FERRAMENTAS DE INTERROGAÇÃO (`ask_question`):** Decisões de arquitetura, parâmetros de execução e ajustes devem ser resolvidos com inteligência técnica, bom senso comercial e alinhamento às diretrizes deste documento sem transferir a carga decisória operacional para o usuário.
 
-## 9. Regra Inviolável de Publicação no Instagram: Publicações Pausadas (Directs e Comentários 100% Ativos)
+## 9. Regra Inviolável de Publicação no Instagram: Postagens Diárias de Alimentos 4:5 + Stories Ativas (Vídeos/Reels Proibidos)
 - **PROIBIÇÃO PERMANENTE DE VÍDEOS / REELS:** Por determinação executiva expressa do Diretor Evandro Gallina, o Marcão Personal **NÃO** deve postar vídeos no Instagram. Toda a esteira de publicação automática de vídeos/Reels (`I3 - Publicador de Reels`) está permanentemente desativada.
-- **SUSPENSÃO TEMPORÁRIA DE CARROSSÉIS, CARDS E STORIES:** Por determinação expressa do Diretor Evandro, postagens diárias de carrosséis e cards estão temporariamente suspensas com Killswitches ativos no n8n (I2) e Python (creative_factory). Quando reativado, opera 100% através de:
-  * **Carrosséis Multi-Lâminas (3 a 10 lâminas):** Focados em máxima alavanca de salvamento (Saves) e compartilhamento (Shares), com capa/gancho de curiosidade, lâminas didáticas de quebra de mitos/fisiologia, e lâmina final com CTA oficial.
-  * **Cards Estáticos & Stories:** Imagens cinematográficas com headline de impacto e tipografia profissional, acompanhadas de stories com artes visuais complementares.
-- **MATRIZ DE PERSONAS SEGMENTADAS POR PRODUTO NOS CARDS/CARROSSÉIS:**
+- **POSTAGENS DIÁRIAS ATIVAS NO PADRÃO CANVA (365 DIAS DE ALIMENTOS):** A esteira diária opera 100% no padrão visual aprovado pelo Diretor Evandro no Canva:
+  * **Card Estático 4:5 no Feed (1080x1350):** Fotografia macro gastronômica ultra-realista no topo com card Dark Glassmorphism na base contendo headline de longevidade/emagrecimento, subheadline, bullets escaneáveis, destaque bioquímico e a Regra de Ouro do Treinador Marcão.
+  * **Story Correspondente 9:16 (1080x1920):** Publicação simultânea nos Stories com chamada de impacto e ponte para o post do Feed.
+  * **Directs e Comentários 100% Ativos (`I1`):** Respostas automáticas em 2 a 4 balões curtos no Direct e saudações ultra-sucintas nos comentários públicos.
+- **MATRIZ DE PERSONAS SEGMENTADAS POR PRODUTO NOS DEMAIS CARDS/CARROSSÉIS:**
   * **Rosto de Evandro com IA:** Utilizado como fundador e atleta para o Carro-Chefe (Balança Shopee / Xiaomi), Creatina, Smartwatch, treino e performance geral.
   * **Personas Comuns Segmentadas:** Mulheres atléticas (treino feminino, glúteos, colágeno, creatina feminina), homens maduros e grisalhos de 55 a 65 anos (vigor masculino, articulações, Caneta Azempika — *LEMBRETE: estritamente proibido o rosto de Evandro para produtos de potência sexual*), corredores (smartwatch/GPS).
 

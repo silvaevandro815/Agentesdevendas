@@ -1947,10 +1947,6 @@ def publicar_card_instagram(image_url, legenda):
     """
     Publica um Card Único de imagem no Instagram (@marcaopersonalfitness).
     """
-    # TRAVA EXECUTIVA INVIOLÁVEL: PUBLICAÇÃO DE CARROSSÉIS E CARDS NO INSTAGRAM DESATIVADA PELO DIRETOR EVANDRO
-    print("[INSTAGRAM KILLSWITCH] Publicação de cards pausada pelo Diretor Evandro. Abortando execução.")
-    return {"sucesso": False, "pausado": True, "motivo": "publicacoes_pausadas_pelo_diretor"}
-
     if not INSTAGRAM_ACCESS_TOKEN or not INSTAGRAM_ACCOUNT_ID:
         return {"sucesso": False, "erro": "Credenciais do Instagram ausentes"}
 
@@ -2091,10 +2087,6 @@ def publicar_story_instagram(image_url):
     Publica uma imagem no Instagram Stories (@marcaopersonalfitness).
     Requer imagem na proporção 9:16 (1080x1920).
     """
-    # TRAVA EXECUTIVA INVIOLÁVEL: PUBLICAÇÃO DE STORIES NO INSTAGRAM DESATIVADA PELO DIRETOR EVANDRO
-    print("[INSTAGRAM KILLSWITCH] Publicação de stories pausada pelo Diretor Evandro. Abortando execução.")
-    return {"sucesso": False, "pausado": True, "motivo": "publicacoes_pausadas_pelo_diretor"}
-
     if not INSTAGRAM_ACCESS_TOKEN or not INSTAGRAM_ACCOUNT_ID:
         return {"sucesso": False, "erro": "Credenciais do Instagram ausentes"}
 

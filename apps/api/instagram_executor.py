@@ -207,10 +207,6 @@ def executar_postagem_solicitada(texto_comando: str) -> dict:
     4. Upload para CDN Supabase.
     5. Publicação oficial no Instagram (@marcaopersonalfitness).
     """
-    # TRAVA EXECUTIVA INVIOLÁVEL: PUBLICAÇÕES NO INSTAGRAM PAUSADAS PELO DIRETOR EVANDRO
-    print("[INSTAGRAM KILLSWITCH] Publicações pausadas pelo Diretor Evandro. Abortando executar_postagem_solicitada.")
-    return {"sucesso": False, "pausado": True, "mensagem": "Publicações no Instagram estão pausadas por ordem do Diretor Evandro."}
-
     print(f"[INSTA_EXEC] Interpretando comando do Chefe com Diretor de Arte IA...")
     plano = interpretar_comando_com_ia(texto_comando)
     print(f"[INSTA_EXEC] Plano Editorial: Headline='{plano.get('headline')}' | Destino='{plano.get('destino')}' | CTA='{plano.get('cta_card')}'")
