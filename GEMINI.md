@@ -48,11 +48,25 @@ Este documento é lido automaticamente no início de **toda e qualquer nova conv
     - Monitoramento de pedidos e comissões via `partnerOrderReport` e endpoints `/api/shopee/*`.
   * **Braip Integrado:** Token autenticado (`BRAIP_API_TOKEN`), Postbacks ativos em `https://n8n.marcaopersonal.com/webhook/braip-postback` (`cow5j2gy`), monitoramento em tempo real (`F4`) e recuperação automática de Pix/Boletos (`M8`).
   * **Amazon Associados Integrado:** Associate Tag Oficial `marcaopersona-20` ativa para todos os produtos físicos e de tecnologia fitness.
-- **Carro-Chefe Nº 1 — Balança Inteligente de Bioimpedância Shopee (R$ 34,90) com Mentoria VIP:**
-  * **Balança Inteligente Shopee Oficial (R$ 34,90, link `https://s.shopee.com.br/2BFoInIBeb`):** Carro-chefe absoluto e produto de entrada de maior conversão do ecossistema Marcão Personal (preço direto de fábrica na Shopee). Custo de apenas R$ 0,09 por dia!
-  * **Conexão e Ativação com Marcão:** O aluno sobe descalço na balança (display LED azul e 4 eletrodos BIA escaneiam 13 biomarcadores), abre o app no celular (Bluetooth BLE) e envia 1 print da tela no WhatsApp. A IA do Marcão com Visão Computacional Multimodal lê todos os 13 biomarcadores instantaneamente em 5 segundos e cadastra a evolução.
-  * **Gatilho Irresistível:** Quem compra a Balança destrava o acompanhamento com o Marcão no WhatsApp (anamnese, evolução física e análise de pratos de comida por foto) com transição suave para a assinatura VIP de R$ 19,90/mês na Stripe.
-  * **Opção Premium Alternativa:** Balança Xiaomi Mi Scale 2 Oficial mantida na Amazon (R$ 149,90, tag `marcaopersona-20`) para alunos que preferem o ecossistema Mi Fit / Amazon Prime.
+- **CARRO-CHEFE Nº 1 OFICIAL — KIT RESET 5 DIAS (PARCERIA KAMILA VITÓRIA + 40 DIAS DE CONSULTORIA VIP):**
+  * **Base de Conhecimento & Arquivos Oficiais:** Pasta `C:\Users\User\Desktop\Agentes de venda\kamila.RESET\` (`DOSSIE_CIENTIFICO_RESET_5_DIAS.md`, `BASE_CONHECIMENTO_RESET.json`, `TRANSCRICAO_AUDIOS_KAMILA.md` e `imagens/`).
+  * **O Produto:** Protocolo de 5 garrafinhas prontas de 500ml de chá funcional 100% natural, sem conservantes e sem açúcar, com blend de ervas (Cavalinha, Hibisco, Chá Preto/Verde, Cafeína Natural, Malva e Cardamomo) e sabores refrescantes de frutas:
+    - **Reset Tradicional (R$ 45,00 = R$ 9/dia):** Desinchaço, drenagem de retenção hídrica, energia, vitalidade e leveza.
+    - **Reset Turbo (R$ 75,00 = R$ 15/dia — Recomendado):** Todo o blend de ervas + **Fibras Solúveis Prebióticas** que regulam o intestino, alimentam bactérias boas, dão alta saciedade e cortam a vontade de doce/compulsão alimentar.
+  * **Gatilho Irresistível (Substitui a antiga regra da balança):** Quem compra o Kit Reset 5 Dias ganha **40 DIAS DE CONSULTORIA VIP GRÁTIS COM O TREINADOR MARCÃO** no WhatsApp! A Kamila envia o nome e WhatsApp do comprador (ou via `/api/reset/ativar-consultoria` / comando `"ativar reset Nome Telefone"`) para o Marcão recepcionar imediatamente.
+  * **Transição Pós-40 Dias:** Ao completar 40 dias de consultoria VIP, o sistema oferece automaticamente a continuidade pela assinatura **Stripe R$ 19,90/mês (sem multa de cancelamento)**.
+  * **Fluxo de Venda Final (WhatsApp, Instagram Direct, Comentários e Site):**
+    - Educar sempre (lead/aluno comum não sabe o que é o Reset!).
+    - Enviar link oficial de detalhes no site: `https://marcaopersonal.com/#reset`.
+    - Enviar IMEDIATAMENTE o contato WhatsApp personalizado da parceira **Kamila Vitória**: **`5532999120912`** (`(32) 99912-0912` — `https://wa.me/5532999120912?text=Ol%C3%A1%20Kamila!%20Vim%20por%20indica%C3%A7%C3%A3o%20do%20Treinador%20Marc%C3%A3o%20e%20quero%20garantir%20meu%20Kit%20Reset%205%20Dias!`).
+    - **PEDIDO OBRIGATÓRIO:** Pedir expressamente para o cliente dizer à Kamila que foi **indicação do Treinador Marcão** (reforçando que o Marcão fica muito feliz e que assim a Kamila libera os 40 dias VIP!).
+  * **Rotinas Autônomas Ativas (`apps/api/reset_engine.py` + `marcao_autonomous_cron.py`):**
+    - **1 Post Diário Inédito do Reset no Instagram (18:00h — Feed 4:5 + Story 9:16):** Imagens reais das garrafinhas com CTA para mandar mensagem no WhatsApp ou Direct do Marcão (mantendo intacto o post diário de alimentos Canva das 11:30h).
+    - **Follow-up Semanal (Terças 15:00h) + Regra de 40 Dias:** Pergunta aos alunos se conhecem o Reset; se disserem que já tomaram, grava `reset_status = 'ja_tomou'` e pausa novas ofertas por **40 dias**, voltando a oferecer após 40 dias para continuidade do tratamento!
+    - **Comentários do Instagram (`I1`):** Cruzamento de dados com Supabase + leitura da legenda do post + resposta pública ultra-sucinta (Regra 6) + Direct privado personalizado com a mesma consciência do WhatsApp!
+- **Equipamento Complementar de Bioimpedância — Balança Inteligente Shopee (R$ 34,90):**
+  * **Balança Inteligente Shopee Oficial (R$ 34,90, link `https://s.shopee.com.br/2BFoInIBeb`):** Produto complementar de alta conversão (apenas R$ 0,09/dia) para alunos que desejam medir os 13 biomarcadores corporais BIA em casa (Visão Computacional do Marcão lê o print do app em 5 segundos).
+  * **Opção Premium Alternativa:** Balança Xiaomi Mi Scale 2 Oficial na Amazon (R$ 149,90, tag `marcaopersona-20`).
 - **Catálogo Oficial Expandido e Mapeamento de Dores (Matriz de Disparo Autônomo):**
   * **Dor no joelho / articulações / tendões:** Ômega 3 Ultra Concentrado DUX + Colágeno com Ácido Hialurônico Nature's Prime.
   * **Cansaço / fraqueza / treino não rende:** Creatina Micronizada 100% Pura (Braip) ou Creatina Creapure DUX (Amazon). Custo diário de apenas R$ 1,68/dia!

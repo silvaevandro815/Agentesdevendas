@@ -40,6 +40,14 @@ EXCLUSAO_ESTRITA_JIDS = [
 
 # Catálogo Estratégico de Produtos & Mapeamento de Dores
 PRODUTOS_FOLLOWUP = {
+    "reset": {
+        "nome": "Kit Reset 5 Dias (Tradicional R$ 45 / Turbo R$ 75 + 40 Dias Consultoria VIP)",
+        "preco": "R$ 45,00 (Tradicional) ou R$ 75,00 (Turbo)",
+        "condicoes": "5 garrafinhas de 500ml 100% naturais + 40 dias de consultoria VIP grátis com o Marcão",
+        "link": "https://marcaopersonal.com/#reset",
+        "link_kamila": "https://wa.me/5532999120912?text=Ol%C3%A1%20Kamila!%20Vim%20por%20indica%C3%A7%C3%A3o%20do%20Treinador%20Marc%C3%A3o%20e%20quero%20garantir%20meu%20Kit%20Reset%205%20Dias!",
+        "foco": "Desinchar a barriga em 5 dias, drenar retenção de líquido, regular intestino, cortar vontade de doce e liberar 40 dias de consultoria VIP com o Marcão"
+    },
     "creatina": {
         "nome": "Creatina Micronizada 100% Pura Nature's Prime (300g)",
         "preco": "R$ 169,90",
@@ -157,19 +165,18 @@ def diagnosticar_dor_lead(lead: dict) -> dict:
             "baloes": baloes
         }
 
-    # 3. Caso Específico: Perder Barriga Pochete / Secar Rápido / Balança Inteligente
-    if any(k in conversa_completa for k in ["barriga", "pochete", "secar", "gordura", "emagrecer", "peso", "fome", "apetite"]):
-        prod = PRODUTOS_FOLLOWUP["balanca"]
+    # 3. Caso Específico: Perder Barriga Pochete / Desinchar / Secar Rápido / Kit Reset 5 Dias (Carro-Chefe Nº 1)
+    if any(k in conversa_completa for k in ["reset", "incha", "barriga", "pochete", "secar", "gordura", "emagrecer", "peso", "fome", "apetite", "doce", "intestino"]):
+        prod = PRODUTOS_FOLLOWUP["reset"]
         baloes = [
             f"Fala, {primeiro_nome}! Marcão na área! Passando pra saber como você tá! 🦁",
-            f"Lembrei da sua meta de queimar aquela gordurinha teimosa da barriga e desenhar o shape.",
-            f"Pra gente destravar sua evolução e eu montar sua dieta sob medida com 3 meses de consultoria VIP grátis comigo no WhatsApp:",
-            f"A Balança de Bioimpedância com App IA tá saindo por apenas R$ 129,90 no link oficial: {prod['link']}",
-            "Bora secar com acompanhamento de verdade? Conta comigo! 👊"
+            f"Lembrei da sua meta de desinchar a barriga, secar gordura e dar um start de verdade no seu shape.",
+            f"Você já conhece o Kit Reset 5 Dias? São 5 garrafinhas prontas de chá natural com ervas (Tradicional R$ 45 ou Turbo R$ 75 com fibras contra doces) que liberam 40 DIAS de Consultoria VIP comigo!",
+            f"Vê os detalhes aqui ({prod['link']}) e chama a Kamila no WhatsApp dizendo que foi indicação do Marcão: {prod['link_kamila']} 👊🔥"
         ]
         return {
-            "produto_chave": "balanca",
-            "dor_diagnosticada": "Gordura abdominal, secar barriga e consultoria VIP",
+            "produto_chave": "reset",
+            "dor_diagnosticada": "Desinchaço, gordura abdominal, controle de doces e consultoria VIP 40 dias",
             "baloes": baloes
         }
 

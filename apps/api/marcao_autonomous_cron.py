@@ -390,6 +390,30 @@ class MarcaoAutonomousScheduler:
             replace_existing=True
         )
 
+        # 9. Postagem Diária Autônoma do Carro-Chefe KIT RESET 5 DIAS no Instagram (Feed 4:5 + Story) às 18:00
+        self.scheduler.add_job(
+            self.rotina_postagem_diaria_reset_instagram,
+            CronTrigger(hour=18, minute=0, timezone="America/Sao_Paulo"),
+            id="cron_post_diario_reset_instagram",
+            replace_existing=True
+        )
+
+        # 10. Follow-up Semanal do KIT RESET 5 DIAS para todos os alunos (Terças às 15:00, respeitando 40 dias)
+        self.scheduler.add_job(
+            self.rotina_followup_semanal_reset,
+            CronTrigger(day_of_week="tue", hour=15, minute=0, timezone="America/Sao_Paulo"),
+            id="cron_followup_semanal_reset",
+            replace_existing=True
+        )
+
+        # 11. Auditoria Diária Pós-40 Dias do Reset -> Oferta Assinatura Stripe R$ 19,90/mês às 10:30
+        self.scheduler.add_job(
+            self.rotina_transicao_stripe_40_dias_reset,
+            CronTrigger(hour=10, minute=30, timezone="America/Sao_Paulo"),
+            id="cron_transicao_stripe_40d_reset",
+            replace_existing=True
+        )
+
         self.scheduler.start()
 
         self._inicializado = True
@@ -1494,6 +1518,80 @@ class MarcaoAutonomousScheduler:
 
         except Exception as e:
             print(f"[ERRO POST CANVA] Falha na rotina diária de alimentos: {e}")
+            return {"sucesso": False, "erro": str(e)}
+
+    async def rotina_postagem_diaria_reset_instagram(self):
+        """
+        JOB #9: Publica diariamente às 18:00 um post inédito do Carro-Chefe KIT RESET 5 DIAS
+        no Instagram (Feed 4:5 + Story 9:16) usando as imagens reais das garrafinhas,
+        com CTA convidando o interessado a chamar o Marcão no WhatsApp ou Direct.
+        """
+        data_hoje = datetime.now().strftime("%Y-%m-%d")
+        chave_lock = f"post_diario_reset_ig_{data_hoje}"
+        if not adquirir_trava_deduplicacao(chave_lock):
+            print(f"[POST RESET IG] Post diário do Reset já publicado hoje ({data_hoje}). Abortando duplicação.")
+            return {"sucesso": False, "motivo": "ja_publicado_hoje"}
+
+        try:
+            try:
+                from reset_engine import gerar_e_publicar_post_diario_reset
+            except ImportError:
+                from apps.api.reset_engine import gerar_e_publicar_post_diario_reset
+
+            res = await gerar_e_publicar_post_diario_reset()
+            self._registrar_log("post_diario_reset_instagram", {"data": data_hoje, "resultado": res})
+            print(f"[POST RESET IG] Execução concluída ({data_hoje}): {res.get('angulo_id')} -> sucesso={res.get('sucesso')}")
+            return res
+        except Exception as e:
+            print(f"[ERRO POST RESET IG] Falha na publicação diária do Reset: {e}")
+            return {"sucesso": False, "erro": str(e)}
+
+    async def rotina_followup_semanal_reset(self):
+        """
+        JOB #10: 1x por semana (Terça às 15:00) pergunta aos alunos ativos se já conhecem o Kit Reset 5 Dias.
+        Se já tomou, respeita bloqueio automático de 40 dias; após 40 dias oferece novo ciclo!
+        """
+        data_hoje = datetime.now().strftime("%Y-%m-%d")
+        chave_lock = f"followup_semanal_reset_{data_hoje}"
+        if not adquirir_trava_deduplicacao(chave_lock):
+            print(f"[FOLLOWUP RESET] Follow-up semanal do Reset já disparado hoje ({data_hoje}).")
+            return {"sucesso": False, "motivo": "ja_disparado_hoje"}
+
+        try:
+            try:
+                from reset_engine import executar_followup_semanal_reset
+            except ImportError:
+                from apps.api.reset_engine import executar_followup_semanal_reset
+
+            res = await executar_followup_semanal_reset(forcar=False)
+            self._registrar_log("followup_semanal_reset", res)
+            print(f"[FOLLOWUP RESET] Resultado semanal: {res}")
+            return res
+        except Exception as e:
+            print(f"[ERRO FOLLOWUP RESET] Falha no follow-up semanal do Reset: {e}")
+            return {"sucesso": False, "erro": str(e)}
+
+    async def rotina_transicao_stripe_40_dias_reset(self):
+        """
+        JOB #11: Verifica diariamente alunos vindos pelo Kit Reset que completaram os 40 dias grátis
+        e envia a oferta de continuidade VIP via Stripe (R$ 19,90/mês sem multa de cancelamento).
+        """
+        data_hoje = datetime.now().strftime("%Y-%m-%d")
+        chave_lock = f"transicao_stripe_40d_reset_{data_hoje}"
+        if not adquirir_trava_deduplicacao(chave_lock):
+            return {"sucesso": False, "motivo": "ja_executado_hoje"}
+
+        try:
+            try:
+                from reset_engine import verificar_transicao_stripe_40_dias
+            except ImportError:
+                from apps.api.reset_engine import verificar_transicao_stripe_40_dias
+
+            res = await verificar_transicao_stripe_40_dias()
+            self._registrar_log("transicao_stripe_40d_reset", res)
+            return res
+        except Exception as e:
+            print(f"[ERRO TRANSICAO STRIPE 40D] Falha: {e}")
             return {"sucesso": False, "erro": str(e)}
 
     def status(self) -> dict:

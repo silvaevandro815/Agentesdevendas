@@ -1668,6 +1668,55 @@ async def registrar_compra_produto_api(identificador: str, payload: dict):
     origem = (payload or {}).get("origem") or "Shopee/Braip"
     return await registrar_compra_produto_aluno(identificador, produto, origem)
 
+
+# -------------------------------------------------------------------------
+# CARRO-CHEFE Nº 1: KIT RESET 5 DIAS (PARCERIA KAMILA VITÓRIA + 40 DIAS VIP)
+# -------------------------------------------------------------------------
+@app.post("/api/reset/ativar-consultoria")
+async def api_ativar_consultoria_reset(payload: dict):
+    """Ativa 40 dias de consultoria VIP grátis para comprador do Kit Reset 5 Dias (enviado pela Kamila)."""
+    try:
+        from reset_engine import ativar_consultoria_40_dias_reset
+    except ImportError:
+        from apps.api.reset_engine import ativar_consultoria_40_dias_reset
+    nome = (payload or {}).get("nome") or "Aluno VIP Reset"
+    telefone = (payload or {}).get("telefone") or ""
+    kit_tipo = (payload or {}).get("kit_tipo") or "Reset Turbo"
+    enviar_bw = (payload or {}).get("enviar_boas_vindas", True)
+    return await ativar_consultoria_40_dias_reset(nome, telefone, kit_tipo=kit_tipo, enviar_boas_vindas=enviar_bw)
+
+
+@app.post("/api/reset/followup-semanal")
+async def api_followup_semanal_reset(payload: dict = None):
+    """Dispara follow-up semanal sobre o Kit Reset 5 Dias (respeitando bloqueio de 40 dias)."""
+    try:
+        from reset_engine import executar_followup_semanal_reset
+    except ImportError:
+        from apps.api.reset_engine import executar_followup_semanal_reset
+    forcar = bool((payload or {}).get("forcar", False))
+    return await executar_followup_semanal_reset(forcar=forcar)
+
+
+@app.post("/api/reset/verificar-stripe-40d")
+async def api_verificar_stripe_40d():
+    """Oferece assinatura Stripe R$ 19,90/mês para alunos que completaram 40 dias de consultoria Reset."""
+    try:
+        from reset_engine import verificar_transicao_stripe_40_dias
+    except ImportError:
+        from apps.api.reset_engine import verificar_transicao_stripe_40_dias
+    return await verificar_transicao_stripe_40_dias()
+
+
+@app.post("/api/reset/publicar-post-diario")
+async def api_publicar_post_diario_reset(payload: dict = None):
+    """Gera e publica o post diário oficial do Kit Reset 5 Dias no Instagram (Feed 4:5 + Story 9:16)."""
+    try:
+        from reset_engine import gerar_e_publicar_post_diario_reset
+    except ImportError:
+        from apps.api.reset_engine import gerar_e_publicar_post_diario_reset
+    dia_idx = (payload or {}).get("dia_indice")
+    return await gerar_e_publicar_post_diario_reset(dia_indice=dia_idx)
+
 @app.post("/api/aluno/treino/salvar/{identificador}")
 async def salvar_treino_aluno_api(identificador: str, payload: dict):
     return await salvar_treino_diario_aluno(identificador, payload or {})

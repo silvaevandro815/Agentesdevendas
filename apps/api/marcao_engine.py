@@ -970,7 +970,61 @@ async def processar_mensagem_marcao(payload_webhook: dict) -> dict:
             print(f"[MARCAO_ENGINE] Erro ao reformular ficha de treino: {e_ref}")
 
     # -------------------------------------------------------------------------
-    # VALIDAÇÃO ANTIFRAUDE DA BALANÇA SHOPEE & MENTORIA VIP GRATUITA (90 DIAS)
+    # MOTOR DO CARRO-CHEFE Nº 1 (KIT RESET 5 DIAS — PARCERIA KAMILA VITÓRIA)
+    # 1) Ativação expressa de aluno 40 dias VIP enviada por Kamila ou Evandro
+    # 2) Registro automático na memória (cooldown 40 dias) se aluno disser que já tomou
+    # -------------------------------------------------------------------------
+    try:
+        try:
+            from reset_engine import (
+                obter_prompt_conhecimento_reset,
+                detectar_ja_tomou_reset,
+                registrar_aluno_ja_tomou_reset,
+                ativar_consultoria_40_dias_reset,
+                KAMILA_WHATSAPP_LINK,
+                SITE_RESET_URL,
+            )
+        except ImportError:
+            from apps.api.reset_engine import (
+                obter_prompt_conhecimento_reset,
+                detectar_ja_tomou_reset,
+                registrar_aluno_ja_tomou_reset,
+                ativar_consultoria_40_dias_reset,
+                KAMILA_WHATSAPP_LINK,
+                SITE_RESET_URL,
+            )
+
+        eh_kamila = "99120912" in str(target_number or "")
+        if (is_evandro or eh_kamila) and any(k in texto_lower for k in ["ativar reset", "novo aluno reset", "liberar reset", "ativar 40 dias"]):
+            # Extrai telefone (10 a 13 dígitos) e nome da mensagem
+            tel_match = re.search(r"(\+?55[\s\-]?)?(\(?\d{2}\)?[\s\-]?)?(9?\d{4}[\s\-]?\d{4})", texto_recebido)
+            if tel_match:
+                tel_novo = "".join(filter(str.isdigit, tel_match.group(0)))
+                texto_sem_tel = texto_recebido.replace(tel_match.group(0), " ")
+                nome_limpo = re.sub(r"(?i)(ativar reset|novo aluno reset|liberar reset|ativar 40 dias|turbo|tradicional|nome|whatsapp|telefone|:|-)", "", texto_sem_tel).strip()
+                nome_novo = nome_limpo if len(nome_limpo) >= 2 else "Aluno VIP Reset"
+                kit_escolhido = "Reset Tradicional" if "tradicional" in texto_lower else "Reset Turbo"
+                res_ativ = await ativar_consultoria_40_dias_reset(nome_novo, tel_novo, kit_tipo=kit_escolhido, enviar_boas_vindas=True)
+                if res_ativ.get("sucesso"):
+                    resp_ok = (
+                        f"Show demais! 🦁🔥 Consultoria VIP de 40 DIAS liberada para *{res_ativ['aluno']}* ({res_ativ['telefone']})!\n\n"
+                        f"Já enviei a recepção calorosa no WhatsApp e liberei o portal: {res_ativ['portal_url']} (válido até {res_ativ['expira_em']}). 👊💪"
+                    )
+                    for b in resp_ok.split("\n\n"):
+                        await enviar_presenca(target_number, "composing", delay_ms=1200)
+                        await asyncio.sleep(0.8)
+                        await enviar_texto_whatsapp(target_number, b)
+                    return {"sucesso": True, "tipo": "ativacao_reset_40d", "target": target_number, "resposta": resp_ok}
+
+        # Verifica se o aluno informou que já conhece e já tomou o Reset (grava cooldown de 40 dias!)
+        ctx_ultimas = " ".join([str(h.get("content", "")) for h in (historico_mensagens or [])[-4:]])
+        if not is_evandro and detectar_ja_tomou_reset(texto_recebido, ctx_ultimas):
+            await registrar_aluno_ja_tomou_reset(target_number, origem="whatsapp_aluno")
+    except Exception as e_reset_hook:
+        print(f"[MARCAO_ENGINE] Aviso no hook Reset: {e_reset_hook}")
+
+    # -------------------------------------------------------------------------
+    # VALIDAÇÃO ANTIFRAUDE DA BALANÇA SHOPEE & MENTORIA VIP GRATUITA
     # -------------------------------------------------------------------------
     termos_comprovante_balanca = [
         "comprei a balanca", "comprei a balança", "ja comprei a balanca", "já comprei a balança",
@@ -1150,15 +1204,15 @@ async def processar_mensagem_marcao(payload_webhook: dict) -> dict:
         )
     elif tem_balanca:
         instrucao_vip = (
-            f"CLIENTE COM A BALANÇA SHOPEE/XIAOMI ({primeiro_nome}):\n"
-            "- Possui balança e direito aos 3 meses de acompanhamento VIP no WhatsApp!\n"
-            "- Conduza para preenchimento de ficha de treino e metas corporais!"
+            f"CLIENTE COM ACOMPANHAMENTO VIP ATIVO ({primeiro_nome}):\n"
+            "- Possui acesso VIP ativo no WhatsApp!\n"
+            "- Conduza para preenchimento de ficha de treino, fotos de pratos e metas corporais!"
         )
     else:
         instrucao_vip = (
-            f"LEAD/CLIENTE SEM A BALANÇA ({primeiro_nome}):\n"
-            "- Ele AINDA NÃO TEM a nossa Balança de Bioimpedância Shopee Oficial (R$ 34,90 - link: https://s.shopee.com.br/LoKQwfHy4).\n"
-            "- Apresente a Balança Shopee como o carro-chefe que destrava 3 meses gratuitos de mentoria VIP direta com você no WhatsApp!"
+            f"LEAD/CLIENTE SEM ACOMPANHAMENTO VIP ATIVO ({primeiro_nome}):\n"
+            "- CARRO-CHEFE Nº 1 DO MARCÃO: Apresente o KIT RESET 5 DIAS (Tradicional R$ 45 ou Turbo R$ 75), que desincha a barriga, seca retenção, controla vontade de doce e DESTRAVA 40 DIAS DE CONSULTORIA VIP GRATUITA com você no WhatsApp! (Após 40 dias continua por apenas R$ 19,90/mês no Stripe sem multa).\n"
+            "- Mande o site oficial com os detalhes (https://marcaopersonal.com/#reset) e o WhatsApp da nossa parceira Kamila Vitória (https://wa.me/5532999120912?text=Ol%C3%A1%20Kamila!%20Vim%20por%20indica%C3%A7%C3%A3o%20do%20Treinador%20Marc%C3%A3o%20e%20quero%20garantir%20meu%20Kit%20Reset%205%20Dias!) pedindo para dizer à Kamila que foi indicação do Treinador Marcão!"
         )
 
     if is_evandro:
@@ -1210,9 +1264,10 @@ async def processar_mensagem_marcao(payload_webhook: dict) -> dict:
   * 1. INVESTIGUE A DOR/QUEIXA NA LATA: Pergunte diretamente chamando pelo nome ({primeiro_nome}): "Me conta aí, {primeiro_nome}: o que tá mais te incomodando no seu corpo hoje? É a barriga que não seca, falta de massa muscular ou cansaço no treino?"
   * 2. SOLTE A FOFOCA DO ACOMPANHAMENTO VIP: Conte em tom descontraído e cúmplice de segredo de bastidores:
     "Aliás, deixa eu te contar uma fofoca de bastidores aqui: sabia que eu tenho um serviço de acompanhamento exclusivo e VIP no WhatsApp onde eu acompanho o aluno de perto todo santo dia? Eu monto o treino sob medida, calculo a alimentação e fico cobrando a execução até o aluno secar a barriga, botar massa muscular na carcaça ou até se preparar pra uma competição esportiva!"
-  * 3. ENVOLVA NOS PRODUTOS & SERVIÇOS:
-    - Se o objetivo for secar ou saúde geral: apresente a Balança de Bioimpedância da Shopee (R$ 34,90 - menos de 10 centavos por dia!) que já destrava 3 meses gratuitos desse acompanhamento VIP no WhatsApp!
+  * 3. ENVOLVA NOS PRODUTOS & SERVIÇOS (CARRO-CHEFE Nº 1 = KIT RESET 5 DIAS):
+    - SEMPRE apresente primeiro o **KIT RESET 5 DIAS** (5 garrafinhas de chá funcional 100% natural com ervas e sabor de frutas: Tradicional R$ 45 ou Turbo R$ 75 com fibras prebióticas que secam inchaço, regulam intestino e cortam vontade de doce) — destacando que comprando o kit ganha **40 DIAS DE CONSULTORIA VIP GRATUITA** comigo no WhatsApp! Envie o site (https://marcaopersonal.com/#reset) e o WhatsApp da Kamila (https://wa.me/5532999120912?text=Ol%C3%A1%20Kamila!%20Vim%20por%20indica%C3%A7%C3%A3o%20do%20Treinador%20Marc%C3%A3o%20e%20quero%20garantir%20meu%20Kit%20Reset%205%20Dias!) pedindo para avisar que foi indicação do Treinador Marcão!
     - Se a queixa for cansaço ou estagnação: prescreva a Creatina Micronizada (R$ 1,69/dia) para dar explosão de força!
+    - Se quiser medir % de gordura e músculo em casa: prescreva a Balança de Bioimpedância da Shopee (R$ 34,90 - apenas R$ 0,09/dia)!
     - Se for dor física: prescreva o acessório ideal da Shopee (joelheira, cinto, strap)!
   * 4. FECHAMENTO OBRIGATÓRIO: Sempre envolva a pessoa e faça a ponte para ela tomar uma decisão agora!
 - SEMPRE QUE O CLIENTE HESITAR POR PREÇO, ACHAR PUXADO OU FALAR EM ADIAR:
@@ -1221,6 +1276,18 @@ async def processar_mensagem_marcao(payload_webhook: dict) -> dict:
   3. INSISTA COM ENERGIA DE COACH E MANDE O LINK DIRETO NO ÚLTIMO BALÃO PARA ELE GARANTIR AGORA!"""
 
     bloco_catalogo_unificado = await obter_catalogo_para_prompt()
+
+    bloco_reset_master = ""
+    if not is_evandro:
+        try:
+            try:
+                from reset_engine import obter_prompt_conhecimento_reset as _get_reset_prompt
+            except ImportError:
+                from apps.api.reset_engine import obter_prompt_conhecimento_reset as _get_reset_prompt
+            metas_para_reset = (ficha_aluno.get("metas_nutricionais") if isinstance(ficha_aluno, dict) else None) or {}
+            bloco_reset_master = _get_reset_prompt(eh_aluno=eh_aluno, metas_aluno=metas_para_reset)
+        except Exception as e_r:
+            print("[MARCAO ENGINE] Erro carregando bloco Reset:", e_r)
 
     # PRESCRICAO AUTONOMA VIA SHOPEE OPEN API EM TEMPO REAL
     bloco_shopee_autonomo = ""
@@ -1337,11 +1404,11 @@ DIRETRIZ DE AUTORIDADE CIENTÍFICA & PROIBIÇÃO ABSOLUTA DE LINKS EXTERNOS:
 - Você possui conhecimento factual profundo e atualizado sobre anatomia, fisiologia do exercício, biomecânica, ortopedia, farmacologia esportiva, fitoterapia e nutrição clínica.
 - FICA TERMINANTEMENTE PROIBIDO enviar links de sites de buscas, artigos de pesquisas científicas externas, enciclopédias, portais governamentais (gov.br), sites de saúde ou páginas de outros médicos/profissionais e receitas de terceiros! O Marcão NÃO dá tráfego gratuito para ninguém!
 - Os ÚNICOS links permitidos no seu vocabulário são:
-  1. Produtos oficiais de Afiliado na Shopee (https://s.shopee.com.br/...)
-  2. Balança de Bioimpedância Shopee Oficial (R$ 34,90 - https://s.shopee.com.br/LoKQwfHy4)
-  3. Produtos oficiais Braip (Creatina, Azempika, Colágeno, etc.)
-  4. Site oficial https://marcaopersonal.com
-  5. Assinatura VIP Stripe https://buy.stripe.com/7sYfZgbmtgaI5dncwrfMA01
+  1. Site Oficial Reset 5 Dias (https://marcaopersonal.com/#reset) e Site Geral (https://marcaopersonal.com)
+  2. WhatsApp Oficial da Parceira Kamila Vitória para compra do Kit Reset 5 Dias (https://wa.me/5532999120912?text=Ol%C3%A1%20Kamila!%20Vim%20por%20indica%C3%A7%C3%A3o%20do%20Treinador%20Marc%C3%A3o%20e%20quero%20garantir%20meu%20Kit%20Reset%205%20Dias! ou número (32) 99912-0912)
+  3. Produtos oficiais de Afiliado na Shopee (https://s.shopee.com.br/...) incluindo Balança Bioimpedância R$ 34,90 (https://s.shopee.com.br/2BFoInIBeb)
+  4. Produtos oficiais Braip (Creatina, Azempika, Colágeno, etc.) e Amazon Associados
+  5. Assinatura VIP Stripe pós-40 dias (R$ 19,90/mês sem multa): https://buy.stripe.com/7sYfZgbmtgaI5dncwrfMA01
 
 REGRA DE OURO DA SHOPEE: O MARCÃO NÃO PODE SER CHATO NEM FORÇAR PRODUTOS SEM NECESSIDADE!
 - FICA PROIBIDO empurrar links ou oferecer produtos sem motivo em conversas normais! Se o aluno apenas comentou o que comeu, mandou foto do prato, deu bom dia ou conversou tranquilamente: NÃO MANDE LINKS DE PRODUTOS!
@@ -1389,10 +1456,12 @@ IDENTIDADE, ÉTICA & GUARDRAILS REGULATÓRIOS (ITEM 14 DO SISTEMA OPERACIONAL):
 - CREF: Você orienta hábitos saudáveis, hidratação, sono e biomecânica. NUNCA prescreva dietas médicas nem treinos clínicos individualizados. Se pedirem isso, recomende um Educador Físico (CREF) ou Nutricionista (CRN).
 - LGPD: Fotos corporais e medidas são dados sensíveis; use apenas com o consentimento do aluno para orientar os hábitos da rotina.
 
-BALANÇA DE BIOIMPEDÂNCIA COM IA & REGRA DE 3 MESES:
+{bloco_reset_master}
+
+BALANÇA DE BIOIMPEDÂNCIA COM IA (PRODUTO COMPLEMENTAR DE ALTA PRECISÃO):
 - A balança mede por microcorrente BIA: Peso, % Gordura, Gordura Visceral, Massa Magra, % Água, Massa Óssea, TMB e Idade Metabólica.
 - Pesar sempre em jejum pela manhã, descalço, pés limpos/secos sobre as 4 placas, chão rígido/plano.
-- CARRO-CHEFE Nº 1 (MAIOR CONVERSÃO): Balança Inteligente de Bioimpedância Shopee Oficial (R$ 34,90, menos de 10 centavos por dia!). Link Oficial Shopee: https://s.shopee.com.br/LoKQwfHy4. Quem compra a balança destrava 3 MESES GRÁTIS de mentoria VIP direta comigo no WhatsApp! Após 3 meses, o acompanhamento continua por apenas R$ 19,90/mês.
+- Balança Inteligente de Bioimpedância Shopee Oficial (R$ 34,90, menos de R$ 0,09 por dia!): https://s.shopee.com.br/2BFoInIBeb. Ideal para alunos que querem medir gordura vs músculo com precisão em casa!
 - OPÇÃO PREMIUM ALTERNATIVA: Balança Xiaomi Mi Scale 2 oficial (R$ 149,90, link: https://www.amazon.com.br/dp/B07T48Z4TN?tag=marcaopersona-20).
 
 REGRAS DE FORMATAÇÃO HUMANIZADA (SEM TEXTÃO - PADRÃO WHATSAPP BRASIL):

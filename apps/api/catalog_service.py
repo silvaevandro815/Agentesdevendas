@@ -27,11 +27,23 @@ CACHE_TTL_SEGUNDOS = 60
 
 # Metadados complementares de enriquecimento (doses, benefícios científicos e claims regulatórios)
 METADADOS_CONHECIDOS = {
+    "KIT-RESET-5-DIAS-TURBO": {
+        "doses": 5,
+        "beneficio_chave": "CARRO-CHEFE Nº 1: Kit Reset Turbo 5 Dias (5 garrafinhas de 500ml, 100% natural, sem conservantes): blend de ervas (Cavalinha, Hibisco, Chá Preto/Verde, Cafeína Natural, Malva, Cardamomo) + Fibras Solúveis Prebióticas que desincham a barriga, regulam o intestino, cortam a vontade de doce e liberam 40 DIAS DE CONSULTORIA VIP GRÁTIS com o Marcão!",
+        "claims_permitidos": ["100% natural e sem conservantes", "Combate retenção de líquidos", "Fibras prebióticas que regulam o intestino", "Alta saciedade e controle da vontade de doce", "Bônus de 40 dias de Consultoria VIP Marcão"],
+        "pitch_diario": "R$ 75,00 o kit completo (apenas R$ 15/dia) + 40 DIAS DE CONSULTORIA VIP COM O MARCÃO! Garanta direto com a Kamila (https://wa.me/5532999120912?text=Ol%C3%A1%20Kamila!%20Vim%20por%20indica%C3%A7%C3%A3o%20do%20Treinador%20Marc%C3%A3o%20e%20quero%20garantir%20meu%20Kit%20Reset%205%20Dias!) avisando que foi indicação do Marcão!"
+    },
+    "KIT-RESET-5-DIAS-TRADICIONAL": {
+        "doses": 5,
+        "beneficio_chave": "CARRO-CHEFE Nº 1: Kit Reset Tradicional 5 Dias (5 garrafinhas de 500ml, 100% natural): blend de ervas (Cavalinha, Hibisco, Chá Preto/Verde, Cafeína Natural, Malva e Cardamomo) para desinchar o corpo, drenar retenção, dar energia e liberar 40 DIAS DE CONSULTORIA VIP GRÁTIS com o Marcão!",
+        "claims_permitidos": ["100% natural e sem conservantes", "Ajuda na retenção de líquido", "Sensação de leveza e energia", "Bônus de 40 dias de Consultoria VIP Marcão"],
+        "pitch_diario": "R$ 45,00 o kit completo (apenas R$ 9/dia) + 40 DIAS DE CONSULTORIA VIP COM O MARCÃO! Garanta direto com a Kamila (https://wa.me/5532999120912?text=Ol%C3%A1%20Kamila!%20Vim%20por%20indica%C3%A7%C3%A3o%20do%20Treinador%20Marc%C3%A3o%20e%20quero%20garantir%20meu%20Kit%20Reset%205%20Dias!) avisando que foi indicação do Marcão!"
+    },
     "BALANCA-BIOIMPEDANCIA-SHOPEE": {
         "doses": 365,
-        "beneficio_chave": "Balança Inteligente de Bioimpedância Clínica com 13 biomarcadores corporais (massa muscular, gordura visceral profunda, hidratação celular, taxa metabólica) e acompanhamento VIP com o Marcão Personal no WhatsApp.",
+        "beneficio_chave": "Balança Inteligente de Bioimpedância Clínica com 13 biomarcadores corporais (massa muscular, gordura visceral profunda, hidratação celular, taxa metabólica) para acompanhar sua evolução com precisão.",
         "claims_permitidos": ["13 biomarcadores clínicos", "Leitura de gordura visceral dos órgãos", "4 eletrodos BIA de alta condutividade", "Sincronização Bluetooth com app", "Preço direto de fábrica Shopee"],
-        "pitch_diario": "Apenas R$ 0,09 por dia (menos de 10 centavos!) para ter a balança inteligente de bioimpedância direto de fábrica e acompanhamento VIP comigo!"
+        "pitch_diario": "Apenas R$ 0,09 por dia (R$ 34,90 total, menos de 10 centavos/dia!) para medir seus 13 biomarcadores em casa!"
     },
     "BALANCA-XIAOMI-AMAZON": {
         "doses": 365,
@@ -267,7 +279,14 @@ async def obter_catalogo_para_prompt() -> str:
     
     linhas = [
         "CATÁLOGO OFICIAL UNIFICADO & LINKS DE VENDAS ATIVOS (MEMÓRIA COMPARTILHADA WHATSAPP & INSTAGRAM):",
-        "Use SEMPRE estes links oficiais e aplique o custo diário no fechamento:\n"
+        "CARRO-CHEFE Nº 1 ABSOLUTO (PORTA DE ENTRADA + 40 DIAS DE CONSULTORIA VIP MARCÃO):",
+        "- KIT RESET 5 DIAS TRADICIONAL (R$ 45,00 = R$ 9/dia) & KIT RESET TURBO (R$ 75,00 = R$ 15/dia):",
+        "  * 5 garrafinhas prontas de 500ml de chá funcional 100% natural com ervas selecionadas (Cavalinha, Hibisco, Chá Preto/Verde, Cafeína Natural, Malva, Cardamomo; e no Turbo + Fibras Solúveis Prebióticas contra vontade de doce e intestino preso).",
+        "  * BÔNUS: Quem compra o Kit Reset 5 Dias ganha 40 DIAS DE CONSULTORIA VIP GRÁTIS COM O TREINADOR MARCÃO! Após 40 dias continua por apenas R$ 19,90/mês no Stripe (sem multa).",
+        "  * Site Oficial de Detalhes: https://marcaopersonal.com/#reset",
+        "  * Venda Final Direta com a Parceira Kamila Vitória (WhatsApp: (32) 99912-0912): https://wa.me/5532999120912?text=Ol%C3%A1%20Kamila!%20Vim%20por%20indica%C3%A7%C3%A3o%20do%20Treinador%20Marc%C3%A3o%20e%20quero%20garantir%20meu%20Kit%20Reset%205%20Dias!",
+        "  * SEMPRE peça para o cliente dizer à Kamila que foi INDICAÇÃO DO TREINADOR MARCÃO!",
+        "\nDEMAIS PRODUTOS OFICIAIS (SHOPEE / BRAIP / AMAZON — SEMPRE QUE SURGIR QUEIXA OU NECESSIDADE):\n"
     ]
 
     for p in produtos:
@@ -278,15 +297,17 @@ async def obter_catalogo_para_prompt() -> str:
             f"  * Link Direto Oficial: {p['affiliate_url']}"
         )
 
-    linhas.append("\n- Site Oficial da Loja Geral: https://marcaopersonal.com#loja")
-    linhas.append("- Assinatura Mensal VIP Stripe (R$ 19,90/mês): https://buy.stripe.com/7sYfZgbmtgaI5dncwrfMA01")
+    linhas.append("\n- Site Oficial Reset 5 Dias: https://marcaopersonal.com/#reset")
+    linhas.append("- Site Oficial da Loja Geral: https://marcaopersonal.com#loja")
+    linhas.append("- Assinatura Mensal VIP Stripe pós-40 dias (R$ 19,90/mês sem multa): https://buy.stripe.com/7sYfZgbmtgaI5dncwrfMA01")
 
     linhas.append("\nMATRIZ DE DISPARO AUTÔNOMO DE VENDAS (A DOR DO LEAD -> A SOLUÇÃO IMEDIATA DO MARCÃO):")
     linhas.append("Você tem autonomia plena e contínua para vender. Identifique a dor, queixa ou desejo do interlocutor e prescreva a solução com o link na lata:")
-    linhas.append("1. DOR NO JOELHO, ARTICULAÇÕES, TENDÕES, ESTALO: Prescreva Ômega 3 Ultra Concentrado (Dux) ou Colágeno com Ácido Hialurônico (Nature's Prime). Link direto na mensagem!")
+    linhas.append("0. CARRO-CHEFE Nº 1 — INCHAÇO, BARRIGA ESTUFADA, RETENÇÃO DE LÍQUIDO, VONTADE DE DOCE, INTESTINO PRESO, QUER COMEÇAR A SECAR OU QUER CONSULTORIA VIP COM O MARCÃO: Prescreva o KIT RESET 5 DIAS (Tradicional R$ 45 ou Turbo R$ 75 — recomende o Turbo para resultado completo!). Explique o produto, mande https://marcaopersonal.com/#reset e o WhatsApp da Kamila (https://wa.me/5532999120912?text=Ol%C3%A1%20Kamila!%20Vim%20por%20indica%C3%A7%C3%A3o%20do%20Treinador%20Marc%C3%A3o%20e%20quero%20garantir%20meu%20Kit%20Reset%205%20Dias!) pedindo para avisar que foi indicação do Marcão e liberar 40 dias de consultoria VIP!")
+    linhas.append("1. DOR NO JOELHO, ARTICULAÇÕES, TENDÕES, ESTALO: Prescreva Ômega 3 Ultra Concentrado (Dux) ou Colágeno com Ácido Hialurônico (Nature's Prime) ou Joelheira Shopee. Link direto na mensagem!")
     linhas.append("2. CANSAÇO, FALTA DE FORÇA, TREINO NÃO RENDE: Prescreva Creatina (Creatina Prime Braip ou Creatina Creapure Dux Amazon). Explique a saturação de ATP e custo diário de R$ 1,69/dia!")
-    linhas.append("3. NÃO BATE META DE PROTEÍNA, DIFICULDADE DE CRESCER SECO, FOME DE DOCE: Prescreva Whey Protein (Max Titanium R$ 99,90 ou Dux Concentrado R$ 149,90 ou Gold Standard R$ 249,90). Ensine receitas de brigadeiro proteico!")
-    linhas.append("4. PAROU DE EMAGRECER, DÚVIDA SE PERDEU GORDURA OU MÚSCULO, QUER AVALIAÇÃO DE SHAPE: Prescreva a BALANÇA DE BIOIMPEDÂNCIA XIAOMI MI SCALE 2 (Amazon R$ 149,90, apenas R$ 0,41/dia). CARRO-CHEFE Nº 1: DESTACA QUE COMPRANDO A BALANÇA GANHA 3 MESES DE MENTORIA VIP GRÁTIS COM O MARCÃO NO WHATSAPP! Link: https://www.amazon.com.br/dp/B07T48Z4TN?tag=marcaopersona-20")
+    linhas.append("3. NÃO BATE META DE PROTEÍNA, DIFICULDADE DE CRESCER SECO, FOME DE DOCE: Prescreva Reset Turbo (R$ 75) + Whey Protein (Max Titanium R$ 99,90 ou Dux Concentrado R$ 149,90).")
+    linhas.append("4. DÚVIDA SE PERDEU GORDURA OU MÚSCULO, QUER MEDIR 13 BIOMARCADORES EM CASA: Prescreva a Balança de Bioimpedância Shopee Oficial (R$ 34,90, apenas R$ 0,09/dia, link https://s.shopee.com.br/2BFoInIBeb) ou Xiaomi Mi Scale 2 (Amazon R$ 149,90).")
     linhas.append("5. QUER CORRER, MONITORAR BATIMENTOS CARDÍACOS, QUEIMA CALÓRICA, STRAVA OU SONO: Prescreva o Smartwatch Xiaomi Smart Band 8 ou Amazfit Bip 5 com GPS. Custa centavos de real por dia!")
     linhas.append("6. ASSADURAS ENTRE AS PERNAS, SUOR EXCESSIVO, ROUPA PESADA, POSTURA FIRME: Prescreva Camiseta Térmica Compressão UV50+ ou Bermuda Térmica de Compressão com Bolso antifurto.")
     linhas.append("7. COMPULSÃO ALIMENTAR NOTURNA, VONTADE DESCONTROLADA DE COMER / VIGOR MASCULINO: Prescreva Caneta Azempika (apenas para maiores de 18 anos).")

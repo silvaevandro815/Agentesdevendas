@@ -733,6 +733,11 @@ app.get(['/llms.txt', '/llms-full.txt'], (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'llms.txt'));
 });
 
+// Rota direta amigável para o Carro-Chefe Nº 1 (Kit Reset 5 Dias)
+app.get('/reset', (req, res) => {
+  res.redirect(302, '/#reset');
+});
+
 // Redirecionamento SPA / fallback seguro
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));

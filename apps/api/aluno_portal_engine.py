@@ -75,8 +75,26 @@ async def prescrever_produtos_personalizados(ficha: dict, local_treino: str, obj
     produtos = []
     texto_contexto = f"{objetivo} {restricoes} {local_treino}".lower()
 
-    # 1. Carro-Chefe: Balança Inteligente Shopee (SOMENTE SE O ALUNO NÃO TIVER!)
+    # 0. CARRO-CHEFE Nº 1: Kit Reset 5 Dias (Parceria Kamila Vitória — respeita cooldown de 40 dias)
     metas_f = ficha.get("metas_nutricionais") or {}
+    hoje_iso_p = datetime.now().strftime("%Y-%m-%d")
+    reset_status = str(metas_f.get("reset_status") or "")
+    reset_prox = str(metas_f.get("reset_proxima_oferta_em") or "")
+    eh_kamila_portal = "99120912" in str(ficha.get("telefone", ""))
+    em_cooldown_reset = bool(reset_status in ("ja_tomou", "ativo_40d") and reset_prox and hoje_iso_p < reset_prox)
+
+    if not eh_kamila_portal and not em_cooldown_reset:
+        produtos.append({
+            "nome": "Kit Reset 5 Dias Turbo (5 Garrafinhas 500ml + Fibras Prebióticas)",
+            "preco": "R$ 75,00 (ou Tradicional R$ 45,00)",
+            "custo_dia": "R$ 15,00 / dia",
+            "motivo": "CARRO-CHEFE DO MARCÃO! Blend 100% natural (Cavalinha, Hibisco, Chá Preto, Malva, Cardamomo + Fibras) que desincha a barriga, destrava o intestino e corta a vontade de doce! Diga à Kamila que foi indicação do Treinador Marcão!",
+            "link": "https://wa.me/5532999120912?text=Ol%C3%A1%20Kamila!%20Vim%20por%20indica%C3%A7%C3%A3o%20do%20Treinador%20Marc%C3%A3o%20e%20quero%20garantir%20meu%20Kit%20Reset%205%20Dias!",
+            "badge": "🏆 Carro-Chefe Nº 1 • Desinchaço em 5 Dias",
+            "origem": "Parceria Oficial Kamila • Reset 5 Dias"
+        })
+
+    # 1. Balança Inteligente Shopee (SOMENTE SE O ALUNO NÃO TIVER!)
     memoria_txt = str(metas_f.get("memoria_pessoal") or "").lower()
     tem_balanca = bool(
         metas_f.get("tem_balanca_bioimpedancia")

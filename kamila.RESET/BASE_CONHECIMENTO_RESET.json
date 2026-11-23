@@ -1,0 +1,146 @@
+{
+  "produto": "Kit Reset 5 Dias",
+  "carro_chefe_numero": 1,
+  "parceira_vendas": {
+    "nome": "Kamila Vitória",
+    "telefone_e164": "5532999120912",
+    "telefone_formatado": "(32) 99912-0912",
+    "whatsapp_link": "https://wa.me/5532999120912?text=Ol%C3%A1%20Kamila!%20Vim%20por%20indica%C3%A7%C3%A3o%20do%20Treinador%20Marc%C3%A3o%20e%20quero%20garantir%20meu%20Kit%20Reset%205%20Dias!"
+  },
+  "site_oficial_url": "https://marcaopersonal.com/#reset",
+  "consultoria_bonus_dias": 40,
+  "assinatura_pos_40_dias": {
+    "preco_mensal": 19.90,
+    "plataforma": "Stripe",
+    "sem_multa": true
+  },
+  "ciclo_recompra_dias": 40,
+  "kits": [
+    {
+      "id": "reset_tradicional",
+      "nome": "Reset Tradicional (5 Dias)",
+      "preco": 45.00,
+      "preco_display": "R$ 45,00",
+      "custo_dia": "R$ 9,00/dia",
+      "formato": "5 garrafinhas de 500ml",
+      "ingredientes": ["Cavalinha", "Hibisco", "Chá Preto/Verde", "Cafeína Natural", "Malva", "Cardamomo"],
+      "beneficios": [
+        "Ajuda na eliminação da retenção de líquido",
+        "Desincha o corpo e reduz estufamento abdominal",
+        "Proporciona sensação de leveza, energia e disposição",
+        "Auxilia na eliminação de toxinas e desinflamação"
+      ],
+      "ideal_para": "Quem quer começar a desinflamar e eliminar o inchaço em 5 dias"
+    },
+    {
+      "id": "reset_turbo",
+      "nome": "Reset Turbo (5 Dias)",
+      "preco": 75.00,
+      "preco_display": "R$ 75,00",
+      "custo_dia": "R$ 15,00/dia",
+      "formato": "5 garrafinhas de 500ml (com fibras prebióticas)",
+      "ingredientes": ["Blend de Ervas Completo (Cavalinha, Hibisco, Chá Preto/Verde, Cafeína Natural, Malva, Cardamomo)", "Fibra Solúvel Prebiótica Concentrada"],
+      "beneficios": [
+        "Todos os benefícios do Reset Tradicional",
+        "Regula o funcionamento intestinal e alimenta as bactérias boas (prebiótico)",
+        "Aumenta drasticamente a saciedade",
+        "Controla a vontade de doce, beliscos e compulsão alimentar",
+        "Potencializa a redução de medidas e gordura abdominal"
+      ],
+      "ideal_para": "Quem quer efeito completo: desinchar, destravar intestino, cortar vontade de doce e acelerar resultados"
+    }
+  ],
+  "angulos_posts_diarios": [
+    {
+      "id": "desinchaco_5_dias",
+      "headline": "DESINCHE SUA BARRIGA EM 5 DIAS",
+      "subheadline": "Kit Reset 5 Dias • 100% Natural • Sem Conservantes",
+      "bullets": [
+        "Combate a retenção de líquido logo nos primeiros dias",
+        "Blend de ervas: Cavalinha, Hibisco, Chá Preto, Malva e Cardamomo",
+        "Sensação imediata de leveza, energia e disposição"
+      ],
+      "destaque_numero": "5 DIAS",
+      "destaque_sub": "PARA DESINFLAMAR E SECÁ-LA",
+      "regra_marcao": "Comprando o Kit Reset você ganha 40 DIAS de Consultoria VIP comigo! Mande 'RESET' no Direct ou WhatsApp!"
+    },
+    {
+      "id": "fim_vontade_doce_turbo",
+      "headline": "PARE DE BELISCAR DOCES À TARDE",
+      "subheadline": "Reset Turbo • Ervas Termogênicas + Fibras Prebióticas",
+      "bullets": [
+        "Fibras solúveis que prolongam a saciedade por horas",
+        "Alimenta as bactérias boas e regula o intestino preso",
+        "Corta a compulsão alimentar e acelera a perda de medidas"
+      ],
+      "destaque_numero": "R$ 15/DIA",
+      "destaque_sub": "RESET TURBO + 40 DIAS VIP",
+      "regra_marcao": "Mande 'RESET' agora no Direct ou no WhatsApp do Marcão e garanta seu Kit + 40 dias de acompanhamento!"
+    },
+    {
+      "id": "intestino_e_abdomen",
+      "headline": "BARRIGA ESTUFADA NÃO É SÓ GORDURA",
+      "subheadline": "Intestino travado + retenção hídrica sabotam seu shape",
+      "bullets": [
+        "Drenagem natural de dentro para fora com Hibisco e Cavalinha",
+        "Fibras prebióticas que desinflamam e destravam o intestino",
+        "Mais disposição nos treinos com cafeína natural dos chás"
+      ],
+      "destaque_numero": "40 DIAS",
+      "destaque_sub": "DE CONSULTORIA VIP DE BÔNUS",
+      "regra_marcao": "Quer saber qual Kit (Tradicional R$45 ou Turbo R$75) é ideal pra você? Chame o Marcão no Direct ou WhatsApp!"
+    },
+    {
+      "id": "comparativo_tradicional_turbo",
+      "headline": "TRADICIONAL OU TURBO? ESCOLHA O SEU!",
+      "subheadline": "Kit Reset 5 Dias • 5 garrafinhas prontas de 500ml",
+      "bullets": [
+        "Tradicional (R$ 45): Desinchaço, drenagem e energia natural",
+        "Turbo (R$ 75): Tudo do tradicional + fibras anti-compulsão",
+        "Ambos liberam 40 dias de Consultoria VIP com o Marcão!"
+      ],
+      "destaque_numero": "A PARTIR DE R$45",
+      "destaque_sub": "PROTOCOLO COMPLETO 5 DIAS",
+      "regra_marcao": "Me chama no Direct ou WhatsApp do Marcão dizendo 'QUERO RESET' que eu te passo o contato VIP agora!"
+    },
+    {
+      "id": "energia_termogenese",
+      "headline": "ENERGIA LIMPA E METABOLISMO ATIVO",
+      "subheadline": "Esqueça refrigerantes e energéticos cheios de açúcar",
+      "bullets": [
+        "Extrato de Chá Preto e Cardamomo para foco e disposição",
+        "Zero açúcar adicionado, zero conservantes, 100% natural",
+        "Acelera a queima calórica aliado ao treino do Marcão"
+      ],
+      "destaque_numero": "100% NATURAL",
+      "destaque_sub": "FÓRMULA TESTADA HÁ +40 ANOS",
+      "regra_marcao": "Comente 'RESET' ou chame no Direct/WhatsApp do Marcão para destravar seu Kit + 40 dias de Consultoria VIP!"
+    },
+    {
+      "id": "combate_retencao_feminina",
+      "headline": "ACORDE MAIS LEVE E DESINCHADA",
+      "subheadline": "Diga adeus às pernas pesadas e calça apertando",
+      "bullets": [
+        "Cavalinha + Hibisco drenam o excesso de líquido retido",
+        "Malva acalma o estômago e elimina gases abdominais",
+        "Sabor refrescante de frutas para beber ao longo do dia"
+      ],
+      "destaque_numero": "500ML/DIA",
+      "destaque_sub": "PRÁTICO, GELADO E EFICIENTE",
+      "regra_marcao": "Quer receber o seu Kit Reset e ganhar 40 dias comigo no WhatsApp? Me manda uma mensagem no Direct agora!"
+    },
+    {
+      "id": "combo_reset_mais_marcao",
+      "headline": "O COMBO QUE TRANSFORMA SEU CORPO",
+      "subheadline": "5 Dias de Reset + 40 Dias de Consultoria Treinador Marcão",
+      "bullets": [
+        "O Reset desinflama e destrava seu metabolismo em 5 dias",
+        "O Marcão acompanha seu treino, dieta e fotos por 40 dias",
+        "Resultado real, sem efeito rebote e com acompanhamento diário"
+      ],
+      "destaque_numero": "5 + 40 DIAS",
+      "destaque_sub": "DESINCHAÇO + QUEIMA REAL",
+      "regra_marcao": "Mande uma mensagem no WhatsApp ou Direct do Marcão agora mesmo e comece sua transformação!"
+    }
+  ]
+}

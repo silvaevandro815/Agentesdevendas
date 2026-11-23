@@ -571,3 +571,12 @@ unpod_open_engine.py: Gerenciador de GPU Serverless para geração de takes 3D h
   3. *Alimento Recortado com Sobreposição Estratégica:* A beterraba com fundo transparente foi ampliada (width: 636px, height: 1058px, top: 215px, left: 474px) e posicionada de modo que seu contorno cubra a junção da barra laranja com o fundo escuro, mascarando imperfeições residuais e gerando efeito tridimensional sem invadir o bloco de texto (margem esquerda segura em x <= 474px).
 - **Padronização para Toda a Esteira:** Esta composição geométrica torna-se a referência definitiva de layout para a automação diária dos 365 posts no Canva.
 
+## 35. Auditoria Real de Obediência Semanal & Novo Carro-Chefe Nº 1: KIT RESET 5 DIAS (Parceria Kamila Vitória)
+- **Auditoria Real de Ranking no Portal do Aluno (`apps/api/obedience_audit_engine.py`):**
+  * Eliminado ranking estático/inflado (100/98/95%). Implementada matriz real de 5 pilares nos últimos 7 dias (Treinos Ficha+Strava 35pts, Fotos 25pts, Ficha/Pesagem 20pts, Produtos 15pts, Constância 5pts).
+- **Novo Carro-Chefe Nº 1: KIT RESET 5 DIAS (`apps/api/reset_engine.py` + pasta `kamila.RESET/`):**
+  * Estudo científico aprofundado e transcrição dos 4 áudios da parceira **Kamila Vitória (`5532999120912`)** organizados em `kamila.RESET/DOSSIE_CIENTIFICO_RESET_5_DIAS.md`, `TRANSCRICAO_AUDIOS_KAMILA.md`, `BASE_CONHECIMENTO_RESET.json` e 9 imagens reais verificadas em `kamila.RESET/imagens/`.
+  * **Kits:** Reset Tradicional (R$ 45,00) e Reset Turbo com Fibras Prebióticas (R$ 75,00) + **Bônus de 40 DIAS de Consultoria VIP Grátis com o Marcão** -> transição automática pós-40 dias para assinatura **Stripe R$ 19,90/mês (sem multa)**.
+  * **Omnichannel 100% Sincronizado:** WhatsApp (`F3` live no n8n + `marcao_engine.py`), Instagram Direct & Comentários (`I1` live no n8n com cruzamento de dados Supabase + leitura de legenda do post + envio automático de Direct), Site Oficial (`marcaopersonal.com/#reset` e `/reset`), Portal do Aluno (`aluno_portal_engine.py`) e Follow-ups (`followup_instagram.py`).
+  * **Agendador Autônomo (`marcao_autonomous_cron.py`):** Adicionados Job #9 (Post diário inédito do Reset no Instagram às 18:00h), Job #10 (Follow-up semanal do Reset às Terças 15:00h com pausa automática de 40 dias para quem já tomou e oferta de recompra após 40 dias) e Job #11 (Auditoria diária pós-40 dias para transição Stripe R$ 19,90/mês), mantendo 100% intactas todas as rotinas anteriores.
+
