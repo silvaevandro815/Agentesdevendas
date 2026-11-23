@@ -1644,6 +1644,30 @@ except ImportError:
 async def obter_portal_aluno_api(identificador: str):
     return await obter_dados_portal_aluno(identificador)
 
+@app.get("/api/aluno/auditoria-ranking")
+async def auditoria_ranking_semanal_api(telefone: str = None):
+    """
+    Auditoria Profissional de Obediência Semanal (0 a 100 pts reais).
+    Retorna o raio-X completo de todos os alunos reais: Treinos (Ficha+Strava),
+    Fotos, Ficha/Pesagem, Produtos e Constância nos últimos 7 dias.
+    """
+    try:
+        from obedience_audit_engine import auditar_obediencia_semanal
+    except ImportError:
+        from apps.api.obedience_audit_engine import auditar_obediencia_semanal
+    return await auditar_obediencia_semanal(aluno_atual_telefone=telefone, incluir_strava=True)
+
+@app.post("/api/aluno/produto/registrar-compra/{identificador}")
+async def registrar_compra_produto_api(identificador: str, payload: dict):
+    """Registra compra confirmada de produto para pontuar no Pilar 4 do Ranking Real."""
+    try:
+        from obedience_audit_engine import registrar_compra_produto_aluno
+    except ImportError:
+        from apps.api.obedience_audit_engine import registrar_compra_produto_aluno
+    produto = (payload or {}).get("produto") or "Produto Oficial Marcão"
+    origem = (payload or {}).get("origem") or "Shopee/Braip"
+    return await registrar_compra_produto_aluno(identificador, produto, origem)
+
 @app.post("/api/aluno/treino/salvar/{identificador}")
 async def salvar_treino_aluno_api(identificador: str, payload: dict):
     return await salvar_treino_diario_aluno(identificador, payload or {})

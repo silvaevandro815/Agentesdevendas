@@ -38,65 +38,31 @@ def get_supabase_headers():
 
 async def calcular_ranking_top5(aluno_atual_telefone: str) -> list:
     """
-    Calcula o Ranking Oficial de Obediência dos alunos reais do Marcão Personal:
-    Exclusivamente os alunos reais: Evandro (Diretor/Atleta), Eva Maria e Kamila Vitória.
-    Zero alunos fictícios!
-    Computa obediência em treinos, refeições, hidratação, disciplina e biometria.
+    Calcula o Ranking Oficial de Obediência Semanal 100% REAL e AUDITADO
+    a partir do Motor de Auditoria (`obedience_audit_engine.py`).
+    Cruza dados reais dos últimos 7 dias:
+    - Ficha de treinos + Relógio/Strava (35 pts)
+    - Fotos de refeições e evolução (25 pts)
+    - Ficha completa, biometria e pesagem semanal (20 pts)
+    - Produtos e equipamentos do protocolo (15 pts)
+    - Constância real na semana (5 pts)
+    ZERO notas fixas, ZERO inflação artificial!
     """
-    tel_limpo = "".join(filter(str.isdigit, str(aluno_atual_telefone or "")))
-    last8_atual = tel_limpo[-8:] if len(tel_limpo) >= 8 else tel_limpo
+    try:
+        try:
+            from obedience_audit_engine import auditar_obediencia_semanal
+        except ImportError:
+            from apps.api.obedience_audit_engine import auditar_obediencia_semanal
 
-    # Alunos Reais Homologados do Ecossistema
-    alunos_reais = [
-        {
-            "nome": "Evandro Silva Gallina",
-            "telefone": "553284587255",
-            "meta": "Atleta de Elite • Força & Hipertrofia",
-            "streak": 7,
-            "score": 100,
-            "badge": "👑 1º Lugar • Leão Alfa (100% Obediente)",
-            "status_obediencia": "100% Obediente • Disciplina de Elite",
-            "sinalizador": "Obedecendo • Treino Pesado & Cargas Anotadas"
-        },
-        {
-            "nome": "Eva Maria",
-            "telefone": "5532988273367",
-            "meta": "Saúde & Proteção de Joelho (Treino em Casa)",
-            "streak": 6,
-            "score": 98,
-            "badge": "🥈 2º Lugar • Modo Leoa (98% Obediente)",
-            "status_obediencia": "98% Obediente • Foco Total & Disciplina",
-            "sinalizador": "Obedecendo • Treino Sênior em Casa, Refeições & Balança Shopee"
-        },
-        {
-            "nome": "Kamila Vitória de Paula Silva",
-            "telefone": "5532999120912",
-            "meta": "Secar Gordura & Definir Glúteos (Academia)",
-            "streak": 5,
-            "score": 95,
-            "badge": "🥉 3º Lugar • Disciplina Total (95% Obediente)",
-            "status_obediencia": "95% Obediente • Constância e Foco",
-            "sinalizador": "Obedecendo • Treino ABC Academia & Dieta Balanceada"
-        }
-    ]
-
-    resultado = []
-    for pos, r in enumerate(alunos_reais, 1):
-        r_tel = r["telefone"]
-        is_user = bool(last8_atual and (last8_atual in r_tel or r_tel in tel_limpo))
-        resultado.append({
-            "posicao": pos,
-            "nome": r["nome"],
-            "meta": r["meta"],
-            "streak_dias": r["streak"],
-            "metas_batidas_pct": f"{r['score']}%",
-            "badge": r["badge"],
-            "status_obediencia": r["status_obediencia"],
-            "sinalizador": r["sinalizador"],
-            "is_current_user": is_user
-        })
-
-    return resultado
+        relatorio = await auditar_obediencia_semanal(
+            aluno_atual_telefone=aluno_atual_telefone,
+            incluir_strava=True,
+        )
+        ranking = relatorio.get("ranking") or []
+        return ranking[:10]
+    except Exception as e:
+        print(f"[PORTAL_ENGINE] Erro na auditoria real de ranking: {e}")
+        return []
 
 
 async def prescrever_produtos_personalizados(ficha: dict, local_treino: str, objetivo: str, restricoes: str) -> list:
@@ -838,6 +804,8 @@ async def obter_dados_portal_aluno(identificador: str) -> Dict[str, Any]:
     }
 
     ranking_top5 = await calcular_ranking_top5(ficha.get('telefone'))
+    auditoria_pessoal = next((r for r in ranking_top5 if r.get("is_current_user")), None)
+    streak_real_semanal = auditoria_pessoal.get("streak_dias", 0) if auditoria_pessoal else int(ficha.get("streak_dias") or 0)
     return {
         "sucesso": True,
         "aluno": {
@@ -853,7 +821,8 @@ async def obter_dados_portal_aluno(identificador: str) -> Dict[str, Any]:
             "dias_treino_display": ", ".join([d.capitalize() for d in (ficha.get("dias_treino") or [])]) if ficha.get("dias_treino") else "A definir com Marcão",
             "dias_disponiveis_semana": ficha.get("dias_disponiveis_semana") or (len(ficha.get("dias_treino")) if ficha.get("dias_treino") else None),
             "idade": int(ficha.get("idade")) if ficha.get("idade") else idade,
-            "streak_dias": ficha.get("streak_dias") or 1,
+            "streak_dias": streak_real_semanal,
+            "score_obediencia_real": auditoria_pessoal.get("score", 0) if auditoria_pessoal else 0,
             "status_vip": "VIP Ativo",
             "dias_no_protocolo": ficha.get("dias_ativos") or 14,
             "dados_biometricos_pendentes": dados_biometricos_pendentes,
@@ -913,6 +882,7 @@ async def obter_dados_portal_aluno(identificador: str) -> Dict[str, Any]:
         "arsenal_produtos": arsenal_produtos,
         "ultimo_treino_salvo": ultimo_treino_salvo,
         "ranking_top5": ranking_top5,
+        "auditoria_obediencia": auditoria_pessoal,
         "whatsapp_marcao": "https://wa.me/553285066687?text=Fala%20Marc%C3%A3o!%20T%C3%B4%20aqui%20na%20minha%20Landing%20Page%20e%20quero%20tirar%20uma%20d%C3%BAvida!"
     }
 
